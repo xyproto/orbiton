@@ -69,6 +69,7 @@ type Editor struct {
 	bookMode                    atomic.Bool // book mode: word wrap, no syntax highlighting, text focus
 	bookForceTextMode           atomic.Bool // force text rendering even when graphics are available
 	bookSavedLocalX             int         // sticky visual column within a sub-row for up/down movement (-1 = unset)
+	bookCursorAffinity          int         // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                  bool        // display a status bar at all times at the bottom of the screen
@@ -182,6 +183,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.bookMode.Store(e.bookMode.Load())
 	e2.bookForceTextMode.Store(e.bookForceTextMode.Load())
 	e2.bookSavedLocalX = e.bookSavedLocalX
+	e2.bookCursorAffinity = e.bookCursorAffinity
 	return &e2
 }
 

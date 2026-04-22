@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"compress/gzip"
 	_ "embed"
 	"encoding/base64"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"image/color"
 	"image/draw"
 	"image/png"
+	"io"
 	"math"
 	"os"
 	"path/filepath"
@@ -27,20 +29,38 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-//go:embed fonts/Vollkorn-Regular.ttf
-var vollkornRegularTTF []byte
+//go:embed fonts/Vollkorn-Regular.ttf.gz
+var vollkornRegularTTFGz []byte
 
-//go:embed fonts/Vollkorn-Italic.ttf
-var vollkornItalicTTF []byte
+//go:embed fonts/Vollkorn-Italic.ttf.gz
+var vollkornItalicTTFGz []byte
 
-//go:embed fonts/Montserrat-Bold.ttf
-var montserratBoldTTF []byte
+//go:embed fonts/Montserrat-Bold.ttf.gz
+var montserratBoldTTFGz []byte
 
-//go:embed fonts/FiraMono-Bold.ttf
-var firaMonoBoldTTF []byte
+//go:embed fonts/FiraMono-Bold.ttf.gz
+var firaMonoBoldTTFGz []byte
 
-//go:embed fonts/Montserrat-Light.ttf
-var montserratLightTTF []byte
+//go:embed fonts/Montserrat-Light.ttf.gz
+var montserratLightTTFGz []byte
+
+// DejaVu Sans is embedded as a broad-coverage fallback font: Greek, Cyrillic,
+// extended Latin, math symbols, arrows and other glyphs the stylistic primary
+// fonts lack.
+//
+//go:embed fonts/DejaVuSans.ttf.gz
+var dejaVuSansTTFGz []byte
+
+// gunzipBytes decompresses the given gzip-compressed byte slice. Used to
+// decompress the embedded .ttf.gz font files on demand.
+func gunzipBytes(gz []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(gz))
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+	return io.ReadAll(r)
+}
 
 // Margin ratios for book mode (fraction of pixel dimensions).
 const (
@@ -110,6 +130,7 @@ var (
 	parsedMontserratBold    *opentype.Font
 	parsedMontserratLight   *opentype.Font
 	parsedFiraMonoBold      *opentype.Font
+	parsedDejaVuSans        *opentype.Font // Unicode-rich fallback
 	parseFontsOnce          sync.Once
 	parseFontsErr           error
 	bookContentCache        *image.RGBA
@@ -144,25 +165,41 @@ var (
 
 func parsedFonts() error {
 	parseFontsOnce.Do(func() {
+		// Decompress the embedded .ttf.gz blobs once, parse, and drop the
+		// decompressed TTF bytes so we only keep the gzip'd originals plus
+		// the parsed font.SFNT tables in memory.
+		parseOne := func(gz []byte) (*opentype.Font, error) {
+			ttf, err := gunzipBytes(gz)
+			if err != nil {
+				return nil, err
+			}
+			return opentype.Parse(ttf)
+		}
 		var err error
-		if parsedVollkornRegular, err = opentype.Parse(vollkornRegularTTF); err != nil {
+		if parsedVollkornRegular, err = parseOne(vollkornRegularTTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedVollkornItalic, err = opentype.Parse(vollkornItalicTTF); err != nil {
+		if parsedVollkornItalic, err = parseOne(vollkornItalicTTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedMontserratBold, err = opentype.Parse(montserratBoldTTF); err != nil {
+		if parsedMontserratBold, err = parseOne(montserratBoldTTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedMontserratLight, err = opentype.Parse(montserratLightTTF); err != nil {
+		if parsedMontserratLight, err = parseOne(montserratLightTTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedFiraMonoBold, err = opentype.Parse(firaMonoBoldTTF); err != nil {
+		if parsedFiraMonoBold, err = parseOne(firaMonoBoldTTFGz); err != nil {
 			parseFontsErr = err
+			return
+		}
+		if parsedDejaVuSans, err = parseOne(dejaVuSansTTFGz); err != nil {
+			// The fallback is optional — if it fails to parse, fewer
+			// glyphs render but book mode still works.
+			parsedDejaVuSans = nil
 		}
 	})
 	return parseFontsErr
@@ -223,14 +260,77 @@ func bookCurrentContentGen() uint64 {
 	return bookContentGen
 }
 
+// Cursor affinity values used at wrap boundaries. When the cursor's raw
+// rune position is exactly at a soft-wrap boundary, it maps to two distinct
+// visual positions: the end of the earlier sub-row and the start of the
+// next sub-row. The editor uses bookCursorAffinity to remember which of the
+// two the cursor belongs to. Without this disambiguation, pressing End on
+// a soft-wrapped line would place the cursor visually at the start of the
+// next sub-row, and pressing Up from there would no-op.
+const (
+	bookAffinityForward  = 0 // cursor belongs to the start of the next sub-row
+	bookAffinityBackward = 1 // cursor belongs to the end of the previous sub-row
+)
+
+// bookFallbackFaces maps a primary font.Face to a same-size DejaVu Sans face
+// used when the primary lacks a glyph (e.g. Greek, Cyrillic, math).
+var bookFallbackFaces sync.Map // font.Face -> font.Face
+
 func newFace(f *opentype.Font, size float64) (font.Face, error) {
-	return opentype.NewFace(f, &opentype.FaceOptions{
+	face, err := opentype.NewFace(f, &opentype.FaceOptions{
 		Size: size,
 		// The page image is rendered at the terminal's real cell size, so we
 		// always use 96 DPI here; environment-based probes proved unreliable.
 		DPI:     96,
 		Hinting: font.HintingFull,
 	})
+	if err != nil {
+		return nil, err
+	}
+	// Register a matching-size DejaVu Sans fallback for this face
+	if parsedDejaVuSans != nil && f != parsedDejaVuSans {
+		if fb, e2 := opentype.NewFace(parsedDejaVuSans, &opentype.FaceOptions{
+			Size:    size,
+			DPI:     96,
+			Hinting: font.HintingFull,
+		}); e2 == nil {
+			bookFallbackFaces.Store(face, fb)
+		}
+	}
+	return face, nil
+}
+
+// faceFallback returns the registered DejaVu fallback for primary, or nil
+func faceFallback(primary font.Face) font.Face {
+	if v, ok := bookFallbackFaces.Load(primary); ok {
+		return v.(font.Face)
+	}
+	return nil
+}
+
+// faceGlyphAdvance is like face.GlyphAdvance but falls back to DejaVu Sans
+// for runes the primary face does not cover
+func faceGlyphAdvance(face font.Face, r rune) (fixed.Int26_6, bool) {
+	if adv, ok := face.GlyphAdvance(r); ok {
+		return adv, true
+	}
+	if fb := faceFallback(face); fb != nil {
+		if adv, ok := fb.GlyphAdvance(r); ok {
+			return adv, true
+		}
+	}
+	return face.GlyphAdvance(r)
+}
+
+// measureStringFB measures the pixel width of s, falling back to DejaVu Sans
+// for runes the primary face lacks
+func measureStringFB(face font.Face, s string) fixed.Int26_6 {
+	var total fixed.Int26_6
+	for _, r := range s {
+		adv, _ := faceGlyphAdvance(face, r)
+		total += adv
+	}
+	return total
 }
 
 // bookFaces returns a font set for the requested base pixel size, using a
@@ -340,14 +440,16 @@ type textSegment struct {
 // parseLineSegments converts a line with Markdown-like inline markers into
 // styled segments. Markers consumed (not rendered):
 //
-//	***text***     bold + italic
-//	**text**       bold
-//	*text*         italic
-//	__text__       underline
-//	~~text~~       strikethrough
-//	`code`         italic (code style; backticks stripped)
-//	[text](url)    underlined link text (URL discarded)
-//	![alt](url)    skipped entirely (image)
+//	***text***              bold + italic
+//	**text**                bold
+//	*text*                  italic
+//	__text__                underline
+//	~~text~~                strikethrough
+//	`code`                  code style (backticks stripped)
+//	[text](url)             rendered as literal "[text](url)" in code style
+//	![alt](url)             rendered as literal "![alt](url)" in code style
+//	[![alt](img)](url)      rendered as a single literal code segment so that
+//	                        the trailing "](url)" is also styled as code
 func parseLineSegments(line string) []textSegment {
 	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline, strike bool) []textSegment {
 		if cur.Len() > 0 {
@@ -363,20 +465,60 @@ func parseLineSegments(line string) []textSegment {
 		st    state
 		runes = []rune(line)
 	)
+	// scanParenClose returns the index of the matching ')' for a '(' at `open`,
+	// or -1 if not found. Nested parentheses are respected.
+	scanParenClose := func(start int) int {
+		depth := 1
+		for k := start; k < len(runes); k++ {
+			switch runes[k] {
+			case '(':
+				depth++
+			case ')':
+				depth--
+				if depth == 0 {
+					return k
+				}
+			}
+		}
+		return -1
+	}
 	for i := 0; i < len(runes); {
-		// images
+		// [![alt](img)](url) — link-wrapped image. Consume the whole thing
+		// as a single literal code segment.
+		if runes[i] == '[' && i+1 < len(runes) && runes[i+1] == '!' &&
+			i+2 < len(runes) && runes[i+2] == '[' {
+			j := i + 3
+			for j < len(runes) && runes[j] != ']' {
+				j++
+			}
+			if j < len(runes) && j+1 < len(runes) && runes[j+1] == '(' {
+				imgClose := scanParenClose(j + 2)
+				if imgClose > 0 && imgClose+2 < len(runes) &&
+					runes[imgClose+1] == ']' && runes[imgClose+2] == '(' {
+					urlClose := scanParenClose(imgClose + 3)
+					if urlClose > 0 {
+						segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
+						literal := string(runes[i : urlClose+1])
+						segs = append(segs, textSegment{text: literal, code: true, underline: st.underline, strike: st.strike})
+						i = urlClose + 1
+						continue
+					}
+				}
+			}
+			// fall through to standalone `[` handling below
+		}
+		// ![alt](url) — render the literal source in code style.
 		if runes[i] == '!' && i+1 < len(runes) && runes[i+1] == '[' {
 			j := i + 2
 			for j < len(runes) && runes[j] != ']' {
 				j++
 			}
 			if j < len(runes) && j+1 < len(runes) && runes[j+1] == '(' {
-				k := j + 2
-				for k < len(runes) && runes[k] != ')' {
-					k++
-				}
-				if k < len(runes) {
+				k := scanParenClose(j + 2)
+				if k > 0 {
 					segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
+					literal := string(runes[i : k+1])
+					segs = append(segs, textSegment{text: literal, code: true, underline: st.underline, strike: st.strike})
 					i = k + 1
 					continue
 				}
@@ -385,21 +527,18 @@ func parseLineSegments(line string) []textSegment {
 			i++
 			continue
 		}
-		// [text](url) links are rendered as underlined text
+		// [text](url) — render the literal source in code style.
 		if runes[i] == '[' {
 			j := i + 1
 			for j < len(runes) && runes[j] != ']' {
 				j++
 			}
 			if j < len(runes) && j+1 < len(runes) && runes[j+1] == '(' {
-				k := j + 2
-				for k < len(runes) && runes[k] != ')' {
-					k++
-				}
-				if k < len(runes) {
+				k := scanParenClose(j + 2)
+				if k > 0 {
 					segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
-					linkText := string(runes[i+1 : j])
-					segs = append(segs, textSegment{text: linkText, bold: st.bold, italic: st.italic, underline: true, strike: st.strike})
+					literal := string(runes[i : k+1])
+					segs = append(segs, textSegment{text: literal, code: true, underline: st.underline, strike: st.strike})
 					i = k + 1
 					continue
 				}
@@ -474,8 +613,9 @@ const (
 	lineKindChecked            // - [x] item
 	lineKindRule               // --- horizontal rule
 	lineKindBlank
-	lineKindImage // standalone ![alt](path) image
+	lineKindImage // standalone ![alt](path) image (local file only)
 	lineKindCode  // fenced (``` / ~~~) or 4-space-indented code block body line
+	lineKindTable // Markdown table row (header, data, or separator)
 )
 
 type parsedLine struct {
@@ -538,6 +678,15 @@ func parseBookLine(line string) parsedLine {
 	}
 	if isHorizontalRule(line) {
 		return parsedLine{kind: lineKindRule}
+	}
+	// Markdown table row: starts and ends with "|" (after trimming), and has
+	// at least two pipes. The separator row "|---|:-:|---:|" is also a
+	// lineKindTable (the renderer detects separator rows by shape).
+	trimmedWhole := strings.TrimSpace(line)
+	if len(trimmedWhole) >= 2 && trimmedWhole[0] == '|' &&
+		trimmedWhole[len(trimmedWhole)-1] == '|' &&
+		strings.Count(trimmedWhole, "|") >= 2 {
+		return parsedLine{kind: lineKindTable, body: trimmedWhole}
 	}
 	// Count leading spaces for indent depth
 	indent := 0
@@ -637,8 +786,10 @@ func parseBookLine(line string) parsedLine {
 		}
 		break
 	}
-	// 4-space (or deeper) indented lines not caught by the above rules are
-	// treated as indented code blocks (Markdown CommonMark spec §4.4).
+	// A leading indent of 4+ spaces is a CommonMark indented code block.
+	// Note: the Tab key in book mode inserts 4 leading spaces on the first
+	// line of a paragraph — that first line then renders as code, as
+	// requested.
 	if indent >= 4 {
 		return parsedLine{kind: lineKindCode, body: trimmed}
 	}
@@ -658,16 +809,51 @@ func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
 	return fs.regular
 }
 
-// drawString renders text at (x, baselineY) using face and returns the new X
+// drawString renders text at (x, baselineY) using face and returns the new X.
+// Runes the primary face lacks are rendered with the registered DejaVu Sans
+// fallback face
 func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, clr color.Color) int {
-	d := &font.Drawer{
-		Dst:  img,
-		Src:  image.NewUniform(clr),
-		Face: face,
-		Dot:  fixed.P(x, baselineY),
+	fb := faceFallback(face)
+	if fb == nil {
+		d := &font.Drawer{
+			Dst:  img,
+			Src:  image.NewUniform(clr),
+			Face: face,
+			Dot:  fixed.P(x, baselineY),
+		}
+		d.DrawString(text)
+		return d.Dot.X.Round()
 	}
-	d.DrawString(text)
-	return d.Dot.X.Round()
+	// Split text into runs of same face (primary / fallback) so each run draws
+	// in a single call
+	src := image.NewUniform(clr)
+	dot := fixed.P(x, baselineY)
+	var curFace font.Face
+	var buf []rune
+	flush := func() {
+		if len(buf) == 0 {
+			return
+		}
+		d := &font.Drawer{Dst: img, Src: src, Face: curFace, Dot: dot}
+		d.DrawString(string(buf))
+		dot = d.Dot
+		buf = buf[:0]
+	}
+	for _, r := range text {
+		use := face
+		if _, ok := face.GlyphAdvance(r); !ok {
+			if _, ok2 := fb.GlyphAdvance(r); ok2 {
+				use = fb
+			}
+		}
+		if use != curFace {
+			flush()
+			curFace = use
+		}
+		buf = append(buf, r)
+	}
+	flush()
+	return dot.X.Round()
 }
 
 // drawSegments renders styled inline segments starting at (x, baselineY),
@@ -721,7 +907,7 @@ func measureSegmentsToRune(fs *bookFontSet, segs []textSegment, targetRune int) 
 			if col >= targetRune {
 				return total.Round()
 			}
-			adv, ok := face.GlyphAdvance(r)
+			adv, ok := faceGlyphAdvance(face, r)
 			if ok {
 				total += adv
 			}
@@ -1166,7 +1352,7 @@ func bookWrapBody(body string, availW int) []wrapSegment {
 // (images return their own row count elsewhere).
 func bookWrapLineRunes(pl parsedLine, availW int) int {
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		return 1
 	}
 	pfxLen := len([]rune(pl.prefix))
@@ -1189,6 +1375,7 @@ type wrappedRow struct {
 	segs       []textSegment // styled segments for this display row
 	runeOffset int           // rune offset into the original body text
 	runeCount  int           // number of visual body runes on this row
+	plainText  string        // set by bookWrapPlainPixel; unused by segment renderers
 }
 
 func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedRow {
@@ -1224,7 +1411,7 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 		lastSpace := -1
 		end := pos
 		for end < len(runes) {
-			adv, _ := runes[end].face.GlyphAdvance(runes[end].r)
+			adv, _ := faceGlyphAdvance(runes[end].face, runes[end].r)
 			extra := fixed.Int26_6(0)
 			if runes[end].bold {
 				extra = fixed.I(1)
@@ -1279,7 +1466,7 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 // pixel width (excluding the prefix). Non-body kinds always return 1.
 func bookWrapLinePixel(fs *bookFontSet, pl parsedLine, bodyAvailPx int) int {
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		return 1
 	}
 	return len(bookWrapSegmentsPixel(fs, pl.body, bodyAvailPx))
@@ -1453,13 +1640,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			// Center text vertically within the allocated block.
 			totalH := hAscent + hDescent
 			vPad := max((blockH-totalH)/2, 0)
-			d := &font.Drawer{
-				Dst:  img,
-				Src:  image.NewUniform(dark),
-				Face: hFace,
-				Dot:  fixed.P(marginLeft, cellTop+vPad+hAscent),
-			}
-			d.DrawString(pl.body)
+			drawString(img, hFace, marginLeft, cellTop+vPad+hAscent, pl.body, dark)
 			if rightMargin < pixW {
 				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+blockH), image.White, image.Point{}, draw.Src)
 			}
@@ -1520,8 +1701,65 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			draw.Draw(img, image.Rect(marginLeft, cellTop, rightMargin, cellTop+lineH),
 				image.NewUniform(codeBg), image.Point{}, draw.Src)
 			codeAscent := faceAscent(fs.code, float64(cellH)*0.72*0.88)
-			vPad := max((lineH-codeAscent)/2, 0)
+			codeDescent := fs.code.Metrics().Descent.Round()
+			if codeDescent <= 0 {
+				codeDescent = int(float64(cellH)*0.72*0.88*0.2 + 0.5)
+			}
+			// Center the full glyph box (ascent+descent) within lineH so
+			// there's visible padding both above and below the text.
+			vPad := max((lineH-codeAscent-codeDescent)/2, 0)
 			drawString(img, fs.code, marginLeft+4, cellTop+vPad+codeAscent, pl.body, dark)
+
+		case lineKindTable:
+			// Walk backward and forward in the document to locate the
+			// full table block so columns size consistently across rows
+			blockStart := docLine - 1
+			for blockStart > 0 {
+				prev := e.Line(LineIndex(blockStart - 1))
+				prev = strings.ReplaceAll(prev, "\t", "    ")
+				if parseBookLine(prev).kind != lineKindTable {
+					break
+				}
+				blockStart--
+			}
+			blockEnd := docLine // exclusive
+			for blockEnd < totalLines {
+				nxt := e.Line(LineIndex(blockEnd))
+				nxt = strings.ReplaceAll(nxt, "\t", "    ")
+				if parseBookLine(nxt).kind != lineKindTable {
+					break
+				}
+				blockEnd++
+			}
+			block := make([]string, 0, blockEnd-blockStart)
+			for i := blockStart; i < blockEnd; i++ {
+				ln := e.Line(LineIndex(i))
+				ln = strings.ReplaceAll(ln, "\t", "    ")
+				block = append(block, strings.TrimSpace(ln))
+			}
+			avail := rightMargin - marginLeft
+			aligns, widths := bookTableLayout(fs, block, avail)
+			// Header row = first non-separator row in the block
+			rowInBlock := (docLine - 1) - blockStart
+			headerRow := -1
+			for i, r := range block {
+				if !bookIsTableSeparator(r) {
+					headerRow = i
+					break
+				}
+			}
+			// Same per-row computation as bookPixelRowCount, so pixel
+			// bookkeeping stays consistent
+			subRows := bookTableRowHeight(fs, pl.body, marginLeft, rightMargin)
+			rowPixelH := subRows * lineH
+			bookDrawTableRow(img, fs, pl.body, block, rowInBlock, headerRow, aligns, widths,
+				marginLeft, rightMargin, cellTop, lineH, rowPixelH, dark, codeBg)
+			if rightMargin < pixW {
+				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+rowPixelH),
+					image.White, image.Point{}, draw.Src)
+			}
+			row += subRows
+			continue
 
 		default: // lineKindBody
 			vPad := max((lineH-ascent)/2, 0)
@@ -1691,8 +1929,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		if adjRawX > len(bodyRunes) {
 			adjRawX = len(bodyRunes)
 		}
-		hd := &font.Drawer{Face: hFace}
-		adv := hd.MeasureString(string(bodyRunes[:adjRawX]))
+		adv := measureStringFB(hFace, string(bodyRunes[:adjRawX]))
 		drawBar(marginLeft+adv.Round(), cursorDisplayRow, hVPad, hAscent, hDescent, nRows)
 
 	case lineKindCode:
@@ -1701,7 +1938,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		if codeDescent <= 0 {
 			codeDescent = int(float64(cellH)*0.72*0.88*0.2 + 0.5)
 		}
-		codeVPad := max((lineH-codeAscent)/2, 0)
+		codeVPad := max((lineH-codeAscent-codeDescent)/2, 0)
 		codeRunes := []rune(pl.body)
 		adjX := cursorRawX
 		if pl.body != rawLine {
@@ -1710,8 +1947,22 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		if adjX > len(codeRunes) {
 			adjX = len(codeRunes)
 		}
-		adv := (&font.Drawer{Face: fs.code}).MeasureString(string(codeRunes[:adjX]))
+		adv := measureStringFB(fs.code, string(codeRunes[:adjX]))
 		drawBar(marginLeft+4+adv.Round(), cursorDisplayRow, codeVPad, codeAscent, codeDescent, 1)
+
+	case lineKindTable:
+		// Measure using the proportional font so the cursor tracks the
+		// rendered row text. Raw cursor X is clamped to the body length.
+		tRunes := []rune(pl.body)
+		adjX := cursorRawX
+		if adjX > len(tRunes) {
+			adjX = len(tRunes)
+		}
+		if adjX < 0 {
+			adjX = 0
+		}
+		adv := measureStringFB(fs.regular, string(tRunes[:adjX]))
+		drawBar(marginLeft+adv.Round(), cursorDisplayRow, regVPad, ascent, regDescent, 1)
 
 	case lineKindBullet, lineKindUnchecked, lineKindChecked, lineKindNumbered:
 		rawPrefix := rawMarkdownPrefix(rawLine)
@@ -1723,7 +1974,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 			size := max(lineH*55/100, 5)
 			prefixEndX = marginLeft + size + 3
 		} else {
-			prefixEndX = marginLeft + (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+			prefixEndX = marginLeft + measureStringFB(fs.regular, pl.prefix).Round()
 		}
 		if bodyRawX < 0 {
 			drawBar(prefixEndX, cursorDisplayRow, regVPad, ascent, regDescent, 1)
@@ -1735,8 +1986,12 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		wrows := bookWrapSegmentsPixel(fs, pl.body, bodyAvailPx)
 		subRow := 0
 		localVisX := bodyVisX
+		backward := e.bookCursorAffinity == bookAffinityBackward
 		for i, wr := range wrows {
-			if localVisX < wr.runeCount || i == len(wrows)-1 {
+			// Backward affinity: the wrap-boundary rune belongs to this
+			// sub-row (end of it), so use <=. Forward affinity: it belongs
+			// to the next sub-row, so use < as before.
+			if i == len(wrows)-1 || localVisX < wr.runeCount || (backward && localVisX == wr.runeCount) {
 				subRow = i
 				break
 			}
@@ -1754,8 +2009,9 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		wrows := bookWrapSegmentsPixel(fs, pl.body, textW)
 		subRow := 0
 		localVisX := visX
+		backward := e.bookCursorAffinity == bookAffinityBackward
 		for i, wr := range wrows {
-			if localVisX < wr.runeCount || i == len(wrows)-1 {
+			if i == len(wrows)-1 || localVisX < wr.runeCount || (backward && localVisX == wr.runeCount) {
 				subRow = i
 				break
 			}
@@ -1952,6 +2208,18 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			c.Write(x, y, vt.Default, vt.DefaultBackground, text)
 			row++
 
+		case lineKindTable:
+			// In text mode we just print the raw pipe-delimited row. The
+			// content is already monospace in the terminal so columns align.
+			text := pl.body
+			runes := []rune(text)
+			if len(runes) > textW {
+				runes = runes[:textW]
+				text = string(runes)
+			}
+			c.Write(x, y, vt.Default, vt.DefaultBackground, text)
+			row++
+
 		case lineKindImage:
 			c.Write(x, y, vt.Dim, vt.DefaultBackground, "[image: "+pl.body+"]")
 			row++
@@ -2015,14 +2283,13 @@ func bookRawXToPixelX(fs *bookFontSet, pl parsedLine, rawLine string, rawX, marg
 		if adjRawX > len(bodyRunes) {
 			adjRawX = len(bodyRunes)
 		}
-		hd := &font.Drawer{Face: fs.headerForLevel(pl.headerLevel)}
-		return marginLeft + hd.MeasureString(string(bodyRunes[:adjRawX])).Round()
+		return marginLeft + measureStringFB(fs.headerForLevel(pl.headerLevel), string(bodyRunes[:adjRawX])).Round()
 	case lineKindBullet, lineKindUnchecked, lineKindChecked, lineKindNumbered:
 		rawPrefix := rawMarkdownPrefix(rawLine)
 		rawBodyStart := len([]rune(rawPrefix))
 		bodyRawX := rawX - rawBodyStart
 		segs := parseLineSegments(pl.body)
-		prefixW := (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+		prefixW := measureStringFB(fs.regular, pl.prefix).Round()
 		prefixX := marginLeft + prefixW
 		if bodyRawX < 0 {
 			return prefixX
@@ -2278,7 +2545,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 				if n > len(bodyRunes) {
 					n = len(bodyRunes)
 				}
-				return (&font.Drawer{Face: hFace}).MeasureString(string(bodyRunes[:n])).Round()
+				return measureStringFB(hFace, string(bodyRunes[:n])).Round()
 			}
 			var hLeft, hRight int
 			switch {
@@ -2305,18 +2572,16 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 					image.White, image.Point{}, draw.Src)
 				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+blockH),
 					image.NewUniform(selBg), image.Point{}, draw.Src)
-				d := &font.Drawer{
-					Dst:  dst,
-					Src:  image.NewUniform(dark),
-					Face: hFace,
-					Dot:  fixed.P(marginLeft, cellTop+hVPad+hAscent),
-				}
-				d.DrawString(pl.body)
+				drawString(dst, hFace, marginLeft, cellTop+hVPad+hAscent, pl.body, dark)
 			}
 
 		case lineKindCode:
 			codeAscent := faceAscent(fs.code, fontSize*0.88)
-			codeVPad := max((lineH-codeAscent)/2, 0)
+			codeDescent := fs.code.Metrics().Descent.Round()
+			if codeDescent <= 0 {
+				codeDescent = int(fontSize*0.88*0.2 + 0.5)
+			}
+			codeVPad := max((lineH-codeAscent-codeDescent)/2, 0)
 			codeRunes := []rune(pl.body)
 			measureTo := func(n int) int {
 				if n < 0 {
@@ -2325,7 +2590,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 				if n > len(codeRunes) {
 					n = len(codeRunes)
 				}
-				return (&font.Drawer{Face: fs.code}).MeasureString(string(codeRunes[:n])).Round()
+				return measureStringFB(fs.code, string(codeRunes[:n])).Round()
 			}
 			adj := 0
 			if pl.body != rawLine {
@@ -2359,6 +2624,20 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			}
 			drawString(dst, fs.code, marginLeft+4, cellTop+codeVPad+codeAscent, pl.body, dark)
 
+		case lineKindTable:
+			// Selection inside a rendered table cell is approximated by a
+			// solid highlight across the visible row (across all its
+			// wrapped sub-rows) — accurate cell-level selection math
+			// would require per-column layout info here.
+			if lineIdx >= selStartY && lineIdx <= selEndY {
+				rowH := rowsConsumed * lineH
+				if rowH < lineH {
+					rowH = lineH
+				}
+				draw.Draw(dst, image.Rect(marginLeft, cellTop, marginRight, cellTop+rowH),
+					image.NewUniform(selBg), image.Point{}, draw.Src)
+			}
+
 		case lineKindUnchecked, lineKindChecked:
 			checked := pl.kind == lineKindChecked
 			size := max(lineH*55/100, 5)
@@ -2373,7 +2652,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			bookDrawCheckbox(dst, marginLeft, cellTop, lineH, checked)
 
 		case lineKindBullet, lineKindNumbered:
-			prefixPx := (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+			prefixPx := measureStringFB(fs.regular, pl.prefix).Round()
 			prefixEndX := marginLeft + prefixPx
 			rawPrefix := rawMarkdownPrefix(rawLine)
 			rawPfxLen := len([]rune(rawPrefix))
@@ -2591,7 +2870,7 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 // return 1. Rune-based; use bookPixelRowCount for the graphical renderer.
 func bookWrapRowCount(pl parsedLine, availW int) int {
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		return 1
 	}
 	pfxLen := len([]rune(pl.prefix))
@@ -2638,6 +2917,8 @@ func bookPixelRowCount(fs *bookFontSet, pl parsedLine, lineH, marginLeft, rightM
 	switch pl.kind {
 	case lineKindHeader:
 		return bookHeaderRows(fs, pl.headerLevel, lineH)
+	case lineKindTable:
+		return bookTableRowHeight(fs, pl.body, marginLeft, rightMargin)
 	case lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
 		return 1
 	}
@@ -2652,7 +2933,7 @@ func bookPixelRowCount(fs *bookFontSet, pl parsedLine, lineH, marginLeft, rightM
 		}
 		return len(bookWrapSegmentsPixel(fs, pl.body, bodyPx))
 	case lineKindBullet, lineKindNumbered:
-		prefixPx := (&font.Drawer{Face: fs.regular}).MeasureString(pl.prefix).Round()
+		prefixPx := measureStringFB(fs.regular, pl.prefix).Round()
 		prefixEndX := marginLeft + prefixPx
 		bodyPx := rightMargin - prefixEndX
 		if bodyPx <= 0 {
@@ -3092,7 +3373,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 			}
 		}
 
-	case lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		x = cursorRawX + marginLeft
 
 	default: // lineKindBody
@@ -3202,7 +3483,7 @@ func (pw *bookPixelWrapInfo) pixelBodyAvailPx(pl parsedLine) int {
 		prefixEndX := pw.marginLeft + size + 3
 		return pw.marginRight - prefixEndX
 	case lineKindBullet, lineKindNumbered:
-		prefixEndX := pw.marginLeft + (&font.Drawer{Face: pw.fs.regular}).MeasureString(pl.prefix).Round()
+		prefixEndX := pw.marginLeft + measureStringFB(pw.fs.regular, pl.prefix).Round()
 		return pw.marginRight - prefixEndX
 	default:
 		return pw.bodyTextPxFullRow
@@ -3213,6 +3494,11 @@ func (pw *bookPixelWrapInfo) pixelBodyAvailPx(pl parsedLine) int {
 // within a soft-wrapped line. For non-wrapping line kinds (header, code,
 // blank, rule, image) it returns (0, 1). When pw is non-nil, pixel-based
 // wrapping (proportional font) is used instead of character-count wrapping.
+//
+// When the cursor's raw position falls exactly at a wrap boundary (shared
+// by the end of row N and the start of row N+1), the editor's
+// bookCursorAffinity disambiguates: bookAffinityBackward places the cursor
+// on row N; bookAffinityForward (the default) places it on row N+1.
 func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, totalRows int) {
 	rawLine := e.Line(e.DataY())
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
@@ -3220,9 +3506,11 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 	pl := parseBookLine(rawLine)
 
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		return 0, 1
 	}
+
+	backward := e.bookCursorAffinity == bookAffinityBackward
 
 	if pw != nil {
 		// Pixel-based wrapping for graphical mode.
@@ -3242,10 +3530,15 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 		bodyVisX := rawXToVisualX(pl.body, bodyRawX)
 		pos := 0
 		for i, wr := range wrows {
-			if bodyVisX < pos+wr.runeCount || i == len(wrows)-1 {
+			end := pos + wr.runeCount
+			last := i == len(wrows)-1
+			if bodyVisX < end || last {
 				return i, len(wrows)
 			}
-			pos += wr.runeCount
+			if bodyVisX == end && backward {
+				return i, len(wrows)
+			}
+			pos = end
 		}
 		return 0, len(wrows)
 	}
@@ -3268,10 +3561,15 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 		pos := 0
 		for i, ws := range wsegs {
 			segLen := len([]rune(ws.text))
-			if bodyRawX < pos+segLen || i == len(wsegs)-1 {
+			end := pos + segLen
+			last := i == len(wsegs)-1
+			if bodyRawX < end || last {
 				return i, len(wsegs)
 			}
-			pos += segLen
+			if bodyRawX == end && backward {
+				return i, len(wsegs)
+			}
+			pos = end
 		}
 		return 0, len(wsegs)
 	default: // lineKindBody
@@ -3279,10 +3577,15 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 		pos := 0
 		for i, ws := range wsegs {
 			segLen := len([]rune(ws.text))
-			if cursorRawX < pos+segLen || i == len(wsegs)-1 {
+			end := pos + segLen
+			last := i == len(wsegs)-1
+			if cursorRawX < end || last {
 				return i, len(wsegs)
 			}
-			pos += segLen
+			if cursorRawX == end && backward {
+				return i, len(wsegs)
+			}
+			pos = end
 		}
 		return 0, len(wsegs)
 	}
@@ -3435,8 +3738,16 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 
 	if sub < total-1 {
 		// Move within the same data line to the next sub-row.
-		newX := bookSubRowX(e.Line(e.DataY()), textW, sub+1, savedX, pw)
+		targetSub := sub + 1
+		newX := bookSubRowX(e.Line(e.DataY()), textW, targetSub, savedX, pw)
 		e.pos.SetX(c, newX)
+		// If the new position lands at the wrap boundary of a non-last
+		// sub-row, pin it to the end of targetSub; otherwise forward.
+		if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
+			e.bookCursorAffinity = bookAffinityBackward
+		} else {
+			e.bookCursorAffinity = bookAffinityForward
+		}
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		return true
@@ -3458,6 +3769,14 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 	// Land on the first sub-row of the new line at the saved visual column.
 	newX := bookSubRowX(e.Line(e.DataY()), textW, 0, savedX, pw)
 	e.pos.SetX(c, newX)
+	// First sub-row of a new line: forward affinity unless it lies on the
+	// wrap boundary of a multi-sub-row line (i.e. savedX past end of row 0).
+	newTotal := bookLineSubRowCount(e.Line(e.DataY()), textW, pw)
+	if newTotal > 1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, 0, pw) {
+		e.bookCursorAffinity = bookAffinityBackward
+	} else {
+		e.bookCursorAffinity = bookAffinityForward
+	}
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 	return true
@@ -3469,7 +3788,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	textW := bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
-	sub, _ := e.bookCursorSubRow(textW, pw)
+	sub, total := e.bookCursorSubRow(textW, pw)
 
 	// Save the visual X on the first up/down press.
 	if e.bookSavedLocalX < 0 {
@@ -3479,8 +3798,19 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 
 	if sub > 0 {
 		// Move within the same data line to the previous sub-row.
-		newX := bookSubRowX(e.Line(e.DataY()), textW, sub-1, savedX, pw)
+		targetSub := sub - 1
+		newX := bookSubRowX(e.Line(e.DataY()), textW, targetSub, savedX, pw)
 		e.pos.SetX(c, newX)
+		// If savedX was at or past the end of targetSub, the cursor ends
+		// up at the wrap boundary shared with the next sub-row. Pin it to
+		// the end of targetSub with backward affinity so it renders on
+		// the expected row. Without this, pressing Up from the start of
+		// the second sub-row would be a no-op (bug fix).
+		if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
+			e.bookCursorAffinity = bookAffinityBackward
+		} else {
+			e.bookCursorAffinity = bookAffinityForward
+		}
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		return true
@@ -3500,6 +3830,9 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	}
 	newX := bookSubRowX(e.Line(e.DataY()), textW, lastSub, savedX, pw)
 	e.pos.SetX(c, newX)
+	// Landing on the last sub-row: forward affinity (the boundary ambiguity
+	// doesn't apply to the last sub-row since there is no row after it).
+	e.bookCursorAffinity = bookAffinityForward
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 	return true
@@ -3512,7 +3845,7 @@ func bookLineSubRowCount(rawLine string, textW int, pw *bookPixelWrapInfo) int {
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 	pl := parseBookLine(rawLine)
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		return 1
 	}
 	if pw != nil {
@@ -3552,7 +3885,7 @@ func bookSubRowX(rawLine string, textW, targetSub, savedX int, pw *bookPixelWrap
 	pl := parseBookLine(rawLine)
 
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
 		lineLen := len([]rune(rawLine))
 		if savedX > lineLen {
 			return lineLen
@@ -3661,6 +3994,62 @@ func bookSubRowX(rawLine string, textW, targetSub, savedX int, pw *bookPixelWrap
 	return newX
 }
 
+// bookSubRowEndX returns the raw rune position that corresponds to the end
+// (wrap boundary) of the given soft-wrapped sub-row. For the last sub-row
+// it returns the raw rune position of the end of the data line. Used to
+// decide cursor affinity when placing the cursor at a wrap boundary.
+func bookSubRowEndX(rawLine string, textW, sub int, pw *bookPixelWrapInfo) int {
+	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+	pl := parseBookLine(rawLine)
+	switch pl.kind {
+	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
+		return len([]rune(rawLine))
+	}
+	rawPfxLen := 0
+	if pl.kind != lineKindBody {
+		rawPfxLen = len([]rune(rawMarkdownPrefix(rawLine)))
+	}
+	clamp := func(n, total int) int {
+		if n < 0 {
+			return 0
+		}
+		if n >= total {
+			return total - 1
+		}
+		return n
+	}
+	if pw != nil {
+		bodyAvailPx := pw.pixelBodyAvailPx(pl)
+		wrows := bookWrapSegmentsPixel(pw.fs, pl.body, bodyAvailPx)
+		if len(wrows) == 0 {
+			return rawPfxLen
+		}
+		sub = clamp(sub, len(wrows))
+		visEnd := 0
+		for i := 0; i <= sub; i++ {
+			visEnd += wrows[i].runeCount
+		}
+		return rawPfxLen + visualXToRawX(pl.body, visEnd)
+	}
+	bodyAvailW := textW
+	if pl.kind != lineKindBody {
+		bodyAvailW = textW - len([]rune(pl.prefix))
+		if bodyAvailW <= 0 {
+			bodyAvailW = 1
+		}
+	}
+	wsegs := bookWrapBody(pl.body, bodyAvailW)
+	if len(wsegs) == 0 {
+		return rawPfxLen
+	}
+	sub = clamp(sub, len(wsegs))
+	runeEnd := 0
+	for i := 0; i <= sub; i++ {
+		runeEnd += len([]rune(wsegs[i].text))
+	}
+	return rawPfxLen + runeEnd
+}
+
 // bookHome moves the cursor to the start of the current display sub-row.
 // If the cursor is already at the start of the current sub-row, it goes
 // to the very start of the data line (column 0).
@@ -3670,6 +4059,7 @@ func (e *Editor) bookHome(c *vt.Canvas) {
 	sub, _ := e.bookCursorSubRow(textW, pw)
 	if sub == 0 {
 		e.Home()
+		e.bookCursorAffinity = bookAffinityForward
 		return
 	}
 	// Place cursor at the start of the current sub-row.
@@ -3677,22 +4067,29 @@ func (e *Editor) bookHome(c *vt.Canvas) {
 	curX := e.pos.sx + e.pos.offsetX
 	if curX == newX {
 		e.Home()
+		e.bookCursorAffinity = bookAffinityForward
 		return
 	}
 	e.pos.SetX(c, newX)
+	// At the start of sub-row N we want forward affinity so the cursor
+	// renders on sub-row N (not as the end of sub-row N-1).
+	e.bookCursorAffinity = bookAffinityForward
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 }
 
 // bookEnd moves the cursor to the end of the current display sub-row.
 // If the cursor is already at the end of the current sub-row, it goes
-// to the very end of the data line.
+// to the very end of the data line. Sets backward affinity when the
+// cursor is left at a wrap boundary so it renders at the end of the
+// current sub-row rather than the start of the next.
 func (e *Editor) bookEnd(c *vt.Canvas) {
 	textW := bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, total := e.bookCursorSubRow(textW, pw)
 	if sub >= total-1 {
 		e.End(c)
+		e.bookCursorAffinity = bookAffinityForward
 		return
 	}
 	// Place cursor at the end of the current sub-row by requesting the
@@ -3746,11 +4143,16 @@ func (e *Editor) bookEnd(c *vt.Canvas) {
 	}
 
 	curX := e.pos.sx + e.pos.offsetX
-	if curX == newX {
+	if curX == newX && e.bookCursorAffinity == bookAffinityBackward {
+		// Already at the wrap boundary rendered as end-of-sub — go to line end.
 		e.End(c)
+		e.bookCursorAffinity = bookAffinityForward
 		return
 	}
 	e.pos.SetX(c, newX)
+	// Pin the cursor to the end of the current sub-row rather than the
+	// start of the next.
+	e.bookCursorAffinity = bookAffinityBackward
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 }
@@ -3828,12 +4230,28 @@ func bookSkipMarkersBackward(runes []rune, rawX int) int {
 // actually advances the visible cursor position — matching the behaviour of
 // WYSIWYG word processors.
 func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
+	// At a wrap boundary with backward affinity, Right should flip the
+	// affinity to forward (visible movement: cursor jumps from end of
+	// sub-row N to start of sub-row N+1) without actually moving rawX.
+	if e.bookCursorAffinity == bookAffinityBackward {
+		textW := bookWrapWidth(c)
+		pw := e.bookGetPixelWrapInfo(c)
+		sub, total := e.bookCursorSubRow(textW, pw)
+		rawX := e.pos.sx + e.pos.offsetX
+		if sub < total-1 && rawX == bookSubRowEndX(e.Line(e.DataY()), textW, sub, pw) {
+			e.bookCursorAffinity = bookAffinityForward
+			e.redrawCursor.Store(true)
+			e.SaveX(true)
+			return true
+		}
+	}
 	runes := []rune(e.Line(e.DataY()))
 	rawX := e.pos.sx + e.pos.offsetX
 	// First, skip any marker the cursor is sitting at/inside.
 	snapped := bookSkipMarkersForward(runes, rawX)
 	if snapped != rawX {
 		e.pos.SetX(c, snapped)
+		e.bookCursorAffinity = bookAffinityForward
 		e.redrawCursor.Store(true)
 		e.SaveX(true)
 		return true
@@ -3850,18 +4268,37 @@ func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
 		e.redrawCursor.Store(true)
 		e.SaveX(true)
 	}
+	e.bookCursorAffinity = bookAffinityForward
 	return e.DataY() != beforeY || e.pos.sx != beforeX
 }
 
 // bookCursorBackward moves one visible column to the left, skipping over any
 // Markdown inline markers so each key-press advances visibly.
 func (e *Editor) bookCursorBackward(c *vt.Canvas, status *StatusBar) bool {
+	// At a wrap boundary with forward affinity (cursor rendered at start
+	// of sub-row N+1 sharing rawX with end of sub-row N), Left should flip
+	// affinity to backward without moving rawX. This matches word
+	// processors where pressing Left from column 0 of a visually-wrapped
+	// line lands the cursor at the end of the previous visual line.
+	if e.bookCursorAffinity == bookAffinityForward {
+		textW := bookWrapWidth(c)
+		pw := e.bookGetPixelWrapInfo(c)
+		sub, _ := e.bookCursorSubRow(textW, pw)
+		rawX := e.pos.sx + e.pos.offsetX
+		if sub > 0 && rawX == bookSubRowEndX(e.Line(e.DataY()), textW, sub-1, pw) {
+			e.bookCursorAffinity = bookAffinityBackward
+			e.redrawCursor.Store(true)
+			e.SaveX(true)
+			return true
+		}
+	}
 	runes := []rune(e.Line(e.DataY()))
 	rawX := e.pos.sx + e.pos.offsetX
 	// First, if the cursor is right after a marker, step past it in one go.
 	snapped := bookSkipMarkersBackward(runes, rawX)
 	if snapped != rawX {
 		e.pos.SetX(c, snapped)
+		e.bookCursorAffinity = bookAffinityForward
 		e.redrawCursor.Store(true)
 		e.SaveX(true)
 		return true
@@ -3877,6 +4314,7 @@ func (e *Editor) bookCursorBackward(c *vt.Canvas, status *StatusBar) bool {
 		e.redrawCursor.Store(true)
 		e.SaveX(true)
 	}
+	e.bookCursorAffinity = bookAffinityForward
 	return e.DataY() != beforeY || e.pos.sx != beforeX
 }
 
@@ -4071,12 +4509,11 @@ func bookScreenshotAnnotate(img *image.RGBA, e *Editor, pixW, pixH, editRows int
 		if adjRawX > len(bodyRunes) {
 			adjRawX = len(bodyRunes)
 		}
-		hd := &font.Drawer{Face: hFace}
-		cursorPx = marginLeft + hd.MeasureString(string(bodyRunes[:adjRawX])).Round()
+		cursorPx = marginLeft + measureStringFB(hFace, string(bodyRunes[:adjRawX])).Round()
 	default:
 		visX := rawXToVisualX(rawLine, cursorRawX)
 		_ = visX
-		cursorPx = marginLeft + (&font.Drawer{Face: fs.regular}).MeasureString(string([]rune(rawLine)[:min(cursorRawX, len([]rune(rawLine)))])).Round()
+		cursorPx = marginLeft + measureStringFB(fs.regular, string([]rune(rawLine)[:min(cursorRawX, len([]rune(rawLine)))])).Round()
 	}
 
 	cursorY := marginTop + cursorDisplayRow*lineH + (lineH-ascent)/2 + ascent/2
@@ -4126,4 +4563,407 @@ func bookScreenshotAnnotate(img *image.RGBA, e *Editor, pixW, pixH, editRows int
 		row += nrows
 		dl++
 	}
+}
+
+// bookParagraphStart returns the LineIndex of the first line of the
+// paragraph containing y. A paragraph is a maximal run of non-blank lines.
+// If y itself is blank, returns y unchanged.
+func (e *Editor) bookParagraphStart(y LineIndex) LineIndex {
+	if strings.TrimSpace(e.Line(y)) == "" {
+		return y
+	}
+	for y > 0 && strings.TrimSpace(e.Line(y-1)) != "" {
+		y--
+	}
+	return y
+}
+
+// bookToggleParagraphIndent toggles a 4-space indent on the first line of
+// the paragraph containing the cursor. If the first line already starts
+// with 4 spaces, the leading 4 spaces are removed; otherwise 4 spaces are
+// prepended. When the edit happens on the cursor's own line, the cursor
+// shifts by 4 raw columns to stay on the same character.
+func (e *Editor) bookToggleParagraphIndent(c *vt.Canvas) {
+	cursorY := e.DataY()
+	startY := e.bookParagraphStart(cursorY)
+	if strings.TrimSpace(e.Line(startY)) == "" {
+		return
+	}
+	line := e.Line(startY)
+	indented := strings.HasPrefix(line, "    ")
+	var newLine string
+	delta := 0
+	if indented {
+		newLine = line[4:]
+		delta = -4
+	} else {
+		newLine = "    " + line
+		delta = 4
+	}
+	e.SetLine(startY, newLine)
+	e.MarkChanged()
+	bookBumpContentGen()
+	if startY == cursorY {
+		newX := e.pos.sx + e.pos.offsetX + delta
+		if newX < 0 {
+			newX = 0
+		}
+		e.pos.SetX(c, newX)
+	}
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+}
+
+// bookSplitTableCells splits a raw Markdown table row like "| a | b | c |"
+// into the trimmed cell strings ["a", "b", "c"]. Leading and trailing
+// pipes are stripped. Pipes escaped with a backslash ("\|") are literal.
+func bookSplitTableCells(row string) []string {
+	row = strings.TrimSpace(row)
+	if strings.HasPrefix(row, "|") {
+		row = row[1:]
+	}
+	if strings.HasSuffix(row, "|") {
+		row = row[:len(row)-1]
+	}
+	var cells []string
+	var cur strings.Builder
+	runes := []rune(row)
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+		if r == '\\' && i+1 < len(runes) && runes[i+1] == '|' {
+			cur.WriteRune('|')
+			i++
+			continue
+		}
+		if r == '|' {
+			cells = append(cells, strings.TrimSpace(cur.String()))
+			cur.Reset()
+			continue
+		}
+		cur.WriteRune(r)
+	}
+	cells = append(cells, strings.TrimSpace(cur.String()))
+	return cells
+}
+
+// bookIsTableSeparator reports whether the given raw table row is a
+// separator like "|---|:-:|---:|". Each cell must contain only "-", ":"
+// and spaces, and have at least one "-".
+func bookIsTableSeparator(row string) bool {
+	cells := bookSplitTableCells(row)
+	if len(cells) == 0 {
+		return false
+	}
+	for _, c := range cells {
+		c = strings.TrimSpace(c)
+		if c == "" {
+			return false
+		}
+		hasDash := false
+		for _, r := range c {
+			switch r {
+			case '-':
+				hasDash = true
+			case ':', ' ':
+			default:
+				return false
+			}
+		}
+		if !hasDash {
+			return false
+		}
+	}
+	return true
+}
+
+const (
+	tableAlignLeft   = 0
+	tableAlignCenter = 1
+	tableAlignRight  = 2
+)
+
+// bookTableCellAlign returns the alignment implied by a separator cell
+// such as ":---", "---:", ":-:" or "---".
+func bookTableCellAlign(cell string) int {
+	cell = strings.TrimSpace(cell)
+	left := strings.HasPrefix(cell, ":")
+	right := strings.HasSuffix(cell, ":")
+	switch {
+	case left && right:
+		return tableAlignCenter
+	case right:
+		return tableAlignRight
+	default:
+		return tableAlignLeft
+	}
+}
+
+// bookTableLayout returns per-column alignments and equal-division pixel
+// widths (summing to exactly avail) for a table block. Column count is
+// the maximum across non-separator rows. Widths are distributed equally
+// regardless of content length so all rows align; overflow within a cell
+// is handled by wrapping in bookDrawTableRow.
+func bookTableLayout(fs *bookFontSet, block []string, avail int) (aligns []int, widths []int) {
+	nCols := 0
+	rows := make([][]string, len(block))
+	for i, r := range block {
+		rows[i] = bookSplitTableCells(r)
+		if len(rows[i]) > nCols {
+			nCols = len(rows[i])
+		}
+	}
+	aligns = make([]int, nCols)
+	widths = make([]int, nCols)
+	for i, r := range block {
+		if bookIsTableSeparator(r) {
+			for c := 0; c < nCols; c++ {
+				if c < len(rows[i]) {
+					aligns[c] = bookTableCellAlign(rows[i][c])
+				}
+			}
+			break
+		}
+	}
+	if nCols == 0 || avail <= 0 {
+		return aligns, widths
+	}
+	each := avail / nCols
+	for i := range widths {
+		widths[i] = each
+	}
+	widths[nCols-1] += avail - each*nCols
+	return aligns, widths
+}
+
+// bookTableRowHeight returns the number of pixel sub-rows a single table
+// row needs when each cell is wrapped into its equal-width column.
+// Separator rows always take a single sub-row.
+func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin int) int {
+	if bookIsTableSeparator(body) {
+		return 1
+	}
+	cells := bookSplitTableCells(body)
+	if len(cells) == 0 {
+		return 1
+	}
+	avail := rightMargin - marginLeft
+	if avail <= 0 {
+		return 1
+	}
+	each := avail / len(cells)
+	const pad = 10
+	inner := each - 2*pad
+	if inner < 1 {
+		inner = 1
+	}
+	maxSub := 1
+	for _, cell := range cells {
+		rows := bookWrapSegmentsPixel(fs, cell, inner)
+		if len(rows) > maxSub {
+			maxSub = len(rows)
+		}
+	}
+	return maxSub
+}
+
+// bookDrawTableRow draws a single table row inside a block using the
+// pre-computed column widths and alignments. Long cells are soft-wrapped
+// to additional sub-rows; rowPixelH is the total vertical space this row
+// occupies (typically subRows*lineH, from bookTableRowHeight). Header rows
+// render with a dark background (#101010) and white sans-serif text; odd
+// data rows use altBg for readability; inline `code`, *italic* and **bold**
+// are parsed per cell.
+func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []string,
+	rowInBlock, headerRow int, aligns, widths []int,
+	marginLeft, rightMargin, cellTop, lineH, rowPixelH int, fg, altBg color.Color) {
+	if len(widths) == 0 || rowPixelH <= 0 {
+		return
+	}
+	const pad = 10
+	colW := make([]int, len(widths))
+	copy(colW, widths)
+	totalW := 0
+	for _, w := range colW {
+		totalW += w
+	}
+	isSep := bookIsTableSeparator(rawRow)
+	isHeader := rowInBlock == headerRow && headerRow >= 0
+
+	// Data-row index (skips separators and the header) — used for the
+	// alternating background band
+	dataIdx := -1
+	if !isSep && !isHeader {
+		n := 0
+		for i := 0; i < rowInBlock && i < len(block); i++ {
+			if i == headerRow {
+				continue
+			}
+			if bookIsTableSeparator(block[i]) {
+				continue
+			}
+			n++
+		}
+		dataIdx = n
+	}
+
+	// Header face: Montserrat Bold at the body size, falling back to
+	// the regular body face if it can't be loaded
+	headerBoldFace := fs.regular
+	if parsedMontserratBold != nil {
+		if hf, err := newFace(parsedMontserratBold, fs.baseSize); err == nil {
+			headerBoldFace = hf
+		}
+	}
+
+	headerBg := color.NRGBA{0x10, 0x10, 0x10, 0xff}
+	headerFg := color.NRGBA{0xff, 0xff, 0xff, 0xff}
+	if isHeader {
+		draw.Draw(img, image.Rect(marginLeft, cellTop, marginLeft+totalW, cellTop+rowPixelH),
+			image.NewUniform(headerBg), image.Point{}, draw.Src)
+	} else if dataIdx >= 0 && dataIdx%2 == 1 {
+		draw.Draw(img, image.Rect(marginLeft, cellTop, marginLeft+totalW, cellTop+rowPixelH),
+			image.NewUniform(altBg), image.Point{}, draw.Src)
+	}
+
+	borderClr := color.NRGBA{0x88, 0x88, 0x88, 0xff}
+	right := marginLeft + totalW
+	drawHLine := func(y int) {
+		for x := marginLeft; x <= right; x++ {
+			img.Set(x, y, borderClr)
+		}
+	}
+	drawVLine := func(x int) {
+		for y := cellTop; y <= cellTop+rowPixelH; y++ {
+			img.Set(x, y, borderClr)
+		}
+	}
+	// Top + bottom borders on every row so the divider between adjacent
+	// rows survives the next row's background paint
+	drawHLine(cellTop)
+	drawHLine(cellTop + rowPixelH)
+	drawVLine(marginLeft)
+	x := marginLeft
+	for _, w := range colW {
+		x += w
+		drawVLine(x)
+	}
+	if isSep {
+		return
+	}
+
+	cells := bookSplitTableCells(rawRow)
+	ascent := faceAscent(fs.regular, float64(lineH)*0.72)
+	descent := fs.regular.Metrics().Descent.Round()
+	if descent <= 0 {
+		descent = int(float64(lineH)*0.72*0.2 + 0.5)
+	}
+	vPad := max((lineH-ascent-descent)/2, 0)
+	textClr := fg
+	if isHeader {
+		textClr = headerFg
+	}
+	cellX := marginLeft
+	for i, w := range colW {
+		var text string
+		if i < len(cells) {
+			text = cells[i]
+		}
+		align := tableAlignLeft
+		if i < len(aligns) {
+			align = aligns[i]
+		}
+		inner := w - 2*pad
+		if inner < 1 {
+			inner = 1
+		}
+		// Wrap the cell to the column's inner width
+		var rows []wrappedRow
+		if isHeader {
+			// Header uses Montserrat Bold uniformly, so wrap by measuring
+			// that face directly instead of via parseLineSegments
+			rows = bookWrapPlainPixel(headerBoldFace, text, inner)
+		} else {
+			rows = bookWrapSegmentsPixel(fs, text, inner)
+		}
+		if len(rows) == 0 {
+			rows = []wrappedRow{{}}
+		}
+		for si, wr := range rows {
+			subBaseline := cellTop + si*lineH + vPad + ascent
+			var tW int
+			if isHeader {
+				tW = measureStringFB(headerBoldFace, wr.plainText).Round()
+			} else {
+				tW = measureSegmentsWidth(fs, wr.segs)
+			}
+			var tx int
+			switch align {
+			case tableAlignCenter:
+				tx = cellX + (w-tW)/2
+			case tableAlignRight:
+				tx = cellX + w - tW - pad
+			default:
+				tx = cellX + pad
+			}
+			if isHeader {
+				drawString(img, headerBoldFace, tx, subBaseline, wr.plainText, textClr)
+			} else {
+				drawSegments(img, fs, tx, subBaseline, wr.segs, textClr)
+			}
+		}
+		cellX += w
+	}
+}
+
+// measureSegmentsWidth returns the total pixel width of segs using fs
+func measureSegmentsWidth(fs *bookFontSet, segs []textSegment) int {
+	total := fixed.Int26_6(0)
+	for _, seg := range segs {
+		face := faceForSeg(fs, seg)
+		for _, r := range seg.text {
+			adv, _ := faceGlyphAdvance(face, r)
+			total += adv
+			if seg.bold {
+				total += fixed.I(1)
+			}
+		}
+	}
+	return total.Round()
+}
+
+// bookWrapPlainPixel wraps a plain (non-segmented) string to fit within
+// availPx using the given face. Rows carry plainText; segs is left unset.
+func bookWrapPlainPixel(face font.Face, body string, availPx int) []wrappedRow {
+	if availPx <= 0 {
+		availPx = 1
+	}
+	runes := []rune(body)
+	if len(runes) == 0 {
+		return []wrappedRow{{plainText: ""}}
+	}
+	var rows []wrappedRow
+	pos := 0
+	for pos < len(runes) {
+		rowStart := pos
+		x := fixed.Int26_6(0)
+		lastSpace := -1
+		end := pos
+		for end < len(runes) {
+			adv, _ := faceGlyphAdvance(face, runes[end])
+			if (x+adv).Round() > availPx && end > rowStart {
+				break
+			}
+			x += adv
+			if runes[end] == ' ' && (end == rowStart || runes[end-1] != ' ') {
+				lastSpace = end
+			}
+			end++
+		}
+		if end < len(runes) && lastSpace > rowStart {
+			end = lastSpace + 1
+		}
+		rows = append(rows, wrappedRow{plainText: string(runes[rowStart:end])})
+		pos = end
+	}
+	return rows
 }
