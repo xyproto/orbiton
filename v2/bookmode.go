@@ -70,12 +70,13 @@ func gunzipBytes(gz []byte) ([]byte, error) {
 	return io.ReadAll(r)
 }
 
-// Margin ratios for book mode (fraction of pixel dimensions).
+// Margin ratios for book mode (fraction of pixel/column dimensions).
 const (
-	bookMarginLeft   = 0.10
-	bookMarginRight  = 0.05
-	bookMarginTop    = 0.02
-	bookMarginBottom = 0.02
+	bookMarginLeft      = 0.10
+	bookMarginRight     = 0.05
+	bookMarginTop       = 0.02
+	bookMarginBottom    = 0.02
+	bookTextMarginRight = 0.02 // tighter right margin for text book mode
 )
 
 // bookFontSet caches Vollkorn body faces, Montserrat Bold header faces, a small
@@ -2955,7 +2956,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	}
 
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
-	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	marginRight := w - max(int(float64(w)*bookTextMarginRight), 1)
 	textW := marginRight - marginLeft
 	topMargin := int(float64(editRows) * bookMarginTop)
 
@@ -2998,40 +2999,42 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			default:
 				fg = vt.LightGray
 			}
-			text := pl.body
-			runes := []rune(text)
-			if len(runes) > textW {
-				runes = runes[:textW]
-				text = string(runes)
+			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
+				if row+topMargin >= editRows {
+					break
+				}
+				c.Write(x, uint(row+topMargin), fg, vt.Bold, chunk)
+				row++
 			}
-			c.Write(x, y, fg, vt.Bold, text)
-			row++
 
 		case lineKindCode:
-			text := pl.body
-			runes := []rune(text)
-			if len(runes) > textW {
-				runes = runes[:textW]
-				text = string(runes)
+			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
+				if row+topMargin >= editRows {
+					break
+				}
+				c.Write(x, uint(row+topMargin), vt.Default, vt.DefaultBackground, chunk)
+				row++
 			}
-			c.Write(x, y, vt.Default, vt.DefaultBackground, text)
-			row++
 
 		case lineKindTable:
 			// In text mode we just print the raw pipe-delimited row. The
 			// content is already monospace in the terminal so columns align.
-			text := pl.body
-			runes := []rune(text)
-			if len(runes) > textW {
-				runes = runes[:textW]
-				text = string(runes)
+			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
+				if row+topMargin >= editRows {
+					break
+				}
+				c.Write(x, uint(row+topMargin), vt.Default, vt.DefaultBackground, chunk)
+				row++
 			}
-			c.Write(x, y, vt.Default, vt.DefaultBackground, text)
-			row++
 
 		case lineKindImage:
-			c.Write(x, y, vt.Dim, vt.DefaultBackground, "[image: "+pl.body+"]")
-			row++
+			for _, chunk := range bookWrapPlainRunes("[image: "+pl.body+"]", textW) {
+				if row+topMargin >= editRows {
+					break
+				}
+				c.Write(x, uint(row+topMargin), vt.Dim, vt.DefaultBackground, chunk)
+				row++
+			}
 
 		case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
 			prefixFg := vt.Default
@@ -3718,8 +3721,14 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 // return 1. Rune-based; use bookPixelRowCount for the graphical renderer.
 func bookWrapRowCount(pl parsedLine, availW int) int {
 	switch pl.kind {
-	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindBlank, lineKindRule:
 		return 1
+	case lineKindHeader, lineKindCode, lineKindTable:
+		// Text book mode wraps these via bookWrapPlainRunes, so the
+		// row count tracks the chunk count.
+		return len(bookWrapPlainRunes(pl.body, availW))
+	case lineKindImage:
+		return len(bookWrapPlainRunes("[image: "+pl.body+"]", availW))
 	}
 	pfxLen := len([]rune(pl.prefix))
 	bodyLen := len([]rune(pl.body))
@@ -4165,7 +4174,7 @@ func bookModeResetCursor() {
 func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	w := int(c.Width())
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
-	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	marginRight := w - max(int(float64(w)*bookTextMarginRight), 1)
 	textW := marginRight - marginLeft
 
 	rawLine := e.Line(e.DataY())
@@ -4193,6 +4202,10 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	case lineKindHeader:
 		prefixLen := pl.headerLevel + 1
 		adjX := max(cursorRawX-prefixLen, 0)
+		if textW > 0 && adjX >= textW {
+			subRow = adjX / textW
+			adjX -= subRow * textW
+		}
 		x = adjX + marginLeft
 
 	case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
@@ -4226,7 +4239,22 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 			}
 		}
 
-	case lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
+	case lineKindCode, lineKindTable, lineKindImage:
+		// These now soft-wrap via bookWrapPlainRunes in bookTextModeRender.
+		adjX := cursorRawX
+		if pl.kind == lineKindImage {
+			// The rendered line is "[image: " + body + "]" — shift the
+			// cursor by the prefix length so it stays aligned with what
+			// the user sees.
+			adjX += len("[image: ")
+		}
+		if textW > 0 && adjX >= textW {
+			subRow = adjX / textW
+			adjX -= subRow * textW
+		}
+		x = adjX + marginLeft
+
+	case lineKindBlank, lineKindRule:
 		x = cursorRawX + marginLeft
 
 	default: // lineKindBody
@@ -4264,10 +4292,19 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 
 // bookWrapWidth returns the available text width in runes for wrapping
 // in the current terminal (marginRight - marginLeft).
-func bookWrapWidth(c *vt.Canvas) int {
+// bookWrapWidth returns the column width available to book-mode text after
+// subtracting the left and right margins. The right margin differs between
+// text and graphical modes (tighter in text mode) — branching here keeps
+// scroll-row-counting in sync with what bookTextModeRender/bookContentImage
+// actually paint.
+func (e *Editor) bookWrapWidth(c *vt.Canvas) int {
 	w := int(c.Width())
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
-	marginRight := w - max(int(float64(w)*bookMarginRight), 1)
+	rightFrac := bookMarginRight
+	if e.bookTextMode() {
+		rightFrac = bookTextMarginRight
+	}
+	marginRight := w - max(int(float64(w)*rightFrac), 1)
 	return marginRight - marginLeft
 }
 
@@ -4453,14 +4490,15 @@ func (e *Editor) bookLineDisplayRows(dl int, textW int, pw *bookPixelWrapInfo) i
 	rl = strings.ReplaceAll(rl, "\t", "    ")
 	pl := parseBookLine(rl)
 	if pl.kind == lineKindImage {
-		var lineH, renderTextW int
-		if pw != nil {
-			lineH = pw.lineH
-			renderTextW = pw.bodyTextPxFullRow
-		} else {
-			renderTextW = textW
+		// In text mode (pw == nil) an image line renders as a single
+		// "[image: url]" row, matching bookTextModeRender and
+		// bookWrapRowCount. Calling bookImageRows here with lineH=0
+		// would clamp to lineH=1 and return a bogus pixel-scaled row
+		// count, which broke PgUp/PgDn and cursor scroll past images.
+		if pw == nil {
+			return 1
 		}
-		return e.bookImageRows(pl.body, lineH, renderTextW)
+		return e.bookImageRows(pl.body, pw.lineH, pw.bodyTextPxFullRow)
 	}
 	if pw != nil {
 		return bookPixelRowCount(pw.fs, pl, pw.lineH, pw.marginLeft, pw.marginRight)
@@ -4503,7 +4541,7 @@ func (e *Editor) bookPgDn(c *vt.Canvas) bool {
 	if editRows <= 0 {
 		return false
 	}
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	totalLines := e.Len()
 	if totalLines == 0 {
@@ -4539,7 +4577,7 @@ func (e *Editor) bookPgUp(c *vt.Canvas) bool {
 	if e.pos.offsetY == 0 && int(e.DataY()) == 0 {
 		return false
 	}
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	// Walk backwards accumulating display rows until we've covered editRows.
 	dl := e.pos.offsetY - 1
@@ -4578,7 +4616,7 @@ func (e *Editor) bookPgUp(c *vt.Canvas) bool {
 // is soft-wrapped and the cursor is not on the last sub-row, it moves within
 // the same data line. Otherwise it moves to the next data line.
 func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, total := e.bookCursorSubRow(textW, pw)
 
@@ -4639,7 +4677,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 // is soft-wrapped and the cursor is not on the first sub-row, it moves within
 // the same data line. Otherwise it moves to the previous data line.
 func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, total := e.bookCursorSubRow(textW, pw)
 
@@ -4907,7 +4945,7 @@ func bookSubRowEndX(rawLine string, textW, sub int, pw *bookPixelWrapInfo) int {
 // If the cursor is already at the start of the current sub-row, it goes
 // to the very start of the data line (column 0).
 func (e *Editor) bookHome(c *vt.Canvas) {
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, _ := e.bookCursorSubRow(textW, pw)
 	if sub == 0 {
@@ -4937,7 +4975,7 @@ func (e *Editor) bookHome(c *vt.Canvas) {
 // cursor is left at a wrap boundary so it renders at the end of the
 // current sub-row rather than the start of the next.
 func (e *Editor) bookEnd(c *vt.Canvas) {
-	textW := bookWrapWidth(c)
+	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, total := e.bookCursorSubRow(textW, pw)
 	if sub >= total-1 {
@@ -5087,7 +5125,7 @@ func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
 	// affinity to forward (visible movement: cursor jumps from end of
 	// sub-row N to start of sub-row N+1) without actually moving rawX.
 	if e.bookCursorAffinity == bookAffinityBackward {
-		textW := bookWrapWidth(c)
+		textW := e.bookWrapWidth(c)
 		pw := e.bookGetPixelWrapInfo(c)
 		sub, total := e.bookCursorSubRow(textW, pw)
 		rawX := e.pos.sx + e.pos.offsetX
@@ -5134,7 +5172,7 @@ func (e *Editor) bookCursorBackward(c *vt.Canvas, status *StatusBar) bool {
 	// processors where pressing Left from column 0 of a visually-wrapped
 	// line lands the cursor at the end of the previous visual line.
 	if e.bookCursorAffinity == bookAffinityForward {
-		textW := bookWrapWidth(c)
+		textW := e.bookWrapWidth(c)
 		pw := e.bookGetPixelWrapInfo(c)
 		sub, _ := e.bookCursorSubRow(textW, pw)
 		rawX := e.pos.sx + e.pos.offsetX
