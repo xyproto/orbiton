@@ -60,6 +60,22 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	msgX := max((w-len(sb.msg))/2, 0)
 
+	// In text book mode the regular themes are replaced by a simple
+	// black-on-bright-white reader theme, and the status bar must stand
+	// out against that: paint the entire status row as white on blue.
+	// True-colour values avoid terminal palette remapping issues.
+	textBook := sb.editor.bookTextMode()
+	if textBook {
+		fg := vt.TrueColor(255, 255, 255)
+		bg := vt.TrueBackground(30, 90, 180)
+		c.Write(0, h, fg, bg, strings.Repeat(" ", w))
+		c.Write(uint(msgX), h, fg, bg, sb.msg)
+		mut.Lock()
+		sb.offsetY = offsetY
+		mut.Unlock()
+		return
+	}
+
 	if sb.IsError() {
 		mut.RLock()
 		c.Write(uint(msgX), h, sb.errfg, sb.errbg, sb.msg)

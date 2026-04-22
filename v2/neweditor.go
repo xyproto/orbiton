@@ -572,8 +572,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 		fallthrough
 	default:
-		// Draw editor lines from line 0 to h onto the canvas at 0,0
-		if !e.bookGraphicalMode() {
+		// Draw editor lines from line 0 to h onto the canvas at 0,0.
+		// Book mode (graphical or text) has its own rendering pipeline
+		// and must not have the regular syntax-highlighted editor lines
+		// painted beneath it — otherwise the old text ghosts through
+		// behind the status bar on the row book mode doesn't repaint.
+		if !e.bookMode.Load() {
 			e.HideCursorDrawLines(c, false, false, false)
 		}
 		e.redraw.Store(false)
@@ -588,7 +592,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// Redraw the TUI, if needed
 	if e.redraw.Load() && c != nil {
 		e.Center(c)
-		if !e.bookGraphicalMode() {
+		if !e.bookMode.Load() {
 			e.HideCursorDrawLines(c, true, false, false)
 		}
 		e.redraw.Store(false)

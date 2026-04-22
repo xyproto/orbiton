@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"html"
 	"image"
 	"image/color"
 	"image/draw"
@@ -79,6 +80,18 @@ const (
 	bookTextMarginRight = 0.02 // tighter right margin for text book mode
 )
 
+// Palette for text book mode. Using true-colour foregrounds avoids the
+// "black looks gray" problem on terminals whose 16-colour palette maps
+// color 0 to a dark gray (common with many xterm colour schemes). The vt
+// library degrades true-colour values to xterm-256 or ANSI-16 automatically
+// on terminals that don't advertise 24-bit colour support.
+var (
+	bookTextFGBlack    = vt.TrueColor(0, 0, 0)
+	bookTextFGDarkGray = vt.TrueColor(80, 80, 80)
+	bookTextFGWhite    = vt.TrueColor(255, 255, 255)
+	bookTextBG         = vt.TrueBackground(255, 255, 255)
+)
+
 // bookFontSet caches Vollkorn body faces, Montserrat Bold header faces, a small
 // Montserrat Bold face for the status bar, and a FiraMono Bold face for code,
 // all derived from the same base pixel size.
@@ -91,6 +104,11 @@ type bookFontSet struct {
 	h3            font.Face
 	h4            font.Face
 	h5            font.Face
+	h1Code        font.Face // FiraMono Bold sized to h1 — for inline `code` in H1 headers
+	h2Code        font.Face
+	h3Code        font.Face
+	h4Code        font.Face
+	h5Code        font.Face
 	statusBar     font.Face
 	baseSize      float64
 	h1Size        float64
@@ -129,6 +147,30 @@ func (fs *bookFontSet) headerSizeForLevel(level int) float64 {
 	default:
 		return fs.h5Size
 	}
+}
+
+// headerCodeForLevel returns a code (FiraMono Bold) face sized to match the
+// given header level so inline `code` segments inside a header render at the
+// same visual size as the surrounding header text. Falls back to fs.code if
+// the level-specific code face could not be created.
+func (fs *bookFontSet) headerCodeForLevel(level int) font.Face {
+	var f font.Face
+	switch level {
+	case 1:
+		f = fs.h1Code
+	case 2:
+		f = fs.h2Code
+	case 3:
+		f = fs.h3Code
+	case 4:
+		f = fs.h4Code
+	default:
+		f = fs.h5Code
+	}
+	if f == nil {
+		return fs.code
+	}
+	return f
 }
 
 var (
@@ -403,6 +445,16 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Code faces sized to match each header level. Inline `code` segments
+	// inside a header should render at the header's font size (in the
+	// FiraMono Bold face) instead of being shrunk to the body-code size.
+	// Individual failures are non-fatal — headerCodeForLevel falls back to
+	// fs.code in that case.
+	h1Code, _ := newFace(parsedFiraMonoBold, h1Size)
+	h2Code, _ := newFace(parsedFiraMonoBold, h2Size)
+	h3Code, _ := newFace(parsedFiraMonoBold, h3Size)
+	h4Code, _ := newFace(parsedFiraMonoBold, h4Size)
+	h5Code, _ := newFace(parsedFiraMonoBold, h5Size)
 	bookFontCache = &bookFontSet{
 		regular:       reg,
 		italic:        ita,
@@ -412,6 +464,11 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 		h3:            h3,
 		h4:            h4,
 		h5:            h5,
+		h1Code:        h1Code,
+		h2Code:        h2Code,
+		h3Code:        h3Code,
+		h4Code:        h4Code,
+		h5Code:        h5Code,
 		statusBar:     sb,
 		h1Size:        h1Size,
 		h2Size:        h2Size,
@@ -462,7 +519,12 @@ type textSegment struct {
 func parseLineSegments(line string) []textSegment {
 	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline, strike bool) []textSegment {
 		if cur.Len() > 0 {
-			segs = append(segs, textSegment{text: cur.String(), bold: bold, italic: italic, underline: underline, strike: strike})
+			// Decode named/numeric HTML entities ("&lt;" → "<", "&amp;" → "&",
+			// "&#124;" → "|", etc.) so markdown sources authored as HTML
+			// render with the intended glyphs in book mode. Inline `code`
+			// segments are flushed separately and keep their literal text —
+			// code blocks should preserve entities as-is.
+			segs = append(segs, textSegment{text: html.UnescapeString(cur.String()), bold: bold, italic: italic, underline: underline, strike: strike})
 			cur.Reset()
 		}
 		return segs
@@ -885,8 +947,85 @@ func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, 
 	return dot.X.Round()
 }
 
-// drawSegments renders styled inline segments starting at (x, baselineY),
-// returning the final X. Bold uses faux-bold (two draws, 1 px apart)
+// drawHeaderSegments renders styled inline segments of a header line at
+// (x, baselineY). Non-code segments use the header face for the given level;
+// code segments use a FiraMono Bold face sized to match the header so
+// inline `code` inside a header visually matches the surrounding header
+// text. Headers are always bold, so all segments are drawn with faux-bold.
+func drawHeaderSegments(img *image.RGBA, fs *bookFontSet, level, x, baselineY int, segs []textSegment, clr color.Color) int {
+	hFace := fs.headerForLevel(level)
+	hCodeFace := fs.headerCodeForLevel(level)
+	for _, seg := range segs {
+		face := hFace
+		if seg.code {
+			face = hCodeFace
+		}
+		endX := drawString(img, face, x, baselineY, seg.text, clr)
+		// Faux-bold: extra pass 1 px to the right (headers render bold).
+		drawString(img, face, x+1, baselineY, seg.text, clr)
+		right := endX + 1
+		if seg.underline {
+			ulY := baselineY + 2
+			if ulY < img.Bounds().Max.Y {
+				for px := x; px < right; px++ {
+					img.Set(px, ulY, clr)
+				}
+			}
+		}
+		if seg.strike {
+			asc := face.Metrics().Ascent.Round()
+			stY := baselineY - asc/3
+			if stY >= img.Bounds().Min.Y && stY < img.Bounds().Max.Y {
+				for px := x; px < right; px++ {
+					img.Set(px, stY, clr)
+				}
+			}
+		}
+		x = endX + 1
+	}
+	return x
+}
+
+// measureHeaderSegmentsToRune returns the pixel width of the first targetRune
+// runes of segs when rendered with drawHeaderSegments. Used for cursor and
+// selection-rectangle positioning so they match the mixed-face output.
+func measureHeaderSegmentsToRune(fs *bookFontSet, level int, segs []textSegment, targetRune int) int {
+	if targetRune <= 0 {
+		return 0
+	}
+	hFace := fs.headerForLevel(level)
+	hCodeFace := fs.headerCodeForLevel(level)
+	total := fixed.Int26_6(0)
+	col := 0
+	for _, seg := range segs {
+		face := hFace
+		if seg.code {
+			face = hCodeFace
+		}
+		for _, r := range seg.text {
+			if col >= targetRune {
+				// Each segment contributes +1 px per rendered rune for faux-bold;
+				// account for that at segment boundaries below.
+				return total.Round() + col
+			}
+			adv, ok := face.GlyphAdvance(r)
+			if !ok {
+				if fb := faceFallback(face); fb != nil {
+					if a2, ok2 := fb.GlyphAdvance(r); ok2 {
+						adv = a2
+						ok = true
+					}
+				}
+			}
+			if ok {
+				total += adv
+			}
+			col++
+		}
+	}
+	// Add +1 px per rune for faux-bold drift.
+	return total.Round() + col
+}
 func drawSegments(img *image.RGBA, fs *bookFontSet, x, baselineY int, segs []textSegment, clr color.Color) int {
 	for _, seg := range segs {
 		face := faceForSeg(fs, seg)
@@ -2360,6 +2499,11 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 	// Determine whether we start inside a fenced code block.
 	inFence := e.fenceStateAtLine(startLine)
+	// codeBlockStart is flipped to true when we transition into a fenced
+	// code block via a fence marker; the first subsequent code line uses it
+	// to inset its gray background by a few pixels, producing a visible
+	// margin below the preceding text.
+	codeBlockStart := false
 
 	codeBg := color.NRGBA{0xf0, 0xf0, 0xf0, 0xff} // light-gray background for code blocks
 
@@ -2374,6 +2518,9 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 		// Fence marker: toggle state, render as blank row.
 		if isFencedCodeMarker(rawLine) {
+			if !inFence {
+				codeBlockStart = true
+			}
 			inFence = !inFence
 			row++
 			continue
@@ -2426,7 +2573,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			// Center text vertically within the allocated block.
 			totalH := hAscent + hDescent
 			vPad := max((blockH-totalH)/2, 0)
-			drawString(img, hFace, marginLeft, cellTop+vPad+hAscent, pl.body, dark)
+			drawHeaderSegments(img, fs, pl.headerLevel, marginLeft, cellTop+vPad+hAscent, parseLineSegments(pl.body), dark)
 			if rightMargin < pixW {
 				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+blockH), image.White, image.Point{}, draw.Src)
 			}
@@ -2483,18 +2630,29 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			continue
 
 		case lineKindCode:
+			// Transitioning into a code block: inset the top of the gray
+			// background slightly so there is a small visible gap between
+			// the preceding text (or the fence-marker blank row) and the
+			// code block, as requested in book-mode polish.
+			topPad := 0
+			if codeBlockStart {
+				topPad = max(lineH/6, 3)
+				codeBlockStart = false
+			}
 			// Light-gray background spanning left-margin to right-margin.
-			draw.Draw(img, image.Rect(marginLeft, cellTop, rightMargin, cellTop+lineH),
+			draw.Draw(img, image.Rect(marginLeft, cellTop+topPad, rightMargin, cellTop+lineH),
 				image.NewUniform(codeBg), image.Point{}, draw.Src)
 			codeAscent := faceAscent(fs.code, float64(cellH)*0.72*0.88)
 			codeDescent := fs.code.Metrics().Descent.Round()
 			if codeDescent <= 0 {
 				codeDescent = int(float64(cellH)*0.72*0.88*0.2 + 0.5)
 			}
-			// Center the full glyph box (ascent+descent) within lineH so
-			// there's visible padding both above and below the text.
-			vPad := max((lineH-codeAscent-codeDescent)/2, 0)
-			drawString(img, fs.code, marginLeft+4, cellTop+vPad+codeAscent, pl.body, dark)
+			// Center the full glyph box (ascent+descent) within the visible
+			// (possibly inset) portion of the cell so the text stays inside
+			// the gray box after top-padding is applied.
+			innerH := lineH - topPad
+			vPad := max((innerH-codeAscent-codeDescent)/2, 0)
+			drawString(img, fs.code, marginLeft+4, cellTop+topPad+vPad+codeAscent, pl.body, dark)
 
 		case lineKindTable:
 			// Walk backward and forward in the document to locate the
@@ -2739,8 +2897,8 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		if adjRawX > len(bodyRunes) {
 			adjRawX = len(bodyRunes)
 		}
-		adv := measureStringFB(hFace, string(bodyRunes[:adjRawX]))
-		drawBar(marginLeft+adv.Round(), cursorDisplayRow, hVPad, hAscent, hDescent, nRows)
+		adv := measureHeaderSegmentsToRune(fs, pl.headerLevel, parseLineSegments(pl.body), adjRawX)
+		drawBar(marginLeft+adv, cursorDisplayRow, hVPad, hAscent, hDescent, nRows)
 
 	case lineKindCode:
 		codeAscent := faceAscent(fs.code, float64(cellH)*0.72*0.88)
@@ -2893,41 +3051,73 @@ func nextListPrefix(pfx string) string {
 
 // writeBookTextSegs writes parsed inline Markdown segments to the canvas at
 // (startX, y), advancing x for each rune. maxX is the right pixel bound.
+// bookTextTheme returns the foreground and background colours text book mode
+// should use for a given logical fg. The background is always a bright white
+// (independent of the user's terminal theme) and the fg defaults to black,
+// falling back to dark gray or light gray for secondary text, to match the
+// look of the graphical book mode.
+// bookTextTheme returns the foreground and background colours text book mode
+// should use for a given logical fg. The background is always a true white
+// and the fg defaults to pure black, falling back to dark gray for
+// secondary text. We map the semantic colour constants to true-colour
+// values because many terminal palettes remap color 0 ("black") to a dark
+// gray, which ruins legibility on a white background.
+func bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.AttributeColor) {
+	fg = bookTextResolveFG(fg)
+	if bold {
+		fg = fg.Combine(vt.Bold)
+	}
+	return fg, bookTextBG
+}
+
+// bookTextResolveFG converts the semantic colour constants used by the
+// text-mode renderer (vt.Black / vt.DarkGray / vt.White) into true-colour
+// equivalents so the final SGR output stays faithful to the intended look
+// regardless of the user's configured palette. vt.TrueColor downgrades
+// automatically to the nearest xterm-256 or ANSI-16 colour on terminals
+// that don't support 24-bit colour.
+func bookTextResolveFG(fg vt.AttributeColor) vt.AttributeColor {
+	switch fg {
+	case vt.Black:
+		return bookTextFGBlack
+	case vt.DarkGray:
+		return bookTextFGDarkGray
+	case vt.White:
+		return bookTextFGWhite
+	}
+	return fg
+}
+
 func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, maxX int) {
 	x := startX
 	for _, seg := range segs {
 		if int(x) >= maxX {
 			break
 		}
-		// Build a priority-ordered attribute list. vt.Combine packs two
-		// attributes per AttributeColor value, so we fill fg then bg.
-		var attrs []vt.AttributeColor
-		if seg.bold {
-			attrs = append(attrs, vt.Bold)
+		// Base colours for text book mode: true black on true white, with
+		// inline `code` rendered in dark gray so it's visually set apart
+		// without introducing a second background colour.
+		fg := bookTextFGBlack
+		if seg.code {
+			fg = bookTextFGDarkGray
 		}
-		if seg.italic {
-			attrs = append(attrs, vt.Italic)
+		bg := bookTextBG
+		// Layer in formatting attributes. vt.Combine packs at most two
+		// attributes per slot (16 bits each), so we prioritise the ones
+		// most commonly used in prose: bold and italic in the fg slot,
+		// underline / strikethrough in the bg slot.
+		if seg.bold && seg.italic {
+			fg = fg.Combine(vt.Bold)
+			bg = bg.Combine(vt.Italic)
+		} else if seg.bold {
+			fg = fg.Combine(vt.Bold)
+		} else if seg.italic {
+			fg = fg.Combine(vt.Italic)
 		}
 		if seg.underline {
-			attrs = append(attrs, vt.Underscore)
-		}
-		if seg.strike {
-			attrs = append(attrs, vt.Strikethrough)
-		}
-		fg, bg := vt.Default, vt.DefaultBackground
-		switch len(attrs) {
-		case 1:
-			fg = attrs[0]
-		case 2:
-			fg, bg = attrs[0], attrs[1]
-		case 3, 4:
-			// More than two attributes requested: combine the first two
-			// into the fg slot, and the remaining one(s) into bg.
-			fg = attrs[0].Combine(attrs[1])
-			bg = attrs[2]
-			if len(attrs) == 4 {
-				bg = attrs[2].Combine(attrs[3])
-			}
+			bg = bg.Combine(vt.Underscore)
+		} else if seg.strike {
+			bg = bg.Combine(vt.Strikethrough)
 		}
 		runes := []rune(seg.text)
 		if rem := maxX - int(x); len(runes) > rem {
@@ -2960,10 +3150,16 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	textW := marginRight - marginLeft
 	topMargin := int(float64(editRows) * bookMarginTop)
 
-	// Clear the editing rows with default colours.
+	// Clear every row (including the status row) with the book theme's
+	// bright-white background. Clearing the status row too is important
+	// on startup: before Loop() calls InitialRedraw, neweditor.go had a
+	// chance to paint regular editor text onto the canvas — if we left
+	// the status row untouched, the old syntax-highlighted text would
+	// ghost through behind the status bar. The status bar will repaint
+	// its own row on top of this blank line anyway.
 	blank := strings.Repeat(" ", w)
-	for row := range editRows {
-		c.Write(0, uint(row), vt.Default, vt.DefaultBackground, blank)
+	for row := 0; row < h; row++ {
+		c.Write(0, uint(row), bookTextFGBlack, bookTextBG, blank)
 	}
 
 	startLine := e.pos.offsetY
@@ -2985,66 +3181,71 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 
 		case lineKindRule:
 			if textW > 0 {
-				c.Write(x, y, vt.Dim, vt.DefaultBackground, strings.Repeat("─", textW))
+				c.Write(x, y, bookTextFGDarkGray, bookTextBG, strings.Repeat("─", textW))
 			}
 			row++
 
 		case lineKindHeader:
-			var fg vt.AttributeColor
-			switch pl.headerLevel {
-			case 1:
-				fg = vt.White
-			case 2:
-				fg = vt.LightCyan
-			default:
-				fg = vt.LightGray
+			// H1 black, H2 dark gray, H3+ dark gray — all bold. The
+			// graphical renderer similarly decreases emphasis as the
+			// header level increases.
+			fg := vt.Black
+			if pl.headerLevel >= 2 {
+				fg = vt.DarkGray
 			}
-			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
+			hfg, hbg := bookTextTheme(fg, true)
+			headerText := html.UnescapeString(pl.body)
+			for _, chunk := range bookWrapPlainRunes(headerText, textW) {
 				if row+topMargin >= editRows {
 					break
 				}
-				c.Write(x, uint(row+topMargin), fg, vt.Bold, chunk)
+				c.Write(x, uint(row+topMargin), hfg, hbg, chunk)
 				row++
 			}
 
 		case lineKindCode:
+			// Dark gray on bright white for code lines — the same
+			// muted contrast used by the graphical renderer's code
+			// background.
+			cfg, cbg := bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
 				if row+topMargin >= editRows {
 					break
 				}
-				c.Write(x, uint(row+topMargin), vt.Default, vt.DefaultBackground, chunk)
+				c.Write(x, uint(row+topMargin), cfg, cbg, chunk)
 				row++
 			}
 
 		case lineKindTable:
 			// In text mode we just print the raw pipe-delimited row. The
 			// content is already monospace in the terminal so columns align.
-			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
+			tfg, tbg := bookTextTheme(vt.Black, false)
+			tableText := html.UnescapeString(pl.body)
+			for _, chunk := range bookWrapPlainRunes(tableText, textW) {
 				if row+topMargin >= editRows {
 					break
 				}
-				c.Write(x, uint(row+topMargin), vt.Default, vt.DefaultBackground, chunk)
+				c.Write(x, uint(row+topMargin), tfg, tbg, chunk)
 				row++
 			}
 
 		case lineKindImage:
+			ifg, ibg := bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes("[image: "+pl.body+"]", textW) {
 				if row+topMargin >= editRows {
 					break
 				}
-				c.Write(x, uint(row+topMargin), vt.Dim, vt.DefaultBackground, chunk)
+				c.Write(x, uint(row+topMargin), ifg, ibg, chunk)
 				row++
 			}
 
 		case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
-			prefixFg := vt.Default
-			prefixBg := vt.DefaultBackground
+			prefixFg, prefixBg := bookTextTheme(vt.Black, false)
 			if pl.kind == lineKindBullet && strings.HasPrefix(pl.prefix, "│") {
-				prefixFg = vt.Dim
+				prefixFg, prefixBg = bookTextTheme(vt.DarkGray, false)
 			}
 			if pl.kind == lineKindChecked {
-				prefixFg = vt.Green
-				prefixBg = vt.Bold
+				prefixFg, prefixBg = bookTextTheme(vt.DarkGray, true)
 			}
 			pfxRunes := []rune(pl.prefix)
 			pfxLen := len(pfxRunes)
@@ -3095,7 +3296,7 @@ func bookRawXToPixelX(fs *bookFontSet, pl parsedLine, rawLine string, rawX, marg
 		if adjRawX > len(bodyRunes) {
 			adjRawX = len(bodyRunes)
 		}
-		return marginLeft + measureStringFB(fs.headerForLevel(pl.headerLevel), string(bodyRunes[:adjRawX])).Round()
+		return marginLeft + measureHeaderSegmentsToRune(fs, pl.headerLevel, parseLineSegments(pl.body), adjRawX)
 	case lineKindBullet, lineKindUnchecked, lineKindChecked, lineKindNumbered:
 		rawPrefix := rawMarkdownPrefix(rawLine)
 		rawBodyStart := len([]rune(rawPrefix))
@@ -3279,6 +3480,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	}
 
 	inFenceSel := e.fenceStateAtLine(startLine)
+	codeBlockStartSel := false
 	docLine2 := startLine
 	for row := 0; row < maxLines && docLine2 < totalLines; {
 		lineIdx := LineIndex(docLine2)
@@ -3288,6 +3490,9 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 
 		if isFencedCodeMarker(rawLine) {
+			if !inFenceSel {
+				codeBlockStartSel = true
+			}
 			inFenceSel = !inFenceSel
 			row++
 			continue
@@ -3361,6 +3566,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 
 			prefixLen := pl.headerLevel + 1
 			bodyRunes := []rune(pl.body)
+			hSegs := parseLineSegments(pl.body)
 			measureTo := func(n int) int {
 				if n < 0 {
 					n = 0
@@ -3368,7 +3574,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 				if n > len(bodyRunes) {
 					n = len(bodyRunes)
 				}
-				return measureStringFB(hFace, string(bodyRunes[:n])).Round()
+				return measureHeaderSegmentsToRune(fs, pl.headerLevel, hSegs, n)
 			}
 			var hLeft, hRight int
 			switch {
@@ -3395,16 +3601,22 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 					image.White, image.Point{}, draw.Src)
 				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+blockH),
 					image.NewUniform(selBg), image.Point{}, draw.Src)
-				drawString(dst, hFace, marginLeft, cellTop+hVPad+hAscent, pl.body, dark)
+				drawHeaderSegments(dst, fs, pl.headerLevel, marginLeft, cellTop+hVPad+hAscent, hSegs, dark)
 			}
 
 		case lineKindCode:
+			topPad := 0
+			if codeBlockStartSel {
+				topPad = max(lineH/6, 3)
+				codeBlockStartSel = false
+			}
 			codeAscent := faceAscent(fs.code, fontSize*0.88)
 			codeDescent := fs.code.Metrics().Descent.Round()
 			if codeDescent <= 0 {
 				codeDescent = int(fontSize*0.88*0.2 + 0.5)
 			}
-			codeVPad := max((lineH-codeAscent-codeDescent)/2, 0)
+			innerH := lineH - topPad
+			codeVPad := max((innerH-codeAscent-codeDescent)/2, 0)
 			codeRunes := []rune(pl.body)
 			measureTo := func(n int) int {
 				if n < 0 {
@@ -3439,13 +3651,13 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			}
 			hLeft = clampX(hLeft)
 			hRight = clampX(hRight)
-			draw.Draw(dst, image.Rect(marginLeft, cellTop, marginRight, cellTop+lineH),
+			draw.Draw(dst, image.Rect(marginLeft, cellTop+topPad, marginRight, cellTop+lineH),
 				image.NewUniform(codeBg), image.Point{}, draw.Src)
 			if hRight > hLeft {
-				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+lineH),
+				draw.Draw(dst, image.Rect(hLeft, cellTop+topPad, hRight, cellTop+lineH),
 					image.NewUniform(selBg), image.Point{}, draw.Src)
 			}
-			drawString(dst, fs.code, marginLeft+4, cellTop+codeVPad+codeAscent, pl.body, dark)
+			drawString(dst, fs.code, marginLeft+4, cellTop+topPad+codeVPad+codeAscent, pl.body, dark)
 
 		case lineKindTable:
 			// Separator rows take no visual space — nothing to highlight
