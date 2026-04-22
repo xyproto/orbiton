@@ -15,10 +15,6 @@ github.com/JohannesKaufmann/html-to-markdown/v2/internal/textutils
 github.com/JohannesKaufmann/html-to-markdown/v2/marker
 github.com/JohannesKaufmann/html-to-markdown/v2/plugin/base
 github.com/JohannesKaufmann/html-to-markdown/v2/plugin/commonmark
-# github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b
-## explicit; go 1.16
-github.com/allegro/bigcache/v3
-github.com/allegro/bigcache/v3/queue
 # github.com/clipperhouse/uax29/v2 v2.7.0
 ## explicit; go 1.18
 github.com/clipperhouse/uax29/v2/graphemes
@@ -66,7 +62,7 @@ github.com/lucasb-eyer/go-colorful
 # github.com/mattn/go-runewidth v0.0.23
 ## explicit; go 1.20
 github.com/mattn/go-runewidth
-# github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310
+# github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 => ./third_party/gfx
 ## explicit; go 1.17
 github.com/peterhellberg/gfx
 # github.com/sajari/fuzzy v1.0.0
@@ -105,7 +101,7 @@ github.com/xyproto/clip
 # github.com/xyproto/digraph v1.3.0
 ## explicit; go 1.20
 github.com/xyproto/digraph
-# github.com/xyproto/distrodetector v1.3.1
+# github.com/xyproto/distrodetector v1.3.2
 ## explicit; go 1.11
 github.com/xyproto/distrodetector
 # github.com/xyproto/env v1.9.1
@@ -144,9 +140,6 @@ github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.6
 ## explicit; go 1.23.2
 github.com/xyproto/mode
-# github.com/xyproto/ollamaclient/v2 v2.7.2
-## explicit; go 1.23.1
-github.com/xyproto/ollamaclient/v2
 # github.com/xyproto/orchideous v1.0.7
 ## explicit; go 1.24
 github.com/xyproto/orchideous
@@ -225,3 +218,4 @@ mvdan.cc/sh/v3/internal
 mvdan.cc/sh/v3/interp
 mvdan.cc/sh/v3/pattern
 mvdan.cc/sh/v3/syntax
+# github.com/peterhellberg/gfx => ./third_party/gfx
