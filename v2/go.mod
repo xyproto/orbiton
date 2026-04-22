@@ -38,7 +38,12 @@ require (
 	golang.org/x/image v0.39.0
 )
 
-require github.com/xyproto/syntax v1.14.2
+require (
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
+	github.com/xyproto/syntax v1.14.2
+)
+
+require github.com/JohannesKaufmann/dom v0.2.0 // indirect
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
