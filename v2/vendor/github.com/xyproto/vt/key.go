@@ -159,6 +159,22 @@ func (tty *TTY) Close() {
 	unix.Close(tty.fd)
 }
 
+// HasPendingInput reports whether ReadKey would return another key without
+// having to wait — either bytes are already buffered inside the TTY or more
+// bytes are readable from the file descriptor right now. Useful for frame
+// skipping: if more input is pending, the current frame can be dropped in
+// favour of the next one.
+func (tty *TTY) HasPendingInput() bool {
+	if len(tty.pending) > 0 {
+		return true
+	}
+	ok, err := tty.Poll(0)
+	if err != nil {
+		return false
+	}
+	return ok
+}
+
 // Poll checks if there is data available to read from the TTY within the given timeout.
 // Returns true if data is available, false if the timeout was reached.
 func (tty *TTY) Poll(d time.Duration) (bool, error) {
@@ -417,7 +433,14 @@ func (tty *TTY) ReadKey() string {
 		return key
 	}
 	// Still nothing parseable (shouldn't normally happen); flush the pending
-	// bytes as-is so we don't deadlock on them.
+	// bytes as-is so we don't deadlock on them. A lone ESC byte that never
+	// got a continuation is the Escape key itself — return it as "c:27" so
+	// callers that compare against the canonical key string (e.g. menu
+	// dismissal) continue to work.
+	if len(tty.pending) == 1 && tty.pending[0] == 27 {
+		tty.pending = tty.pending[:0]
+		return "c:27"
+	}
 	s := string(tty.pending)
 	tty.pending = tty.pending[:0]
 	return s
