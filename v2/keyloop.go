@@ -417,6 +417,33 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Draw everything once, with slightly different behavior if used over ssh
 	e.InitialRedraw(c, status)
 
+	// In book mode, periodically auto-save the file if it has unsaved
+	// changes. This matches the "reading/writing" use case book mode was
+	// designed for: long sessions where losing 10 minutes of notes is
+	// annoying. Only autosave when backed by a real file — not stdin
+	// ("-") or URL-derived buffers, which have no meaningful target.
+	if e.bookMode.Load() && e.filename != "" && e.filename != "-" && !fnord.stdin {
+		go func() {
+			t := time.NewTicker(10 * time.Minute)
+			defer t.Stop()
+			for range t.C {
+				if e.quit {
+					return
+				}
+				if !e.Changed() {
+					continue
+				}
+				if err := e.Save(c, tty); err != nil {
+					// Silent best-effort: surface via status bar
+					// (auto-clears on next keypress).
+					status.Clear(c, false)
+					status.SetErrorMessage(fmt.Sprintf("autosave: %v", err))
+					status.Show(c, e)
+				}
+			}
+		}()
+	}
+
 	// Initialize the spell checker in the background, but only if the document has single-line comments
 	if spellChecker == nil && ProgrammingLanguage(e.mode) {
 		go func() {
@@ -1177,7 +1204,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
+			beforeX := e.currentDisplayX()
+			beforeY := e.DataY()
 			e.Cursor().Left(c, status)
+			// In book mode, bookCursorBackward may only flip the
+			// cursor's wrap affinity at a soft-wrap boundary without
+			// actually retreating. For selection shrinking we need
+			// real motion, so retry once if nothing moved.
+			if e.bookMode.Load() && e.DataY() == beforeY && e.currentDisplayX() == beforeX {
+				e.Cursor().Left(c, status)
+			}
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1186,7 +1222,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
+			beforeXR := e.currentDisplayX()
+			beforeYR := e.DataY()
 			e.Cursor().Right(c, status)
+			if e.bookMode.Load() && e.DataY() == beforeYR && e.currentDisplayX() == beforeXR {
+				e.Cursor().Right(c, status)
+			}
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -2537,6 +2578,57 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			clearKeyHistory = true
 
 		case "c:18": // ctrl-r, to open or close a portal. In debug mode, reverse step.
+
+			// In book mode: follow the Markdown link under the cursor,
+			// or when the cursor is not on a link, navigate back one
+			// step in the per-session history. This replaces the
+			// portal/rebase behaviour (neither of which makes sense
+			// while reading a book-mode document).
+			if e.bookMode.Load() {
+				url := e.bookLinkURLUnderCursor()
+				pushCurrent := true
+				if url == "" {
+					url = bookPopHistory()
+					// Going back: don't push the current URL onto
+					// the stack (that would trap the user in a
+					// two-URL loop).
+					pushCurrent = false
+					if url == "" {
+						break
+					}
+				}
+				status.ClearAll(c, false)
+				status.SetMessage("Loading " + url)
+				status.Show(c, e)
+				md, err := fetchURLAsMarkdown(url)
+				if err != nil {
+					status.SetError(err)
+					status.Show(c, e)
+					break
+				}
+				if pushCurrent {
+					if cur := bookGetCurrentURL(); cur != "" {
+						bookPushHistory(cur)
+					}
+				}
+				bookMarkLinkVisited(url)
+				bookSetCurrentURL(url)
+				// Replace the buffer with the fetched Markdown
+				// and reset the view. Matches the URL-at-startup
+				// path in main.go so the user gets consistent
+				// behaviour.
+				e.LoadBytes(md)
+				e.filename = "-"
+				e.changed.Store(false)
+				e.pos.sx = 0
+				e.pos.sy = 0
+				e.pos.offsetX = 0
+				e.pos.offsetY = 0
+				e.bookSavedLocalX = -1
+				bookBumpContentGen()
+				e.FullResetRedraw(c, status, true, true)
+				break
+			}
 
 			if e.nanoMode.Load() { // nano: ctrl-r, insert file
 				// Ask the user which filename to insert

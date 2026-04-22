@@ -423,7 +423,36 @@ func main() {
 			}
 		}()
 	} else {
-		fnord.filename, lineNumber, colNumber = FilenameLineColNumber(pflag.Arg(0), pflag.Arg(1), pflag.Arg(2))
+		// URLs (http:// or https://) are treated as a special form of
+		// "book mode": fetch the page, convert HTML → Markdown on the
+		// fly, and render the result. Doing the URL detection here
+		// bypasses FilenameLineColNumber's ":" splitting, which would
+		// otherwise mangle the URL on the "https:" prefix.
+		if arg0 := pflag.Arg(0); isWebURL(arg0) {
+			md, err := fetchURLAsMarkdown(arg0)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				quitMut.Lock()
+				defer quitMut.Unlock()
+				os.Exit(1)
+			}
+			// Route the fetched Markdown through the same in-memory
+			// path as piped stdin: filename "-" + populated data. The
+			// editor treats this as an unsaved buffer so Ctrl-S won't
+			// overwrite anything unexpected, and the user can save to
+			// a real file from inside Orbiton.
+			fnord.filename = "-"
+			fnord.data = md
+			fnord.length = len(md)
+			fnord.stdin = true
+			bookModeFlag = true
+			// Remember the source URL so Ctrl-R can follow links
+			// relative to this page and so the history stack has
+			// an anchor to navigate back to.
+			bookSetCurrentURL(arg0)
+		} else {
+			fnord.filename, lineNumber, colNumber = FilenameLineColNumber(arg0, pflag.Arg(1), pflag.Arg(2))
+		}
 	}
 
 	if searchAndOpenFlag {
