@@ -546,17 +546,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 					return
 				}
 				base := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
-				// Put the PDF in the same directory as the source file,
-				// not in the CWD (which is often / or /tmp when running
-				// via a file manager).
+				// Place the PDF next to the source file
 				srcDir, absErr := filepath.Abs(filepath.Dir(e.filename))
 				if absErr != nil {
 					srcDir = filepath.Dir(e.filename)
 				}
 				pdfFilename := filepath.Join(srcDir, base)
-				// Show a "Rendering…" hint that survives the redraw
-				// triggered by the menu closing. exportPandocPDF sets
-				// its own …AfterRedraw message on completion.
+				// Show a "Rendering..." hint that survives the redraw when the menu closes
 				status.SetMessageAfterRedraw("Rendering " + base + " with pandoc...")
 				go func() {
 					pandocMutex.Lock()

@@ -268,17 +268,26 @@ func (e *Editor) bookTextMode() bool {
 	return e.bookMode.Load() && (!imagepreview.HasGraphics || e.bookForceTextMode.Load())
 }
 
+// bookTextTopBarRows is the number of terminal rows reserved at the top of
+// text book mode for a filename status bar. Graphical book mode has no such
+// top bar (it's always 0 there).
+const bookTextTopBarRows = 1
+
 // bookEditRows returns the number of terminal rows available for the graphical
 // book content. When the status bar is hidden (statusMode==true), the full
 // terminal height is used; otherwise one row is reserved for the status bar.
 func (e *Editor) bookEditRows(totalRows uint) uint {
-	if e.statusMode {
-		return totalRows
+	reserved := uint(0)
+	if !e.statusMode {
+		reserved++ // bottom status bar
 	}
-	if totalRows == 0 {
+	if e.bookTextMode() {
+		reserved += uint(bookTextTopBarRows) // top filename bar (text mode only)
+	}
+	if totalRows <= reserved {
 		return 0
 	}
-	return totalRows - 1
+	return totalRows - reserved
 }
 
 // bookModeSetStatusMsg atomically sets the temporary status bar message.
@@ -3276,11 +3285,17 @@ func nextListPrefix(pfx string) string {
 // values because many terminal palettes remap color 0 ("black") to a dark
 // gray, which ruins legibility on a white background.
 func bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.AttributeColor) {
-	fg = bookTextResolveFG(fg)
 	if bold {
-		fg = fg.Combine(vt.Bold)
+		// vt.AttributeColor.Combine truncates its operands to the lower
+		// 16 bits, which drops the extended / true-colour flag bits and
+		// turns a true-colour value into a bogus SGR sequence. For bold
+		// headers we use the palette (vt.Black / vt.DarkGray) so the
+		// attribute combination emits a valid "\x1b[30;1m" / "\x1b[90;1m"
+		// instead of the corrupted escape that otherwise leaks SGR
+		// attributes onto subsequent cells.
+		return fg.Combine(vt.Bold), bookTextBG
 	}
-	return fg, bookTextBG
+	return bookTextResolveFG(fg), bookTextBG
 }
 
 // bookTextResolveFG converts the semantic colour constants used by the
@@ -3315,8 +3330,15 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 			fg = bookTextFGDarkGray
 		}
 		// Links (Markdown [text](url)) use the same palette as the
-		// graphical renderer: #46a3bf unvisited, #7e46bf visited. Also
-		// force an underline.
+		// graphical renderer: #46a3bf unvisited, #7e46bf visited. The
+		// colour alone differentiates links — we intentionally do NOT
+		// combine vt.Underscore into the true-colour foreground or
+		// background here, because vt.AttributeColor.Combine masks the
+		// operand to the lower 16 bits and destroys the extended /
+		// true-colour flag bits, emitting a bogus SGR like
+		// "\x1b[65535;4m" that can leave the underline attribute stuck
+		// on cells that follow. Colour-only link styling side-steps the
+		// bug while remaining visibly distinct.
 		isLink := seg.linkURL != ""
 		if isLink {
 			if bookIsLinkVisited(seg.linkURL) {
@@ -3326,22 +3348,38 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 			}
 		}
 		bg := bookTextBG
-		// Layer in formatting attributes. vt.Combine packs at most two
-		// attributes per slot (16 bits each), so we prioritise the ones
-		// most commonly used in prose: bold and italic in the fg slot,
-		// underline / strikethrough in the bg slot.
-		if seg.bold && seg.italic {
-			fg = fg.Combine(vt.Bold)
-			bg = bg.Combine(vt.Italic)
-		} else if seg.bold {
-			fg = fg.Combine(vt.Bold)
-		} else if seg.italic {
-			fg = fg.Combine(vt.Italic)
-		}
-		if seg.underline || isLink {
-			bg = bg.Combine(vt.Underscore)
-		} else if seg.strike {
-			bg = bg.Combine(vt.Strikethrough)
+		// For the same reason we can't pack attributes onto a true-colour
+		// fg: Combine would drop the extended-colour flag and corrupt the
+		// SGR sequence. When we need bold / italic, fall back to a
+		// palette foreground (vt.Black / vt.DarkGray) which combines
+		// cleanly with the attribute codes. We lose a touch of colour
+		// fidelity on bold/italic runs but the alternative is broken
+		// output. Underline / strikethrough are dropped altogether in
+		// text mode — they can't be expressed safely on top of a
+		// true-colour bg, and link colour already signals the link.
+		if seg.bold || seg.italic {
+			paletteFG := vt.Black
+			if seg.code {
+				paletteFG = vt.DarkGray
+			}
+			if isLink {
+				// Preserve link colour even on bold/italic by using a
+				// 256-colour nearest palette index — Combine on a
+				// non-extended 256-colour value still drops the
+				// extended flag, so keep it simple and skip the bold
+				// here; colour wins over weight for link emphasis.
+				paletteFG = fg
+			}
+			fg = paletteFG
+			if seg.bold && seg.italic {
+				fg = fg.Combine(vt.Bold)
+				// No safe slot for italic on top of a true-colour bg;
+				// bold wins. bg is left untouched.
+			} else if seg.bold {
+				fg = fg.Combine(vt.Bold)
+			} else if seg.italic {
+				fg = fg.Combine(vt.Italic)
+			}
 		}
 		runes := []rune(seg.text)
 		if rem := maxX - int(x); len(runes) > rem {
@@ -3364,7 +3402,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	}
 	w := int(c.Width())
 	h := int(c.Height())
-	editRows := int(e.bookEditRows(uint(h))) // last row reserved for the status bar (unless hidden)
+	editRows := int(e.bookEditRows(uint(h))) // rows for content (excludes both top and bottom bars)
 	if editRows <= 0 || w <= 0 {
 		return
 	}
@@ -3372,7 +3410,14 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
 	marginRight := w - max(int(float64(w)*bookTextMarginRight), 1)
 	textW := marginRight - marginLeft
-	topMargin := int(float64(editRows) * bookMarginTop)
+	// topMargin already shifts content below the top status bar: it includes
+	// both the decorative top padding and the one-row filename bar.
+	topMargin := int(float64(editRows)*bookMarginTop) + bookTextTopBarRows
+	// yMax is the exclusive upper bound on y used by all loop guards below.
+	// editRows is already the content budget (top and bottom bars excluded);
+	// adding bookTextTopBarRows converts it to the absolute y just past the
+	// last drawable row (i.e. the bottom status row).
+	yMax := editRows + bookTextTopBarRows
 
 	// Clear every row (including the status row) with the book theme's
 	// bright-white background. Clearing the status row too is important
@@ -3386,12 +3431,31 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		c.Write(0, uint(row), bookTextFGBlack, bookTextBG, blank)
 	}
 
+	// Top filename bar — white on blue, filename centred. Matches the
+	// bottom status bar's palette (see statusbar.go). Use the base name
+	// only (no directory) and clamp to the terminal width.
+	fname := filepath.Base(e.filename)
+	if fname == "" || fname == "." {
+		fname = "untitled"
+	}
+	if len(fname) > w {
+		if w > 3 {
+			fname = fname[:w-3] + "..."
+		} else {
+			fname = fname[:w]
+		}
+	}
+	tbFG := vt.TrueColor(255, 255, 255)
+	tbBG := vt.TrueBackground(30, 90, 180)
+	c.Write(0, 0, tbFG, tbBG, strings.Repeat(" ", w))
+	c.Write(uint(max((w-len(fname))/2, 0)), 0, tbFG, tbBG, fname)
+
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
 	row := 0
 	docLine := startLine
-	for row+topMargin < editRows && docLine < totalLines {
+	for row+topMargin < yMax && docLine < totalLines {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 		pl := parseBookLine(rawLine)
@@ -3420,7 +3484,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			hfg, hbg := bookTextTheme(fg, true)
 			headerText := html.UnescapeString(pl.body)
 			for _, chunk := range bookWrapPlainRunes(headerText, textW) {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				c.Write(x, uint(row+topMargin), hfg, hbg, chunk)
@@ -3433,7 +3497,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			// background.
 			cfg, cbg := bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				c.Write(x, uint(row+topMargin), cfg, cbg, chunk)
@@ -3446,7 +3510,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			tfg, tbg := bookTextTheme(vt.Black, false)
 			tableText := html.UnescapeString(pl.body)
 			for _, chunk := range bookWrapPlainRunes(tableText, textW) {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				c.Write(x, uint(row+topMargin), tfg, tbg, chunk)
@@ -3456,7 +3520,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		case lineKindImage:
 			ifg, ibg := bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes("[image: "+pl.body+"]", textW) {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				c.Write(x, uint(row+topMargin), ifg, ibg, chunk)
@@ -3479,7 +3543,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 			wsegs := bookWrapBody(pl.body, bodyAvailW)
 			for i, ws := range wsegs {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				dy := uint(row + topMargin)
@@ -3496,7 +3560,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		default: // lineKindBody
 			wsegs := bookWrapBody(pl.body, textW)
 			for _, ws := range wsegs {
-				if row+topMargin >= editRows {
+				if row+topMargin >= yMax {
 					break
 				}
 				dy := uint(row + topMargin)
@@ -4245,41 +4309,54 @@ func bookPixelRowCount(fs *bookFontSet, pl parsedLine, lineH, marginLeft, rightM
 // the cursor document line is always rendered inside the visible image area.
 // It accounts for multi-row image lines that consume more than one display row.
 func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
-	cellW, cellH := imagepreview.TerminalCellPixels()
-	if cellH == 0 {
-		cellH = 16
-	}
-	if cellW == 0 {
-		cellW = 8
-	}
-	// Use the same capped cell size as the rendering pipeline so the number
-	// of visible display rows matches exactly.
-	_, renderH := bookRenderCellSize(cellW, cellH)
-
 	rows := int(c.Height())
 	editRows := int(e.bookEditRows(uint(rows)))
 	if editRows <= 0 {
 		return
 	}
 
-	lineH := int(renderH)
-	pixH := editRows * lineH
-	pixW := int(uint(c.Width()) * cellW)
+	// Two code paths share this helper:
+	//  - graphical book mode: sub-row counting happens in pixels via
+	//    bookPixelRowCount, so we build a font set and pass pixel widths.
+	//  - text book mode: sub-row counting happens in character cells via
+	//    bookWrapRowCount, so we pass the cell-based wrap width and leave
+	//    fs nil. The pixel branch used to be the only branch, which made
+	//    scrolling in text mode spuriously believe the cursor was always
+	//    "visible" (because bookWrapRowCount returned 1 for pixel-wide
+	//    lines that actually soft-wrap across many cell rows) and the
+	//    viewport never advanced when the cursor walked off the bottom.
+	graphical := e.bookGraphicalMode()
 
-	marginLeft := int(float64(pixW) * bookMarginLeft)
-	marginRight := pixW - int(float64(pixW)*bookMarginRight)
-	marginTop := int(float64(pixH) * bookMarginTop)
-	marginBottom := int(float64(pixH) * bookMarginBottom)
-	textW := marginRight - marginLeft
+	var (
+		lineH          int
+		textW          int
+		marginLeft     int
+		marginRight    int
+		maxDisplayRows int
+		fs             *bookFontSet
+	)
 
-	maxDisplayRows := min((pixH-marginTop-marginBottom)/lineH, editRows)
-	if maxDisplayRows <= 0 {
-		return
-	}
+	if graphical {
+		cellW, cellH := imagepreview.TerminalCellPixels()
+		if cellH == 0 {
+			cellH = 16
+		}
+		if cellW == 0 {
+			cellW = 8
+		}
+		_, renderH := bookRenderCellSize(cellW, cellH)
+		lineH = int(renderH)
+		pixH := editRows * lineH
+		pixW := int(uint(c.Width()) * cellW)
 
-	// Load font set for pixel-based row counting in graphical mode.
-	var fs *bookFontSet
-	if e.bookGraphicalMode() {
+		marginLeft = int(float64(pixW) * bookMarginLeft)
+		marginRight = pixW - int(float64(pixW)*bookMarginRight)
+		marginTop := int(float64(pixH) * bookMarginTop)
+		marginBottom := int(float64(pixH) * bookMarginBottom)
+		textW = marginRight - marginLeft
+
+		maxDisplayRows = min((pixH-marginTop-marginBottom)/lineH, editRows)
+
 		fontSize := float64(renderH) * 0.72
 		if fontSize < 6 {
 			fontSize = 6
@@ -4287,6 +4364,24 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 		if f, err := bookFaces(fontSize); err == nil {
 			fs = f
 		}
+	} else {
+		// Text mode uses cells for everything. Mirror the accounting done
+		// by bookTextModeRender: top padding consumes some editRows, then
+		// content fills the remainder. lineH/marginLeft/marginRight are
+		// unused when fs == nil, but bookWrapRowCount needs textW in cells.
+		lineH = 1
+		textW = e.bookWrapWidth(c)
+		if textW <= 0 {
+			return
+		}
+		topMargin := int(float64(editRows) * bookMarginTop)
+		maxDisplayRows = editRows - topMargin
+		if maxDisplayRows <= 0 {
+			maxDisplayRows = editRows
+		}
+	}
+	if maxDisplayRows <= 0 {
+		return
 	}
 
 	cursorDataY := int(e.DataY())
@@ -4713,7 +4808,9 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	editRows := int(e.bookEditRows(uint(h)))
 	topMargin := int(float64(editRows) * bookMarginTop)
 
-	y := displayRow + subRow + topMargin
+	// The filename bar occupies row 0 in text mode; shift the cursor
+	// down by that many rows so it lands on the rendered text row.
+	y := displayRow + subRow + topMargin + bookTextTopBarRows
 
 	if x >= w {
 		x = w - 1
@@ -5165,6 +5262,16 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	return true
 }
 
+// bookLineKindAt returns the parsed line kind of the given data line. Handy
+// for cursor-movement code that needs to special-case atomic line kinds
+// (e.g. image lines, which render as "[image: path]" and share no column
+// positions with their raw "![alt](path)" source).
+func (e *Editor) bookLineKindAt(dl LineIndex) lineKind {
+	rl := e.Line(dl)
+	rl = strings.ReplaceAll(rl, "\t", "    ")
+	return parseBookLine(rl).kind
+}
+
 // bookLineSubRowCount returns the total number of display sub-rows for a data
 // line when soft-wrapped at the given textW. When pw is non-nil, pixel-based
 // wrapping is used.
@@ -5557,6 +5664,22 @@ func bookSkipMarkersBackward(runes []rune, rawX int) int {
 // actually advances the visible cursor position — matching the behaviour of
 // WYSIWYG word processors.
 func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
+	// Image lines render as "[image: path]" which shares no positions
+	// with the raw "![alt](path)" source. Moving the cursor rune-by-rune
+	// over the raw source therefore produces visually erratic jumps.
+	// Treat the line atomically: Right jumps straight to the next line.
+	if e.bookLineKindAt(e.DataY()) == lineKindImage {
+		beforeY := e.DataY()
+		if int(beforeY)+1 >= e.Len() {
+			return false
+		}
+		e.pos.Down(c)
+		e.Home()
+		e.bookCursorAffinity = bookAffinityForward
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+		return e.DataY() != beforeY
+	}
 	// At a wrap boundary with backward affinity, Right should flip the
 	// affinity to forward (visible movement: cursor jumps from end of
 	// sub-row N to start of sub-row N+1) without actually moving rawX.
@@ -5602,6 +5725,29 @@ func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
 // bookCursorBackward moves one visible column to the left, skipping over any
 // Markdown inline markers so each key-press advances visibly.
 func (e *Editor) bookCursorBackward(c *vt.Canvas, status *StatusBar) bool {
+	// Atomic image lines: Left from the start of an image line jumps to
+	// the end of the previous line, and from anywhere else on the image
+	// line snaps back to the line's start.
+	if e.bookLineKindAt(e.DataY()) == lineKindImage {
+		rawX := e.pos.sx + e.pos.offsetX
+		if rawX > 0 {
+			e.Home()
+			e.bookCursorAffinity = bookAffinityForward
+			e.redrawCursor.Store(true)
+			e.SaveX(true)
+			return true
+		}
+		beforeY := e.DataY()
+		if beforeY == 0 {
+			return false
+		}
+		e.pos.Up()
+		e.End(c)
+		e.bookCursorAffinity = bookAffinityForward
+		e.redrawCursor.Store(true)
+		e.SaveX(true)
+		return e.DataY() != beforeY
+	}
 	// At a wrap boundary with forward affinity (cursor rendered at start
 	// of sub-row N+1 sharing rawX with end of sub-row N), Left should flip
 	// affinity to backward without moving rawX. This matches word
