@@ -33,7 +33,7 @@ require (
 	github.com/xyproto/orchideous v1.0.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
-	github.com/xyproto/vt v1.9.3
+	github.com/xyproto/vt v1.9.4
 	github.com/xyproto/wordwrap v1.0.2
 	golang.org/x/image v0.39.0
 )
