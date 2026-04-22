@@ -2108,9 +2108,23 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.bookModeRenderAll(c, status)
 					redrawMutex.Unlock()
 				} else {
+					// Text book mode: force a full canvas redraw so
+					// the status row is blanked (when hidden) or
+					// repainted white-on-blue (when shown). The
+					// graphical bookModeStatusBar path emits a
+					// Kitty/iTerm/Sixel image and doesn't belong
+					// here — calling it from text mode would paint
+					// a mismatched graphical status bar on top of
+					// the text-mode canvas.
+					e.bookModeEnsureCursorVisible(c)
 					vt.BeginSyncUpdate()
-					e.bookModeStatusBar(c)
+					e.bookTextModeRender(c)
+					if !e.statusMode {
+						status.Draw(c, 0)
+					}
+					c.HideCursorAndDraw()
 					vt.EndSyncUpdate()
+					e.redrawCursor.Store(true)
 				}
 				break
 			}
@@ -2228,6 +2242,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetErrorAfterRedraw(err)
 				break
 			}
+			// Undo.Restore swaps e.lines wholesale without going through
+			// MarkChanged, so the graphical book-mode content cache
+			// (keyed on bookContentGen) would otherwise serve a stale
+			// image and the post-cut state would remain on screen even
+			// though e.lines has been restored. Bump the counter
+			// explicitly so the next render rebuilds the content image.
+			bookBumpContentGen()
 			e.EnableAndPlaceCursor(c)
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)

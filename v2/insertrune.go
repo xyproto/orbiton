@@ -11,13 +11,24 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	e.showTypoHighlights = true
 	// Insert a regular space instead of a non-breaking space.
 	// Nobody likes non-breaking spaces.
+	// Normalise runes that look like ASCII punctuation so the user
+	// doesn't accidentally commit them (they're invisible or ambiguous
+	// in most fonts). The values used here are Unicode code points —
+	// earlier revisions compared against UTF-8 byte sequences like
+	// 0xC2A0, which never matched a decoded rune (NBSP is U+00A0,
+	// decoded to rune 0x00A0 = 160, not 0xC2A0) so the substitutions
+	// silently stopped working.
 	switch r {
-	case 0xc2a0: // non-breaking space
+	case '\u00A0': // non-breaking space → regular space
 		r = ' '
-	case 0xcc88: // annoying tilde
+	case '\u0308': // combining diaeresis (sticky dead key)
 		r = '~'
-	case 0xcdbe: // greek question mark
+	case '\u037E': // Greek question mark (looks like ';')
 		r = ';'
+	case '\u0387': // Greek ano teleia (looks like ';' / '·')
+		r = ';'
+	case '\u00B7': // middle dot (looks like '·')
+		r = '.'
 	}
 
 	// The document will be changed
