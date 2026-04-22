@@ -1,19 +1,56 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"maps"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
 	"sort"
 	"strings"
+	"sync"
 
-	"github.com/ianlancetaylor/demangle"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
+
+var (
+	cxxfiltPathOnce sync.Once
+	cxxfiltPath     string
+)
+
+// findCxxfilt returns the path to c++filt, or "" if not found. Cached.
+func findCxxfilt() string {
+	cxxfiltPathOnce.Do(func() {
+		cxxfiltPath = files.WhichCached("c++filt")
+	})
+	return cxxfiltPath
+}
+
+// demangleLines pipes lines through c++filt to demangle any C++ symbols.
+// If c++filt is not available or fails, the original lines are returned.
+func demangleLines(lines []string) []string {
+	path := findCxxfilt()
+	if path == "" || len(lines) == 0 {
+		return lines
+	}
+	cmd := exec.Command(path)
+	cmd.Stdin = strings.NewReader(strings.Join(lines, "\n") + "\n")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return lines
+	}
+	result := strings.Split(strings.TrimRight(out.String(), "\n"), "\n")
+	if len(result) != len(lines) {
+		return lines
+	}
+	return result
+}
+
 
 const (
 	smallRegisterWindow = iota
@@ -507,30 +544,12 @@ func (e *Editor) DrawInstructions(c *vt.Canvas, repositionCursor bool) error {
 				}
 			}
 
-			demangledLines := []string{}
+			demangledLines := demangleLines(instructions)
 			maxLen := 0
-			for _, line := range instructions {
-				demangledLine := line
-				for word := range strings.FieldsSeq(line) {
-					word := strings.TrimSpace(word)
-					modifiedWord := word // maybe modified word
-					if strings.HasPrefix(word, "<") && strings.HasSuffix(word, ">") {
-						word = strings.TrimSpace(word[1 : len(word)-1])
-						// This modification is needed for demangle to accept the symbol syntax
-						modifiedWord = strings.Replace(word, "E+", "E.", 1)
-					}
-					modifiedWord = strings.TrimSuffix(modifiedWord, "@plt")
-					if demangledWord, err := demangle.ToString(modifiedWord); err == nil { // success
-						// logf("%s -> %s\n", modifiedWord, demangledWord)
-						demangledLine = strings.ReplaceAll(demangledLine, word, demangledWord)
-						//} else {
-						//logf("could not demangle: %s\n", modifiedWord)
-					}
-				}
+			for _, demangledLine := range demangledLines {
 				if len(demangledLine) > maxLen {
 					maxLen = len(demangledLine)
 				}
-				demangledLines = append(demangledLines, demangledLine)
 			}
 
 			// Adjust the box width, if needed
