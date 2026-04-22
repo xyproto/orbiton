@@ -28,7 +28,6 @@ require (
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.6.39
 	github.com/xyproto/mode v0.12.6
-	github.com/xyproto/ollamaclient/v2 v2.7.2
 	github.com/xyproto/orchideous v1.0.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
@@ -46,7 +45,6 @@ require github.com/JohannesKaufmann/dom v0.2.0 // indirect
 
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/allegro/bigcache/v3 v3.1.1-0.20240222131551-901589e4644b // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -60,7 +58,7 @@ require (
 	github.com/xfmoulet/qoi v0.2.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
 	github.com/xyproto/burnpal v1.0.0 // indirect
-	github.com/xyproto/distrodetector v1.3.1 // indirect
+	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.6.1 // indirect
 	golang.org/x/net v0.53.0 // indirect
@@ -69,3 +67,5 @@ require (
 	golang.org/x/text v0.36.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 )
+
+replace github.com/peterhellberg/gfx => ./third_party/gfx
