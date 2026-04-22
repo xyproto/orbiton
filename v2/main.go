@@ -156,21 +156,6 @@ func main() {
 
 	pflag.Parse()
 
-	// --bookscreenshot: render graphical book mode headlessly and save a PNG.
-	if bookScreenshotFlag != "" {
-		bookModeFlag = true
-		args := pflag.Args()
-		if len(args) == 0 {
-			fmt.Fprintln(os.Stderr, "--bookscreenshot requires a filename argument")
-			os.Exit(1)
-		}
-		if err := bookScreenshot(args[0], bookScreenshotFlag); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		return
-	}
-
 	if versionFlag {
 		fmt.Println(versionString)
 		return
@@ -492,7 +477,9 @@ func main() {
 		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already checked for)
 		specificLetter = true
 		switch firstLetterOfExecutable {
-		case 'b', 'e': // bo, borland, ed, edit etc.
+		case 'b': // book mode
+			bookModeFlag = true
+		case 'e': // ed, edit etc.
 			theme = NewDarkBlueEditTheme()
 			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 			editTheme = true
