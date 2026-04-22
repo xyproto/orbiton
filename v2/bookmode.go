@@ -499,8 +499,9 @@ type textSegment struct {
 	bold      bool
 	italic    bool
 	underline bool
-	strike    bool // rendered with a strikethrough line
-	code      bool // rendered in the monospace code font (FiraMono Bold)
+	strike    bool   // rendered with a strikethrough line
+	code      bool   // rendered in the monospace code font (FiraMono Bold)
+	linkURL   string // non-empty for inline links: the hyperlink target
 }
 
 // parseLineSegments converts a line with Markdown-like inline markers into
@@ -554,8 +555,10 @@ func parseLineSegments(line string) []textSegment {
 		return -1
 	}
 	for i := 0; i < len(runes); {
-		// [![alt](img)](url) — link-wrapped image. Consume the whole thing
-		// as a single literal code segment.
+		// [![alt](img)](url) — link-wrapped image. Emit a single link
+		// segment so the whole thing is clickable and coloured. When the
+		// alt text is empty we fall back to a short placeholder rather
+		// than an invisible segment.
 		if runes[i] == '[' && i+1 < len(runes) && runes[i+1] == '!' &&
 			i+2 < len(runes) && runes[i+2] == '[' {
 			j := i + 3
@@ -569,8 +572,20 @@ func parseLineSegments(line string) []textSegment {
 					urlClose := scanParenClose(imgClose + 3)
 					if urlClose > 0 {
 						segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
-						literal := string(runes[i : urlClose+1])
-						segs = append(segs, textSegment{text: literal, code: true, underline: st.underline, strike: st.strike})
+						alt := strings.TrimSpace(string(runes[i+3 : j]))
+						linkURL := strings.TrimSpace(string(runes[imgClose+3 : urlClose]))
+						display := alt
+						if display == "" {
+							display = "image"
+						}
+						segs = append(segs, textSegment{
+							text:      html.UnescapeString(display),
+							bold:      st.bold,
+							italic:    st.italic,
+							underline: st.underline,
+							strike:    st.strike,
+							linkURL:   linkURL,
+						})
 						i = urlClose + 1
 						continue
 					}
@@ -598,18 +613,38 @@ func parseLineSegments(line string) []textSegment {
 			i++
 			continue
 		}
-		// [text](url) — render the literal source in code style.
+		// [text](url) — render as a styled link (display text only).
+		// The text scan tracks bracket nesting so "[foo[bar]](url)" is
+		// recognised correctly.
 		if runes[i] == '[' {
 			j := i + 1
-			for j < len(runes) && runes[j] != ']' {
+			depth := 1
+			for j < len(runes) && depth > 0 {
+				switch runes[j] {
+				case '[':
+					depth++
+				case ']':
+					depth--
+				}
+				if depth == 0 {
+					break
+				}
 				j++
 			}
 			if j < len(runes) && j+1 < len(runes) && runes[j+1] == '(' {
 				k := scanParenClose(j + 2)
 				if k > 0 {
 					segs = flush(segs, &cur, st.bold, st.italic, st.underline, st.strike)
-					literal := string(runes[i : k+1])
-					segs = append(segs, textSegment{text: literal, code: true, underline: st.underline, strike: st.strike})
+					linkText := string(runes[i+1 : j])
+					linkURL := strings.TrimSpace(string(runes[j+2 : k]))
+					segs = append(segs, textSegment{
+						text:      html.UnescapeString(linkText),
+						bold:      st.bold,
+						italic:    st.italic,
+						underline: st.underline,
+						strike:    st.strike,
+						linkURL:   linkURL,
+					})
 					i = k + 1
 					continue
 				}
@@ -960,15 +995,21 @@ func drawHeaderSegments(img *image.RGBA, fs *bookFontSet, level, x, baselineY in
 		if seg.code {
 			face = hCodeFace
 		}
-		endX := drawString(img, face, x, baselineY, seg.text, clr)
+		segClr := clr
+		segUnderline := seg.underline
+		if seg.linkURL != "" {
+			segClr = bookLinkColor(seg.linkURL)
+			segUnderline = true
+		}
+		endX := drawString(img, face, x, baselineY, seg.text, segClr)
 		// Faux-bold: extra pass 1 px to the right (headers render bold).
-		drawString(img, face, x+1, baselineY, seg.text, clr)
+		drawString(img, face, x+1, baselineY, seg.text, segClr)
 		right := endX + 1
-		if seg.underline {
+		if segUnderline {
 			ulY := baselineY + 2
 			if ulY < img.Bounds().Max.Y {
 				for px := x; px < right; px++ {
-					img.Set(px, ulY, clr)
+					img.Set(px, ulY, segClr)
 				}
 			}
 		}
@@ -977,7 +1018,7 @@ func drawHeaderSegments(img *image.RGBA, fs *bookFontSet, level, x, baselineY in
 			stY := baselineY - asc/3
 			if stY >= img.Bounds().Min.Y && stY < img.Bounds().Max.Y {
 				for px := x; px < right; px++ {
-					img.Set(px, stY, clr)
+					img.Set(px, stY, segClr)
 				}
 			}
 		}
@@ -1026,23 +1067,195 @@ func measureHeaderSegmentsToRune(fs *bookFontSet, level int, segs []textSegment,
 	// Add +1 px per rune for faux-bold drift.
 	return total.Round() + col
 }
+
+// bookLinkURLUnderCursor returns the URL of a Markdown link "[text](url)"
+// whose raw source contains the current cursor position, or "" if no link
+// is under the cursor. The scan treats the cursor rune index as inclusive
+// on the opening "[" and exclusive on the closing ")".
+func (e *Editor) bookLinkURLUnderCursor() string {
+	dataX, err := e.DataX()
+	if err != nil {
+		return ""
+	}
+	line := e.CurrentLine()
+	runes := []rune(line)
+	for i := 0; i < len(runes); i++ {
+		if runes[i] != '[' {
+			continue
+		}
+		// Find the matching "]" for the link text.
+		j := i + 1
+		depth := 1
+		for j < len(runes) && depth > 0 {
+			switch runes[j] {
+			case '[':
+				depth++
+			case ']':
+				depth--
+				if depth == 0 {
+					break
+				}
+			}
+			if depth == 0 {
+				break
+			}
+			j++
+		}
+		if j >= len(runes) || runes[j] != ']' {
+			continue
+		}
+		if j+1 >= len(runes) || runes[j+1] != '(' {
+			continue
+		}
+		// Find the matching ")" (respecting nesting).
+		k := j + 2
+		pdepth := 1
+		for k < len(runes) && pdepth > 0 {
+			switch runes[k] {
+			case '(':
+				pdepth++
+			case ')':
+				pdepth--
+				if pdepth == 0 {
+					break
+				}
+			}
+			if pdepth == 0 {
+				break
+			}
+			k++
+		}
+		if k >= len(runes) || runes[k] != ')' {
+			continue
+		}
+		// Cursor inside the whole "[text](url)" span?
+		if dataX >= i && dataX <= k {
+			return strings.TrimSpace(string(runes[j+2 : k]))
+		}
+		i = k
+	}
+	return ""
+}
+
+// bookLinkUnvisited is the paint colour for unvisited Markdown links in
+// graphical book mode. bookLinkVisited is used after a link has been
+// followed during this session.
+var (
+	bookLinkUnvisited = color.NRGBA{0x46, 0xa3, 0xbf, 0xff}
+	bookLinkVisited   = color.NRGBA{0x7e, 0x46, 0xbf, 0xff}
+)
+
+// bookVisitedLinks is a session-wide, concurrency-safe set of URLs the user
+// has followed via Ctrl-R in book mode. The set is intentionally not
+// persisted to disk — it resets on every Orbiton invocation.
+var bookVisitedLinks sync.Map
+
+// bookMarkLinkVisited records that url has been visited this session so
+// future paints switch it to the visited colour.
+func bookMarkLinkVisited(url string) {
+	if url == "" {
+		return
+	}
+	bookVisitedLinks.Store(url, struct{}{})
+}
+
+// bookIsLinkVisited reports whether url has been visited this session.
+func bookIsLinkVisited(url string) bool {
+	if url == "" {
+		return false
+	}
+	_, ok := bookVisitedLinks.Load(url)
+	return ok
+}
+
+// bookLinkColor returns the colour to paint a link with url (visited or not).
+func bookLinkColor(url string) color.Color {
+	if bookIsLinkVisited(url) {
+		return bookLinkVisited
+	}
+	return bookLinkUnvisited
+}
+
+// Session-wide navigation history for book-mode URL browsing. bookCurrentURL
+// remembers the URL of the document currently displayed (empty for local
+// files). bookURLHistory is a stack of previously-visited URLs: following a
+// link pushes the current URL, Ctrl-R on a non-link location pops and loads
+// the top entry.
+var (
+	bookHistoryMu  sync.Mutex
+	bookCurrentURL string
+	bookURLHistory []string
+)
+
+// bookSetCurrentURL records the URL of the document currently being viewed.
+// Called from main.go on startup and from the link-follow handler.
+func bookSetCurrentURL(url string) {
+	bookHistoryMu.Lock()
+	bookCurrentURL = url
+	bookHistoryMu.Unlock()
+}
+
+// bookGetCurrentURL returns the URL of the document currently being viewed,
+// or "" if none.
+func bookGetCurrentURL() string {
+	bookHistoryMu.Lock()
+	defer bookHistoryMu.Unlock()
+	return bookCurrentURL
+}
+
+// bookPushHistory appends url to the back-navigation stack. Consecutive
+// duplicates are collapsed so rapid re-follows don't bloat the stack.
+func bookPushHistory(url string) {
+	if url == "" {
+		return
+	}
+	bookHistoryMu.Lock()
+	defer bookHistoryMu.Unlock()
+	n := len(bookURLHistory)
+	if n > 0 && bookURLHistory[n-1] == url {
+		return
+	}
+	bookURLHistory = append(bookURLHistory, url)
+}
+
+// bookPopHistory removes and returns the most recently pushed URL, or "" if
+// the stack is empty.
+func bookPopHistory() string {
+	bookHistoryMu.Lock()
+	defer bookHistoryMu.Unlock()
+	n := len(bookURLHistory)
+	if n == 0 {
+		return ""
+	}
+	top := bookURLHistory[n-1]
+	bookURLHistory = bookURLHistory[:n-1]
+	return top
+}
+
 func drawSegments(img *image.RGBA, fs *bookFontSet, x, baselineY int, segs []textSegment, clr color.Color) int {
 	for _, seg := range segs {
 		face := faceForSeg(fs, seg)
-		endX := drawString(img, face, x, baselineY, seg.text, clr)
+		// Links are painted in a distinct colour and always underlined.
+		segClr := clr
+		segUnderline := seg.underline
+		if seg.linkURL != "" {
+			segClr = bookLinkColor(seg.linkURL)
+			segUnderline = true
+		}
+		endX := drawString(img, face, x, baselineY, seg.text, segClr)
 		if seg.bold {
 			// Faux bold: draw again 1 px to the right for thicker strokes
-			drawString(img, face, x+1, baselineY, seg.text, clr)
+			drawString(img, face, x+1, baselineY, seg.text, segClr)
 		}
 		right := endX
 		if seg.bold {
 			right++
 		}
-		if seg.underline {
+		if segUnderline {
 			ulY := baselineY + 2
 			if ulY < img.Bounds().Max.Y {
 				for px := x; px < right; px++ {
-					img.Set(px, ulY, clr)
+					img.Set(px, ulY, segClr)
 				}
 			}
 		}
@@ -1052,7 +1265,7 @@ func drawSegments(img *image.RGBA, fs *bookFontSet, x, baselineY int, segs []tex
 			stY := baselineY - asc/3
 			if stY >= img.Bounds().Min.Y && stY < img.Bounds().Max.Y {
 				for px := x; px < right; px++ {
-					img.Set(px, stY, clr)
+					img.Set(px, stY, segClr)
 				}
 			}
 		}
@@ -3101,6 +3314,17 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 		if seg.code {
 			fg = bookTextFGDarkGray
 		}
+		// Links (Markdown [text](url)) use the same palette as the
+		// graphical renderer: #46a3bf unvisited, #7e46bf visited. Also
+		// force an underline.
+		isLink := seg.linkURL != ""
+		if isLink {
+			if bookIsLinkVisited(seg.linkURL) {
+				fg = vt.TrueColor(0x7e, 0x46, 0xbf)
+			} else {
+				fg = vt.TrueColor(0x46, 0xa3, 0xbf)
+			}
+		}
 		bg := bookTextBG
 		// Layer in formatting attributes. vt.Combine packs at most two
 		// attributes per slot (16 bits each), so we prioritise the ones
@@ -3114,7 +3338,7 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 		} else if seg.italic {
 			fg = fg.Combine(vt.Italic)
 		}
-		if seg.underline {
+		if seg.underline || isLink {
 			bg = bg.Combine(vt.Underscore)
 		} else if seg.strike {
 			bg = bg.Combine(vt.Strikethrough)
