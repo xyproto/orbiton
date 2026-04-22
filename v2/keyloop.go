@@ -1571,7 +1571,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
-		case " ": // space
+		case " ", "c:194": // space
 			// Scroll down if a man page is being viewed, or if the editor is read-only
 			if e.readOnly && !e.blockMode {
 				// Try to scroll down a full page
