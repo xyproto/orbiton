@@ -338,7 +338,8 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Add the syntax highlighting toggle menu item
-	if !envNoColor && (height > menuHeightThreshold) {
+	// (not applicable in book mode — book mode has its own renderer)
+	if !envNoColor && (height > menuHeightThreshold) && !e.bookMode.Load() {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
@@ -364,8 +365,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
-	if !envNoColor || changedTheme {
-		// Add an option for selecting a theme
+	if (!envNoColor || changedTheme) && !e.bookMode.Load() {
+		// Add an option for selecting a theme (not applicable in book
+		// mode — book mode uses its own fixed black-on-white theme).
 		actions.Add("Change theme", func() {
 			menuChoices := []string{
 				"Default",
@@ -538,19 +540,29 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		// Render to PDF using pandoc
 		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
 			actions.Add("Render to PDF using pandoc", func() {
-				// pandoc
-				if pandocPath := files.WhichCached("pandoc"); pandocPath != "" {
-					pdfFilename := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
-					go func() {
-						pandocMutex.Lock()
-						_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
-						pandocMutex.Unlock()
-					}()
-					// the exportPandoc function handles it's own status output
+				pandocPath := files.WhichCached("pandoc")
+				if pandocPath == "" {
+					status.SetErrorMessageAfterRedraw("Could not find pandoc")
 					return
 				}
-				status.SetErrorMessage("Could not find pandoc")
-				status.ShowNoTimeout(c, e)
+				base := strings.ReplaceAll(filepath.Base(e.filename), ".", "_") + ".pdf"
+				// Put the PDF in the same directory as the source file,
+				// not in the CWD (which is often / or /tmp when running
+				// via a file manager).
+				srcDir, absErr := filepath.Abs(filepath.Dir(e.filename))
+				if absErr != nil {
+					srcDir = filepath.Dir(e.filename)
+				}
+				pdfFilename := filepath.Join(srcDir, base)
+				// Show a "Rendering…" hint that survives the redraw
+				// triggered by the menu closing. exportPandocPDF sets
+				// its own …AfterRedraw message on completion.
+				status.SetMessageAfterRedraw("Rendering " + base + " with pandoc...")
+				go func() {
+					pandocMutex.Lock()
+					defer pandocMutex.Unlock()
+					_ = e.exportPandocPDF(c, tty, status, pandocPath, pdfFilename)
+				}()
 			})
 		}
 	}
@@ -586,30 +598,33 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Launch the megafile file browser
-	actions.Add("File browser", func() {
-		startdir := filepath.Dir(e.filename)
-		if startdir == "" || startdir == "." {
-			startdir, _ = os.Getwd()
-		}
-		megaFileState := megafile.New(c, tty, []string{startdir}, "", getEditorCommand(), fileBrowserUndoHistoryFilename)
-		megaFileState.WrittenTextColor = e.Foreground
-		megaFileState.Background = e.Background
-		megaFileState.HeaderColor = e.HeaderTextColor
-		megaFileState.PromptColor = e.LinkColor
-		megaFileState.AngleColor = e.JumpToLetterColor
-		megaFileState.EdgeBackground = e.Background
-		megaFileState.HighlightBackground = e.NanoHelpBackground
-		megaFileState.EmptyFileColor = e.MultiLineComment
-		c.HideCursor()
-		if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+	// (not applicable in book mode — the user is reading, not editing)
+	if !e.bookMode.Load() {
+		actions.Add("File browser", func() {
+			startdir := filepath.Dir(e.filename)
+			if startdir == "" || startdir == "." {
+				startdir, _ = os.Getwd()
+			}
+			megaFileState := megafile.New(c, tty, []string{startdir}, "", getEditorCommand(), fileBrowserUndoHistoryFilename)
+			megaFileState.WrittenTextColor = e.Foreground
+			megaFileState.Background = e.Background
+			megaFileState.HeaderColor = e.HeaderTextColor
+			megaFileState.PromptColor = e.LinkColor
+			megaFileState.AngleColor = e.JumpToLetterColor
+			megaFileState.EdgeBackground = e.Background
+			megaFileState.HighlightBackground = e.NanoHelpBackground
+			megaFileState.EmptyFileColor = e.MultiLineComment
+			c.HideCursor()
+			if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+				c.ShowCursor()
+				status.SetError(err)
+				status.Show(c, e)
+				return
+			}
 			c.ShowCursor()
-			status.SetError(err)
-			status.Show(c, e)
-			return
-		}
-		c.ShowCursor()
-		os.Exit(0)
-	})
+			os.Exit(0)
+		})
+	}
 
 	// Only show the menu option for killing the parent process if the parent process is a known search command
 	searchProcessNames := []string{"ag", "find", "rg"}
@@ -633,7 +648,28 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	// Launch a generic menu
 	useMenuIndex := max(lastMenuIndex, 0)
 
-	selected, spacePressed := e.Menu(status, tty, menuTitle, menuChoices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, useMenuIndex, extraDashes)
+	// In book mode override the theme's menu palette with a simple
+	// black-on-white reader look: bright white background, black body
+	// text, and a strong blue for the accelerator letter + [N] numbers,
+	// with the existing book-mode link/visited-link colours for the
+	// currently-highlighted and just-selected rows. This keeps the menu
+	// consistent with the rest of book mode (see bookmode.go).
+	bgColor := e.Background
+	titleColor := e.MenuTitleColor
+	arrowColor := e.MenuArrowColor
+	textColor := e.MenuTextColor
+	highlightColor := e.MenuHighlightColor
+	selectedColor := e.MenuSelectedColor
+	if e.bookMode.Load() {
+		bgColor = vt.TrueColor(255, 255, 255)
+		titleColor = vt.TrueColor(30, 90, 180)
+		arrowColor = vt.TrueColor(30, 90, 180)
+		textColor = vt.TrueColor(0, 0, 0)
+		highlightColor = vt.TrueColor(0x46, 0xa3, 0xbf) // unvisited-link cyan
+		selectedColor = vt.TrueColor(0x7e, 0x46, 0xbf)  // visited-link purple
+	}
+
+	selected, spacePressed := e.Menu(status, tty, menuTitle, menuChoices, bgColor, titleColor, arrowColor, textColor, highlightColor, selectedColor, useMenuIndex, extraDashes)
 	if spacePressed {
 		return selected, spacePressed
 	}
