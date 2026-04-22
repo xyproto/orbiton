@@ -7,7 +7,6 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/ollamaclient/v2"
 	"github.com/xyproto/usermodel"
 	"github.com/xyproto/vt"
 )
@@ -15,7 +14,7 @@ import (
 // Ollama holds a model name, a boolean for if the model name was found and an Ollama client struct
 type Ollama struct {
 	// Ollama client, used for tab completion
-	ollamaClient *ollamaclient.Config
+	ollamaClient *ollamaConfig
 
 	// The Ollama model that is used for code completion
 	ModelName string
@@ -54,7 +53,7 @@ func (cc *Ollama) LoadModel() error {
 	if !cc.foundModel {
 		return fmt.Errorf("could not find a code completion model name to use")
 	}
-	cc.ollamaClient = ollamaclient.New(cc.ModelName)
+	cc.ollamaClient = newOllamaConfig(cc.ModelName)
 	cc.ollamaClient.Verbose = false
 	const verbosePull = true
 	if err := cc.ollamaClient.PullIfNeeded(verbosePull); err != nil {
@@ -74,12 +73,7 @@ func (cc *Ollama) Loaded() bool {
 
 // GetSimpleResponse gets a simple text response from Ollama for a given prompt
 func (cc *Ollama) GetSimpleResponse(prompt string) (string, error) {
-	// Use the same approach as CompleteBetween but with empty end
-	response, err := cc.ollamaClient.GetBetweenResponse(prompt, "")
-	if err != nil {
-		return "", err
-	}
-	return response.Response, nil
+	return cc.ollamaClient.GetSimpleResponse(prompt)
 }
 
 // clearBuildErrorExplanationState clears the build error explanation state

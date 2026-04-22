@@ -16,8 +16,6 @@ import (
 	"image/png"
 	"io"
 	"math"
-	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1328,10 +1326,6 @@ var (
 
 	// Download images when rendering?
 	bookDownloadImages = true
-
-	// bookHTTPClient is used for image downloads. A modest timeout keeps
-	// the UI from hanging when a remote host is slow.
-	bookHTTPClient = &http.Client{Timeout: 10 * time.Second}
 )
 
 // bookIsRemoteURL reports whether imgPath is an http(s) URL.
@@ -1820,20 +1814,15 @@ func bookRenderSVG(data []byte) image.Image {
 // any failure so the caller can fall back to rendering without the image.
 // Handles SVG via oksvg/rasterx as well as standard PNG/JPEG/GIF.
 func bookDownloadImage(rawURL string) image.Image {
-	if _, err := url.Parse(rawURL); err != nil {
+	if !bookIsRemoteURL(rawURL) {
 		return nil
 	}
-	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
-	if err != nil {
-		return nil
-	}
-	req.Header.Set("User-Agent", "orbiton")
-	resp, err := bookHTTPClient.Do(req)
+	resp, err := httpGet(rawURL, map[string]string{"User-Agent": "orbiton"}, 10*time.Second)
 	if err != nil {
 		return nil
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != 200 {
 		return nil
 	}
 	const maxBytes = 16 << 20
@@ -1844,7 +1833,7 @@ func bookDownloadImage(rawURL string) image.Image {
 	// Treat both by URL extension and by content sniffing: remote SVGs often
 	// have path components like "/badge.svg" or Content-Type "image/svg+xml"
 	// but some redirect-served URLs don't, so check the payload too
-	contentType := resp.Header.Get("Content-Type")
+	contentType := resp.Header["content-type"]
 	if strings.HasSuffix(strings.ToLower(rawURL), ".svg") ||
 		strings.Contains(contentType, "svg") ||
 		bookLooksLikeSVG(data) {
