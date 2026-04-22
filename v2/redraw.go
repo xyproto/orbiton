@@ -181,7 +181,9 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	// Book mode with graphics: render the editing area as an image
 	if e.bookGraphicalMode() {
 		e.bookModeEnsureCursorVisible(c)
+		redrawMutex.Lock()
 		e.bookModeRenderAll(c, status)
+		redrawMutex.Unlock()
 		e.redraw.Store(false)
 		return
 	}

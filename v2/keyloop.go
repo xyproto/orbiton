@@ -59,7 +59,53 @@ var (
 
 	// Don't search for a corresponding header/source file for longer than ~0.5 seconds
 	fileSearchMaxTime = 500 * time.Millisecond
+
+	// lastBookModeToggle is the last time ctrl-w toggled graphical/text
+	// book mode. Used to debounce buffered repeats during slow renders.
+	lastBookModeToggle time.Time
 )
+
+// bookModeToggleDebounce is the minimum time between successive ctrl-w
+// book-mode toggles. Shorter successive presses are dropped.
+const bookModeToggleDebounce = 400 * time.Millisecond
+
+// toggleBookGraphical flips between graphical and text book-mode rendering
+// when the terminal supports graphics. Buffered presses during a slow render
+// are debounced so they do not immediately toggle back.
+func (e *Editor) toggleBookGraphical(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string) {
+	if !imagepreview.HasGraphics {
+		return
+	}
+	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
+		return
+	}
+	lastBookModeToggle = time.Now()
+	if e.bookForceTextMode.Load() {
+		e.bookForceTextMode.Store(false)
+	} else {
+		if imagepreview.IsKitty {
+			imagepreview.DeleteInlineImages()
+		}
+		e.bookForceTextMode.Store(true)
+	}
+	drainKeys(tty, drainKey)
+	e.FullResetRedraw(c, status, true, false)
+}
+
+// drainKeys discards any pending key presses, up to a small cap. Used after
+// slow actions (e.g. toggling graphical book mode) so buffered repeats do
+// not immediately fire again. The `keys` argument is accepted for
+// self-documentation — all pending input is dropped regardless.
+func drainKeys(tty *vt.TTY, keys ...string) {
+	_ = keys
+	const maxDrain = 64
+	saved := tty.Timeout()
+	tty.SetTimeout(1 * time.Millisecond)
+	defer tty.SetTimeout(saved)
+	for i := 0; i < maxDrain && tty.HasPendingInput(); i++ {
+		_ = tty.ReadKey()
+	}
+}
 
 // ttyFastInput approximates old fast/slow input toggling by adjusting read timeout.
 func ttyFastInput(tty *vt.TTY, enabled bool) {
@@ -494,18 +540,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.bookMode.Load() {
 				// In book mode, ctrl-w toggles between graphical and text
 				// rendering when the terminal supports graphics (Kitty/iTerm2).
-				if imagepreview.HasGraphics {
-					if e.bookForceTextMode.Load() {
-						e.bookForceTextMode.Store(false)
-					} else {
-						// Switching from graphical to text: clean up images.
-						if imagepreview.IsKitty {
-							imagepreview.DeleteInlineImages()
-						}
-						e.bookForceTextMode.Store(true)
-					}
-					e.FullResetRedraw(c, status, true, false)
-				}
+				e.toggleBookGraphical(c, tty, status, "c:23")
 				break
 			}
 
@@ -599,6 +634,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 			if e.nanoMode.Load() {
 				break // do nothing
+			}
+			// In book mode, ctrl-space toggles a Markdown checkbox when the
+			// cursor is on one; otherwise it toggles graphical/text rendering.
+			if e.bookMode.Load() {
+				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
+					undo.Snapshot(e)
+					break
+				}
+				e.toggleBookGraphical(c, tty, status, "c:0")
+				break
 			}
 			switch e.mode {
 			case mode.Markdown:
@@ -1150,7 +1195,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.Cursor().Up(c, status)
+			if e.bookMode.Load() {
+				e.Up(c, status)
+			} else {
+				e.Cursor().Up(c, status)
+			}
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1159,7 +1208,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			e.Cursor().Down(c, status)
+			if e.bookMode.Load() {
+				e.Down(c, status)
+			} else {
+				e.Cursor().Down(c, status)
+			}
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1169,7 +1222,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.StartSelection()
 			}
 			if e.bookMode.Load() {
-				e.bookEnd(c)
+				// Jump straight to the end of the logical line, not the
+				// end of the current soft-wrapped sub-row.
+				e.End(c)
+				e.bookCursorAffinity = bookAffinityForward
 			} else if e.AtOrAfterEndOfLine() {
 				e.Down(c, status)
 				e.End(c)
@@ -1185,7 +1241,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.StartSelection()
 			}
 			if e.bookMode.Load() {
-				e.bookHome(c)
+				// Jump straight to the start of the logical line, not the
+				// start of the current soft-wrapped sub-row.
+				e.Home()
+				e.bookCursorAffinity = bookAffinityForward
 			} else if e.AtStartOfTextScreenLine() && (e.pos.sx+e.pos.offsetX) != 0 {
 				e.Home()
 			} else if e.pos.sx == 0 && e.pos.offsetX == 0 {
@@ -2004,7 +2063,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// Invalidate cached content so it re-renders at the new height
 					bookContentCache = nil
 					e.bookModeEnsureCursorVisible(c)
+					redrawMutex.Lock()
 					e.bookModeRenderAll(c, status)
+					redrawMutex.Unlock()
 				} else {
 					vt.BeginSyncUpdate()
 					e.bookModeStatusBar(c)
@@ -2792,7 +2853,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
 		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
-		e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
+		// Frame skipping: in book mode (both graphical and text) a single
+		// redraw can cost tens of milliseconds, which lets buffered key
+		// presses pile up while the user holds arrow keys. If more input
+		// is already pending when we reach the end of the loop, skip this
+		// redraw — the next iteration will handle it, and e.redraw stays
+		// set. Only applies when book mode is active so other modes keep
+		// their original per-keypress redraw cadence.
+		skipRedraw := e.bookMode.Load() && tty.HasPendingInput()
+		if !skipRedraw {
+			e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
+		}
 
 		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine && !e.debugMode {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
