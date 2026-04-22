@@ -51,7 +51,6 @@ func demangleLines(lines []string) []string {
 	return result
 }
 
-
 const (
 	smallRegisterWindow = iota
 	largeRegisterWindow

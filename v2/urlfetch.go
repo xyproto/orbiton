@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"time"
 
@@ -23,34 +21,25 @@ func isWebURL(s string) bool {
 // HTML to Markdown using the html-to-markdown package, and returns the
 // Markdown bytes. The URL is prepended as a brief header so the reader can
 // see where the content came from. Non-2xx responses produce an error.
+// https:// URLs require the curl executable to be on the PATH; http:// URLs
+// are fetched natively.
 func fetchURLAsMarkdown(u string) ([]byte, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return nil, fmt.Errorf("build request: %w", err)
+	headers := map[string]string{
+		"User-Agent": httpUserAgent + " text/markdown reader",
+		"Accept":     "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
 	}
-	// Many sites return machine-readable or barebones responses to clients
-	// without a browser-style User-Agent. Identify as a recognisable
-	// Orbiton reader while still being polite.
-	req.Header.Set("User-Agent", "Orbiton/1.0 (+https://github.com/xyproto/orbiton) text/markdown reader")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5")
-
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpDo("GET", u, nil, headers, 30*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("fetch %s: %w", u, err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		// Drain a small amount so the connection can be reused.
-		io.Copy(io.Discard, io.LimitReader(resp.Body, 1024))
-		return nil, fmt.Errorf("fetch %s: HTTP %d %s", u, resp.StatusCode, resp.Status)
+		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1024))
+		return nil, fmt.Errorf("fetch %s: HTTP %d", u, resp.StatusCode)
 	}
 
-	// Cap response size at 16 MiB to avoid runaway memory on misbehaving
-	// servers. More than enough for any reasonable article.
+	// Cap response size at 16 MiB to avoid runaway memory on misbehaving servers
 	const maxBytes = 16 << 20
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBytes+1))
 	if err != nil {
