@@ -2011,6 +2011,30 @@ type wrapSegment struct {
 	text  string
 }
 
+// bookWrapPlainRunes wraps s into consecutive rune-chunks of at most width
+// runes each, with no word-boundary awareness. Used by the text book mode
+// for content types (headers, code lines, table rows, image placeholders)
+// where the text is already either pre-formatted or irreducible, so a
+// word-aware wrap would either be lossy or look worse than a hard split.
+func bookWrapPlainRunes(s string, width int) []string {
+	if width <= 0 {
+		return []string{s}
+	}
+	runes := []rune(s)
+	if len(runes) <= width {
+		return []string{s}
+	}
+	var out []string
+	for i := 0; i < len(runes); i += width {
+		end := i + width
+		if end > len(runes) {
+			end = len(runes)
+		}
+		out = append(out, string(runes[i:end]))
+	}
+	return out
+}
+
 // bookWrapBody wraps a body string (no prefix) to fit within availW visible
 // columns, breaking at word boundaries. Visible columns ignore Markdown
 // inline markers (*, **, ***, __, ~~ and `), so the wrap result reflects
@@ -5556,11 +5580,22 @@ func bookTableLayout(fs *bookFontSet, block []string, avail int) (aligns []int, 
 	if nCols == 0 || avail <= 0 {
 		return aligns, widths
 	}
-	each := avail / nCols
+	// Reserve a single pixel column for the right border. The outer
+	// renderer paints a white rectangle starting at rightMargin after
+	// the table is drawn; if the table's right vertical line were to
+	// land exactly on rightMargin that fill would overwrite it and the
+	// table would appear to be missing its right border. Keeping the
+	// table one pixel narrower than avail guarantees the border sits at
+	// rightMargin-1 and survives.
+	layoutAvail := avail
+	if layoutAvail > 1 {
+		layoutAvail--
+	}
+	each := layoutAvail / nCols
 	for i := range widths {
 		widths[i] = each
 	}
-	widths[nCols-1] += avail - each*nCols
+	widths[nCols-1] += layoutAvail - each*nCols
 	return aligns, widths
 }
 
@@ -5580,6 +5615,10 @@ func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin in
 	avail := rightMargin - marginLeft
 	if avail <= 0 {
 		return 1
+	}
+	// Match bookTableLayout, which reserves one pixel for the right border.
+	if avail > 1 {
+		avail--
 	}
 	each := avail / len(cells)
 	const pad = 10
