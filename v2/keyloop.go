@@ -461,10 +461,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			goto AFTER_KEY_HANDLING
 		}
 
-		// Reset the saved visual column for book mode unless the user is
-		// pressing up/down arrows (which should retain it).
+		// Reset the saved visual column for book mode, except on up/down
+		// arrows (which should retain it)
 		if key != upArrow && key != downArrow {
 			e.bookSavedLocalX = -1
+		}
+
+		// Reset the book-mode cursor affinity on any non-movement key so
+		// that typing or editing lands on the forward-affinity position.
+		// Movement keys manage affinity themselves.
+		switch key {
+		case upArrow, downArrow, leftArrow, rightArrow, homeKey, endKey,
+			pgUpKey, pgDnKey, "c:1", "c:5":
+			// movement — leave affinity alone
+		default:
+			e.bookCursorAffinity = bookAffinityForward
 		}
 
 		switch key {
@@ -1650,7 +1661,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.bookMode.Load() { // book mode: toggle italic (tab not needed in prose mode)
 				undo.Snapshot(e)
-				e.bookToggleFormat(c, "*")
+				e.bookToggleParagraphIndent(c)
 				break
 			}
 

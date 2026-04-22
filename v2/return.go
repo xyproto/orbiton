@@ -68,17 +68,25 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 
 	switch {
 	case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrBeforeStartOfTextScreenLine()):
-		e.InsertLineAbove()
-		noHome = true
+		// An empty last line needs InsertLineBelow — InsertLineAbove would
+		// trim the trailing empty line back off, resulting in a net no-op
+		if e.AtLastLineOfDocument() && e.EmptyLine() {
+			e.InsertLineBelow()
+			scrollBack = true
+		} else {
+			e.InsertLineAbove()
+			noHome = true
+		}
 	case e.AtOrAfterEndOfDocument() && !e.AtStartOfTheLine() && !e.AtOrAfterEndOfLine():
-		e.InsertStringAndMove(c, "")
 		e.InsertLineBelow()
 		scrollBack = true
 	case e.AfterEndOfLine():
 		e.InsertLineBelow()
 		scrollBack = true
 	case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrAfterEndOfLine()):
-		e.InsertStringAndMove(c, "")
+		// End of the last line: insert a blank line below so the user can
+		// actually append lines at the end of the document
+		e.InsertLineBelow()
 		scrollBack = true
 	case e.AtStartOfTheLine():
 		e.InsertLineAbove()
@@ -104,11 +112,9 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		editH--
 	}
 	if e.bookMode.Load() {
-		// Book mode: pos.sy is a data-line offset from offsetY, and the
-		// canvas-row based scroll math in ScrollDown does not account
-		// for soft wrap. Just advance DataY directly and let
-		// bookModeEnsureCursorVisible (called from RedrawAtEndOfKeyLoop)
-		// scroll the viewport based on the real display-row layout.
+		// In book mode, pos.sy is a data-line offset; the canvas-row
+		// scroll math does not account for soft wrap. Advance DataY
+		// directly and let bookModeEnsureCursorVisible handle scrolling
 		e.pos.Down(c)
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
@@ -146,11 +152,10 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		}
 	}
 
-	// Auto-continue Markdown lists: insert the next prefix on the new line.
+	// Auto-continue Markdown lists: insert the next prefix on the new line
 	if listPrefix != "" {
 		e.SetCurrentLine(listPrefix + e.LineContentsFromCursorPosition())
-		// Position cursor after the prefix. Don't use End() — it trims
-		// trailing whitespace which would strip the space from "* ".
+		// End() would trim trailing whitespace and strip the space from "* "
 		e.pos.SetX(c, len([]rune(listPrefix)))
 	}
 
