@@ -5,15 +5,21 @@ import (
 	"compress/gzip"
 	_ "embed"
 	"encoding/base64"
+	"encoding/xml"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
+	_ "image/gif"
+	_ "image/jpeg"
 	"image/png"
 	"io"
 	"math"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,6 +27,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/srwiley/oksvg"
+	"github.com/srwiley/rasterx"
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -352,11 +360,11 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if err != nil {
 		return nil, err
 	}
-	h1Size := pixelSize * 1.85
-	h2Size := pixelSize * 1.65
-	h3Size := pixelSize * 1.4
-	h4Size := pixelSize * 1.2
-	h5Size := pixelSize * 1.05
+	h1Size := pixelSize * 1.55
+	h2Size := pixelSize * 1.35
+	h3Size := pixelSize * 1.2
+	h4Size := pixelSize * 1.1
+	h5Size := pixelSize * 1.0
 	h1, err := newFace(parsedMontserratBold, h1Size)
 	if err != nil {
 		return nil, err
@@ -716,6 +724,26 @@ func parseBookLine(line string) parsedLine {
 			body:   inner,
 		}
 	}
+	// Markdown images, possibly wrapped in a link: [![alt](imgURL)](linkURL)
+	if strings.HasPrefix(trimmed, "[![") {
+		// Find the closing "](" of the inner ![alt](imgURL)
+		j := strings.Index(trimmed[3:], "](")
+		if j >= 0 {
+			imgStart := 3 + j + 2
+			k := strings.Index(trimmed[imgStart:], ")")
+			if k >= 0 {
+				rest := trimmed[imgStart+k+1:]
+				// Require the outer link pattern and nothing else on the line
+				if strings.HasPrefix(rest, "](") {
+					endIdx := strings.Index(rest[2:], ")")
+					if endIdx >= 0 && strings.TrimSpace(rest[2+endIdx+1:]) == "" {
+						imgPath := trimmed[imgStart : imgStart+k]
+						return parsedLine{kind: lineKindImage, body: imgPath}
+					}
+				}
+			}
+		}
+	}
 	// Markdown images
 	if strings.HasPrefix(trimmed, "![") {
 		j := strings.Index(trimmed[2:], "](")
@@ -811,7 +839,7 @@ func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
 
 // drawString renders text at (x, baselineY) using face and returns the new X.
 // Runes the primary face lacks are rendered with the registered DejaVu Sans
-// fallback face
+// fallback face.
 func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, clr color.Color) int {
 	fb := faceFallback(face)
 	if fb == nil {
@@ -932,29 +960,609 @@ func drawCursorBar(img *image.RGBA, x, top, bottom int) {
 }
 
 var (
-	bookImgCache   = map[string]image.Image{}
-	bookImgCacheMu sync.Mutex
+	bookImgCache    = map[string]image.Image{}
+	bookImgInFlight = map[string]bool{}
+	bookImgCacheMu  sync.Mutex
+
+	// Download images when rendering?
+	bookDownloadImages = true
+
+	// bookHTTPClient is used for image downloads. A modest timeout keeps
+	// the UI from hanging when a remote host is slow.
+	bookHTTPClient = &http.Client{Timeout: 10 * time.Second}
 )
 
-// bookLoadImage loads and caches an image by absolute path.
-// Returns nil if the file does not exist or cannot be decoded.
-func bookLoadImage(absPath string) image.Image {
-	bookImgCacheMu.Lock()
-	defer bookImgCacheMu.Unlock()
-	if img, ok := bookImgCache[absPath]; ok {
-		return img
+// bookIsRemoteURL reports whether imgPath is an http(s) URL.
+func bookIsRemoteURL(imgPath string) bool {
+	if len(imgPath) < 7 {
+		return false
 	}
-	nimg, err := imagepreview.LoadImage(absPath)
+	lower := strings.ToLower(imgPath)
+	return strings.HasPrefix(lower, "http://") || strings.HasPrefix(lower, "https://")
+}
+
+// svgTextSpan describes a single piece of text extracted from an SVG.
+// All coordinates are in the SVG's user-space (before the viewBox→pixel
+// mapping) and already have the cumulative ancestor transforms folded in
+// (only scale/translate are honored — enough for shields.io-style badges).
+type svgTextSpan struct {
+	x, y        float64
+	text        string
+	fontSize    float64
+	fill        color.NRGBA
+	anchor      string // "start" | "middle" | "end"
+	bold        bool
+	italic      bool
+	monospace   bool
+	fillOpacity float64
+}
+
+// svgAttrFrame captures the CSS/presentation attributes inherited down the
+// SVG element tree.
+type svgAttrFrame struct {
+	fontSize    float64
+	fill        color.NRGBA
+	fillSet     bool
+	anchor      string
+	family      string
+	bold        bool
+	italic      bool
+	scaleX      float64
+	scaleY      float64
+	tx, ty      float64
+	fillOpacity float64
+}
+
+var (
+	svgNumRe       = regexp.MustCompile(`-?(?:\d+(?:\.\d+)?|\.\d+)`)
+	svgHexShortRe  = regexp.MustCompile(`^#([0-9A-Fa-f]{3})$`)
+	svgHexLongRe   = regexp.MustCompile(`^#([0-9A-Fa-f]{6})$`)
+	svgRGBFuncRe   = regexp.MustCompile(`^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$`)
+	svgTranslateRe = regexp.MustCompile(`translate\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:[,\s]+(-?(?:\d+(?:\.\d+)?|\.\d+)))?\s*\)`)
+	svgScaleRe     = regexp.MustCompile(`scale\s*\(\s*(-?(?:\d+(?:\.\d+)?|\.\d+))(?:[,\s]+(-?(?:\d+(?:\.\d+)?|\.\d+)))?\s*\)`)
+)
+
+// svgParseColor parses a subset of SVG color strings: #rgb, #rrggbb, rgb(r,g,b)
+// and the common named colors used by badges. Returns (c, ok).
+func svgParseColor(s string) (color.NRGBA, bool) {
+	s = strings.TrimSpace(s)
+	if s == "" || s == "none" || s == "transparent" || s == "inherit" {
+		return color.NRGBA{}, false
+	}
+	if m := svgHexLongRe.FindStringSubmatch(s); m != nil {
+		v, err := strconv.ParseUint(m[1], 16, 32)
+		if err != nil {
+			return color.NRGBA{}, false
+		}
+		return color.NRGBA{uint8(v >> 16), uint8(v >> 8), uint8(v), 0xff}, true
+	}
+	if m := svgHexShortRe.FindStringSubmatch(s); m != nil {
+		r, _ := strconv.ParseUint(string(m[1][0]), 16, 32)
+		g, _ := strconv.ParseUint(string(m[1][1]), 16, 32)
+		b, _ := strconv.ParseUint(string(m[1][2]), 16, 32)
+		return color.NRGBA{uint8(r * 17), uint8(g * 17), uint8(b * 17), 0xff}, true
+	}
+	if m := svgRGBFuncRe.FindStringSubmatch(s); m != nil {
+		r, _ := strconv.Atoi(m[1])
+		g, _ := strconv.Atoi(m[2])
+		b, _ := strconv.Atoi(m[3])
+		return color.NRGBA{uint8(r), uint8(g), uint8(b), 0xff}, true
+	}
+	switch strings.ToLower(s) {
+	case "white":
+		return color.NRGBA{0xff, 0xff, 0xff, 0xff}, true
+	case "black":
+		return color.NRGBA{0, 0, 0, 0xff}, true
+	case "red":
+		return color.NRGBA{0xff, 0, 0, 0xff}, true
+	case "green":
+		return color.NRGBA{0, 0x80, 0, 0xff}, true
+	case "blue":
+		return color.NRGBA{0, 0, 0xff, 0xff}, true
+	case "gray", "grey":
+		return color.NRGBA{0x80, 0x80, 0x80, 0xff}, true
+	}
+	return color.NRGBA{}, false
+}
+
+// svgParseStyle returns a map of name→value from a CSS-like style string
+// ("font-size:11px;fill:#fff").
+func svgParseStyle(s string) map[string]string {
+	m := map[string]string{}
+	for _, p := range strings.Split(s, ";") {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if i := strings.IndexByte(p, ':'); i > 0 {
+			k := strings.TrimSpace(p[:i])
+			v := strings.TrimSpace(p[i+1:])
+			m[k] = v
+		}
+	}
+	return m
+}
+
+// svgParseLength parses "11px" / "11" as a float. Returns 0 on failure.
+func svgParseLength(s string) float64 {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0
+	}
+	for _, suf := range []string{"px", "pt", "em"} {
+		s = strings.TrimSuffix(s, suf)
+	}
+	f, _ := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	return f
+}
+
+// svgApplyAttrs returns a new frame derived from parent with the given
+// element attributes merged in. Only a subset of attributes used by common
+// badge SVGs are honored: font-size, font-family, font-weight, font-style,
+// fill, fill-opacity, text-anchor, transform (translate + scale).
+func svgApplyAttrs(parent svgAttrFrame, attrs []xml.Attr) svgAttrFrame {
+	f := parent
+	// Merge style= into named attrs first so explicit attrs win.
+	var styleMap map[string]string
+	for _, a := range attrs {
+		if a.Name.Local == "style" {
+			styleMap = svgParseStyle(a.Value)
+			break
+		}
+	}
+	apply := func(name, value string) {
+		switch name {
+		case "font-size":
+			if v := svgParseLength(value); v > 0 {
+				f.fontSize = v
+			}
+		case "font-family":
+			f.family = value
+		case "font-weight":
+			v := strings.TrimSpace(value)
+			f.bold = v == "bold" || v == "bolder" || v == "700" || v == "800" || v == "900"
+		case "font-style":
+			f.italic = strings.TrimSpace(value) == "italic"
+		case "fill":
+			if c, ok := svgParseColor(value); ok {
+				f.fill = c
+				f.fillSet = true
+			}
+		case "fill-opacity":
+			if v, err := strconv.ParseFloat(strings.TrimSpace(value), 64); err == nil {
+				f.fillOpacity = v
+			}
+		case "text-anchor":
+			f.anchor = strings.TrimSpace(value)
+		case "transform":
+			// Compose translate/scale (ignore rotate/skew — uncommon in badges).
+			if m := svgTranslateRe.FindStringSubmatch(value); m != nil {
+				tx, _ := strconv.ParseFloat(m[1], 64)
+				ty := 0.0
+				if m[2] != "" {
+					ty, _ = strconv.ParseFloat(m[2], 64)
+				}
+				// The new translate maps child (0,0) → (parent+scale*tx, ...)
+				f.tx += f.scaleX * tx
+				f.ty += f.scaleY * ty
+			}
+			if m := svgScaleRe.FindStringSubmatch(value); m != nil {
+				sx, _ := strconv.ParseFloat(m[1], 64)
+				sy := sx
+				if m[2] != "" {
+					sy, _ = strconv.ParseFloat(m[2], 64)
+				}
+				f.scaleX *= sx
+				f.scaleY *= sy
+			}
+		}
+	}
+	for k, v := range styleMap {
+		apply(k, v)
+	}
+	for _, a := range attrs {
+		if a.Name.Local == "style" {
+			continue
+		}
+		apply(a.Name.Local, a.Value)
+	}
+	return f
+}
+
+// svgExtractTextSpans parses an SVG document and returns the viewBox width
+// and height plus all <text> / <tspan> leaves in render order. When the
+// document cannot be parsed, all return values are zero/nil.
+func svgExtractTextSpans(data []byte) (viewW, viewH float64, spans []svgTextSpan) {
+	dec := xml.NewDecoder(bytes.NewReader(data))
+	dec.Strict = false
+	dec.Entity = xml.HTMLEntity
+
+	type frameLevel struct {
+		frame      svgAttrFrame
+		inText     bool
+		textBuf    strings.Builder
+		xOverride  float64
+		yOverride  float64
+		hasX, hasY bool
+	}
+	root := svgAttrFrame{
+		fontSize:    16,
+		fill:        color.NRGBA{0, 0, 0, 0xff},
+		anchor:      "start",
+		scaleX:      1,
+		scaleY:      1,
+		fillOpacity: 1,
+	}
+	stack := []frameLevel{{frame: root}}
+
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			break
+		}
+		switch t := tok.(type) {
+		case xml.StartElement:
+			parent := stack[len(stack)-1].frame
+			cur := svgApplyAttrs(parent, t.Attr)
+			lvl := frameLevel{frame: cur}
+			lvl.xOverride = parent.tx
+			lvl.yOverride = parent.ty
+			// Snapshot the x/y on <text>/<tspan> before the element's own
+			// transform is applied — SVG applies attributes first, then
+			// transforms. But shields.io uses only transform="scale(...)"
+			// and absolute x/y on <text>. We fold as: final = parentTrans +
+			// parentScale*(x,y)*ownScaleFactor — for the common case of a
+			// single scale on the element, parentScale is 1.
+			for _, a := range t.Attr {
+				switch a.Name.Local {
+				case "x":
+					if v, err := strconv.ParseFloat(strings.TrimSpace(a.Value), 64); err == nil {
+						lvl.xOverride = v
+						lvl.hasX = true
+					}
+				case "y":
+					if v, err := strconv.ParseFloat(strings.TrimSpace(a.Value), 64); err == nil {
+						lvl.yOverride = v
+						lvl.hasY = true
+					}
+				}
+			}
+			if strings.EqualFold(t.Name.Local, "svg") {
+				// viewBox="minX minY W H"
+				for _, a := range t.Attr {
+					if a.Name.Local == "viewBox" {
+						nums := svgNumRe.FindAllString(a.Value, -1)
+						if len(nums) >= 4 {
+							w, _ := strconv.ParseFloat(nums[2], 64)
+							h, _ := strconv.ParseFloat(nums[3], 64)
+							viewW, viewH = w, h
+						}
+					}
+					if a.Name.Local == "width" && viewW == 0 {
+						viewW = svgParseLength(a.Value)
+					}
+					if a.Name.Local == "height" && viewH == 0 {
+						viewH = svgParseLength(a.Value)
+					}
+				}
+			}
+			if strings.EqualFold(t.Name.Local, "text") || strings.EqualFold(t.Name.Local, "tspan") {
+				lvl.inText = true
+			}
+			stack = append(stack, lvl)
+		case xml.CharData:
+			top := &stack[len(stack)-1]
+			if top.inText {
+				top.textBuf.WriteString(string(t))
+			}
+		case xml.EndElement:
+			top := stack[len(stack)-1]
+			if top.inText {
+				text := strings.TrimSpace(top.textBuf.String())
+				if text != "" {
+					f := top.frame
+					// f.tx / f.scaleX already include all ancestor and own
+					// transforms (svgApplyAttrs composes them left-to-right).
+					// If this element provided x/y, map them through the full
+					// transform; otherwise use the accumulated translation.
+					x := f.tx
+					y := f.ty
+					if top.hasX {
+						x = f.tx + f.scaleX*top.xOverride
+					}
+					if top.hasY {
+						y = f.ty + f.scaleY*top.yOverride
+					}
+					op := f.fillOpacity
+					if op <= 0 {
+						op = 1
+					}
+					fc := f.fill
+					fc.A = uint8(float64(fc.A) * op)
+					spans = append(spans, svgTextSpan{
+						x:           x,
+						y:           y,
+						text:        text,
+						fontSize:    f.fontSize * f.scaleY,
+						fill:        fc,
+						anchor:      f.anchor,
+						bold:        f.bold,
+						italic:      f.italic,
+						monospace:   strings.Contains(strings.ToLower(f.family), "mono") || strings.Contains(strings.ToLower(f.family), "courier"),
+						fillOpacity: op,
+					})
+				}
+			}
+			stack = stack[:len(stack)-1]
+		}
+	}
+	return viewW, viewH, spans
+}
+
+// bookRenderSVGTextOverlay draws <text>/<tspan> content onto img after oksvg
+// has rasterized the shapes. oksvg itself doesn't render SVG text, so this
+// recovers legibility for shields.io-style badges and similar SVGs that rely
+// on <text>. Text is rendered with Orbiton's bundled fonts — DejaVu Sans is
+// used as the Unicode-safe fallback for "sans-serif" / "Verdana" / "Arial"
+// requests, Fira Mono Bold for monospace, and Vollkorn for serif.
+func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64) {
+	w, h := viewW, viewH
+	if w <= 0 || h <= 0 {
+		b := img.Bounds()
+		w, h = float64(b.Dx()), float64(b.Dy())
+	}
+	_, _, spans := svgExtractTextSpans(data)
+	if len(spans) == 0 {
+		return
+	}
+	b := img.Bounds()
+	sx := float64(b.Dx()) / w
+	sy := float64(b.Dy()) / h
+	_ = parsedFonts() // ensure fonts are loaded; safe to ignore error here
+	for _, sp := range spans {
+		// Apply a small legibility adjustment: DejaVu Sans at the SVG's
+		// declared px size tends to render visually larger than Verdana
+		// (shields.io's intended face), which nudges text past the badge
+		// edges. Shave a touch off the size so it fits cleanly.
+		size := sp.fontSize * sy * 0.82
+		if size < 4 {
+			size = 4
+		}
+		// Pick a face
+		var baseFont *opentype.Font
+		switch {
+		case sp.monospace && parsedFiraMonoBold != nil:
+			baseFont = parsedFiraMonoBold
+		case sp.bold && parsedMontserratBold != nil:
+			baseFont = parsedMontserratBold
+		case parsedDejaVuSans != nil:
+			baseFont = parsedDejaVuSans
+		case parsedMontserratLight != nil:
+			baseFont = parsedMontserratLight
+		case parsedVollkornRegular != nil:
+			baseFont = parsedVollkornRegular
+		}
+		if baseFont == nil {
+			continue
+		}
+		face, err := newFace(baseFont, size)
+		if err != nil {
+			continue
+		}
+		// Measure for anchoring
+		width := measureStringFB(face, sp.text).Round()
+		px := sp.x * sx
+		py := sp.y * sy
+		switch strings.ToLower(sp.anchor) {
+		case "middle":
+			px -= float64(width) / 2
+		case "end":
+			px -= float64(width)
+		}
+		clr := sp.fill
+		if clr.A == 0 {
+			continue
+		}
+		drawString(img, face, int(px+0.5), int(py+0.5), sp.text, clr)
+		face.Close()
+	}
+}
+
+func bookLooksLikeSVG(data []byte) bool {
+	// Scan past whitespace and an optional XML prolog / doctype / comments
+	i := 0
+	for i < len(data) {
+		for i < len(data) && (data[i] == ' ' || data[i] == '\t' || data[i] == '\n' || data[i] == '\r') {
+			i++
+		}
+		if i >= len(data) || data[i] != '<' {
+			return false
+		}
+		rest := data[i:]
+		switch {
+		case bytes.HasPrefix(rest, []byte("<?xml")):
+			end := bytes.Index(rest, []byte("?>"))
+			if end < 0 {
+				return false
+			}
+			i += end + 2
+		case bytes.HasPrefix(rest, []byte("<!--")):
+			end := bytes.Index(rest, []byte("-->"))
+			if end < 0 {
+				return false
+			}
+			i += end + 3
+		case bytes.HasPrefix(rest, []byte("<!DOCTYPE")), bytes.HasPrefix(rest, []byte("<!doctype")):
+			end := bytes.IndexByte(rest, '>')
+			if end < 0 {
+				return false
+			}
+			i += end + 1
+		case bytes.HasPrefix(rest, []byte("<svg")):
+			return true
+		default:
+			return false
+		}
+	}
+	return false
+}
+
+// bookRenderSVG rasterises SVG bytes to an image.Image. Returns nil on any
+// parse or render error. oksvg only handles the geometric shapes, so any
+// <text> / <tspan> content is composited afterwards using Orbiton's built-in
+// fonts (bookRenderSVGTextOverlay).
+func bookRenderSVG(data []byte) image.Image {
+	icon, err := oksvg.ReadIconStream(bytes.NewReader(data))
 	if err != nil {
-		bookImgCache[absPath] = nil
 		return nil
 	}
+	w := 800
+	h := 600
+	if icon.ViewBox.W > 0 {
+		w = int(icon.ViewBox.W)
+		h = int(icon.ViewBox.H)
+		if h <= 0 {
+			h = w
+		}
+	}
+	// Cap the raster size so a large viewBox can't blow up memory
+	const maxDim = 2048
+	if w > maxDim {
+		scale := float64(maxDim) / float64(w)
+		w = maxDim
+		h = int(float64(h) * scale)
+	}
+	if h > maxDim {
+		scale := float64(maxDim) / float64(h)
+		h = maxDim
+		w = int(float64(w) * scale)
+	}
+	if w < 1 {
+		w = 1
+	}
+	if h < 1 {
+		h = 1
+	}
+	icon.SetTarget(0, 0, float64(w), float64(h))
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	scanner := rasterx.NewScannerGV(w, h, img, img.Bounds())
+	dasher := rasterx.NewDasher(w, h, scanner)
+	icon.Draw(dasher, 1.0)
+	// Render any SVG <text> / <tspan> elements on top. oksvg ignores text
+	// entirely, so this is what makes shields.io badges legible.
+	bookRenderSVGTextOverlay(img, data, icon.ViewBox.W, icon.ViewBox.H)
+	return img
+}
+
+// bookDownloadImage fetches a remote image and decodes it. Returns nil on
+// any failure so the caller can fall back to rendering without the image.
+// Handles SVG via oksvg/rasterx as well as standard PNG/JPEG/GIF.
+func bookDownloadImage(rawURL string) image.Image {
+	if _, err := url.Parse(rawURL); err != nil {
+		return nil
+	}
+	req, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil
+	}
+	req.Header.Set("User-Agent", "orbiton")
+	resp, err := bookHTTPClient.Do(req)
+	if err != nil {
+		return nil
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil
+	}
+	const maxBytes = 16 << 20
+	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBytes))
+	if err != nil {
+		return nil
+	}
+	// Treat both by URL extension and by content sniffing: remote SVGs often
+	// have path components like "/badge.svg" or Content-Type "image/svg+xml"
+	// but some redirect-served URLs don't, so check the payload too
+	contentType := resp.Header.Get("Content-Type")
+	if strings.HasSuffix(strings.ToLower(rawURL), ".svg") ||
+		strings.Contains(contentType, "svg") ||
+		bookLooksLikeSVG(data) {
+		if img := bookRenderSVG(data); img != nil {
+			return img
+		}
+	}
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil
+	}
+	return img
+}
+
+// bookLoadImage loads and caches an image by absolute path or remote URL.
+// Returns nil if the image cannot be loaded or decoded. Remote URLs are
+// fetched asynchronously in the background (only when --downloadimages is
+// enabled) so the render loop is never blocked on the network; subsequent
+// frames pick up completed downloads.
+func bookLoadImage(absPath string) image.Image {
+	bookImgCacheMu.Lock()
+	if img, ok := bookImgCache[absPath]; ok {
+		bookImgCacheMu.Unlock()
+		return img
+	}
+	if bookIsRemoteURL(absPath) {
+		if !bookDownloadImages {
+			bookImgCache[absPath] = nil
+			bookImgCacheMu.Unlock()
+			return nil
+		}
+		if bookImgInFlight[absPath] {
+			bookImgCacheMu.Unlock()
+			return nil
+		}
+		bookImgInFlight[absPath] = true
+		bookImgCacheMu.Unlock()
+		go func(u string) {
+			nimg := bookDownloadImage(u)
+			bookImgCacheMu.Lock()
+			bookImgCache[u] = nimg
+			delete(bookImgInFlight, u)
+			bookImgCacheMu.Unlock()
+			// Invalidate the content cache so the next frame includes
+			// the newly-available image
+			bookBumpContentGen()
+		}(absPath)
+		return nil
+	}
+	bookImgCacheMu.Unlock()
+	nimg := bookLoadLocalImage(absPath)
+	bookImgCacheMu.Lock()
 	bookImgCache[absPath] = nimg
+	bookImgCacheMu.Unlock()
 	return nimg
 }
 
-// resolveBookImagePath resolves an image path relative to the document
+// bookLoadLocalImage loads and decodes a local image file, with SVG support
+// via oksvg/rasterx. Returns nil on error.
+func bookLoadLocalImage(absPath string) image.Image {
+	if strings.HasSuffix(strings.ToLower(absPath), ".svg") {
+		data, err := os.ReadFile(absPath)
+		if err != nil {
+			return nil
+		}
+		return bookRenderSVG(data)
+	}
+	nimg, err := imagepreview.LoadImage(absPath)
+	if err != nil {
+		return nil
+	}
+	return nimg
+}
+
+// resolveBookImagePath resolves an image path relative to the document.
+// Remote (http/https) paths are returned unchanged.
 func (e *Editor) resolveBookImagePath(imgPath string) string {
+	if bookIsRemoteURL(imgPath) {
+		return imgPath
+	}
 	if filepath.IsAbs(imgPath) {
 		return imgPath
 	}
@@ -999,6 +1607,147 @@ func bookScaleImage(src image.Image, maxW, maxH int) image.Image {
 
 // bookMaxImageRows is the default maximum height (in terminal rows) for inline images
 const bookMaxImageRows = 8
+
+// bookImagePlacement describes one image's position within an image group.
+type bookImagePlacement struct {
+	img     image.Image
+	dstX    int // x relative to the group's left edge (marginLeft)
+	dstY    int // y relative to the group's top edge (cellTop)
+	width   int
+	height  int
+	loading bool // true if the image is still being fetched (placeholder)
+}
+
+// bookCollectImageGroup returns the list of image URLs for an image-only
+// paragraph starting at startLine, plus how many source lines it spans.
+// Returns (nil, 0) when startLine is not an image line. Adjacent image-only
+// lines with no blank line between them are treated as a single paragraph,
+// matching Markdown's paragraph-coalescing semantics.
+func (e *Editor) bookCollectImageGroup(startLine int) ([]string, int) {
+	total := e.Len()
+	if startLine >= total {
+		return nil, 0
+	}
+	raw := strings.ReplaceAll(e.Line(LineIndex(startLine)), "\t", "    ")
+	pl := parseBookLine(raw)
+	if pl.kind != lineKindImage {
+		return nil, 0
+	}
+	urls := []string{pl.body}
+	i := startLine + 1
+	for i < total {
+		r := strings.ReplaceAll(e.Line(LineIndex(i)), "\t", "    ")
+		pl2 := parseBookLine(r)
+		if pl2.kind != lineKindImage {
+			break
+		}
+		urls = append(urls, pl2.body)
+		i++
+	}
+	return urls, i - startLine
+}
+
+// bookLayoutImageGroup places images left-to-right, wrapping to a new row
+// when the next image would overflow availW. Each image is scaled to fit
+// bookMaxImageRows*lineH tall (and never wider than availW). A missing or
+// not-yet-downloaded image gets a small placeholder slot so the paragraph
+// takes roughly the same footprint before and after async image loads
+// complete. Returns the placements and total rows consumed.
+func (e *Editor) bookLayoutImageGroup(urls []string, availW, lineH int) ([]bookImagePlacement, int) {
+	if availW < 1 {
+		availW = 1
+	}
+	if lineH < 1 {
+		lineH = 1
+	}
+	const gapX = 6
+	const gapY = 2
+	maxH := bookMaxImageRows * lineH
+	// Placeholder size for images that aren't loaded yet — roughly matches a
+	// typical shields.io badge so the layout doesn't snap when downloads land.
+	phW := min(120, availW)
+	phH := max(lineH*9/10, 14)
+
+	var placed []bookImagePlacement
+	curX, rowTop, rowH := 0, 0, 0
+	for _, u := range urls {
+		abs := e.resolveBookImagePath(u)
+		src := bookLoadImage(abs)
+		var w, h int
+		loading := src == nil
+		if loading {
+			w, h = phW, phH
+		} else {
+			b := src.Bounds()
+			sw, sh := b.Dx(), b.Dy()
+			if sw <= 0 || sh <= 0 {
+				continue
+			}
+			scale := 1.0
+			if sh > maxH {
+				scale = float64(maxH) / float64(sh)
+			}
+			if float64(sw)*scale > float64(availW) {
+				scale = float64(availW) / float64(sw)
+			}
+			w = max(int(float64(sw)*scale), 1)
+			h = max(int(float64(sh)*scale), 1)
+		}
+		// Wrap when the image wouldn't fit on the current row (but never on
+		// an empty row — if it's too wide it goes alone and gets clipped).
+		if curX > 0 && curX+w > availW {
+			rowTop += rowH + gapY
+			curX = 0
+			rowH = 0
+		}
+		placed = append(placed, bookImagePlacement{img: src, dstX: curX, dstY: rowTop, width: w, height: h, loading: loading})
+		curX += w + gapX
+		if h > rowH {
+			rowH = h
+		}
+	}
+	totalPx := rowTop + rowH
+	rows := max((totalPx+lineH-1)/lineH, 1)
+	return placed, rows
+}
+
+// bookImageGroupRows returns how many display rows an image paragraph will
+// occupy, without drawing anything. Used during row counting / cursor mapping.
+func (e *Editor) bookImageGroupRows(urls []string, availW, lineH int) int {
+	_, rows := e.bookLayoutImageGroup(urls, availW, lineH)
+	return rows
+}
+
+// bookDrawImageGroup draws a group of images at (marginLeft, cellTop), laid
+// out horizontally with wrapping. Loading placeholders render as a faint
+// rounded rectangle so the user sees "something is coming here". Returns the
+// number of display rows consumed.
+func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, marginRight, cellTop, lineH int) int {
+	availW := marginRight - marginLeft
+	placed, rows := e.bookLayoutImageGroup(urls, availW, lineH)
+	phBg := color.NRGBA{0xe0, 0xe0, 0xe0, 0xff}
+	phBorder := color.NRGBA{0xb0, 0xb0, 0xb0, 0xff}
+	for _, p := range placed {
+		if p.loading {
+			rect := image.Rect(marginLeft+p.dstX, cellTop+p.dstY, marginLeft+p.dstX+p.width, cellTop+p.dstY+p.height)
+			draw.Draw(img, rect, image.NewUniform(phBg), image.Point{}, draw.Src)
+			for x := rect.Min.X; x < rect.Max.X; x++ {
+				img.Set(x, rect.Min.Y, phBorder)
+				img.Set(x, rect.Max.Y-1, phBorder)
+			}
+			for y := rect.Min.Y; y < rect.Max.Y; y++ {
+				img.Set(rect.Min.X, y, phBorder)
+				img.Set(rect.Max.X-1, y, phBorder)
+			}
+			continue
+		}
+		scaled := bookScaleImage(p.img, p.width, p.height)
+		b := scaled.Bounds()
+		dstRect := image.Rect(marginLeft+p.dstX, cellTop+p.dstY, marginLeft+p.dstX+b.Dx(), cellTop+p.dstY+b.Dy())
+		draw.Draw(img, dstRect, scaled, b.Min, draw.Src)
+	}
+	return rows
+}
 
 // bookImageRows returns the number of display rows a Markdown image line will
 // occupy. The size is fixed — it does not depend on where on the page the image
@@ -1613,7 +2362,19 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 		switch pl.kind {
 		case lineKindImage:
-			rowsUsed := e.bookDrawInlineImage(img, pl.body, marginLeft, rightMargin, cellTop, lineH)
+			// Coalesce consecutive image-only lines into one paragraph so
+			// badges (and similar) lay out side by side, wrapping as needed.
+			urls := []string{pl.body}
+			for docLine < totalLines {
+				nextRaw := strings.ReplaceAll(e.Line(LineIndex(docLine)), "\t", "    ")
+				nextPl := parseBookLine(nextRaw)
+				if nextPl.kind != lineKindImage {
+					break
+				}
+				urls = append(urls, nextPl.body)
+				docLine++
+			}
+			rowsUsed := e.bookDrawImageGroup(img, urls, marginLeft, rightMargin, cellTop, lineH)
 			row += rowsUsed
 			continue // no right-margin clip needed for images
 
@@ -1751,6 +2512,11 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			// Same per-row computation as bookPixelRowCount, so pixel
 			// bookkeeping stays consistent
 			subRows := bookTableRowHeight(fs, pl.body, marginLeft, rightMargin)
+			if subRows == 0 {
+				// Separator row: the adjacent rows already paint the
+				// dividing line, so skip drawing entirely
+				continue
+			}
 			rowPixelH := subRows * lineH
 			bookDrawTableRow(img, fs, pl.body, block, rowInBlock, headerRow, aligns, widths,
 				marginLeft, rightMargin, cellTop, lineH, rowPixelH, dark, codeBg)
@@ -1858,17 +2624,36 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 			if inFence {
 				pl = parsedLine{kind: lineKindCode, body: rl}
 			}
+			if pl.kind == lineKindImage {
+				// Coalesce a group of image-only lines, then check whether
+				// the cursor is inside it. A cursor on any member maps to
+				// the top display row of the group.
+				groupStart := dl
+				urls := []string{pl.body}
+				dl++
+				for dl < totalLines {
+					nextRaw := strings.ReplaceAll(e.Line(LineIndex(dl)), "\t", "    ")
+					nextPl := parseBookLine(nextRaw)
+					if nextPl.kind != lineKindImage {
+						break
+					}
+					urls = append(urls, nextPl.body)
+					dl++
+				}
+				if cursorDataY >= groupStart && cursorDataY < dl {
+					cursorDisplayRow = row
+					cursorInFence = false
+					break
+				}
+				row += e.bookImageGroupRows(urls, textW, lineH)
+				continue
+			}
 			if dl == cursorDataY {
 				cursorDisplayRow = row
 				cursorInFence = inFence
 				break
 			}
-			switch {
-			case pl.kind == lineKindImage:
-				row += e.bookImageRows(pl.body, lineH, textW)
-			default:
-				row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
-			}
+			row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
 			dl++
 		}
 	}
@@ -2486,10 +3271,26 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			pl = parsedLine{kind: lineKindCode, body: rawLine}
 		}
 
+		// Image paragraphs coalesce consecutive image-only lines into one
+		// visual group. Advance past the whole group in lockstep with the
+		// draw loop; selection highlighting for images is a no-op.
+		if pl.kind == lineKindImage {
+			urls := []string{pl.body}
+			for docLine2 < totalLines {
+				nextRaw := strings.ReplaceAll(e.Line(LineIndex(docLine2)), "\t", "    ")
+				nextPl := parseBookLine(nextRaw)
+				if nextPl.kind != lineKindImage {
+					break
+				}
+				urls = append(urls, nextPl.body)
+				docLine2++
+			}
+			row += e.bookImageGroupRows(urls, marginRight-marginLeft, lineH)
+			continue
+		}
+
 		var rowsConsumed int
 		switch pl.kind {
-		case lineKindImage:
-			rowsConsumed = e.bookImageRows(pl.body, lineH, marginRight-marginLeft)
 		default:
 			rowsConsumed = bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
 		}
@@ -2498,11 +3299,6 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		}
 
 		if lineIdx < selStartY || lineIdx > selEndY {
-			row += rowsConsumed
-			continue
-		}
-
-		if pl.kind == lineKindImage {
 			row += rowsConsumed
 			continue
 		}
@@ -2625,15 +3421,16 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			drawString(dst, fs.code, marginLeft+4, cellTop+codeVPad+codeAscent, pl.body, dark)
 
 		case lineKindTable:
+			// Separator rows take no visual space — nothing to highlight
+			if rowsConsumed == 0 {
+				break
+			}
 			// Selection inside a rendered table cell is approximated by a
 			// solid highlight across the visible row (across all its
 			// wrapped sub-rows) — accurate cell-level selection math
 			// would require per-column layout info here.
 			if lineIdx >= selStartY && lineIdx <= selEndY {
 				rowH := rowsConsumed * lineH
-				if rowH < lineH {
-					rowH = lineH
-				}
 				draw.Draw(dst, image.Rect(marginLeft, cellTop, marginRight, cellTop+rowH),
 					image.NewUniform(selBg), image.Point{}, draw.Src)
 			}
@@ -2666,6 +3463,33 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 
 		row += rowsConsumed
 	}
+}
+
+// bookSaveScreenshot writes the current graphical-book-mode content cache
+// to /tmp as a PNG. Used by the SIGUSR1 handler so the user can capture
+// whatever Orbiton has most recently composited — useful for diagnosing
+// rendering problems when the UI appears to hang.
+// Returns the saved path or an empty string on failure.
+func bookSaveScreenshot() string {
+	redrawMutex.Lock()
+	defer redrawMutex.Unlock()
+	if bookContentCache == nil {
+		return ""
+	}
+	// Copy so we don't hold a reference to the live cache while encoding.
+	src := bookContentCache
+	dst := image.NewRGBA(src.Bounds())
+	draw.Draw(dst, dst.Bounds(), src, src.Bounds().Min, draw.Src)
+	path := fmt.Sprintf("/tmp/orbiton-book-%d.png", time.Now().UnixNano())
+	f, err := os.Create(path)
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+	if err := png.Encode(f, dst); err != nil {
+		return ""
+	}
+	return path
 }
 
 // bookPageToImage renders the visible page (content + selection + cursor) into
@@ -3081,6 +3905,11 @@ func bookRenderCellSize(cellW, cellH uint) (uint, uint) {
 // content image + status bar + cursor positioning, all wrapped in a DEC 2026
 // synchronized update. Takes a cursor-only fast path when the content cache
 // is valid and a Sixel strip fast path when the terminal supports Sixel.
+//
+// NOTE: Callers MUST hold redrawMutex. The underlying opentype.Face shares
+// an internal mask buffer between Glyph() calls; without serialization the
+// status-bar auto-clear goroutine can re-slice the mask under image/draw
+// and panic with "index out of range" from mask.Pix.
 func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 	cols := uint(c.Width())
 	rows := uint(c.Height())
@@ -4737,10 +5566,12 @@ func bookTableLayout(fs *bookFontSet, block []string, avail int) (aligns []int, 
 
 // bookTableRowHeight returns the number of pixel sub-rows a single table
 // row needs when each cell is wrapped into its equal-width column.
-// Separator rows always take a single sub-row.
+// Separator rows take zero rows — the top border of the row below (and
+// the bottom border of the header above) already paint the visual divider,
+// so rendering a separate empty row just adds dead space.
 func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin int) int {
 	if bookIsTableSeparator(body) {
-		return 1
+		return 0
 	}
 	cells := bookSplitTableCells(body)
 	if len(cells) == 0 {
@@ -4810,12 +5641,12 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 	// the regular body face if it can't be loaded
 	headerBoldFace := fs.regular
 	if parsedMontserratBold != nil {
-		if hf, err := newFace(parsedMontserratBold, fs.baseSize); err == nil {
+		if hf, err := newFace(parsedMontserratBold, fs.baseSize*0.9); err == nil {
 			headerBoldFace = hf
 		}
 	}
 
-	headerBg := color.NRGBA{0x10, 0x10, 0x10, 0xff}
+	headerBg := color.NRGBA{0x40, 0x40, 0x40, 0xff}
 	headerFg := color.NRGBA{0xff, 0xff, 0xff, 0xff}
 	if isHeader {
 		draw.Draw(img, image.Rect(marginLeft, cellTop, marginLeft+totalW, cellTop+rowPixelH),
@@ -4857,6 +5688,9 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 	if descent <= 0 {
 		descent = int(float64(lineH)*0.72*0.2 + 0.5)
 	}
+	// Shift text slightly upward so descenders clear the bottom row line
+	// by a few pixels instead of sitting right on it
+	const cellBottomMargin = 3
 	vPad := max((lineH-ascent-descent)/2, 0)
 	textClr := fg
 	if isHeader {
@@ -4889,7 +5723,7 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 			rows = []wrappedRow{{}}
 		}
 		for si, wr := range rows {
-			subBaseline := cellTop + si*lineH + vPad + ascent
+			subBaseline := cellTop + si*lineH + vPad + ascent - cellBottomMargin
 			var tW int
 			if isHeader {
 				tW = measureStringFB(headerBoldFace, wr.plainText).Round()
