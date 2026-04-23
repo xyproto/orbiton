@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime/debug"
 	"strings"
 
 	"github.com/xyproto/mode"
@@ -50,29 +49,6 @@ func quitMessage(tty *vt.TTY, msg string) {
 	newLineCount := strings.Count(msg, "\n")
 	vt.ShowCursor(true)
 	vt.SetXY(uint(0), uint(newLineCount+1))
-	os.Exit(1)
-}
-
-// quitMessageWithStack stops the program with a message and stack trace
-func quitMessageWithStack(tty *vt.TTY, msg string) {
-	quitMut.Lock()
-	defer quitMut.Unlock()
-
-	stopBackgroundProcesses()
-
-	if tty != nil {
-		tty.Close()
-	}
-
-	vt.Reset()
-	vt.SetNoColor()
-	vt.Clear()
-	vt.CloseKeepContent()
-	fmt.Fprintln(os.Stderr, msg)
-	newLineCount := strings.Count(msg, "\n")
-	vt.ShowCursor(true)
-	vt.SetXY(uint(0), uint(newLineCount+1))
-	debug.PrintStack()
 	os.Exit(1)
 }
 
