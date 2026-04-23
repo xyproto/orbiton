@@ -241,6 +241,9 @@ func (s *Sudoers) setupSignalHandlers() {
 	go func() {
 		<-c
 		s.cleanup()
+		// Signal-handler goroutine: the process is terminating by design
+		// in response to SIGINT/SIGTERM/etc., so exiting here is the
+		// intended behavior, not a non-main-path bailout.
 		os.Exit(1)
 	}()
 }

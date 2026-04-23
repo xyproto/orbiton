@@ -618,7 +618,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				return
 			}
 			c.ShowCursor()
-			os.Exit(0)
+			// File browser exited cleanly; signal the editor loop to quit.
+			e.quit = true
+			clearOnQuit.Store(true)
 		})
 	}
 

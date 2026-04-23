@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
@@ -326,7 +327,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	if monitorAndReadOnly {
 		e.readOnly = true
 		if err := e.StartMonitoring(c, tty, status); err != nil {
-			quitError(tty, err)
+			return "", megafile.NoAction, err
 		}
 	}
 
@@ -389,13 +390,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 				// Create a suitable error message, depending on if the file is saved or not
 				msg := fmt.Sprintf("Saved the file first!\n%v", x)
-				if err := e.Save(c, tty); err != nil {
-					// Output the error message
-					msg = fmt.Sprintf("Could not save the file first! %v\n%v", err, x)
+				if saveErr := e.Save(c, tty); saveErr != nil {
+					msg = fmt.Sprintf("Could not save the file first! %v\n%v", saveErr, x)
 				}
 
-				// Output the error message
-				quitMessageWithStack(tty, msg)
+				// Append the stack trace to the user-visible message so main() can print it.
+				msg += "\n" + string(debug.Stack())
+
+				// Propagate via the named return values; main() will surface and exit.
+				userMessage = msg
+				err = errors.New(msg)
 			}
 		}()
 	}
@@ -407,7 +411,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 		e.formatCode(c, tty, status, &jsonFormatToggle) // jsonFormatToggle is for also formatting indentation, or not, when formatting
 		if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
-			quitError(tty, errors.New(msg))
+			return "", megafile.NoAction, errors.New(msg)
 		}
 		e.UserSave(c, tty, status)
 		// Continue to the loop and then quit

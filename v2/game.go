@@ -763,10 +763,7 @@ retry:
 
 	tty, err := vt.NewTTY()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		quitMut.Lock()
-		defer quitMut.Unlock()
-		os.Exit(1)
+		return false, err
 	}
 	defer tty.Close()
 

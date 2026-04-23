@@ -286,9 +286,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 			collectedString = ""
 			// Start the game
 			if _, err := Game(); err != nil {
-				// This should never happen
+				// Easter-egg path: log to stderr and continue; this must not kill the editor.
 				fmt.Fprintln(os.Stderr, err)
-				os.Exit(1)
 			}
 			// The game ended, return from the menu
 			running = false

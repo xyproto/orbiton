@@ -2,6 +2,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -595,6 +596,10 @@ func main() {
 
 	// Respond to the error returned from the main loop, if any
 	if err != nil {
+		// A clean file-browser exit is not an error for the user; exit silently.
+		if errors.Is(err, errFileBrowserExit) {
+			return
+		}
 		if userMessage != "" {
 			quitMessage(tty, userMessage)
 		} else {
