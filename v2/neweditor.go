@@ -26,6 +26,10 @@ var (
 	noDrawUntilResize atomic.Bool      // we are running within the VTE GUI application, but SIGWINCH has not been sent yet
 	tempDir           = env.Dir("TMPDIR", "/tmp")
 	errFileNotFound   = errors.New("file not found")
+
+	// errFileBrowserExit is returned when the user exits the file browser cleanly.
+	// main() treats this as a request for a silent, successful exit (status 0).
+	errFileBrowserExit = errors.New("file browser exit")
 )
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
@@ -269,7 +273,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 					return e, "", false, megafile.NoAction, fmt.Errorf("could not browse %s: %v", e.filename, err)
 				}
 				c.ShowCursor()
-				os.Exit(0)
+				return e, "", false, megafile.NoAction, errFileBrowserExit
 			}
 		}
 

@@ -155,10 +155,9 @@ func ohDoRec(runArgs []string) error {
 	return orchideous.DoBuild(orchideous.BuildOptions{Opt: true, ProfileUse: true})
 }
 
-func ohDoFmt() {
+func ohDoFmt() error {
 	if !has("clang-format") {
-		fmt.Fprintln(os.Stderr, "error: clang-format not found in PATH")
-		os.Exit(1)
+		return fmt.Errorf("clang-format not found in PATH")
 	}
 	exts := []string{"cpp", "cc", "cxx", "h", "hpp", "hh", "h++"}
 	dirs := []string{".", "include", "common"}
@@ -171,6 +170,7 @@ func ohDoFmt() {
 			}
 		}
 	}
+	return nil
 }
 
 func ohDoValgrind(opts orchideous.BuildOptions) error {
@@ -386,7 +386,7 @@ oh -C <dir> ... - run in the given directory
 	case "rec":
 		return ohDoRec(subArgs)
 	case "fmt":
-		ohDoFmt()
+		return ohDoFmt()
 	case "cmake":
 		return orchideous.DoCMakeBuild(orchideous.BuildOptions{})
 	case "generate":
