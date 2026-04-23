@@ -55,6 +55,17 @@ var montserratLightTTFGz []byte
 // extended Latin, math symbols, arrows and other glyphs the stylistic primary
 // fonts lack.
 //
+// The embedded copy is a subset of the upstream DejaVuSans.ttf, containing
+// only the Unicode ranges we need as fallback glyphs for book mode and SVG
+// text rendering. This keeps the compiled binary small. To regenerate:
+//
+//	pyftsubset DejaVuSans.ttf \
+//	  --unicodes="U+0020-007E,U+00A0-00FF,U+0100-024F,U+0370-03FF,U+0400-04FF,\
+//	U+0500-052F,U+2000-206F,U+2070-209F,U+20A0-20CF,U+2100-214F,U+2150-218F,\
+//	U+2190-21FF,U+2200-22FF,U+2300-23FF,U+2460-24FF,U+2500-257F,U+2580-259F,\
+//	U+25A0-25FF,U+2600-26FF,U+2700-27BF,U+FB00-FB06,U+FFFD" \
+//	  --output-file=DejaVuSans.ttf && gzip -9 DejaVuSans.ttf
+//
 //go:embed fonts/DejaVuSans.ttf.gz
 var dejaVuSansTTFGz []byte
 
