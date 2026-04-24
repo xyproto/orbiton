@@ -507,9 +507,9 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		// broken. Graphical modes transport pixels out-of-band and
 		// remain toggleable under NO_COLOR.
 		if !(envNoColor && e.bookTextMode()) {
-			darkModeText := "Switch to dark mode"
+			darkModeText := "Dark mode"
 			if e.bookDarkMode {
-				darkModeText = "Switch to light mode"
+				darkModeText = "Light mode"
 			}
 			actions.Add(darkModeText, func() {
 				e.bookDarkMode = !e.bookDarkMode
