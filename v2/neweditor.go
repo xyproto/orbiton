@@ -703,11 +703,9 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		// Auto-detect terminal theme for the initial book dark/light
 		// choice. initialLightBackground is populated earlier by the
 		// normal theme-detection pipeline (COLORFGBG, terminal-emulator
-		// heuristics, optional OSC background query). If it says the
-		// terminal is NOT light — or could not decide — start in dark
-		// book mode so users on dark terminals don't see a flash of
-		// bright-page mode before they manually toggle.
-		if initialLightBackground == nil || !*initialLightBackground {
+		// heuristics, optional OSC background query). Default to light
+		// mode; only use dark mode if we detected a dark background.
+		if initialLightBackground != nil && !*initialLightBackground {
 			e.bookDarkMode = true
 		}
 	}
