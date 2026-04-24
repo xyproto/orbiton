@@ -879,6 +879,30 @@ func (e *Editor) fenceStateAtLine(lineIdx int) bool {
 	return inFence
 }
 
+// inHTMLCommentAtLine reports whether the given line is inside an HTML
+// comment block (<!-- ... -->). Tracks <!-- and --> markers across the
+// document from the start to the given lineIdx.
+func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
+	const open = "<!--"
+	const close = "-->"
+	inComment := false
+	for i := range lineIdx {
+		raw := e.Line(LineIndex(i))
+		for j := 0; j < len(raw); {
+			if strings.HasPrefix(raw[j:], open) {
+				inComment = true
+				j += len(open)
+			} else if strings.HasPrefix(raw[j:], close) {
+				inComment = false
+				j += len(close)
+			} else {
+				j++
+			}
+		}
+	}
+	return inComment
+}
+
 // isHorizontalRule reports whether the line is a Markdown thematic break
 // (three or more - or = characters, optionally separated by spaces).
 // '*' is intentionally excluded: it is overloaded for bold/italic markers
@@ -1155,9 +1179,49 @@ func isHeadingLine(line string) bool {
 	return false
 }
 
-// parseBookLine converts a raw Markdown line into a parsedLine.
+// extractImgSrc extracts the src attribute value from an <img ...> tag.
+// Returns the src path if found, empty string otherwise. Handles both
+// src="path" and src='path' quote styles.
+func extractImgSrc(htmlSnippet string) string {
+	srcStart := strings.Index(htmlSnippet, "src=")
+	if srcStart < 0 {
+		return ""
+	}
+	srcStart += 4 // Move past "src="
+	if srcStart >= len(htmlSnippet) {
+		return ""
+	}
+	if htmlSnippet[srcStart] != '"' && htmlSnippet[srcStart] != '\'' {
+		return ""
+	}
+	quote := htmlSnippet[srcStart]
+	srcStart++
+	endIdx := strings.IndexByte(htmlSnippet[srcStart:], quote)
+	if endIdx < 0 {
+		return ""
+	}
+	return htmlSnippet[srcStart : srcStart+endIdx]
+}
+
+// parseBookLine converts a raw Markdown line into a parsedLine, with an
+// optional inComment flag to indicate the line is inside an HTML comment block.
 func parseBookLine(line string) parsedLine {
+	return parseBookLineInContext(line, false)
+}
+
+// parseBookLineInContext converts a raw Markdown line into a parsedLine,
+// accounting for context like being inside an HTML comment block.
+func parseBookLineInContext(line string, inComment bool) parsedLine {
 	if strings.TrimSpace(line) == "" {
+		return parsedLine{kind: lineKindBlank}
+	}
+	// If we're currently inside a multiline HTML comment block, skip the line
+	if inComment {
+		return parsedLine{kind: lineKindBlank}
+	}
+	// HTML comments: <!-- ... --> (render as blank to hide from output)
+	trimmedWhole := strings.TrimSpace(line)
+	if strings.HasPrefix(trimmedWhole, "<!--") && strings.Contains(trimmedWhole, "-->") {
 		return parsedLine{kind: lineKindBlank}
 	}
 	if isHorizontalRule(line) {
@@ -1166,7 +1230,6 @@ func parseBookLine(line string) parsedLine {
 	// Markdown table row: starts and ends with "|" (after trimming), and has
 	// at least two pipes. The separator row "|---|:-:|---:|" is also a
 	// lineKindTable (the renderer detects separator rows by shape).
-	trimmedWhole := strings.TrimSpace(line)
 	if len(trimmedWhole) >= 2 && trimmedWhole[0] == '|' &&
 		trimmedWhole[len(trimmedWhole)-1] == '|' &&
 		strings.Count(trimmedWhole, "|") >= 2 {
@@ -1230,6 +1293,23 @@ func parseBookLine(line string) parsedLine {
 				imgPath := trimmed[pathStart : pathStart+k]
 				return parsedLine{kind: lineKindImage, body: imgPath}
 			}
+		}
+	}
+	// HTML anchor tags with embedded images: <a href="..."><img src="path" .../></a>
+	// Extract the image src from the img tag inside the anchor.
+	if strings.HasPrefix(trimmed, "<a") && strings.Contains(trimmed, "<img") {
+		imgStart := strings.Index(trimmed, "<img")
+		if imgStart >= 0 {
+			imgSnippet := trimmed[imgStart:]
+			if imgPath := extractImgSrc(imgSnippet); imgPath != "" {
+				return parsedLine{kind: lineKindImage, body: imgPath}
+			}
+		}
+	}
+	// HTML images: <img src="path" ...> or <img src='path' ...> (src must be present)
+	if strings.HasPrefix(trimmed, "<img") {
+		if imgPath := extractImgSrc(trimmed); imgPath != "" {
+			return parsedLine{kind: lineKindImage, body: imgPath}
 		}
 	}
 	// Headers
@@ -2442,7 +2522,7 @@ func (e *Editor) bookImageGroupRows(urls []string, availW, lineH int) int {
 
 // bookDrawImageGroup draws a group of images at (marginLeft, cellTop), laid
 // out horizontally with wrapping. Loading placeholders render as a faint
-// rounded rectangle so the user sees "something is coming here". Returns the
+// rounded rectangle with three animated circles to indicate loading. Returns the
 // number of display rows consumed.
 func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, marginRight, cellTop, lineH int) int {
 	availW := marginRight - marginLeft
@@ -2464,6 +2544,24 @@ func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, 
 			for y := rect.Min.Y; y < rect.Max.Y; y++ {
 				img.Set(rect.Min.X, y, phBorder)
 				img.Set(rect.Max.X-1, y, phBorder)
+			}
+			
+			// Draw three circles in the center to indicate loading
+			centerX := rect.Min.X + (rect.Dx() / 2)
+			centerY := rect.Min.Y + (rect.Dy() / 2)
+			circleRadius := 3
+			circleDist := 12
+			
+			// Choose circle color based on theme
+			circleColor := color.NRGBA{0x4a, 0xb0, 0x60, 0xff} // green
+			if e.bookDarkMode {
+				circleColor = color.NRGBA{0x5a, 0xd0, 0x70, 0xff} // bright green
+			}
+			
+			// Draw three circles
+			for i := -1; i <= 1; i++ {
+				x := centerX + i*circleDist
+				e.bookDrawCircle(img, x, centerY, circleRadius, circleColor)
 			}
 			continue
 		}
@@ -2509,6 +2607,20 @@ func (e *Editor) bookImageRows(imgPath string, lineH, maxW int) int {
 	scaledH := max(int(float64(srcH)*scale), 1)
 	rows := max((scaledH+lineH-1)/lineH, 1)
 	return rows
+}
+
+// bookDrawCircle draws a filled circle at (centerX, centerY) with given radius and color
+func (e *Editor) bookDrawCircle(img *image.RGBA, centerX, centerY, radius int, col color.NRGBA) {
+	r2 := radius * radius
+	for y := centerY - radius; y <= centerY+radius; y++ {
+		for x := centerX - radius; x <= centerX+radius; x++ {
+			dx := x - centerX
+			dy := y - centerY
+			if dx*dx+dy*dy <= r2 {
+				img.Set(x, y, col)
+			}
+		}
+	}
 }
 
 // bookDrawInlineImage loads, scales and draws a Markdown image into img at
@@ -3108,6 +3220,8 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 	// Determine whether we start inside a fenced code block.
 	inFence := e.fenceStateAtLine(startLine)
+	// Determine whether we start inside an HTML comment block.
+	inComment := e.inHTMLCommentAtLine(startLine)
 	// codeBlockStart is flipped to true when we transition into a fenced
 	// code block via a fence marker; the first subsequent code line uses it
 	// to inset its gray background by a few pixels, producing a visible
@@ -3123,6 +3237,35 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	for row := 0; row < maxLines && docLine < totalLines; {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+		
+		// Track HTML comment state: a line is hidden if it's inside a comment
+		// (inComment was true at line start) OR if the line contains both <!-- and -->
+		// on the same line (single-line comment). Update inComment for next iteration.
+		const htmlCommentOpen = "<!--"
+		const htmlCommentClose = "-->"
+		wasInComment := inComment
+		commentStarted := false
+		commentEnded := false
+		for j := 0; j < len(rawLine); {
+			if strings.HasPrefix(rawLine[j:], htmlCommentOpen) {
+				inComment = true
+				commentStarted = true
+				j += len(htmlCommentOpen)
+			} else if strings.HasPrefix(rawLine[j:], htmlCommentClose) {
+				inComment = false
+				commentEnded = true
+				j += len(htmlCommentClose)
+			} else {
+				j++
+			}
+		}
+		
+		// A line should be hidden if:
+		// 1. It started inside a comment block (wasInComment), OR
+		// 2. It contains the opening <!-- marker (commentStarted), OR
+		// 3. It contains the closing --> marker (commentEnded)
+		lineIsComment := wasInComment || commentStarted || commentEnded
+		
 		docLine++
 
 		// Fence marker: toggle state, render as blank row.
@@ -3134,8 +3277,13 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			row++
 			continue
 		}
+		
+		// HTML comment line: skip without rendering or consuming display row
+		if lineIsComment {
+			continue
+		}
 
-		pl := parseBookLine(rawLine)
+		pl := parseBookLineInContext(rawLine, false)
 		if inFence {
 			pl = parsedLine{kind: lineKindCode, body: rawLine}
 		}
