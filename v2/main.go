@@ -103,7 +103,7 @@ func main() {
 		createDirectoriesFlag  bool
 		debugModeFlag          bool
 		forceFlag              bool
-		formatFlag             bool
+		fmtFlag                bool
 		helpFlag               bool
 		lastCommandFlag        bool
 		listDigraphsFlag       bool
@@ -131,7 +131,7 @@ func main() {
 	pflag.BoolVarP(&createDirectoriesFlag, "create-dir", "k", false, "create directories when opening a new file")
 	pflag.BoolVarP(&debugModeFlag, "debug", "d", false, "start in debug mode")
 	pflag.BoolVarP(&forceFlag, "force", "f", false, "open even if already open")
-	pflag.BoolVarP(&formatFlag, "format", "F", false, "Try to format the file instead of editing it")
+	pflag.BoolVarP(&fmtFlag, "fmt", "F", false, "Format the file in place and quit (headless: no TTY, no UI)")
 	pflag.BoolVarP(&helpFlag, "help", "h", false, "quick overview of hotkeys and flags")
 	pflag.BoolVarP(&lastCommandFlag, "last-command", "l", false, "output the last build or format command")
 	pflag.BoolVarP(&listDigraphsFlag, "digraphs", "s", false, "List digraphs")
@@ -363,7 +363,9 @@ func main() {
 		buildFlag = true
 	}
 
-	// If -b was given (or obuild), dispatch to orchideous and exit
+	// If -b was given (or obuild), try language-specific builds first (Go,
+	// Rust, Zig, etc. based on marker files in the cwd), then fall back to
+	// orchideous for C/C++ projects.
 	if buildFlag {
 		obuildArgs := args
 		if helpFlag {
@@ -372,6 +374,18 @@ func main() {
 		commandName := editorExecutable + " -b"
 		if buildMode {
 			commandName = "obuild"
+		}
+		// Only attempt auto-detected non-C/C++ builds when no explicit
+		// subcommand was passed (i.e. plain `o -b` / `obuild`). When the
+		// user typed something like `o -b clean` they want orchideous.
+		if !helpFlag && (len(obuildArgs) == 0 || obuildArgs[0] == "build") {
+			if attempted, err := tryAutoBuild(); attempted {
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
+				}
+				os.Exit(0)
+			}
 		}
 		if err := runObuild(obuildArgs, commandName); err != nil {
 			if err.Error() == "no source files found" {
@@ -555,6 +569,13 @@ func main() {
 		}
 		fmt.Println(msg)
 		os.Exit(0)
+	} else if fmtFlag {
+		// Format the file in place and quit, without initialising a TTY.
+		if err := runFmt(fnord); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		os.Exit(0)
 	}
 
 	// Initialize the VT100 terminal
@@ -568,7 +589,7 @@ func main() {
 	defer tty.Close()
 
 	// Run the main editor loop
-	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, formatFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
+	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
 
 	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
 	switch nextAction {
