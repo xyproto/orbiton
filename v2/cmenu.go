@@ -498,6 +498,67 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
+	// Add book mode specific options
+	if e.bookMode.Load() {
+		// Under NO_COLOR text book mode the vt library strips every
+		// colour / attribute escape, so toggling dark mode would make
+		// no visible difference (DNBOOK16 ≡ NBOOK16, DNBOOK256 ≡
+		// NBOOK256). Omit the toggle there so users don't think it's
+		// broken. Graphical modes transport pixels out-of-band and
+		// remain toggleable under NO_COLOR.
+		if !(envNoColor && e.bookTextMode()) {
+			darkModeText := "Switch to dark mode"
+			if e.bookDarkMode {
+				darkModeText = "Switch to light mode"
+			}
+			actions.Add(darkModeText, func() {
+				e.bookDarkMode = !e.bookDarkMode
+				// The cached content image is mode-dependent: dark mode
+				// uses different text/background colours, selection colours,
+				// border rendering, and bottom rounded-corner fill. Also,
+				// when toggling focus mode in dark mode, the dimming level
+				// is stronger (dimAlpha=190 instead of 140). Drop the cache
+				// on toggle so all these visuals regenerate correctly.
+				bookContentCache = nil
+				e.redraw.Store(true)
+			})
+		}
+
+		paragraphIndentText := "Enable paragraph indentation"
+		if e.bookParagraphIndent {
+			paragraphIndentText = "Disable paragraph indentation"
+		}
+		actions.Add(paragraphIndentText, func() {
+			e.bookParagraphIndent = !e.bookParagraphIndent
+			e.redraw.Store(true)
+		})
+
+		focusModeText := "Enable focus mode"
+		if e.bookFocusMode {
+			focusModeText = "Disable focus mode"
+		}
+		actions.Add(focusModeText, func() {
+			e.bookFocusMode = !e.bookFocusMode
+			// Invalidate the cached content image so the dim overlay
+			// is (re-)applied on the next graphical render.
+			bookContentCache = nil
+			e.redraw.Store(true)
+		})
+
+		// The walking-cat animation only exists in the text book-mode
+		// top bar, so only surface the toggle there.
+		if e.bookTextMode() {
+			catMenuText := "Stop cat from moving"
+			if e.bookCatPaused {
+				catMenuText = "Start cat"
+			}
+			actions.Add(catMenuText, func() {
+				e.bookCatPaused = !e.bookCatPaused
+				e.redraw.Store(true)
+			})
+		}
+	}
+
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
 	if isLinux && height > menuHeightThreshold {
 		primaryToggleText := "Toggle clipboard to secondary"

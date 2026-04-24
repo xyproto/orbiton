@@ -2,11 +2,72 @@ package main
 
 import (
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/xyproto/vt"
 )
 
 var redrawMutex sync.Mutex // to avoid an issue where the terminal is resized, signals are flying and the user is hammering the esc button
+
+// bookCatAnimStarted ensures only one cat-animation goroutine runs per
+// editor instance even if InitialRedraw is called multiple times (e.g. on
+// SIGWINCH).
+var bookCatAnimStarted atomic.Bool
+
+// startBookCatAnim launches a background goroutine that redraws the text
+// book-mode top bar every 250 ms so the animated cat in drawBookTopBar
+// walks back and forth even when the user is idle. The goroutine exits
+// once the editor is quitting or book (text) mode has been left.
+func (e *Editor) startBookCatAnim(c *vt.Canvas) {
+	if c == nil {
+		return
+	}
+	if !bookCatAnimStarted.CompareAndSwap(false, true) {
+		return
+	}
+	go func() {
+		t := time.NewTicker(250 * time.Millisecond)
+		defer t.Stop()
+		for range t.C {
+			if e.quit {
+				return
+			}
+			if !e.bookTextMode() {
+				// Stay dormant: if book mode is toggled back on
+				// later, a fresh InitialRedraw will relaunch us
+				// (the CAS above guards the restart).
+				bookCatAnimStarted.Store(false)
+				return
+			}
+			if e.bookCatPaused {
+				// Cat is sitting still — no repaint needed. The
+				// static glyph was drawn by the last keystroke
+				// redraw (or the pause-toggle redraw).
+				continue
+			}
+			if notRegularEditingRightNow.Load() {
+				// A modal menu (ctrl-o), build dialog, input
+				// prompt, etc. owns the screen. Repainting the
+				// top bar would corrupt that UI; calling
+				// bookTextModePlaceCursor would also unhide the
+				// cursor that the menu just hid.
+				continue
+			}
+			redrawMutex.Lock()
+			w := int(c.Width())
+			fg, _, bg := bookBarPalette(e.bookDarkMode)
+			// Only repaint the left-side cat walk strip; the
+			// right-side stats must stay stationary between key
+			// presses. Reserve 0 cells on the right since we only
+			// paint our own region.
+			e.drawBookTopBarCat(c, w, fg, bg, 2, 0)
+			c.Draw()
+			e.bookTextModePlaceCursor(c)
+			redrawMutex.Unlock()
+		}
+	}()
+}
 
 // FullResetRedraw will completely reset and redraw everything, including creating a brand new Canvas struct
 func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, shouldHighlightCurrentLine bool) {
@@ -116,6 +177,22 @@ func (e *Editor) RepositionCursor(x, y uint) {
 
 // PlaceAndEnableCursor will enable the cursor and then place it
 func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
+	// Book mode has its own cursor semantics — the graphical renderer
+	// paints the cursor inside the rendered image, and the text-mode
+	// renderer maps document coordinates to canvas rows via
+	// bookTextModePlaceCursor (accounting for the top bar row and
+	// Markdown prefixes). Calling vt.SetXY with the raw ScreenX/ScreenY
+	// here would snap the caret to (0,0) on startup — inside the top
+	// bar — before the first keystroke moves it back. Defer to the
+	// book-mode path instead.
+	if e.bookGraphicalMode() {
+		return
+	}
+	if e.bookTextMode() {
+		e.bookTextModePlaceCursor(c)
+		return
+	}
+
 	// Redraw the cursor, if needed
 	e.pos.mut.RLock()
 	x := uint(e.pos.ScreenX())
@@ -190,12 +267,18 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 
 	// Book mode with text (VT100/xterm): render Markdown via ANSI escape codes
 	if e.bookTextMode() {
+		e.bookModeEnsureCursorVisible(c)
 		e.bookTextModeRender(c)
 		if !e.statusMode {
 			status.NanoInfo(c, e)
 		}
 		c.HideCursorAndDraw()
 		e.redraw.Store(false)
+		// Without this, the terminal cursor stays at row 0 (the top
+		// filename bar) until the first key is pressed.
+		e.bookTextModePlaceCursor(c)
+		// Kick off the walking-cat top-bar animation (idempotent).
+		e.startBookCatAnim(c)
 		return
 	}
 

@@ -334,3 +334,156 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 		}
 	}
 }
+
+// runFmt is the headless counterpart of the --fmt flag. It loads the given
+// file, runs the same formatting pipeline used by formatCode (plus markdown
+// table formatting for markdown files), writes the result back to disk, and
+// returns. It never touches a TTY, canvas, or status bar.
+func runFmt(fnord FilenameOrData) error {
+	filename := fnord.filename
+	if filename == "" || filename == "-" || fnord.stdin {
+		return errors.New("--fmt requires a filename")
+	}
+	if !files.IsFile(filename) {
+		return fmt.Errorf("no such file: %s", filename)
+	}
+
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+
+	m := mode.Detect(stripGZ(filename))
+
+	// Refine the mode based on first-line / contents. Mirrors the gating
+	// in neweditor.go so we don't flip a clearly-detected Markdown/Go/JSON
+	// file into Configuration just because its first line looks like a
+	// comment.
+	if m == mode.Blank || m == mode.Prolog || m == mode.Config || m == mode.FSTAB || m == mode.Nix || m == mode.Assembly {
+		firstLine := data
+		if nl := bytes.IndexByte(data, '\n'); nl >= 0 {
+			firstLine = data[:nl]
+		}
+		if len(firstLine) > 512 {
+			firstLine = firstLine[:512]
+		}
+		if m2, found := mode.DetectFromContentBytes(m, firstLine, func() []byte { return data }); found {
+			m = m2
+		}
+	}
+
+	theme := NewDefaultTheme()
+	e := NewCustomEditor(m.TabsSpaces(), 1, m, theme, false, false, false, false, false, false, false)
+	e.filename = filename
+	e.LoadBytes(data)
+
+	if e.mode == mode.Markdown {
+		e.FormatAllMarkdownTables()
+	}
+
+	// In-process transforms (match formatCode's switch statement).
+	jsonFormatToggle := false
+	switch e.mode {
+	case mode.JSON:
+		out, err := formatJSON([]byte(e.String()), &jsonFormatToggle, e.indentation.PerTab)
+		if err != nil {
+			return err
+		}
+		e.LoadBytes(out)
+	case mode.FSTAB:
+		const spaces = 2
+		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
+	case mode.Assembly:
+		if lookslikegoasm.Consider(e.String()) {
+			e.mode = mode.GoAssembly
+			if out, err := asmfmt.Format(strings.NewReader(e.String())); err == nil {
+				e.LoadBytes(out)
+			}
+		}
+	case mode.GoAssembly:
+		if out, err := asmfmt.Format(strings.NewReader(e.String())); err == nil {
+			e.LoadBytes(out)
+		}
+	case mode.ObjectPascal:
+		if files.WhichCached("ptop") == "" {
+			return errors.New("ptop is missing")
+		}
+		tmpIn, err := os.CreateTemp(tempDir, "o.*.pas")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmpIn.Name())
+		tmpOut, err := os.CreateTemp(tempDir, "o.*.pas")
+		if err != nil {
+			return err
+		}
+		defer os.Remove(tmpOut.Name())
+		if _, err := tmpIn.Write([]byte(e.String())); err != nil {
+			tmpIn.Close()
+			return err
+		}
+		tmpIn.Close()
+		tmpOut.Close()
+		cmd := exec.Command("ptop", tmpIn.Name(), tmpOut.Name())
+		if output, err := cmd.CombinedOutput(); err != nil {
+			msg := strings.TrimSpace(string(output))
+			if msg == "" {
+				msg = err.Error()
+			}
+			return errors.New("failed to format code: " + msg)
+		}
+		out, err := os.ReadFile(tmpOut.Name())
+		if err != nil {
+			return err
+		}
+		e.LoadBytes(out)
+	case mode.Java, mode.Kotlin:
+		const removeExistingImports = false
+		const deGlobImports = true
+		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
+	}
+
+	// Persist the in-process result to disk. Save is safe with nil canvas/tty
+	// (see the changed-branch guard in savefile.go and the nil-aware Spinner).
+	e.MarkChanged()
+	if err := e.Save(nil, nil); err != nil {
+		return err
+	}
+
+	// External formatter pass: run the configured formatter (if any) directly
+	// against the file, in place.
+	for formatMode, cmd := range e.GetFormatMap() {
+		if e.mode != formatMode {
+			continue
+		}
+		// Resolve perltidy fallback (mirrors formatWithUtility's logic).
+		cmdPath := cmd.Path
+		if e.mode == mode.Perl && cmdPath == "/usr/bin/vendor_perl/perltidy" && !files.Exists(cmdPath) {
+			if p := files.WhichCached("perltidy"); p != "" {
+				cmdPath = p
+			} else {
+				return errors.New("perltidy is missing")
+			}
+		}
+		if files.WhichCached(cmdPath) == "" {
+			return fmt.Errorf("%s is missing", filepath.Base(cmdPath))
+		}
+		args := append([]string{}, cmd.Args[1:]...)
+		args = append(args, filename)
+		out, execErr := exec.Command(cmdPath, args...).CombinedOutput()
+		ignoreErrors := strings.HasSuffix(cmdPath, "tidy") && files.WhichCached("tidy") != ""
+		if execErr != nil && !ignoreErrors {
+			msg := strings.TrimSpace(string(out))
+			if msg == "" {
+				msg = execErr.Error()
+			}
+			if i := strings.Index(msg, "\n"); i > 0 {
+				msg = strings.TrimSpace(msg[:i])
+			}
+			return fmt.Errorf("%s: %s", filepath.Base(cmdPath), msg)
+		}
+		break
+	}
+
+	return nil
+}

@@ -68,6 +68,10 @@ type Editor struct {
 	runAfterBuild               atomic.Bool // run the application after building?
 	bookMode                    atomic.Bool // book mode: word wrap, no syntax highlighting, text focus
 	bookForceTextMode           atomic.Bool // force text rendering even when graphics are available
+	bookDarkMode                bool        // book mode: use dark mode (false = light mode)
+	bookParagraphIndent         bool        // book mode: visually indent first line of paragraphs
+	bookFocusMode               bool        // book mode: typewriter scrolling + dim non-active paragraphs
+	bookCatPaused               bool        // book mode (text): stop the walking-cat animation in the top bar
 	bookSavedLocalX             int         // sticky visual column within a sub-row for up/down movement (-1 = unset)
 	bookCursorAffinity          int         // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
 	rainbowParenthesis          bool        // rainbow parenthesis
@@ -182,6 +186,10 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.moveLinesMode.Store(e.moveLinesMode.Load())
 	e2.bookMode.Store(e.bookMode.Load())
 	e2.bookForceTextMode.Store(e.bookForceTextMode.Load())
+	e2.bookDarkMode = e.bookDarkMode
+	e2.bookParagraphIndent = e.bookParagraphIndent
+	e2.bookFocusMode = e.bookFocusMode
+	e2.bookCatPaused = e.bookCatPaused
 	e2.bookSavedLocalX = e.bookSavedLocalX
 	e2.bookCursorAffinity = e.bookCursorAffinity
 	return &e2

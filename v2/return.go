@@ -24,6 +24,24 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		indent = false
 	}
 
+	// In book mode, never indent and ensure clean paragraphs
+	if e.bookMode.Load() {
+		indent = false
+	}
+
+	// In book mode, pressing Return at the end of a heading line should
+	// drop the user into a fresh paragraph with a blank separator line in
+	// between, matching the Markdown convention and WordGrinder-style
+	// prose editing. Without this, the cursor lands on the next row where
+	// the renderer visually abuts the heading and the user perceives the
+	// heading emphasis as "leaking" into the following paragraph.
+	afterHeading := false
+	if e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+		if isHeadingLine(e.CurrentLine()) {
+			afterHeading = true
+		}
+	}
+
 	// In book mode or Markdown mode, detect list prefixes for auto-continuation.
 	var listPrefix string
 	if e.bookMode.Load() && e.AtOrAfterEndOfLine() {
@@ -157,6 +175,14 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		e.SetCurrentLine(listPrefix + e.LineContentsFromCursorPosition())
 		// End() would trim trailing whitespace and strip the space from "* "
 		e.pos.SetX(c, len([]rune(listPrefix)))
+	}
+
+	// Book-mode: after a heading, insert an extra blank line below so the
+	// cursor ends up in a clean paragraph two rows down from the heading.
+	if afterHeading {
+		e.InsertLineBelow()
+		e.pos.Down(c)
+		e.pos.SetX(c, 0)
 	}
 
 	e.SaveX(true)
