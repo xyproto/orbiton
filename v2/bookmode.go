@@ -3858,12 +3858,12 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	// one containing the cursor) for focus-mode dimming. Rows are measured
 	// relative to (row + topMargin), i.e. absolute canvas y.
 	var (
-		focusEnabled  = e.bookFocusMode
-		activeDocY    LineIndex
-		activeStartY  LineIndex
-		activeEndY    LineIndex
-		activeRowLo   = -1
-		activeRowHi   = -1
+		focusEnabled = e.bookFocusMode
+		activeDocY   LineIndex
+		activeStartY LineIndex
+		activeEndY   LineIndex
+		activeRowLo  = -1
+		activeRowHi  = -1
 	)
 	if focusEnabled {
 		activeDocY = e.DataY()
@@ -4771,10 +4771,10 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 	// Clearing via a direct slice fill is cheaper than draw.Draw with a
 	// uniform source.
 	for i := 0; i < len(full.Pix); i += 4 {
-		full.Pix[i] = 0       // R
-		full.Pix[i+1] = 0     // G
-		full.Pix[i+2] = 0     // B
-		full.Pix[i+3] = 0xff  // A
+		full.Pix[i] = 0      // R
+		full.Pix[i+1] = 0    // G
+		full.Pix[i+2] = 0    // B
+		full.Pix[i+3] = 0xff // A
 	}
 	// Copy the page (content + selection + cursor + top rounded corners) to the top.
 	draw.Draw(full, image.Rect(0, 0, pixW, editPixH), pageImg, image.Point{}, draw.Src)
