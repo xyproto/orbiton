@@ -178,7 +178,7 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 	e.redrawCursor.Store(true)
 
 	// Trailing spaces may be trimmed, so move to the end, if needed
-	if changed {
+	if changed && c != nil {
 		e.GoToPosition(c, nil, *bookmark)
 		if e.AfterEndOfLine() {
 			e.EndNoTrim(c)

@@ -62,12 +62,13 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	// In text book mode the regular themes are replaced by a simple
 	// black-on-bright-white reader theme, and the status bar must stand
-	// out against that: paint the entire status row as white on blue.
-	// True-colour values avoid terminal palette remapping issues.
+	// out against that. Use the same palette as the top book-mode bar so
+	// the reading area is framed by a matched pair, and degrade per-TERM
+	// (16-colour on vt*/xterm, 256-colour on xterm-256color, true-colour
+	// on xterm-kitty; no colour under NO_COLOR / vt100).
 	textBook := sb.editor.bookTextMode()
 	if textBook {
-		fg := vt.TrueColor(255, 255, 255)
-		bg := vt.TrueBackground(30, 90, 180)
+		fg, _, bg := bookBarPalette(sb.editor.bookDarkMode)
 		c.Write(0, h, fg, bg, strings.Repeat(" ", w))
 		c.Write(uint(msgX), h, fg, bg, sb.msg)
 		mut.Lock()

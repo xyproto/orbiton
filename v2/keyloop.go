@@ -74,7 +74,7 @@ const bookModeToggleDebounce = 400 * time.Millisecond
 // when the terminal supports graphics. Buffered presses during a slow render
 // are debounced so they do not immediately toggle back.
 func (e *Editor) toggleBookGraphical(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string) {
-	if !imagepreview.HasGraphics {
+	if !bookGraphicsCapable() {
 		return
 	}
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
@@ -205,7 +205,7 @@ func readPasteBurst(tty *vt.TTY) string {
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, fmtFlag, escToExit, cycleFilenames, debugMode bool) (userMessage string, nextAction megafile.Action, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, escToExit, cycleFilenames, debugMode bool) (userMessage string, nextAction megafile.Action, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()
@@ -402,20 +402,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				err = errors.New(msg)
 			}
 		}()
-	}
-
-	if fmtFlag { // Only try to format the file, save the file and then quit
-		if e.mode == mode.Markdown {
-			e.GoToStartOfTextLine(c)
-			e.FormatAllMarkdownTables()
-		}
-		e.formatCode(c, tty, status, &jsonFormatToggle) // jsonFormatToggle is for also formatting indentation, or not, when formatting
-		if msg := strings.TrimSpace(status.msg); status.isError && msg != "" {
-			return "", megafile.NoAction, errors.New(msg)
-		}
-		e.UserSave(c, tty, status)
-		// Continue to the loop and then quit
-		e.quit = true
 	}
 
 	// Draw everything once, with slightly different behavior if used over ssh

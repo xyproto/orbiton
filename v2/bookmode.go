@@ -28,6 +28,7 @@ import (
 
 	"github.com/srwiley/oksvg"
 	"github.com/srwiley/rasterx"
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -99,7 +100,103 @@ var (
 	bookTextFGDarkGray = vt.TrueColor(80, 80, 80)
 	bookTextFGWhite    = vt.TrueColor(255, 255, 255)
 	bookTextBG         = vt.TrueBackground(255, 255, 255)
+	// Dark-mode variants used when e.bookDarkMode is true
+	bookTextFGLight     = vt.TrueColor(220, 220, 220)
+	bookTextFGLightGray = vt.TrueColor(170, 170, 170)
+	bookTextBGDark      = vt.TrueBackground(26, 26, 26)
 )
+
+// bookFG returns the appropriate foreground color for book mode rendering
+// based on dark/light mode preference.
+func (e *Editor) bookFG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0xe8, 0xe8, 0xe8, 0xff}
+	}
+	return color.NRGBA{0x10, 0x10, 0x10, 0xff}
+}
+
+// bookBG returns the appropriate background color for book mode rendering.
+func (e *Editor) bookBG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
+	}
+	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
+}
+
+// bookBGImage returns the background as a uniform image, suitable for draw.Draw.
+func (e *Editor) bookBGImage() image.Image {
+	if e.bookDarkMode {
+		return image.NewUniform(e.bookBG())
+	}
+	return image.White
+}
+
+// bookCodeBG returns the code-block background color.
+func (e *Editor) bookCodeBG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0x2a, 0x2a, 0x2a, 0xff}
+	}
+	return color.NRGBA{0xf0, 0xf0, 0xf0, 0xff}
+}
+
+// bookDimFG returns a dimmed foreground color (for checked items, secondary text).
+func (e *Editor) bookDimFG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0x90, 0x90, 0x90, 0xff}
+	}
+	return color.NRGBA{0x55, 0x55, 0x55, 0xff}
+}
+
+// bookTextModeBG returns the text-mode background attribute color.
+func (e *Editor) bookTextModeBG() vt.AttributeColor {
+	if e.bookDarkMode {
+		return bookTextBGDark
+	}
+	return bookTextBG
+}
+
+// bookGraphicalStatusBarBG returns the page-pixel colour that the
+// graphical-mode status bar paints its background with. Kept in sync with
+// bookStatusBarImage: light mode uses black, dark mode uses white. Used by
+// the rounded-corner carver so the bottom corners blend into the bar.
+func (e *Editor) bookGraphicalStatusBarBG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0xff, 0xff, 0xff, 0xff}
+	}
+	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
+}
+
+// bookBottomCornerBG returns the colour that the bottom rounded corners of
+// the page should fade into. That's whatever is drawn directly below the
+// page in the composed frame:
+//
+//   - status bar visible → the status bar background
+//   - status bar hidden  → terminal chrome (black)
+//
+// Picking the wrong value leaves a thin seam between the page's rounded
+// corners and the strip below.
+func (e *Editor) bookBottomCornerBG() color.NRGBA {
+	if !e.statusMode || bookModeGetStatusMsg() != "" {
+		return e.bookGraphicalStatusBarBG()
+	}
+	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
+}
+
+// bookTextModeFGBlack returns the primary text color for text-mode book rendering.
+func (e *Editor) bookTextModeFGBlack() vt.AttributeColor {
+	if e.bookDarkMode {
+		return bookTextFGLight
+	}
+	return bookTextFGBlack
+}
+
+// bookTextModeFGDim returns the dimmed text color for text-mode book rendering.
+func (e *Editor) bookTextModeFGDim() vt.AttributeColor {
+	if e.bookDarkMode {
+		return bookTextFGLightGray
+	}
+	return bookTextFGDarkGray
+}
 
 // bookFontSet caches Vollkorn body faces, Montserrat Bold header faces, a small
 // Montserrat Bold face for the status bar, and a FiraMono Bold face for code,
@@ -265,16 +362,27 @@ func parsedFonts() error {
 	return parseFontsErr
 }
 
-// bookGraphicalMode returns true when book mode uses the Kitty/iTerm2 graphics
-// protocol for rendering (terminal supports pixel-level image display).
+// bookGraphicsCapable reports whether the current terminal can display inline
+// pixel images via Kitty, iTerm2 or Sixel. Unlike imagepreview.HasGraphics it
+// does NOT gate on NO_COLOR: NO_COLOR is a contract about ANSI colour escape
+// sequences; Kitty/iTerm2/Sixel transport pixels out-of-band and do not emit
+// ANSI colour, so honouring NO_COLOR there would spuriously disable the
+// graphical book mode on perfectly capable terminals (the original bug that
+// made NBOOKG/DNBOOKG/NBOOKSX/DNBOOKSX unreachable).
+func bookGraphicsCapable() bool {
+	return (imagepreview.IsKitty || imagepreview.IsITerm2 || imagepreview.IsSixel) && !imagepreview.IsVT
+}
+
+// bookGraphicalMode returns true when book mode uses the Kitty/iTerm2/Sixel
+// graphics protocol for rendering (terminal supports pixel-level image display).
 func (e *Editor) bookGraphicalMode() bool {
-	return e.bookMode.Load() && imagepreview.HasGraphics && !e.bookForceTextMode.Load()
+	return e.bookMode.Load() && bookGraphicsCapable() && !e.bookForceTextMode.Load()
 }
 
 // bookTextMode returns true when book mode uses VT100/xterm text rendering
 // (vt100, vt220, xterm, xterm-color, xterm-256color, linux terminals).
 func (e *Editor) bookTextMode() bool {
-	return e.bookMode.Load() && (!imagepreview.HasGraphics || e.bookForceTextMode.Load())
+	return e.bookMode.Load() && (!bookGraphicsCapable() || e.bookForceTextMode.Load())
 }
 
 // bookTextTopBarRows is the number of terminal rows reserved at the top of
@@ -793,6 +901,258 @@ func isHorizontalRule(line string) bool {
 		}
 	}
 	return count >= 3
+}
+
+// bookDocumentTitle returns a human-friendly title for the document: the
+// first top-level (H1) or second-level (H2) Markdown heading found, trimmed
+// to a reasonable length. Falls back to the base filename when no heading is
+// present. Used by the text-mode top bar.
+func (e *Editor) bookDocumentTitle() string {
+	const maxLen = 80
+	n := e.Len()
+	scanLimit := min(n, 200) // don't scan huge files end-to-end for a title
+	ellipsis := "…"
+	if useASCII {
+		ellipsis = "..."
+	}
+	truncate := func(t string) string {
+		if len(t) > maxLen {
+			t = t[:maxLen-len(ellipsis)] + ellipsis
+		}
+		return t
+	}
+	for i := 0; i < scanLimit; i++ {
+		raw := strings.TrimRight(e.Line(LineIndex(i)), " \t")
+		if strings.HasPrefix(raw, "# ") {
+			return truncate(strings.TrimSpace(raw[2:]))
+		}
+		if strings.HasPrefix(raw, "## ") {
+			return truncate(strings.TrimSpace(raw[3:]))
+		}
+	}
+	base := filepath.Base(e.filename)
+	if base == "" || base == "." {
+		return "untitled"
+	}
+	// Strip common doc extensions for a cleaner look.
+	for _, ext := range []string{".md", ".markdown", ".txt", ".rst", ".adoc"} {
+		if strings.HasSuffix(strings.ToLower(base), ext) {
+			return base[:len(base)-len(ext)]
+		}
+	}
+	return base
+}
+
+// bookBarPalette returns (fg, dimFg, bg) for the text book-mode bars. The
+// top bar and the bottom status bar must use the same background/foreground
+// pair so they frame the reading area as a matched set.
+//
+// Palette rationale — evokes WordGrinder / AbiWord / classic word-processor
+// aesthetics rather than the WordPerfect-5.1 blue. Warm parchment tones in
+// light mode, sepia ink in dark mode: think paper and a fountain pen.
+//
+// Tiers (per the xyproto/vt capability model):
+//
+//   - NO_COLOR environment variable set → no colour escapes (always defaults)
+//   - TERM=vt100, TERM=vt*, TERM=xterm → one of the 16 ANSI colours (or defaults if NO_COLOR)
+//   - TERM=xterm-256color → a 256-colour palette index (or ANSI if NO_COLOR)
+//   - TERM=xterm-kitty → a true (24-bit) RGB colour (or ANSI if NO_COLOR)
+func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
+	if envNoColor {
+		return vt.Default, vt.Default, vt.DefaultBackground
+	}
+	term := env.Str("TERM")
+	switch term {
+	case "xterm-kitty":
+		// 24-bit true colour. Warm parchment (light) and deep sepia
+		// (dark) — no blue — with comfortable contrast.
+		if dark {
+			return vt.TrueColor(232, 222, 200), vt.TrueColor(175, 160, 135), vt.TrueBackground(38, 30, 22)
+		}
+		return vt.TrueColor(48, 36, 24), vt.TrueColor(110, 90, 70), vt.TrueBackground(228, 216, 188)
+	case "xterm-256color":
+		// 256-colour palette. 223=wheat-ish (#ffd7af), 180=tan,
+		// 235=very dark gray, 94=sepia brown, 16=black, 230=cream.
+		if dark {
+			return vt.Color256(230), vt.Color256(180), vt.Background256(235)
+		}
+		return vt.Color256(16), vt.Color256(94), vt.Background256(223)
+	}
+	// All other TERMs (xterm, vt220, linux, screen, tmux, …): 16 ANSI
+	// colours. Use LightGray/Black (neutral, AbiWord-like) for light
+	// mode, and DarkGray/White for dark mode. No blue — distinct from
+	// the WordPerfect 5.1 look the user asked to avoid.
+	if dark {
+		return vt.White, vt.LightGray, vt.BackgroundBrightBlack
+	}
+	return vt.Black, vt.DarkGray, vt.BackgroundLightGray
+}
+
+// bookReadingPercent converts the current line position into a reading
+// progress percentage that is 0 at the very top and 100 at the very bottom.
+// Using line-number / lastLine (as the generic editor does) makes line 1 of
+// a 6-line document show 16%, which is confusing for a "how far have I read"
+// indicator in book mode — the reader has not progressed at all yet.
+func bookReadingPercent(lineNumber, lastLineNumber LineNumber) int {
+	if lastLineNumber <= 1 {
+		return 0
+	}
+	p := int(100.0 * float64(lineNumber-1) / float64(lastLineNumber-1))
+	if p < 0 {
+		return 0
+	}
+	if p > 100 {
+		return 100
+	}
+	return p
+}
+
+// bookCatFrame picks the animated cat silhouette for the text-mode top
+// bar. Returns the glyph string and the column offset within the walk
+// strip. The cat walks back and forth over the left portion of the bar;
+// the column is derived from wall-clock time so the animation advances
+// even when the user is idle (driven by a ticker goroutine — see
+// bookCatAnimLoop). When paused is true the cat stays at column 0.
+//
+// The silhouette is always plain ASCII art so it renders identically on
+// every terminal (including TERM=vt100 / vt220 / xterm). No emoji. The
+// cat occupies 2 cells and keeps the ear oriented in the walk direction:
+//
+//	walking right →  "^>"     (ear leads, body trails)
+//	walking left  →  "<^"     (body leads, ear trails)
+//	sitting still →  "=^"     (a small loaf of cat)
+func bookCatFrame(walkCols int, paused bool) (glyph string, col int, width int) {
+	if walkCols < 2 {
+		walkCols = 2
+	}
+	const catRight = "^>"
+	const catLeft = "<^"
+	const catStill = "=^"
+
+	if paused {
+		return catStill, 0, len(catStill)
+	}
+
+	// 250 ms per step → ~4 fps, gentle walk.
+	step := int(time.Now().UnixMilli() / 250)
+	period := 2 * (walkCols - 1)
+	phase := ((step % period) + period) % period
+	if phase < walkCols {
+		return catRight, phase, len(catRight)
+	}
+	return catLeft, period - phase, len(catLeft)
+}
+
+// drawBookTopBar paints the text book-mode top bar on row 0. Left side shows
+// an animated 1-character cat that walks back and forth. Right side shows
+// word count, ~reading time, and scroll percentage.
+//
+// Degrades gracefully:
+//   - NO_COLOR / TERM=vt100 → no colours; cat/stats in the terminal default.
+//   - TERM=vt100 / vt220    → ASCII cat ("<" / ">"), no · middle dot.
+//   - TERM=xterm*           → colour tier chosen by bookBarPalette.
+func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
+	if w <= 0 {
+		return
+	}
+
+	statSep := " · "
+	if useASCII {
+		statSep = " | "
+	}
+
+	fg, dimFg, bg := bookBarPalette(e.bookDarkMode)
+
+	blank := strings.Repeat(" ", w)
+	c.Write(0, 0, fg, bg, blank)
+
+	words := e.WordCount()
+	readingMinutes := words / 200
+	lineNumber := e.LineNumber()
+	lastLineNumber := LineNumber(e.Len())
+	percentage := bookReadingPercent(lineNumber, lastLineNumber)
+	var right string
+	if readingMinutes > 0 {
+		right = fmt.Sprintf("%d words%s~%d min%s%d%%", words, statSep, readingMinutes, statSep, percentage)
+	} else {
+		right = fmt.Sprintf("%d words%s%d%%", words, statSep, percentage)
+	}
+
+	const leftPad = 2
+	const rightPad = 2
+	rightLen := len(right)
+
+	e.drawBookTopBarCat(c, w, fg, bg, leftPad, rightPad+rightLen)
+
+	if rightLen+rightPad <= w {
+		c.Write(uint(w-rightPad-rightLen), 0, dimFg, bg, right)
+	}
+}
+
+// bookCatWalkCols returns the width (in cells) of the left-side strip the
+// animated cat walks within. Centralised so the keypress-driven full redraw
+// and the idle-tick cat-only redraw agree on the layout.
+func bookCatWalkCols(w int) int {
+	if w < 40 {
+		return max(w/4, 3)
+	}
+	return 10
+}
+
+// drawBookTopBarCat repaints only the left-side cat walk strip on row 0 —
+// everything from column leftPad up to the start of the cat's maximum
+// reach. Everything else on the bar (stats on the right, padding) is left
+// untouched so the ticker-driven animation cannot redraw the statistics
+// text on every tick (the canvas diff-render would normally skip the
+// unchanged cells, but writing them would still pull the right-hand stats
+// into the animation conceptually, and subtle timing artefacts are visible
+// when the stats change between ticks). rightReserved is the number of
+// cells reserved at the right edge (rightPad + rightLen) so the cat never
+// overruns the stats.
+func (e *Editor) drawBookTopBarCat(c *vt.Canvas, w int, fg, bg vt.AttributeColor, leftPad, rightReserved int) {
+	walkCols := bookCatWalkCols(w)
+	cat, catCol, catW := bookCatFrame(walkCols, e.bookCatPaused)
+	// Maximum cells the cat region can ever occupy on this tick: from
+	// leftPad to leftPad+walkCols+catW-1. Clear that whole span (with
+	// the palette bg) before painting, so the previous position is erased
+	// without touching the stats area on the right.
+	stripStart := leftPad
+	// The cat can step up to walkCols-1 cells to the right of its home;
+	// its glyph is catW wide. The asciicat width changes with direction
+	// but never exceeds 2, so 2 is a safe upper bound for the clear span.
+	const maxCatWidth = 2
+	stripEnd := leftPad + walkCols - 1 + maxCatWidth
+	if stripEnd > w-rightReserved {
+		stripEnd = w - rightReserved
+	}
+	if stripEnd <= stripStart {
+		return
+	}
+	c.Write(uint(stripStart), 0, fg, bg, strings.Repeat(" ", stripEnd-stripStart))
+
+	catX := uint(leftPad + catCol)
+	if int(catX)+catW > w-rightReserved {
+		return
+	}
+	c.Write(catX, 0, fg, bg, cat)
+}
+
+// isHeadingLine reports whether the given raw line is a Markdown ATX heading
+// (levels 1–6). Used by ReturnPressed to insert a blank separator line after
+// a heading in book mode.
+func isHeadingLine(line string) bool {
+	trimmed := strings.TrimLeft(line, " ")
+	// Must start flush left (no indent) to be a heading — mirrors
+	// parseBookLine's indent==0 guard.
+	if len(trimmed) != len(line) {
+		return false
+	}
+	for _, pfx := range []string{"# ", "## ", "### ", "#### ", "##### ", "###### "} {
+		if strings.HasPrefix(trimmed, pfx) {
+			return true
+		}
+	}
+	return false
 }
 
 // parseBookLine converts a raw Markdown line into a parsedLine.
@@ -2089,6 +2449,10 @@ func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, 
 	placed, rows := e.bookLayoutImageGroup(urls, availW, lineH)
 	phBg := color.NRGBA{0xe0, 0xe0, 0xe0, 0xff}
 	phBorder := color.NRGBA{0xb0, 0xb0, 0xb0, 0xff}
+	if e.bookDarkMode {
+		phBg = color.NRGBA{0x2a, 0x2a, 0x2a, 0xff}
+		phBorder = color.NRGBA{0x55, 0x55, 0x55, 0xff}
+	}
 	for _, p := range placed {
 		if p.loading {
 			rect := image.Rect(marginLeft+p.dstX, cellTop+p.dstY, marginLeft+p.dstX+p.width, cellTop+p.dstY+p.height)
@@ -2207,18 +2571,27 @@ func bookBresenhamLine(img *image.RGBA, x1, y1, x2, y2 int, clr color.Color) {
 // bookDrawCheckbox draws a checkbox icon centred vertically within (cellTop,
 // cellTop+lineH). checked=true draws a green fill with a checkmark.
 // Returns the X coordinate just after the icon (including a small gap).
-func bookDrawCheckbox(img *image.RGBA, x, cellTop, lineH int, checked bool) int {
+func (e *Editor) bookDrawCheckbox(img *image.RGBA, x, cellTop, lineH int, checked bool) int {
 	size := max(
 		// ~55 % of line height
 		lineH*55/100, 5)
 	topY := cellTop + (lineH-size)/2
 
-	border := color.NRGBA{0x55, 0x55, 0x55, 0xff}
-	var fill color.NRGBA
-	if checked {
-		fill = color.NRGBA{0xcc, 0xf0, 0xcc, 0xff} // light green
+	var border, fill color.NRGBA
+	if e.bookDarkMode {
+		border = color.NRGBA{0xaa, 0xaa, 0xaa, 0xff}
+		if checked {
+			fill = color.NRGBA{0x1f, 0x3a, 0x1f, 0xff} // muted dark green
+		} else {
+			fill = color.NRGBA{0x2a, 0x2a, 0x2a, 0xff} // slightly lighter than page
+		}
 	} else {
-		fill = color.NRGBA{0xf8, 0xf8, 0xf8, 0xff} // near-white
+		border = color.NRGBA{0x55, 0x55, 0x55, 0xff}
+		if checked {
+			fill = color.NRGBA{0xcc, 0xf0, 0xcc, 0xff} // light green
+		} else {
+			fill = color.NRGBA{0xf8, 0xf8, 0xf8, 0xff} // near-white
+		}
 	}
 
 	// Interior fill
@@ -2608,13 +2981,17 @@ func bookWrapLinePixel(fs *bookFontSet, pl parsedLine, bodyAvailPx int) int {
 }
 
 // bookRoundedCorners paints anti-aliased dark quarter-circles in the specified
-// corners of img so that the white page appears to have rounded corners against
-// a dark terminal background.
-func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool) {
+// bookRoundedCorners carves quarter-circle rounded corners into img by
+// filling the outside of each corner quadrant with bg. Only the corners
+// selected via top/bottom are modified. A 1-pixel anti-aliasing fringe
+// keeps edges smooth. bg is typically the colour of whatever will sit
+// immediately adjacent to the rounded edge (terminal chrome above the
+// top corners; the status bar below the bottom corners); passing a
+// mismatched bg produces a visible seam.
+func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool, bg color.NRGBA) {
 	if radius <= 0 || (!top && !bottom) {
 		return
 	}
-	bg := color.NRGBA{0x00, 0x00, 0x00, 0xff}
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 
@@ -2675,16 +3052,26 @@ func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool) {
 // bookOverlayCursor on the result to add the I-beam before displaying.
 func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
-	draw.Draw(img, img.Bounds(), image.White, image.Point{}, draw.Src)
+	bg := e.bookBGImage()
+	draw.Draw(img, img.Bounds(), bg, image.Point{}, draw.Src)
 
 	// Bottom corners are part of the cached content layer so they scroll
 	// with the document. Top corners are applied per-frame in bookPageToImage
-	// so they stay fixed at the top of the window.
-	cornerRadius := min(pixW, pixH) / 40
-	if cornerRadius < 6 {
-		cornerRadius = 6
+	// so they stay fixed at the top of the window. The outside-fill colour
+	// for the bottom corners must match whatever sits directly below the
+	// page — the status bar in the usual case — otherwise the corners
+	// produce a visible seam. bookBottomCornerBG handles both the bar-
+	// visible and status-hidden cases (see its doc).
+	// Rounded corners look great against a bright page on a dark terminal
+	// chrome but they produce a visible "bite" on dark backgrounds where the
+	// carved-out pixels contrast with the page. Skip them in dark mode.
+	if !e.bookDarkMode {
+		cornerRadius := min(pixW, pixH) / 40
+		if cornerRadius < 6 {
+			cornerRadius = 6
+		}
+		bookRoundedCorners(img, cornerRadius, false, true, e.bookBottomCornerBG())
 	}
-	bookRoundedCorners(img, cornerRadius, false, true)
 
 	if editRows <= 0 || pixW <= 0 || pixH <= 0 {
 		return img
@@ -2711,8 +3098,8 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	marginTop := int(float64(pixH) * bookMarginTop)
 	marginBottom := int(float64(pixH) * bookMarginBottom)
 
-	dark := color.NRGBA{0x10, 0x10, 0x10, 0xff}
-
+	dark := e.bookFG()
+	pageBG := e.bookBGImage()
 	maxLines := min((pixH-marginTop-marginBottom)/lineH, editRows)
 	rightMargin := pixW - int(float64(pixW)*bookMarginRight)
 
@@ -2727,7 +3114,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	// margin below the preceding text.
 	codeBlockStart := false
 
-	codeBg := color.NRGBA{0xf0, 0xf0, 0xf0, 0xff} // light-gray background for code blocks
+	codeBg := e.bookCodeBG() // light-gray (dark gray in dark mode) background for code blocks
 
 	// Use separate document-line (docLine) and display-row (row) counters so that
 	// image lines and soft-wrapped body lines can consume multiple display rows.
@@ -2797,14 +3184,14 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			vPad := max((blockH-totalH)/2, 0)
 			drawHeaderSegments(img, fs, pl.headerLevel, marginLeft, cellTop+vPad+hAscent, parseLineSegments(pl.body), dark)
 			if rightMargin < pixW {
-				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+blockH), image.White, image.Point{}, draw.Src)
+				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+blockH), pageBG, image.Point{}, draw.Src)
 			}
 			row += nRows
 			continue
 
 		case lineKindUnchecked, lineKindChecked:
 			checked := pl.kind == lineKindChecked
-			prefixX := bookDrawCheckbox(img, marginLeft, cellTop, lineH, checked)
+			prefixX := e.bookDrawCheckbox(img, marginLeft, cellTop, lineH, checked)
 			bodyClr := dark
 			if checked {
 				bodyClr = color.NRGBA{0x55, 0x55, 0x55, 0xff}
@@ -2824,7 +3211,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				}
 				// Hard-clip overflow.
 				if rightMargin < pixW {
-					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), pageBG, image.Point{}, draw.Src)
 				}
 			}
 			row += len(wrows)
@@ -2845,7 +3232,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				drawSegments(img, fs, prefixX, bl, wr.segs, dark)
 				// Hard-clip overflow.
 				if rightMargin < pixW {
-					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), pageBG, image.Point{}, draw.Src)
 				}
 			}
 			row += len(wrows)
@@ -2923,11 +3310,19 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				continue
 			}
 			rowPixelH := subRows * lineH
+			headerBg := color.NRGBA{0x40, 0x40, 0x40, 0xff}
+			headerFg := color.NRGBA{0xff, 0xff, 0xff, 0xff}
+			if e.bookDarkMode {
+				// On a dark page a dark-gray header bar disappears;
+				// invert the contrast so headers still read as headers.
+				headerBg = color.NRGBA{0xd0, 0xd0, 0xd0, 0xff}
+				headerFg = color.NRGBA{0x10, 0x10, 0x10, 0xff}
+			}
 			bookDrawTableRow(img, fs, pl.body, block, rowInBlock, headerRow, aligns, widths,
-				marginLeft, rightMargin, cellTop, lineH, rowPixelH, dark, codeBg)
+				marginLeft, rightMargin, cellTop, lineH, rowPixelH, dark, codeBg, headerBg, headerFg)
 			if rightMargin < pixW {
 				draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+rowPixelH),
-					image.White, image.Point{}, draw.Src)
+					pageBG, image.Point{}, draw.Src)
 			}
 			row += subRows
 			continue
@@ -2944,7 +3339,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				drawSegments(img, fs, marginLeft, bl, wr.segs, dark)
 				// Hard-clip overflow.
 				if rightMargin < pixW {
-					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), image.White, image.Point{}, draw.Src)
+					draw.Draw(img, image.Rect(rightMargin, ct, pixW, ct+lineH), pageBG, image.Point{}, draw.Src)
 				}
 			}
 			row += len(wrows)
@@ -2954,7 +3349,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 		// Hard-clip any text that overflowed past the right margin (for
 		// non-wrapped line kinds that fall through: blank, rule, header, code).
 		if rightMargin < pixW {
-			draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+lineH), image.White, image.Point{}, draw.Src)
+			draw.Draw(img, image.Rect(rightMargin, cellTop, pixW, cellTop+lineH), pageBG, image.Point{}, draw.Src)
 		}
 		row++
 	}
@@ -3284,7 +3679,7 @@ func nextListPrefix(pfx string) string {
 // secondary text. We map the semantic colour constants to true-colour
 // values because many terminal palettes remap color 0 ("black") to a dark
 // gray, which ruins legibility on a white background.
-func bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.AttributeColor) {
+func (e *Editor) bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.AttributeColor) {
 	if bold {
 		// vt.AttributeColor.Combine truncates its operands to the lower
 		// 16 bits, which drops the extended / true-colour flag bits and
@@ -3293,9 +3688,9 @@ func bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.Attri
 		// attribute combination emits a valid "\x1b[30;1m" / "\x1b[90;1m"
 		// instead of the corrupted escape that otherwise leaks SGR
 		// attributes onto subsequent cells.
-		return fg.Combine(vt.Bold), bookTextBG
+		return fg.Combine(vt.Bold), e.bookTextModeBG()
 	}
-	return bookTextResolveFG(fg), bookTextBG
+	return e.bookTextResolveFG(fg), e.bookTextModeBG()
 }
 
 // bookTextResolveFG converts the semantic colour constants used by the
@@ -3303,31 +3698,36 @@ func bookTextTheme(fg vt.AttributeColor, bold bool) (vt.AttributeColor, vt.Attri
 // equivalents so the final SGR output stays faithful to the intended look
 // regardless of the user's configured palette. vt.TrueColor downgrades
 // automatically to the nearest xterm-256 or ANSI-16 colour on terminals
-// that don't support 24-bit colour.
-func bookTextResolveFG(fg vt.AttributeColor) vt.AttributeColor {
+// that don't support 24-bit colour. Dark-mode-aware: vt.Black maps to the
+// light foreground on dark backgrounds.
+func (e *Editor) bookTextResolveFG(fg vt.AttributeColor) vt.AttributeColor {
 	switch fg {
 	case vt.Black:
-		return bookTextFGBlack
+		return e.bookTextModeFGBlack()
 	case vt.DarkGray:
-		return bookTextFGDarkGray
+		return e.bookTextModeFGDim()
 	case vt.White:
 		return bookTextFGWhite
 	}
 	return fg
 }
 
-func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, maxX int) {
+func (e *Editor) writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, maxX int) {
 	x := startX
+	bodyFG := e.bookTextModeFGBlack()
+	codeFG := e.bookTextModeFGDim()
+	textBG := e.bookTextModeBG()
 	for _, seg := range segs {
 		if int(x) >= maxX {
 			break
 		}
-		// Base colours for text book mode: true black on true white, with
-		// inline `code` rendered in dark gray so it's visually set apart
-		// without introducing a second background colour.
-		fg := bookTextFGBlack
+		// Base colours for text book mode: the theme-appropriate body
+		// foreground on the theme background, with inline `code`
+		// rendered in dim foreground so it's visually set apart without
+		// introducing a second background colour.
+		fg := bodyFG
 		if seg.code {
-			fg = bookTextFGDarkGray
+			fg = codeFG
 		}
 		// Links (Markdown [text](url)) use the same palette as the
 		// graphical renderer: #46a3bf unvisited, #7e46bf visited. The
@@ -3347,7 +3747,7 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 				fg = vt.TrueColor(0x46, 0xa3, 0xbf)
 			}
 		}
-		bg := bookTextBG
+		bg := textBG
 		// For the same reason we can't pack attributes onto a true-colour
 		// fg: Combine would drop the extended-colour flag and corrupt the
 		// SGR sequence. When we need bold / italic, fall back to a
@@ -3361,6 +3761,15 @@ func writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []textSegment, ma
 			paletteFG := vt.Black
 			if seg.code {
 				paletteFG = vt.DarkGray
+			}
+			if e.bookDarkMode {
+				// Dark mode: a palette "Black" foreground would be
+				// invisible on a dark background. Swap to White /
+				// LightGray which combines cleanly with Bold/Italic.
+				paletteFG = vt.White
+				if seg.code {
+					paletteFG = vt.LightGray
+				}
 			}
 			if isLink {
 				// Preserve link colour even on bold/italic by using a
@@ -3420,38 +3829,47 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	yMax := editRows + bookTextTopBarRows
 
 	// Clear every row (including the status row) with the book theme's
-	// bright-white background. Clearing the status row too is important
-	// on startup: before Loop() calls InitialRedraw, neweditor.go had a
-	// chance to paint regular editor text onto the canvas — if we left
-	// the status row untouched, the old syntax-highlighted text would
-	// ghost through behind the status bar. The status bar will repaint
-	// its own row on top of this blank line anyway.
+	// background. Clearing the status row too is important on startup:
+	// before Loop() calls InitialRedraw, neweditor.go had a chance to
+	// paint regular editor text onto the canvas — if we left the status
+	// row untouched, the old syntax-highlighted text would ghost through
+	// behind the status bar. The status bar will repaint its own row on
+	// top of this blank line anyway.
 	blank := strings.Repeat(" ", w)
+	clearFG := e.bookTextModeFGBlack()
+	clearBG := e.bookTextModeBG()
 	for row := 0; row < h; row++ {
-		c.Write(0, uint(row), bookTextFGBlack, bookTextBG, blank)
+		c.Write(0, uint(row), clearFG, clearBG, blank)
 	}
 
-	// Top filename bar — white on blue, filename centred. Matches the
-	// bottom status bar's palette (see statusbar.go). Use the base name
-	// only (no directory) and clamp to the terminal width.
-	fname := filepath.Base(e.filename)
-	if fname == "" || fname == "." {
-		fname = "untitled"
-	}
-	if len(fname) > w {
-		if w > 3 {
-			fname = fname[:w-3] + "..."
-		} else {
-			fname = fname[:w]
-		}
-	}
-	tbFG := vt.TrueColor(255, 255, 255)
-	tbBG := vt.TrueBackground(30, 90, 180)
-	c.Write(0, 0, tbFG, tbBG, strings.Repeat(" ", w))
-	c.Write(uint(max((w-len(fname))/2, 0)), 0, tbFG, tbBG, fname)
+	// Top book-title bar — palette blends with the book-mode theme and
+	// surfaces genuinely useful information at a glance:
+	//   [📖] <book title>                       words · ~N min · NN%
+	// The title is the first H1 found in the document (up to the first 80
+	// runes), falling back to the base filename. Word count, estimated
+	// reading time, and scroll progress are right-aligned. A small book
+	// glyph anchors the left so the bar feels like a header, not a label.
+	e.drawBookTopBar(c, w)
 
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
+
+	// Compute the display-row range occupied by the active paragraph (the
+	// one containing the cursor) for focus-mode dimming. Rows are measured
+	// relative to (row + topMargin), i.e. absolute canvas y.
+	var (
+		focusEnabled  = e.bookFocusMode
+		activeDocY    LineIndex
+		activeStartY  LineIndex
+		activeEndY    LineIndex
+		activeRowLo   = -1
+		activeRowHi   = -1
+	)
+	if focusEnabled {
+		activeDocY = e.DataY()
+		activeStartY = e.bookParagraphStart(activeDocY)
+		activeEndY = e.bookParagraphEnd(activeDocY)
+	}
 
 	row := 0
 	docLine := startLine
@@ -3459,6 +3877,8 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 		pl := parseBookLine(rawLine)
+		rowBefore := row
+		currentDocLine := LineIndex(docLine)
 		docLine++
 		y := uint(row + topMargin)
 		x := uint(marginLeft)
@@ -3469,7 +3889,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 
 		case lineKindRule:
 			if textW > 0 {
-				c.Write(x, y, bookTextFGDarkGray, bookTextBG, strings.Repeat("─", textW))
+				c.Write(x, y, e.bookTextModeFGDim(), e.bookTextModeBG(), strings.Repeat("─", textW))
 			}
 			row++
 
@@ -3481,7 +3901,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			if pl.headerLevel >= 2 {
 				fg = vt.DarkGray
 			}
-			hfg, hbg := bookTextTheme(fg, true)
+			hfg, hbg := e.bookTextTheme(fg, true)
 			headerText := html.UnescapeString(pl.body)
 			for _, chunk := range bookWrapPlainRunes(headerText, textW) {
 				if row+topMargin >= yMax {
@@ -3495,7 +3915,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			// Dark gray on bright white for code lines — the same
 			// muted contrast used by the graphical renderer's code
 			// background.
-			cfg, cbg := bookTextTheme(vt.DarkGray, false)
+			cfg, cbg := e.bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes(pl.body, textW) {
 				if row+topMargin >= yMax {
 					break
@@ -3507,7 +3927,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		case lineKindTable:
 			// In text mode we just print the raw pipe-delimited row. The
 			// content is already monospace in the terminal so columns align.
-			tfg, tbg := bookTextTheme(vt.Black, false)
+			tfg, tbg := e.bookTextTheme(vt.Black, false)
 			tableText := html.UnescapeString(pl.body)
 			for _, chunk := range bookWrapPlainRunes(tableText, textW) {
 				if row+topMargin >= yMax {
@@ -3518,7 +3938,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 
 		case lineKindImage:
-			ifg, ibg := bookTextTheme(vt.DarkGray, false)
+			ifg, ibg := e.bookTextTheme(vt.DarkGray, false)
 			for _, chunk := range bookWrapPlainRunes("[image: "+pl.body+"]", textW) {
 				if row+topMargin >= yMax {
 					break
@@ -3528,12 +3948,12 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 
 		case lineKindBullet, lineKindNumbered, lineKindUnchecked, lineKindChecked:
-			prefixFg, prefixBg := bookTextTheme(vt.Black, false)
+			prefixFg, prefixBg := e.bookTextTheme(vt.Black, false)
 			if pl.kind == lineKindBullet && strings.HasPrefix(pl.prefix, "│") {
-				prefixFg, prefixBg = bookTextTheme(vt.DarkGray, false)
+				prefixFg, prefixBg = e.bookTextTheme(vt.DarkGray, false)
 			}
 			if pl.kind == lineKindChecked {
-				prefixFg, prefixBg = bookTextTheme(vt.DarkGray, true)
+				prefixFg, prefixBg = e.bookTextTheme(vt.DarkGray, true)
 			}
 			pfxRunes := []rune(pl.prefix)
 			pfxLen := len(pfxRunes)
@@ -3549,10 +3969,10 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 				dy := uint(row + topMargin)
 				if i == 0 {
 					c.Write(x, dy, prefixFg, prefixBg, pl.prefix)
-					writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
+					e.writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
 				} else {
 					// Continuation line: indent to match prefix width.
-					writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
+					e.writeBookTextSegs(c, x+uint(pfxLen), dy, parseLineSegments(ws.text), marginRight)
 				}
 				row++
 			}
@@ -3564,8 +3984,46 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 					break
 				}
 				dy := uint(row + topMargin)
-				writeBookTextSegs(c, x, dy, parseLineSegments(ws.text), marginRight)
+				e.writeBookTextSegs(c, x, dy, parseLineSegments(ws.text), marginRight)
 				row++
+			}
+		}
+
+		// Remember the y-range of the active paragraph so the focus-mode
+		// post-pass can leave it alone and dim everything else.
+		if focusEnabled && currentDocLine >= activeStartY && currentDocLine <= activeEndY {
+			absLo := rowBefore + topMargin
+			absHi := row + topMargin - 1
+			if absHi < absLo {
+				absHi = absLo
+			}
+			if activeRowLo == -1 || absLo < activeRowLo {
+				activeRowLo = absLo
+			}
+			if absHi > activeRowHi {
+				activeRowHi = absHi
+			}
+		}
+	}
+
+	// Focus mode: dim rows outside the active paragraph by rewriting each
+	// cell's foreground to the dim palette colour. The content itself is
+	// preserved; only the visual emphasis shifts away from it.
+	if focusEnabled {
+		dimFg := vt.DarkGray
+		if e.bookDarkMode {
+			dimFg = vt.TrueColor(90, 90, 95)
+		} else {
+			dimFg = vt.TrueColor(190, 190, 195)
+		}
+		for y := bookTextTopBarRows; y < yMax; y++ {
+			if activeRowLo != -1 && y >= activeRowLo && y <= activeRowHi {
+				continue
+			}
+			for x := 0; x < w; x++ {
+				if r, err := c.At(uint(x), uint(y)); err == nil && r != 0 && r != ' ' {
+					c.PlotColor(uint(x), uint(y), dimFg, r)
+				}
 			}
 		}
 	}
@@ -3642,9 +4100,16 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	selStartY, selStartX := e.selection.start()
 	selEndY, selEndX := e.selection.end()
 
-	selBg := color.NRGBA{0xD0, 0xD0, 0xD0, 0xFF}
-	dark := color.NRGBA{0x10, 0x10, 0x10, 0xff}
-	codeBg := color.NRGBA{0xf0, 0xf0, 0xf0, 0xff}
+	// Selection background (mid-gray, legible on either page tone).
+	var selBg color.NRGBA
+	if e.bookDarkMode {
+		selBg = color.NRGBA{0x44, 0x44, 0x48, 0xFF}
+	} else {
+		selBg = color.NRGBA{0xD0, 0xD0, 0xD0, 0xFF}
+	}
+	dark := e.bookFG()
+	codeBg := e.bookCodeBG()
+	pageBG := e.bookBGImage()
 
 	// paintSubRow paints one wrapped sub-row with a selection stripe from
 	// pxL..pxR, then re-renders the segments starting at segsStartX so
@@ -3652,7 +4117,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	paintSubRow := func(subRow int, pxL, pxR int, segs []textSegment, segsStartX int, textClr color.Color) {
 		ct := marginTop + subRow*lineH
 		draw.Draw(dst, image.Rect(0, ct, pixW, ct+lineH),
-			image.White, image.Point{}, draw.Src)
+			pageBG, image.Point{}, draw.Src)
 		if pxR > pxL {
 			draw.Draw(dst, image.Rect(pxL, ct, pxR, ct+lineH),
 				image.NewUniform(selBg), image.Point{}, draw.Src)
@@ -3886,7 +4351,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			hRight = clampX(hRight)
 			if hRight > hLeft {
 				draw.Draw(dst, image.Rect(0, cellTop, pixW, cellTop+blockH),
-					image.White, image.Point{}, draw.Src)
+					pageBG, image.Point{}, draw.Src)
 				draw.Draw(dst, image.Rect(hLeft, cellTop, hRight, cellTop+blockH),
 					image.NewUniform(selBg), image.Point{}, draw.Src)
 				drawHeaderSegments(dst, fs, pl.headerLevel, marginLeft, cellTop+hVPad+hAscent, hSegs, dark)
@@ -3973,7 +4438,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 				textClr = color.NRGBA{0x55, 0x55, 0x55, 0xff}
 			}
 			wrappedSel(lineIdx, pl, row, rowsConsumed, prefixEndX, rawPfxLen, textClr)
-			bookDrawCheckbox(dst, marginLeft, cellTop, lineH, checked)
+			e.bookDrawCheckbox(dst, marginLeft, cellTop, lineH, checked)
 
 		case lineKindBullet, lineKindNumbered:
 			prefixPx := measureStringFB(fs.regular, pl.prefix).Round()
@@ -4044,17 +4509,124 @@ func (e *Editor) bookPageToImage(pixW, pixH, editRows int, cellH uint) *image.RG
 	copy(dst.Pix, bookContentCache.Pix)
 
 	e.bookOverlaySelection(dst, pixW, pixH, editRows, cellH)
+	if e.bookFocusMode {
+		e.bookOverlayFocusDim(dst, pixW, pixH, editRows, cellH)
+	}
 	e.bookOverlayCursor(dst, pixW, pixH, editRows, cellH)
 
-	// Top corners are painted per-frame so they stay fixed at the top of the
-	// window regardless of scroll position.
-	cornerRadius := min(pixW, pixH) / 40
-	if cornerRadius < 6 {
-		cornerRadius = 6
+	// Top corners: decorative carve on bright pages, skipped in dark mode
+	// where the carved pixels would otherwise contrast as dark "teeth" at
+	// the top edge of the page.
+	if !e.bookDarkMode {
+		cornerRadius := min(pixW, pixH) / 40
+		if cornerRadius < 6 {
+			cornerRadius = 6
+		}
+		bookRoundedCorners(dst, cornerRadius, true, false, color.NRGBA{0x00, 0x00, 0x00, 0xff})
 	}
-	bookRoundedCorners(dst, cornerRadius, true, false)
 
 	return dst
+}
+
+// bookOverlayFocusDim dims pixel rows outside the active paragraph by blending
+// them toward the book background. Called only when bookFocusMode is true.
+// The content image itself is unchanged, so toggling focus mode off restores
+// the original appearance on the next render.
+func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, cellH uint) {
+	if dst == nil || pixW <= 0 || pixH <= 0 || editRows <= 0 {
+		return
+	}
+
+	fontSize := float64(cellH) * 0.72
+	if fontSize < 6 {
+		fontSize = 6
+	}
+	fs, err := bookFaces(fontSize)
+	if err != nil {
+		return
+	}
+	lineH := int(cellH)
+	if lineH <= 0 {
+		lineH = int(fontSize) + 4
+	}
+
+	marginLeft := int(float64(pixW) * bookMarginLeft)
+	marginTop := int(float64(pixH) * bookMarginTop)
+	marginBottom := int(float64(pixH) * bookMarginBottom)
+	rightMargin := pixW - int(float64(pixW)*bookMarginRight)
+	maxLines := min((pixH-marginTop-marginBottom)/lineH, editRows)
+
+	cursorDataY := e.DataY()
+	activeStart := e.bookParagraphStart(cursorDataY)
+	activeEnd := e.bookParagraphEnd(cursorDataY)
+
+	startLine := e.pos.offsetY
+	totalLines := e.Len()
+
+	// Walk docLines from offsetY, measuring pixel height of each, to find
+	// where the active paragraph falls in the content image.
+	pxTop := marginTop
+	activePxLo, activePxHi := -1, -1
+	row := 0
+	dl := LineIndex(startLine)
+	for row < maxLines && int(dl) < totalLines {
+		rl := e.Line(dl)
+		rl = strings.ReplaceAll(rl, "\t", "    ")
+		pl := parseBookLine(rl)
+		rows := bookPixelRowCount(fs, pl, lineH, marginLeft, rightMargin)
+		pxBot := pxTop + rows*lineH
+		if dl >= activeStart && dl <= activeEnd {
+			if activePxLo == -1 || pxTop < activePxLo {
+				activePxLo = pxTop
+			}
+			if pxBot > activePxHi {
+				activePxHi = pxBot
+			}
+		}
+		pxTop = pxBot
+		row += rows
+		dl++
+	}
+
+	// If the active paragraph is off-screen (shouldn't happen because
+	// ensureCursorVisible has already scrolled it in), just dim everything.
+	bgR, bgG, bgB, _ := e.bookBG().RGBA()
+	bgr8, bgg8, bgb8 := uint8(bgR>>8), uint8(bgG>>8), uint8(bgB>>8)
+	// Alpha of 140/255 ≈ 55% toward bg keeps the dim text legible as context
+	// but clearly secondary. In dark mode, bump to ~75% for stronger dimming,
+	// since the text is already naturally dim and needs more contrast.
+	dimAlpha := 140
+	if e.bookDarkMode {
+		dimAlpha = 190
+	}
+
+	dimRow := func(y int) {
+		if y < 0 || y >= pixH {
+			return
+		}
+		// stride = 4 bytes per pixel in RGBA
+		base := y * dst.Stride
+		for x := 0; x < pixW; x++ {
+			i := base + x*4
+			r := dst.Pix[i]
+			g := dst.Pix[i+1]
+			b := dst.Pix[i+2]
+			// blend toward bg
+			r = uint8((int(r)*(255-dimAlpha) + int(bgr8)*dimAlpha) / 255)
+			g = uint8((int(g)*(255-dimAlpha) + int(bgg8)*dimAlpha) / 255)
+			b = uint8((int(b)*(255-dimAlpha) + int(bgb8)*dimAlpha) / 255)
+			dst.Pix[i] = r
+			dst.Pix[i+1] = g
+			dst.Pix[i+2] = b
+		}
+	}
+
+	for y := 0; y < pixH; y++ {
+		if activePxLo != -1 && y >= activePxLo && y < activePxHi {
+			continue
+		}
+		dimRow(y)
+	}
 }
 
 // bookStatusBarImage renders the status bar strip as a standalone RGBA image.
@@ -4063,15 +4635,33 @@ func (e *Editor) bookPageToImage(pixW, pixH, editRows int, cellH uint) *image.RG
 // replaces the stats half and is shown centered.
 func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, pixW, statusPixH))
-	bgClr := color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
+
+	// Status bar colour scheme is intentionally the *inverse* of the page:
+	// a light page gets a black bar with white text; a dark page gets a
+	// white bar with black text. The high contrast frames the reading
+	// area regardless of mode. The page's bottom rounded corners are
+	// carved with the same bg (see bookBottomCornerBG) so the join is
+	// seamless.
+	var bgClr, textClr, dimClr color.NRGBA
+	if e.bookDarkMode {
+		// Dark mode (dark page): white bar, black text.
+		bgClr = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+		textClr = color.NRGBA{0x00, 0x00, 0x00, 0xff}
+		dimClr = color.NRGBA{0x60, 0x60, 0x60, 0xff}
+	} else {
+		// Light mode (white page): black bar, white text.
+		bgClr = color.NRGBA{0x00, 0x00, 0x00, 0xff}
+		textClr = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+		dimClr = color.NRGBA{0xa0, 0xa0, 0xa0, 0xff}
+	}
+
 	draw.Draw(img, img.Bounds(), image.NewUniform(bgClr), image.Point{}, draw.Src)
 
-	// Subtle 1 px separator line along the top edge, reminiscent of the thin
-	// rule that sits above the status bar in typical word processors.
-	sepClr := color.NRGBA{0x30, 0x30, 0x30, 0xff}
-	for x := 0; x < pixW; x++ {
-		img.Set(x, 0, sepClr)
-	}
+	// No separator line at the top edge: the previous subtle 1 px rule
+	// made sense when the bar colour sat next to a near-identical page
+	// colour, but against the new high-contrast bar (inverse of the
+	// page) the rule reads as a seam between the page's rounded corners
+	// and the status strip.
 
 	mainFontSize := float64(renderH) * 0.72
 	if mainFontSize < 6 {
@@ -4081,9 +4671,6 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	if err != nil {
 		return img
 	}
-
-	textClr := color.NRGBA{0xd0, 0xd0, 0xd0, 0xff}
-	dimClr := color.NRGBA{0x80, 0x80, 0x80, 0xff}
 
 	sbAscent := faceAscent(fs.statusBar, fs.statusBarSize)
 	baseline := (statusPixH+sbAscent)/2 + 1
@@ -4103,7 +4690,10 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 		return img
 	}
 
-	percentage, lineNumber, lastLineNumber := e.PLA()
+	_, lineNumber, lastLineNumber := e.PLA()
+	// Reading progress: 0% at the very top, 100% at the very bottom.
+	// Using the raw line / lastLine ratio would show 16% on line 1 of 6.
+	percentage := bookReadingPercent(lineNumber, lastLineNumber)
 
 	// Left half: cursor position — fixed-width so digits don't shift the
 	// surrounding labels as the cursor moves. The widths (5 / 4) are chosen
@@ -4112,9 +4702,16 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	leftText := fmt.Sprintf("Line %5d of %-5d   Col %4d",
 		int(lineNumber), int(lastLineNumber), e.ColNumber())
 
-	// Right half: document stats.
+	// Right half: enhanced document stats with more useful information
 	words := e.WordCount()
-	rightText := fmt.Sprintf("Words %6d   %3d%%", words, percentage)
+	// Estimate reading time: ~200 words per minute
+	readingTimeMinutes := words / 200
+	var rightText string
+	if readingTimeMinutes > 0 {
+		rightText = fmt.Sprintf("Words %6d   ~%d min   %3d%%", words, readingTimeMinutes, percentage)
+	} else {
+		rightText = fmt.Sprintf("Words %6d   %3d%%", words, percentage)
+	}
 
 	// Draw left, left-anchored with a small padding.
 	marginX := 16
@@ -4168,14 +4765,16 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 		bookComposeBuf = image.NewRGBA(bounds)
 	}
 	full := bookComposeBuf
-	// Dark background everywhere so any gap matches the terminal chrome.
+	// Fill the entire buffer with black so any undrawn gap matches the
+	// terminal chrome background (which is typically black). This also
+	// ensures the page + status bar composite has a seamless background.
 	// Clearing via a direct slice fill is cheaper than draw.Draw with a
 	// uniform source.
 	for i := 0; i < len(full.Pix); i += 4 {
-		full.Pix[i] = 0
-		full.Pix[i+1] = 0
-		full.Pix[i+2] = 0
-		full.Pix[i+3] = 0xff
+		full.Pix[i] = 0       // R
+		full.Pix[i+1] = 0     // G
+		full.Pix[i+2] = 0     // B
+		full.Pix[i+3] = 0xff  // A
 	}
 	// Copy the page (content + selection + cursor + top rounded corners) to the top.
 	draw.Draw(full, image.Rect(0, 0, pixW, editPixH), pageImg, image.Point{}, draw.Src)
@@ -4403,6 +5002,31 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 		}
 	}
 	if cursorDataY < 0 || totalLines == 0 {
+		return
+	}
+
+	// Focus (typewriter) mode: anchor the cursor row near the vertical
+	// centre of the edit area. Scroll offsetY so that the number of
+	// display rows from offsetY to cursorDataY equals roughly
+	// maxDisplayRows/2 — the page slides under a stationary cursor.
+	if e.bookFocusMode {
+		targetRow := maxDisplayRows / 2
+		if targetRow < 1 {
+			targetRow = 1
+		}
+		// Walk offsetY down until the rows-from-offset matches target,
+		// or up until we can't go any further (cursor near top of doc).
+		// Use countDisplayRowsTo to stay honest about soft-wrapped rows.
+		e.pos.offsetY = cursorDataY
+		for e.pos.offsetY > 0 {
+			candidate := e.pos.offsetY - 1
+			rowsFromCandidate := e.countDisplayRowsTo(candidate, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs)
+			if rowsFromCandidate < 0 || rowsFromCandidate > targetRow {
+				break
+			}
+			e.pos.offsetY = candidate
+		}
+		e.pos.sy = max(cursorDataY-e.pos.offsetY, 0)
 		return
 	}
 
@@ -4819,8 +5443,14 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 		x = marginLeft
 	}
 
-	c.ShowCursor()
+	// Position first, THEN show. If ShowCursor ran before SetXY the
+	// caret would briefly appear at the position left behind by the
+	// preceding HideCursorAndDraw (typically the end of the last row
+	// drawn, which can be inside the top bar), then jump to the final
+	// position — a visible flash. Reversing the order keeps the caret
+	// invisible until it is already where it belongs.
 	vt.SetXY(uint(x), uint(y))
+	c.ShowCursor()
 }
 
 // bookWrapWidth returns the available text width in runes for wrapping
@@ -5858,12 +6488,13 @@ func bookScreenshot(mdPath, outPath string) error {
 		img := e.bookContentImage(pixW, pixH, int(editRows), renderH)
 		e.bookOverlayCursor(img, pixW, pixH, int(editRows), renderH)
 
-		// Apply top corners.
+		// Apply top corners. Outside-fill is terminal chrome (black).
 		cornerRadius := min(pixW, pixH) / 40
 		if cornerRadius < 6 {
 			cornerRadius = 6
 		}
-		bookRoundedCorners(img, cornerRadius, true, false)
+		// Use the same logic as the page itself: fade top corners to black (terminal chrome)
+		bookRoundedCorners(img, cornerRadius, true, false, color.NRGBA{0x00, 0x00, 0x00, 0xff})
 
 		// Draw row guides.
 		bookScreenshotAnnotate(img, e, pixW, pixH, int(editRows), renderH)
@@ -6047,6 +6678,20 @@ func (e *Editor) bookParagraphStart(y LineIndex) LineIndex {
 	}
 	for y > 0 && strings.TrimSpace(e.Line(y-1)) != "" {
 		y--
+	}
+	return y
+}
+
+// bookParagraphEnd returns the LineIndex of the last line of the paragraph
+// containing y (inclusive). A paragraph is a maximal run of non-blank lines.
+// If y itself is blank, returns y unchanged.
+func (e *Editor) bookParagraphEnd(y LineIndex) LineIndex {
+	if strings.TrimSpace(e.Line(y)) == "" {
+		return y
+	}
+	last := LineIndex(e.Len() - 1)
+	for y < last && strings.TrimSpace(e.Line(y+1)) != "" {
+		y++
 	}
 	return y
 }
@@ -6265,7 +6910,7 @@ func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin in
 // are parsed per cell.
 func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []string,
 	rowInBlock, headerRow int, aligns, widths []int,
-	marginLeft, rightMargin, cellTop, lineH, rowPixelH int, fg, altBg color.Color) {
+	marginLeft, rightMargin, cellTop, lineH, rowPixelH int, fg, altBg, headerBg, headerFg color.Color) {
 	if len(widths) == 0 || rowPixelH <= 0 {
 		return
 	}
@@ -6305,8 +6950,6 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 		}
 	}
 
-	headerBg := color.NRGBA{0x40, 0x40, 0x40, 0xff}
-	headerFg := color.NRGBA{0xff, 0xff, 0xff, 0xff}
 	if isHeader {
 		draw.Draw(img, image.Rect(marginLeft, cellTop, marginLeft+totalW, cellTop+rowPixelH),
 			image.NewUniform(headerBg), image.Point{}, draw.Src)
