@@ -380,12 +380,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				"Blue Edit      (O_THEME=blueedit)",
 				"Pinetree       (O_THEME=pinetree)",
 				"Zulu           (O_THEME=zulu)",
+				"Xoria          (O_THEME=xoria)",
+				"Gruvbox        (O_THEME=gruvbox)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
 				"Blue Mono      (O_THEME=bluemono)",
-				"Xoria          (O_THEME=xoria)",
-				"Gruvbox        (O_THEME=gruvbox)"}
+			}
 			menuChoices = append(menuChoices, "No colors      (NO_COLOR=1)")
 			useMenuIndex := 0
 			for i, menuChoiceText := range menuChoices {
