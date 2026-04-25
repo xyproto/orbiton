@@ -1669,9 +1669,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			undo.Snapshot(e)
 
-			// Book mode has word-processor-style type-to-replace: if a
-			// selection exists when Return is pressed, replace it.
-			if e.bookMode.Load() && e.HasSelection() {
+			// If a selection exists when Return is pressed, replace it
+			if e.HasSelection() {
 				e.DeleteSelection(c, status)
 				e.ClearSelection()
 			}
