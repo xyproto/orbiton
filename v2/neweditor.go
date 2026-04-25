@@ -621,6 +621,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 	// Craft an appropriate status message
 	if createdNewFile {
+		e.bookFocusMode = true // use focus mode by default for new files, when in book mode
 		statusMessage = "New " + e.filename
 	} else if e.Empty() && !fnord.stdin {
 		statusMessage = "Loaded empty file: " + files.Relative(e.filename) + warningMessage
