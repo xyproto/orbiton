@@ -25,6 +25,9 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		}
 	}
 	e.binaryFile = binary.DataAccurate(data)
+	if !e.binaryFile {
+		data = []byte(opinionatedStringReplacer.Replace(string(data)))
+	}
 
 	var (
 		reader           = bufio.NewReader(bytes.NewReader(data))
@@ -47,7 +50,6 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		if e.binaryFile {
 			lines[index] = []rune(line)
 		} else {
-			line = opinionatedStringReplacer.Replace(line)
 			if len(line) > 2 {
 				first = line[0]
 				if first == '\t' {
@@ -122,13 +124,12 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
-	lineCount := bytes.Count(data, []byte{'\n'}) + 1
-
-	// Prepare an empty map to load the lines into
-	e.Clear()
-	e.lines = make(map[int][]rune, lineCount)
-
 	e.binaryFile = binary.DataAccurate(data)
+	if !e.binaryFile {
+		data = []byte(opinionatedStringReplacer.Replace(string(data)))
+	}
+
+	lineCount := bytes.Count(data, []byte{'\n'}) + 1
 
 	var (
 		// Split the bytes into lines
