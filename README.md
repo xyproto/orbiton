@@ -387,6 +387,10 @@ For using ie. the Synthwave theme, the `/usr/bin/sw` symlink to `/usr/bin/o` can
 
     export O_THEME=synthwave
 
+It is also possibly to specify any base16 theme, like ie. this:
+
+    export O_THEME=/usr/share/base16/monokai.yaml
+
 ## Inserting a symbol
 
 * To insert a symbol, like `æ`, just press `ctrl-_` and type in `ae`. To insert `µ`, type in `My`.
