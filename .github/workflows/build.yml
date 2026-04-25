@@ -82,7 +82,7 @@ jobs:
         with:
           release: 15.0
           usesh: true
-          prepare: export IGNORE_OSVERSION=yes; pkg update -f && pkg install -y go
+          prepare: pkg install -y go
           run: |
             cd v2
             go build -mod=vendor
