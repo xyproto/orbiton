@@ -945,7 +945,7 @@ func (e *Editor) bookDocumentTitle() string {
 		}
 		return t
 	}
-	for i := 0; i < scanLimit; i++ {
+	for i := range scanLimit {
 		raw := strings.TrimRight(e.Line(LineIndex(i)), " \t")
 		if strings.HasPrefix(raw, "# ") {
 			return truncate(strings.TrimSpace(raw[2:]))
@@ -1145,10 +1145,7 @@ func (e *Editor) drawBookTopBarCat(c *vt.Canvas, w int, fg, bg vt.AttributeColor
 	// its glyph is catW wide. The asciicat width changes with direction
 	// but never exceeds 2, so 2 is a safe upper bound for the clear span.
 	const maxCatWidth = 2
-	stripEnd := leftPad + walkCols - 1 + maxCatWidth
-	if stripEnd > w-rightReserved {
-		stripEnd = w - rightReserved
-	}
+	stripEnd := min(leftPad+walkCols-1+maxCatWidth, w-rightReserved)
 	if stripEnd <= stripStart {
 		return
 	}
@@ -1876,7 +1873,7 @@ func svgParseColor(s string) (color.NRGBA, bool) {
 // ("font-size:11px;fill:#fff").
 func svgParseStyle(s string) map[string]string {
 	m := map[string]string{}
-	for _, p := range strings.Split(s, ";") {
+	for p := range strings.SplitSeq(s, ";") {
 		p = strings.TrimSpace(p)
 		if p == "" {
 			continue
@@ -2545,19 +2542,19 @@ func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, 
 				img.Set(rect.Min.X, y, phBorder)
 				img.Set(rect.Max.X-1, y, phBorder)
 			}
-			
+
 			// Draw three circles in the center to indicate loading
 			centerX := rect.Min.X + (rect.Dx() / 2)
 			centerY := rect.Min.Y + (rect.Dy() / 2)
 			circleRadius := 3
 			circleDist := 12
-			
+
 			// Choose circle color based on theme
 			circleColor := color.NRGBA{0x4a, 0xb0, 0x60, 0xff} // green
 			if e.bookDarkMode {
 				circleColor = color.NRGBA{0x5a, 0xd0, 0x70, 0xff} // bright green
 			}
-			
+
 			// Draw three circles
 			for i := -1; i <= 1; i++ {
 				x := centerX + i*circleDist
@@ -2873,10 +2870,7 @@ func bookWrapPlainRunes(s string, width int) []string {
 	}
 	var out []string
 	for i := 0; i < len(runes); i += width {
-		end := i + width
-		if end > len(runes) {
-			end = len(runes)
-		}
+		end := min(i+width, len(runes))
 		out = append(out, string(runes[i:end]))
 	}
 	return out
@@ -3131,13 +3125,13 @@ func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool, bg color.
 
 	if top {
 		// Top-left corner (centre of circle at radius, radius).
-		for y := 0; y < radius; y++ {
-			for x := 0; x < radius; x++ {
+		for y := range radius {
+			for x := range radius {
 				blend(x, y, radius, radius)
 			}
 		}
 		// Top-right corner.
-		for y := 0; y < radius; y++ {
+		for y := range radius {
 			for x := w - radius; x < w; x++ {
 				blend(x, y, w-radius-1, radius)
 			}
@@ -3146,7 +3140,7 @@ func bookRoundedCorners(img *image.RGBA, radius int, top, bottom bool, bg color.
 	if bottom {
 		// Bottom-left corner.
 		for y := h - radius; y < h; y++ {
-			for x := 0; x < radius; x++ {
+			for x := range radius {
 				blend(x, y, radius, h-radius-1)
 			}
 		}
@@ -3178,10 +3172,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	// chrome but they produce a visible "bite" on dark backgrounds where the
 	// carved-out pixels contrast with the page. Skip them in dark mode.
 	if !e.bookDarkMode {
-		cornerRadius := min(pixW, pixH) / 40
-		if cornerRadius < 6 {
-			cornerRadius = 6
-		}
+		cornerRadius := max(min(pixW, pixH)/40, 6)
 		bookRoundedCorners(img, cornerRadius, false, true, e.bookBottomCornerBG())
 	}
 
@@ -3237,7 +3228,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	for row := 0; row < maxLines && docLine < totalLines; {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-		
+
 		// Track HTML comment state: a line is hidden if it's inside a comment
 		// (inComment was true at line start) OR if the line contains both <!-- and -->
 		// on the same line (single-line comment). Update inComment for next iteration.
@@ -3259,13 +3250,13 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 				j++
 			}
 		}
-		
+
 		// A line should be hidden if:
 		// 1. It started inside a comment block (wasInComment), OR
 		// 2. It contains the opening <!-- marker (commentStarted), OR
 		// 3. It contains the closing --> marker (commentEnded)
 		lineIsComment := wasInComment || commentStarted || commentEnded
-		
+
 		docLine++
 
 		// Fence marker: toggle state, render as blank row.
@@ -3277,7 +3268,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			row++
 			continue
 		}
-		
+
 		// HTML comment line: skip without rendering or consuming display row
 		if lineIsComment {
 			continue
@@ -3687,10 +3678,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		// Measure using the proportional font so the cursor tracks the
 		// rendered row text. Raw cursor X is clamped to the body length.
 		tRunes := []rune(pl.body)
-		adjX := cursorRawX
-		if adjX > len(tRunes) {
-			adjX = len(tRunes)
-		}
+		adjX := min(cursorRawX, len(tRunes))
 		if adjX < 0 {
 			adjX = 0
 		}
@@ -3986,7 +3974,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	blank := strings.Repeat(" ", w)
 	clearFG := e.bookTextModeFGBlack()
 	clearBG := e.bookTextModeBG()
-	for row := 0; row < h; row++ {
+	for row := range h {
 		c.Write(0, uint(row), clearFG, clearBG, blank)
 	}
 
@@ -4141,10 +4129,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		// post-pass can leave it alone and dim everything else.
 		if focusEnabled && currentDocLine >= activeStartY && currentDocLine <= activeEndY {
 			absLo := rowBefore + topMargin
-			absHi := row + topMargin - 1
-			if absHi < absLo {
-				absHi = absLo
-			}
+			absHi := max(row+topMargin-1, absLo)
 			if activeRowLo == -1 || absLo < activeRowLo {
 				activeRowLo = absLo
 			}
@@ -4168,7 +4153,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			if activeRowLo != -1 && y >= activeRowLo && y <= activeRowHi {
 				continue
 			}
-			for x := 0; x < w; x++ {
+			for x := range w {
 				if r, err := c.At(uint(x), uint(y)); err == nil && r != 0 && r != ' ' {
 					c.PlotColor(uint(x), uint(y), dimFg, r)
 				}
@@ -4320,17 +4305,11 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 				visStart, visEnd = visEnd, visStart
 			}
 		case lineIdx == selStartY:
-			s := selStartX - rawPfxLen
-			if s < 0 {
-				s = 0
-			}
+			s := max(selStartX-rawPfxLen, 0)
 			visStart = rawXToVisualX(body, s)
 			visEnd = bodyVisTotal
 		case lineIdx == selEndY:
-			en := selEndX - rawPfxLen
-			if en < 0 {
-				en = 0
-			}
+			en := max(selEndX-rawPfxLen, 0)
 			visStart = 0
 			visEnd = rawXToVisualX(body, en)
 		default:
@@ -4666,10 +4645,7 @@ func (e *Editor) bookPageToImage(pixW, pixH, editRows int, cellH uint) *image.RG
 	// where the carved pixels would otherwise contrast as dark "teeth" at
 	// the top edge of the page.
 	if !e.bookDarkMode {
-		cornerRadius := min(pixW, pixH) / 40
-		if cornerRadius < 6 {
-			cornerRadius = 6
-		}
+		cornerRadius := max(min(pixW, pixH)/40, 6)
 		bookRoundedCorners(dst, cornerRadius, true, false, color.NRGBA{0x00, 0x00, 0x00, 0xff})
 	}
 
@@ -4754,7 +4730,7 @@ func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, 
 		}
 		// stride = 4 bytes per pixel in RGBA
 		base := y * dst.Stride
-		for x := 0; x < pixW; x++ {
+		for x := range pixW {
 			i := base + x*4
 			r := dst.Pix[i]
 			g := dst.Pix[i+1]
@@ -4769,7 +4745,7 @@ func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, 
 		}
 	}
 
-	for y := 0; y < pixH; y++ {
+	for y := range pixH {
 		if activePxLo != -1 && y >= activePxLo && y < activePxHi {
 			continue
 		}
@@ -5158,10 +5134,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	// display rows from offsetY to cursorDataY equals roughly
 	// maxDisplayRows/2 — the page slides under a stationary cursor.
 	if e.bookFocusMode {
-		targetRow := maxDisplayRows / 2
-		if targetRow < 1 {
-			targetRow = 1
-		}
+		targetRow := max(maxDisplayRows/2, 1)
 		// Walk offsetY down until the rows-from-offset matches target,
 		// or up until we can't go any further (cursor near top of doc).
 		// Use countDisplayRowsTo to stay honest about soft-wrapped rows.
@@ -5531,10 +5504,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 			for i, ws := range wsegs {
 				if bodyRawX < ws.end || i == len(wsegs)-1 {
 					subRow = i
-					localRawX := bodyRawX - ws.start
-					if localRawX < 0 {
-						localRawX = 0
-					}
+					localRawX := max(bodyRawX-ws.start, 0)
 					localVisX := rawXToVisualX(ws.text, localRawX)
 					x = marginLeft + pfxLen + localVisX
 					break
@@ -5565,10 +5535,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 		for i, ws := range wsegs {
 			if cursorRawX < ws.end || i == len(wsegs)-1 {
 				subRow = i
-				localRawX := cursorRawX - ws.start
-				if localRawX < 0 {
-					localRawX = 0
-				}
+				localRawX := max(cursorRawX-ws.start, 0)
 				localVisX := rawXToVisualX(ws.text, localRawX)
 				x = marginLeft + localVisX
 				break
@@ -5650,10 +5617,7 @@ func (e *Editor) bookGetPixelWrapInfo(c *vt.Canvas) *bookPixelWrapInfo {
 	if editRows <= 0 {
 		return nil
 	}
-	lineH := int(renderH)
-	if lineH < 1 {
-		lineH = 1
-	}
+	lineH := max(int(renderH), 1)
 	pixW := int(uint(c.Width()) * cellW)
 	marginLeft := int(float64(pixW) * bookMarginLeft)
 	marginRight := pixW - int(float64(pixW)*bookMarginRight)
@@ -5826,10 +5790,7 @@ func (e *Editor) bookVisibleDataLines(startDoc, editRows, textW int, pw *bookPix
 	rowsUsed := 0
 	count := 0
 	for dl := startDoc; dl < totalLines; dl++ {
-		lineRows := e.bookLineDisplayRows(dl, textW, pw)
-		if lineRows < 1 {
-			lineRows = 1
-		}
+		lineRows := max(e.bookLineDisplayRows(dl, textW, pw), 1)
 		if rowsUsed+lineRows > editRows {
 			break
 		}
@@ -5894,10 +5855,7 @@ func (e *Editor) bookPgUp(c *vt.Canvas) bool {
 	dl := e.pos.offsetY - 1
 	rowsUsed := 0
 	for dl >= 0 {
-		lineRows := e.bookLineDisplayRows(dl, textW, pw)
-		if lineRows < 1 {
-			lineRows = 1
-		}
+		lineRows := max(e.bookLineDisplayRows(dl, textW, pw), 1)
 		if rowsUsed+lineRows > editRows && dl < e.pos.offsetY-1 {
 			dl++
 			break
@@ -6026,10 +5984,7 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	// will handle scroll-up when sy goes below zero.
 	e.pos.SetY(e.pos.sy - 1)
 	// Land on the last sub-row of the previous line at the saved visual column.
-	lastSub := bookLineSubRowCount(e.Line(e.DataY()), textW, pw) - 1
-	if lastSub < 0 {
-		lastSub = 0
-	}
+	lastSub := max(bookLineSubRowCount(e.Line(e.DataY()), textW, pw)-1, 0)
 	newX := bookSubRowX(e.Line(e.DataY()), textW, lastSub, savedX, pw)
 	e.pos.SetX(c, newX)
 	// Landing on the last sub-row: forward affinity (the boundary ambiguity
@@ -6623,7 +6578,7 @@ func bookScreenshot(mdPath, outPath string) error {
 	totalLines := e.Len()
 	maxLines := min(totalLines, int(editRows))
 
-	for curLine := 0; curLine < maxLines; curLine++ {
+	for curLine := range maxLines {
 		// Position cursor at the start of this line.
 		e.pos.sy = curLine
 		e.pos.sx = 0
@@ -6637,10 +6592,7 @@ func bookScreenshot(mdPath, outPath string) error {
 		e.bookOverlayCursor(img, pixW, pixH, int(editRows), renderH)
 
 		// Apply top corners. Outside-fill is terminal chrome (black).
-		cornerRadius := min(pixW, pixH) / 40
-		if cornerRadius < 6 {
-			cornerRadius = 6
-		}
+		cornerRadius := max(min(pixW, pixH)/40, 6)
 		// Use the same logic as the page itself: fade top corners to black (terminal chrome)
 		bookRoundedCorners(img, cornerRadius, true, false, color.NRGBA{0x00, 0x00, 0x00, 0xff})
 
@@ -6870,10 +6822,7 @@ func (e *Editor) bookToggleParagraphIndent(c *vt.Canvas) {
 	e.MarkChanged()
 	bookBumpContentGen()
 	if startY == cursorY {
-		newX := e.pos.sx + e.pos.offsetX + delta
-		if newX < 0 {
-			newX = 0
-		}
+		newX := max(e.pos.sx+e.pos.offsetX+delta, 0)
 		e.pos.SetX(c, newX)
 	}
 	e.redraw.Store(true)
@@ -7035,10 +6984,7 @@ func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin in
 	}
 	each := avail / len(cells)
 	const pad = 10
-	inner := each - 2*pad
-	if inner < 1 {
-		inner = 1
-	}
+	inner := max(each-2*pad, 1)
 	maxSub := 1
 	for _, cell := range cells {
 		rows := bookWrapSegmentsPixel(fs, cell, inner)
@@ -7156,10 +7102,7 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 		if i < len(aligns) {
 			align = aligns[i]
 		}
-		inner := w - 2*pad
-		if inner < 1 {
-			inner = 1
-		}
+		inner := max(w-2*pad, 1)
 		// Wrap the cell to the column's inner width
 		var rows []wrappedRow
 		if isHeader {

@@ -78,7 +78,7 @@ func parseSimpleURL(raw string) (scheme, host, port, path string, err error) {
 // Content-Type must be provided via extraHeaders when relevant.
 func httpDo(method, rawURL string, body []byte, extraHeaders map[string]string, timeout time.Duration) (*httpResponse, error) {
 	cur := rawURL
-	for i := 0; i < 6; i++ {
+	for range 6 {
 		scheme, host, port, path, err := parseSimpleURL(cur)
 		if err != nil {
 			return nil, err
@@ -194,12 +194,12 @@ func parseHTTPResponse(rc io.ReadCloser) (*httpResponse, error) {
 		if line == "" {
 			break
 		}
-		colon := strings.IndexByte(line, ':')
-		if colon < 0 {
+		before, after, ok := strings.Cut(line, ":")
+		if !ok {
 			continue
 		}
-		key := strings.ToLower(strings.TrimSpace(line[:colon]))
-		val := strings.TrimSpace(line[colon+1:])
+		key := strings.ToLower(strings.TrimSpace(before))
+		val := strings.TrimSpace(after)
 		resp.Header[key] = val
 	}
 	if strings.EqualFold(resp.Header["transfer-encoding"], "chunked") {
@@ -253,10 +253,7 @@ func (c *chunkedReader) Read(p []byte) (int, error) {
 		}
 		c.remain = n
 	}
-	read := int64(len(p))
-	if read > c.remain {
-		read = c.remain
-	}
+	read := min(int64(len(p)), c.remain)
 	m, err := c.br.Read(p[:read])
 	c.remain -= int64(m)
 	if c.remain == 0 && err == nil {

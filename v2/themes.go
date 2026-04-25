@@ -1856,3 +1856,223 @@ func (e *Editor) setGreenTheme() {
 func (e *Editor) setBlueTheme() {
 	e.SetTheme(NewBlueTheme())
 }
+
+// registerGruvboxColors adds the Gruvbox palette entries to the vt color maps
+// and rebuilds the tag replacers so the custom color names are recognized.
+// Based on the base16 Gruvbox dark, hard scheme by Dawid Kurek / morhetz.
+func registerGruvboxColors() {
+	vt.DarkColorMap["gbcomment"] = vt.TrueColor(0x66, 0x5c, 0x54) // base03
+	vt.DarkColorMap["gbstring"] = vt.TrueColor(0xb8, 0xbb, 0x26)  // base0B green
+	vt.DarkColorMap["gbident"] = vt.TrueColor(0xd3, 0x86, 0x9b)   // base0E purple
+	vt.DarkColorMap["gbnumber"] = vt.TrueColor(0xfe, 0x80, 0x19)  // base09 orange
+	vt.DarkColorMap["gbpreproc"] = vt.TrueColor(0x8e, 0xc0, 0x7c) // base0C aqua
+	vt.DarkColorMap["gbkeyword"] = vt.TrueColor(0xfb, 0x49, 0x34) // base08 red
+	vt.DarkColorMap["gbtype"] = vt.TrueColor(0xfa, 0xbd, 0x2f)    // base0A yellow
+	vt.DarkColorMap["gbplain"] = vt.TrueColor(0xd5, 0xc4, 0xa1)   // base05
+	vt.DarkColorMap["gbescape"] = vt.TrueColor(0xd6, 0x5d, 0x0e)  // base0F brown
+	vt.DarkColorMap["gbpunct"] = vt.TrueColor(0xbd, 0xae, 0x93)   // base04
+	vt.DarkColorMap["gbfunc"] = vt.TrueColor(0x83, 0xa5, 0x98)    // base0D blue
+	vt.DarkColorMap["gbcurly"] = vt.TrueColor(0xbd, 0xae, 0x93)   // base04
+	vt.RebuildTagReplacers()
+	tout = vt.New()
+}
+
+// NewGruvboxTheme creates the Gruvbox theme, based on the base16 Gruvbox dark,
+// hard scheme by Dawid Kurek / morhetz. Requires true-color or 256-color support.
+func NewGruvboxTheme() Theme {
+	return Theme{
+		Name:                  "Gruvbox",
+		Light:                 false,
+		Foreground:            vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		Background:            vt.TrueBackground(0x1d, 0x20, 0x21), // base00
+		StatusForeground:      vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		StatusBackground:      vt.TrueBackground(0x3c, 0x38, 0x36), // base01
+		TopRightForeground:    vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		TopRightBackground:    vt.TrueBackground(0x1d, 0x20, 0x21), // base00
+		StatusErrorForeground: vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		StatusErrorBackground: vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
+		SearchHighlight:       vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		MultiLineComment:      vt.TrueColor(0x66, 0x5c, 0x54),      // base03
+		MultiLineString:       vt.TrueColor(0xb8, 0xbb, 0x26),      // base0B green
+		HighlightForeground:   vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		HighlightBackground:   vt.BackgroundDefault,
+		Git:                   vt.TrueColor(0x8e, 0xc0, 0x7c), // base0C aqua
+		String:                "gbstring",
+		Keyword:               "gbkeyword",
+		Comment:               "gbcomment",
+		Type:                  "gbtype",
+		Literal:               "gbstring",
+		Punctuation:           "gbpunct",
+		Plaintext:             "gbplain",
+		Tag:                   "gbkeyword",
+		TextTag:               "gbkeyword",
+		TextAttrName:          "gbtype",
+		TextAttrValue:         "gbstring",
+		Decimal:               "gbnumber",
+		AndOr:                 "gbpunct",
+		AngleBracket:          "gbkeyword",
+		Dollar:                "gbpreproc",
+		Star:                  "gbplain",
+		Static:                "gbkeyword",
+		Self:                  "gbident",
+		Class:                 "gbident",
+		Private:               "gbescape",
+		Protected:             "gbtype",
+		Public:                "gbpreproc",
+		Whitespace:            "",
+		AssemblyEnd:           "gbescape",
+		Mut:                   "gbpreproc",
+		CurlyBracket:          "gbcurly",
+		IncludeSystem:         "gbfunc",
+		RainbowParenColors: []vt.AttributeColor{
+			vt.TrueColor(0xfb, 0x49, 0x34), // red
+			vt.TrueColor(0x8e, 0xc0, 0x7c), // aqua
+			vt.TrueColor(0xd6, 0x5d, 0x0e), // brown
+			vt.TrueColor(0xb8, 0xbb, 0x26), // green
+			vt.TrueColor(0xd3, 0x86, 0x9b), // purple
+			vt.TrueColor(0xfa, 0xbd, 0x2f), // yellow
+			vt.TrueColor(0xfe, 0x80, 0x19), // orange
+		},
+		MarkdownTextColor:           vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		HeaderBulletColor:           vt.TrueColor(0x66, 0x5c, 0x54),      // base03
+		HeaderTextColor:             vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		ListBulletColor:             vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
+		ListTextColor:               vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		ListCodeColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
+		CodeColor:                   vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
+		CodeBlockColor:              vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
+		ImageColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		LinkColor:                   vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
+		QuoteColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		QuoteTextColor:              vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		HTMLColor:                   vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
+		CommentColor:                vt.TrueColor(0x66, 0x5c, 0x54),      // base03
+		BoldColor:                   vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		ItalicsColor:                vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		StrikeColor:                 vt.TrueColor(0x66, 0x5c, 0x54),      // base03
+		TableColor:                  vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
+		CheckboxColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
+		XColor:                      vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		TableBackground:             vt.TrueBackground(0x1d, 0x20, 0x21), // base00
+		UnmatchedParenColor:         vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		MenuTitleColor:              vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		MenuArrowColor:              vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
+		MenuTextColor:               vt.TrueColor(0xbd, 0xae, 0x93),      // base04
+		MenuHighlightColor:          vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
+		MenuSelectedColor:           vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		ManSectionColor:             vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
+		ManSynopsisColor:            vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		BoxTextColor:                vt.TrueColor(0x1d, 0x20, 0x21),      // base00
+		BoxBackground:               vt.TrueBackground(0xbd, 0xae, 0x93), // base04
+		ProgressIndicatorBackground: vt.TrueBackground(0xfe, 0x80, 0x19), // base09 orange
+		BoxHighlight:                vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		DebugRunningBackground:      vt.TrueBackground(0xb8, 0xbb, 0x26), // base0B green
+		DebugStoppedBackground:      vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
+		DebugRegistersBackground:    vt.TrueBackground(0x83, 0xa5, 0x98), // base0D blue
+		DebugOutputBackground:       vt.TrueBackground(0xfa, 0xbd, 0x2f), // base0A yellow
+		DebugLineIndicator:          vt.TrueColor(0xb8, 0xbb, 0x26),      // base0B green
+		DebugInstructionsForeground: vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
+		DebugInstructionsBackground: vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
+		BoxUpperEdge:                vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
+		JumpToLetterColor:           vt.TrueColor(0xfe, 0x80, 0x19),      // base09 orange
+		NanoHelpForeground:          vt.TrueColor(0x1d, 0x20, 0x21),      // base00
+		NanoHelpBackground:          vt.TrueBackground(0xbd, 0xae, 0x93), // base04
+		MultiCursorBackground:       vt.TrueBackground(0x50, 0x49, 0x45), // base02
+	}
+}
+
+// NewGruvbox16Theme creates a 16-color approximation of the Gruvbox theme,
+// for terminals that do not support 256 colors.
+func NewGruvbox16Theme() Theme {
+	return Theme{
+		Name:                        "Gruvbox",
+		Light:                       false,
+		Foreground:                  vt.White,
+		Background:                  vt.BackgroundBlack,
+		StatusForeground:            vt.White,
+		StatusBackground:            vt.BackgroundDefault,
+		TopRightForeground:          vt.White,
+		TopRightBackground:          vt.BackgroundBlack,
+		StatusErrorForeground:       vt.White,
+		StatusErrorBackground:       vt.BackgroundRed,
+		SearchHighlight:             vt.Yellow,
+		MultiLineComment:            vt.Gray,
+		MultiLineString:             vt.LightGreen,
+		HighlightForeground:         vt.White,
+		HighlightBackground:         vt.BackgroundDefault,
+		Git:                         vt.LightCyan,
+		String:                      "lightgreen",
+		Keyword:                     "lightred",
+		Comment:                     "gray",
+		Type:                        "yellow",
+		Literal:                     "lightgreen",
+		Punctuation:                 "lightgray",
+		Plaintext:                   "white",
+		Tag:                         "lightred",
+		TextTag:                     "lightred",
+		TextAttrName:                "yellow",
+		TextAttrValue:               "lightgreen",
+		Decimal:                     "darkyellow",
+		AndOr:                       "lightgray",
+		AngleBracket:                "lightred",
+		Dollar:                      "lightcyan",
+		Star:                        "white",
+		Static:                      "lightred",
+		Self:                        "lightmagenta",
+		Class:                       "lightmagenta",
+		Private:                     "darkyellow",
+		Protected:                   "yellow",
+		Public:                      "lightcyan",
+		Whitespace:                  "",
+		AssemblyEnd:                 "darkyellow",
+		Mut:                         "lightcyan",
+		CurlyBracket:                "lightgray",
+		IncludeSystem:               "lightblue",
+		RainbowParenColors:          []vt.AttributeColor{vt.LightRed, vt.LightCyan, vt.Yellow, vt.LightGreen, vt.LightMagenta, vt.LightYellow, vt.White},
+		MarkdownTextColor:           vt.White,
+		HeaderBulletColor:           vt.Gray,
+		HeaderTextColor:             vt.Yellow,
+		ListBulletColor:             vt.LightRed,
+		ListTextColor:               vt.White,
+		ListCodeColor:               vt.LightCyan,
+		CodeColor:                   vt.LightCyan,
+		CodeBlockColor:              vt.LightCyan,
+		ImageColor:                  vt.Yellow,
+		LinkColor:                   vt.LightBlue,
+		QuoteColor:                  vt.Yellow,
+		QuoteTextColor:              vt.White,
+		HTMLColor:                   vt.LightBlue,
+		CommentColor:                vt.Gray,
+		BoldColor:                   vt.Yellow,
+		ItalicsColor:                vt.White,
+		StrikeColor:                 vt.Gray,
+		TableColor:                  vt.LightBlue,
+		CheckboxColor:               vt.LightCyan,
+		XColor:                      vt.Yellow,
+		TableBackground:             vt.BackgroundBlack,
+		UnmatchedParenColor:         vt.White,
+		MenuTitleColor:              vt.Yellow,
+		MenuArrowColor:              vt.LightRed,
+		MenuTextColor:               vt.Gray,
+		MenuHighlightColor:          vt.LightBlue,
+		MenuSelectedColor:           vt.White,
+		ManSectionColor:             vt.LightRed,
+		ManSynopsisColor:            vt.Yellow,
+		BoxTextColor:                vt.Black,
+		BoxBackground:               vt.BackgroundYellow,
+		ProgressIndicatorBackground: vt.BackgroundYellow,
+		BoxHighlight:                vt.Yellow,
+		DebugRunningBackground:      vt.BackgroundGreen,
+		DebugStoppedBackground:      vt.BackgroundRed,
+		DebugRegistersBackground:    vt.BackgroundBlue,
+		DebugOutputBackground:       vt.BackgroundYellow,
+		DebugLineIndicator:          vt.LightGreen,
+		DebugInstructionsForeground: vt.Yellow,
+		DebugInstructionsBackground: vt.BackgroundRed,
+		BoxUpperEdge:                vt.White,
+		JumpToLetterColor:           vt.Yellow,
+		NanoHelpForeground:          vt.Black,
+		NanoHelpBackground:          vt.BackgroundYellow,
+		MultiCursorBackground:       vt.BackgroundMagenta,
+	}
+}
