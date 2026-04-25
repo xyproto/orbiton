@@ -3678,10 +3678,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		// Measure using the proportional font so the cursor tracks the
 		// rendered row text. Raw cursor X is clamped to the body length.
 		tRunes := []rune(pl.body)
-		adjX := min(cursorRawX, len(tRunes))
-		if adjX < 0 {
-			adjX = 0
-		}
+		adjX := max(min(cursorRawX, len(tRunes)), 0)
 		adv := measureStringFB(fs.regular, string(tRunes[:adjX]))
 		drawBar(marginLeft+adv.Round(), cursorDisplayRow, regVPad, ascent, regDescent, 1)
 

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/env/v2"
@@ -1859,44 +1862,43 @@ func (e *Editor) setBlueTheme() {
 
 // registerGruvboxColors adds the Gruvbox palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
-// Based on the base16 Gruvbox dark, hard scheme by Dawid Kurek / morhetz.
 func registerGruvboxColors() {
-	vt.DarkColorMap["gbcomment"] = vt.TrueColor(0x66, 0x5c, 0x54) // base03
-	vt.DarkColorMap["gbstring"] = vt.TrueColor(0xb8, 0xbb, 0x26)  // base0B green
-	vt.DarkColorMap["gbident"] = vt.TrueColor(0xd3, 0x86, 0x9b)   // base0E purple
-	vt.DarkColorMap["gbnumber"] = vt.TrueColor(0xfe, 0x80, 0x19)  // base09 orange
-	vt.DarkColorMap["gbpreproc"] = vt.TrueColor(0x8e, 0xc0, 0x7c) // base0C aqua
-	vt.DarkColorMap["gbkeyword"] = vt.TrueColor(0xfb, 0x49, 0x34) // base08 red
-	vt.DarkColorMap["gbtype"] = vt.TrueColor(0xfa, 0xbd, 0x2f)    // base0A yellow
-	vt.DarkColorMap["gbplain"] = vt.TrueColor(0xd5, 0xc4, 0xa1)   // base05
-	vt.DarkColorMap["gbescape"] = vt.TrueColor(0xd6, 0x5d, 0x0e)  // base0F brown
-	vt.DarkColorMap["gbpunct"] = vt.TrueColor(0xbd, 0xae, 0x93)   // base04
-	vt.DarkColorMap["gbfunc"] = vt.TrueColor(0x83, 0xa5, 0x98)    // base0D blue
-	vt.DarkColorMap["gbcurly"] = vt.TrueColor(0xbd, 0xae, 0x93)   // base04
+	vt.DarkColorMap["gbcomment"] = vt.TrueColor(0x66, 0x5c, 0x54)
+	vt.DarkColorMap["gbstring"] = vt.TrueColor(0xb8, 0xbb, 0x26)
+	vt.DarkColorMap["gbident"] = vt.TrueColor(0xd3, 0x86, 0x9b)
+	vt.DarkColorMap["gbnumber"] = vt.TrueColor(0xfe, 0x80, 0x19)
+	vt.DarkColorMap["gbpreproc"] = vt.TrueColor(0x8e, 0xc0, 0x7c)
+	vt.DarkColorMap["gbkeyword"] = vt.TrueColor(0xfb, 0x49, 0x34)
+	vt.DarkColorMap["gbtype"] = vt.TrueColor(0xfa, 0xbd, 0x2f)
+	vt.DarkColorMap["gbplain"] = vt.TrueColor(0xd5, 0xc4, 0xa1)
+	vt.DarkColorMap["gbescape"] = vt.TrueColor(0xd6, 0x5d, 0x0e)
+	vt.DarkColorMap["gbpunct"] = vt.TrueColor(0xbd, 0xae, 0x93)
+	vt.DarkColorMap["gbfunc"] = vt.TrueColor(0x83, 0xa5, 0x98)
+	vt.DarkColorMap["gbcurly"] = vt.TrueColor(0xbd, 0xae, 0x93)
 	vt.RebuildTagReplacers()
 	tout = vt.New()
 }
 
-// NewGruvboxTheme creates the Gruvbox theme, based on the base16 Gruvbox dark,
-// hard scheme by Dawid Kurek / morhetz. Requires true-color or 256-color support.
+// NewGruvboxTheme creates the Gruvbox theme, based on the base16 "Gruvbox dark, hard"
+// scheme by Dawid Kurek / morhetz. Requires true-color or 256-color support.
 func NewGruvboxTheme() Theme {
 	return Theme{
 		Name:                  "Gruvbox",
 		Light:                 false,
-		Foreground:            vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		Background:            vt.TrueBackground(0x1d, 0x20, 0x21), // base00
-		StatusForeground:      vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
-		StatusBackground:      vt.TrueBackground(0x3c, 0x38, 0x36), // base01
-		TopRightForeground:    vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		TopRightBackground:    vt.TrueBackground(0x1d, 0x20, 0x21), // base00
-		StatusErrorForeground: vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
-		StatusErrorBackground: vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
-		SearchHighlight:       vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		MultiLineComment:      vt.TrueColor(0x66, 0x5c, 0x54),      // base03
-		MultiLineString:       vt.TrueColor(0xb8, 0xbb, 0x26),      // base0B green
-		HighlightForeground:   vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
+		Foreground:            vt.TrueColor(0xd5, 0xc4, 0xa1),
+		Background:            vt.TrueBackground(0x1d, 0x20, 0x21),
+		StatusForeground:      vt.TrueColor(0xfb, 0xf1, 0xc7),
+		StatusBackground:      vt.TrueBackground(0x3c, 0x38, 0x36),
+		TopRightForeground:    vt.TrueColor(0xd5, 0xc4, 0xa1),
+		TopRightBackground:    vt.TrueBackground(0x1d, 0x20, 0x21),
+		StatusErrorForeground: vt.TrueColor(0xfb, 0xf1, 0xc7),
+		StatusErrorBackground: vt.TrueBackground(0xfb, 0x49, 0x34),
+		SearchHighlight:       vt.TrueColor(0xfa, 0xbd, 0x2f),
+		MultiLineComment:      vt.TrueColor(0x66, 0x5c, 0x54),
+		MultiLineString:       vt.TrueColor(0xb8, 0xbb, 0x26),
+		HighlightForeground:   vt.TrueColor(0xfb, 0xf1, 0xc7),
 		HighlightBackground:   vt.BackgroundDefault,
-		Git:                   vt.TrueColor(0x8e, 0xc0, 0x7c), // base0C aqua
+		Git:                   vt.TrueColor(0x8e, 0xc0, 0x7c),
 		String:                "gbstring",
 		Keyword:               "gbkeyword",
 		Comment:               "gbcomment",
@@ -1925,59 +1927,54 @@ func NewGruvboxTheme() Theme {
 		CurlyBracket:          "gbcurly",
 		IncludeSystem:         "gbfunc",
 		RainbowParenColors: []vt.AttributeColor{
-			vt.TrueColor(0xfb, 0x49, 0x34), // red
-			vt.TrueColor(0x8e, 0xc0, 0x7c), // aqua
-			vt.TrueColor(0xd6, 0x5d, 0x0e), // brown
-			vt.TrueColor(0xb8, 0xbb, 0x26), // green
-			vt.TrueColor(0xd3, 0x86, 0x9b), // purple
-			vt.TrueColor(0xfa, 0xbd, 0x2f), // yellow
-			vt.TrueColor(0xfe, 0x80, 0x19), // orange
+			vt.TrueColor(0xfb, 0x49, 0x34), vt.TrueColor(0x8e, 0xc0, 0x7c), vt.TrueColor(0xd6, 0x5d, 0x0e),
+			vt.TrueColor(0xb8, 0xbb, 0x26), vt.TrueColor(0xd3, 0x86, 0x9b), vt.TrueColor(0xfa, 0xbd, 0x2f), vt.TrueColor(0xfe, 0x80, 0x19),
 		},
-		MarkdownTextColor:           vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		HeaderBulletColor:           vt.TrueColor(0x66, 0x5c, 0x54),      // base03
-		HeaderTextColor:             vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		ListBulletColor:             vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
-		ListTextColor:               vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		ListCodeColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
-		CodeColor:                   vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
-		CodeBlockColor:              vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
-		ImageColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		LinkColor:                   vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
-		QuoteColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		QuoteTextColor:              vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		HTMLColor:                   vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
-		CommentColor:                vt.TrueColor(0x66, 0x5c, 0x54),      // base03
-		BoldColor:                   vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		ItalicsColor:                vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		StrikeColor:                 vt.TrueColor(0x66, 0x5c, 0x54),      // base03
-		TableColor:                  vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
-		CheckboxColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),      // base0C aqua
-		XColor:                      vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		TableBackground:             vt.TrueBackground(0x1d, 0x20, 0x21), // base00
-		UnmatchedParenColor:         vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
-		MenuTitleColor:              vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		MenuArrowColor:              vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
-		MenuTextColor:               vt.TrueColor(0xbd, 0xae, 0x93),      // base04
-		MenuHighlightColor:          vt.TrueColor(0x83, 0xa5, 0x98),      // base0D blue
-		MenuSelectedColor:           vt.TrueColor(0xfb, 0xf1, 0xc7),      // base07
-		ManSectionColor:             vt.TrueColor(0xfb, 0x49, 0x34),      // base08 red
-		ManSynopsisColor:            vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		BoxTextColor:                vt.TrueColor(0x1d, 0x20, 0x21),      // base00
-		BoxBackground:               vt.TrueBackground(0xbd, 0xae, 0x93), // base04
-		ProgressIndicatorBackground: vt.TrueBackground(0xfe, 0x80, 0x19), // base09 orange
-		BoxHighlight:                vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		DebugRunningBackground:      vt.TrueBackground(0xb8, 0xbb, 0x26), // base0B green
-		DebugStoppedBackground:      vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
-		DebugRegistersBackground:    vt.TrueBackground(0x83, 0xa5, 0x98), // base0D blue
-		DebugOutputBackground:       vt.TrueBackground(0xfa, 0xbd, 0x2f), // base0A yellow
-		DebugLineIndicator:          vt.TrueColor(0xb8, 0xbb, 0x26),      // base0B green
-		DebugInstructionsForeground: vt.TrueColor(0xfa, 0xbd, 0x2f),      // base0A yellow
-		DebugInstructionsBackground: vt.TrueBackground(0xfb, 0x49, 0x34), // base08 red
-		BoxUpperEdge:                vt.TrueColor(0xd5, 0xc4, 0xa1),      // base05
-		JumpToLetterColor:           vt.TrueColor(0xfe, 0x80, 0x19),      // base09 orange
-		NanoHelpForeground:          vt.TrueColor(0x1d, 0x20, 0x21),      // base00
-		NanoHelpBackground:          vt.TrueBackground(0xbd, 0xae, 0x93), // base04
-		MultiCursorBackground:       vt.TrueBackground(0x50, 0x49, 0x45), // base02
+		MarkdownTextColor:           vt.TrueColor(0xd5, 0xc4, 0xa1),
+		HeaderBulletColor:           vt.TrueColor(0x66, 0x5c, 0x54),
+		HeaderTextColor:             vt.TrueColor(0xfa, 0xbd, 0x2f),
+		ListBulletColor:             vt.TrueColor(0xfb, 0x49, 0x34),
+		ListTextColor:               vt.TrueColor(0xd5, 0xc4, 0xa1),
+		ListCodeColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),
+		CodeColor:                   vt.TrueColor(0x8e, 0xc0, 0x7c),
+		CodeBlockColor:              vt.TrueColor(0x8e, 0xc0, 0x7c),
+		ImageColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),
+		LinkColor:                   vt.TrueColor(0x83, 0xa5, 0x98),
+		QuoteColor:                  vt.TrueColor(0xfa, 0xbd, 0x2f),
+		QuoteTextColor:              vt.TrueColor(0xd5, 0xc4, 0xa1),
+		HTMLColor:                   vt.TrueColor(0x83, 0xa5, 0x98),
+		CommentColor:                vt.TrueColor(0x66, 0x5c, 0x54),
+		BoldColor:                   vt.TrueColor(0xfa, 0xbd, 0x2f),
+		ItalicsColor:                vt.TrueColor(0xd5, 0xc4, 0xa1),
+		StrikeColor:                 vt.TrueColor(0x66, 0x5c, 0x54),
+		TableColor:                  vt.TrueColor(0x83, 0xa5, 0x98),
+		CheckboxColor:               vt.TrueColor(0x8e, 0xc0, 0x7c),
+		XColor:                      vt.TrueColor(0xfa, 0xbd, 0x2f),
+		TableBackground:             vt.TrueBackground(0x1d, 0x20, 0x21),
+		UnmatchedParenColor:         vt.TrueColor(0xfb, 0xf1, 0xc7),
+		MenuTitleColor:              vt.TrueColor(0xfa, 0xbd, 0x2f),
+		MenuArrowColor:              vt.TrueColor(0xfb, 0x49, 0x34),
+		MenuTextColor:               vt.TrueColor(0xbd, 0xae, 0x93),
+		MenuHighlightColor:          vt.TrueColor(0x83, 0xa5, 0x98),
+		MenuSelectedColor:           vt.TrueColor(0xfb, 0xf1, 0xc7),
+		ManSectionColor:             vt.TrueColor(0xfb, 0x49, 0x34),
+		ManSynopsisColor:            vt.TrueColor(0xfa, 0xbd, 0x2f),
+		BoxTextColor:                vt.TrueColor(0x1d, 0x20, 0x21),
+		BoxBackground:               vt.TrueBackground(0xbd, 0xae, 0x93),
+		ProgressIndicatorBackground: vt.TrueBackground(0xfe, 0x80, 0x19),
+		BoxHighlight:                vt.TrueColor(0xfa, 0xbd, 0x2f),
+		DebugRunningBackground:      vt.TrueBackground(0xb8, 0xbb, 0x26),
+		DebugStoppedBackground:      vt.TrueBackground(0xfb, 0x49, 0x34),
+		DebugRegistersBackground:    vt.TrueBackground(0x83, 0xa5, 0x98),
+		DebugOutputBackground:       vt.TrueBackground(0xfa, 0xbd, 0x2f),
+		DebugLineIndicator:          vt.TrueColor(0xb8, 0xbb, 0x26),
+		DebugInstructionsForeground: vt.TrueColor(0xfa, 0xbd, 0x2f),
+		DebugInstructionsBackground: vt.TrueBackground(0xfb, 0x49, 0x34),
+		BoxUpperEdge:                vt.TrueColor(0xd5, 0xc4, 0xa1),
+		JumpToLetterColor:           vt.TrueColor(0xfe, 0x80, 0x19),
+		NanoHelpForeground:          vt.TrueColor(0x1d, 0x20, 0x21),
+		NanoHelpBackground:          vt.TrueBackground(0xbd, 0xae, 0x93),
+		MultiCursorBackground:       vt.TrueBackground(0x50, 0x49, 0x45),
 	}
 }
 
@@ -2075,4 +2072,199 @@ func NewGruvbox16Theme() Theme {
 		NanoHelpBackground:          vt.BackgroundYellow,
 		MultiCursorBackground:       vt.BackgroundMagenta,
 	}
+}
+
+// parseBase16File reads a base16 YAML scheme file and returns the theme name
+// and the 16 palette colors. It handles both the spec-0.11 format (with a
+// "palette:" block) and the older flat format where base00..base0F are at the
+// top level.
+func parseBase16File(filename string) (name string, colors [16]vt.AttributeColor, bgs [16]vt.AttributeColor, err error) {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return "", colors, bgs, err
+	}
+	found := 0
+	for line := range strings.SplitSeq(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		if after, ok := strings.CutPrefix(trimmed, "name:"); ok {
+			name = strings.Trim(strings.TrimSpace(after), "\"'")
+			continue
+		}
+		// Match base00..base0F
+		if !strings.HasPrefix(trimmed, "base0") {
+			continue
+		}
+		parts := strings.SplitN(trimmed, ":", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		key := strings.TrimSpace(parts[0])
+		if len(key) != 6 { // "base0X"
+			continue
+		}
+		hexDigit := key[5]
+		var idx int
+		switch {
+		case hexDigit >= '0' && hexDigit <= '9':
+			idx = int(hexDigit - '0')
+		case hexDigit >= 'A' && hexDigit <= 'F':
+			idx = int(hexDigit-'A') + 10
+		case hexDigit >= 'a' && hexDigit <= 'f':
+			idx = int(hexDigit-'a') + 10
+		default:
+			continue
+		}
+		val := strings.Trim(strings.TrimSpace(parts[1]), "\"'")
+		c, cErr := vt.ColorFromHex(val)
+		if cErr != nil {
+			return "", colors, bgs, fmt.Errorf("%s: %w", key, cErr)
+		}
+		b, bErr := vt.BackgroundFromHex(val)
+		if bErr != nil {
+			return "", colors, bgs, fmt.Errorf("%s background: %w", key, bErr)
+		}
+		colors[idx] = c
+		bgs[idx] = b
+		found++
+	}
+	if found == 0 {
+		return "", colors, bgs, fmt.Errorf("%s: no base16 colors found", filename)
+	}
+	if name == "" {
+		name = strings.TrimSuffix(filepath.Base(filename), filepath.Ext(filename))
+	}
+	return name, colors, bgs, nil
+}
+
+// registerBase16Colors adds base16 palette entries to the vt color maps
+// and rebuilds the tag replacers so the custom color names are recognized.
+func registerBase16Colors(colors [16]vt.AttributeColor) {
+	vt.DarkColorMap["b16comment"] = colors[0x3]
+	vt.DarkColorMap["b16string"] = colors[0xB]
+	vt.DarkColorMap["b16ident"] = colors[0xE]
+	vt.DarkColorMap["b16number"] = colors[0x9]
+	vt.DarkColorMap["b16preproc"] = colors[0xC]
+	vt.DarkColorMap["b16keyword"] = colors[0x8]
+	vt.DarkColorMap["b16type"] = colors[0xA]
+	vt.DarkColorMap["b16plain"] = colors[0x5]
+	vt.DarkColorMap["b16escape"] = colors[0xF]
+	vt.DarkColorMap["b16punct"] = colors[0x4]
+	vt.DarkColorMap["b16func"] = colors[0xD]
+	vt.DarkColorMap["b16curly"] = colors[0x4]
+	vt.RebuildTagReplacers()
+	tout = vt.New()
+}
+
+// newBase16Theme creates a Theme from pre-parsed base16 foreground and background
+// color arrays, using the same base16 slot mapping as the built-in Gruvbox theme.
+func newBase16Theme(name string, c [16]vt.AttributeColor, bg [16]vt.AttributeColor) Theme {
+	return Theme{
+		Name:                  name,
+		Light:                 false,
+		Foreground:            c[0x5],
+		Background:            bg[0x0],
+		StatusForeground:      c[0x7],
+		StatusBackground:      bg[0x1],
+		TopRightForeground:    c[0x5],
+		TopRightBackground:    bg[0x0],
+		StatusErrorForeground: c[0x7],
+		StatusErrorBackground: bg[0x8],
+		SearchHighlight:       c[0xA],
+		MultiLineComment:      c[0x3],
+		MultiLineString:       c[0xB],
+		HighlightForeground:   c[0x7],
+		HighlightBackground:   vt.BackgroundDefault,
+		Git:                   c[0xC],
+		String:                "b16string",
+		Keyword:               "b16keyword",
+		Comment:               "b16comment",
+		Type:                  "b16type",
+		Literal:               "b16string",
+		Punctuation:           "b16punct",
+		Plaintext:             "b16plain",
+		Tag:                   "b16keyword",
+		TextTag:               "b16keyword",
+		TextAttrName:          "b16type",
+		TextAttrValue:         "b16string",
+		Decimal:               "b16number",
+		AndOr:                 "b16punct",
+		AngleBracket:          "b16keyword",
+		Dollar:                "b16preproc",
+		Star:                  "b16plain",
+		Static:                "b16keyword",
+		Self:                  "b16ident",
+		Class:                 "b16ident",
+		Private:               "b16escape",
+		Protected:             "b16type",
+		Public:                "b16preproc",
+		Whitespace:            "",
+		AssemblyEnd:           "b16escape",
+		Mut:                   "b16preproc",
+		CurlyBracket:          "b16curly",
+		IncludeSystem:         "b16func",
+		RainbowParenColors: []vt.AttributeColor{
+			c[0x8], c[0xC], c[0xF], c[0xB], c[0xE], c[0xA], c[0x9],
+		},
+		MarkdownTextColor:           c[0x5],
+		HeaderBulletColor:           c[0x3],
+		HeaderTextColor:             c[0xA],
+		ListBulletColor:             c[0x8],
+		ListTextColor:               c[0x5],
+		ListCodeColor:               c[0xC],
+		CodeColor:                   c[0xC],
+		CodeBlockColor:              c[0xC],
+		ImageColor:                  c[0xA],
+		LinkColor:                   c[0xD],
+		QuoteColor:                  c[0xA],
+		QuoteTextColor:              c[0x5],
+		HTMLColor:                   c[0xD],
+		CommentColor:                c[0x3],
+		BoldColor:                   c[0xA],
+		ItalicsColor:                c[0x5],
+		StrikeColor:                 c[0x3],
+		TableColor:                  c[0xD],
+		CheckboxColor:               c[0xC],
+		XColor:                      c[0xA],
+		TableBackground:             bg[0x0],
+		UnmatchedParenColor:         c[0x7],
+		MenuTitleColor:              c[0xA],
+		MenuArrowColor:              c[0x8],
+		MenuTextColor:               c[0x4],
+		MenuHighlightColor:          c[0xD],
+		MenuSelectedColor:           c[0x7],
+		ManSectionColor:             c[0x8],
+		ManSynopsisColor:            c[0xA],
+		BoxTextColor:                c[0x0],
+		BoxBackground:               bg[0x4],
+		ProgressIndicatorBackground: bg[0x9],
+		BoxHighlight:                c[0xA],
+		DebugRunningBackground:      bg[0xB],
+		DebugStoppedBackground:      bg[0x8],
+		DebugRegistersBackground:    bg[0xD],
+		DebugOutputBackground:       bg[0xA],
+		DebugLineIndicator:          c[0xB],
+		DebugInstructionsForeground: c[0xA],
+		DebugInstructionsBackground: bg[0x8],
+		BoxUpperEdge:                c[0x5],
+		JumpToLetterColor:           c[0x9],
+		NanoHelpForeground:          c[0x0],
+		NanoHelpBackground:          bg[0x4],
+		MultiCursorBackground:       bg[0x2],
+	}
+}
+
+// NewThemeFromBase16File reads a base16 YAML scheme file and returns a fully
+// populated Theme. It also registers the palette colors for syntax highlighting.
+// Both the spec-0.11 format (with a "palette:" block) and the older flat format
+// are supported.
+func NewThemeFromBase16File(filename string) (Theme, error) {
+	name, colors, bgs, err := parseBase16File(filename)
+	if err != nil {
+		return Theme{}, err
+	}
+	registerBase16Colors(colors)
+	return newBase16Theme(name, colors, bgs), nil
 }
