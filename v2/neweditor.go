@@ -417,6 +417,15 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		themeOverride = ""
 	}
 	themeWasSet := false
+	// If O_THEME points to a base16 scheme file, load it directly
+	if strings.HasSuffix(themeOverride, ".yaml") || strings.HasSuffix(themeOverride, ".yml") {
+		if termHas256Colors() {
+			if theme, err := NewThemeFromBase16File(themeOverride); err == nil {
+				e.SetTheme(theme, assumeLightBackground)
+				themeWasSet = true
+			}
+		}
+	}
 	switch themeOverride {
 	case "redblack":
 		e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
