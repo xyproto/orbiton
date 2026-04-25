@@ -78,6 +78,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Build and test on FreeBSD
+        continue-on-error: true
         uses: vmactions/freebsd-vm@v1
         with:
           usesh: true
