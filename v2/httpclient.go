@@ -183,11 +183,18 @@ func parseHTTPResponse(rc io.ReadCloser) (*httpResponse, error) {
 		rc.Close()
 		return nil, fmt.Errorf("bad status code: %q", parts[1])
 	}
+
+	success := false
+	defer func() {
+		if !success {
+			rc.Close()
+		}
+	}()
+
 	resp := &httpResponse{StatusCode: code, Status: statusLine, Header: map[string]string{}}
 	for {
 		line, err := br.ReadString('\n')
 		if err != nil {
-			rc.Close()
 			return nil, err
 		}
 		line = strings.TrimRight(line, "\r\n")
@@ -213,6 +220,7 @@ func parseHTTPResponse(rc io.ReadCloser) (*httpResponse, error) {
 	} else {
 		resp.Body = readCloser{Reader: br, Closer: rc}
 	}
+	success = true
 	return resp, nil
 }
 

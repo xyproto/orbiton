@@ -62,21 +62,16 @@ func (e *Editor) exportAdoc(manFilename string) error {
 	}
 	tmpfn := tmpfile.Name()
 
-	defer func() {
-		tmpfile.Close()
-		os.Remove(tmpfn)
-	}()
+	defer os.Remove(tmpfn)
 
 	if _, err := io.WriteString(tmpfile, e.String()); err != nil {
+		tmpfile.Close()
 		return err
 	}
+	tmpfile.Close()
 
 	// Run asciidoctor
 	adocCommand := exec.Command(adocPath, "-b", "manpage", "-o", manFilename, tmpfn)
 	saveCommand(adocCommand)
-	if err := adocCommand.Run(); err != nil {
-		_ = os.Remove(tmpfn) // Try removing the temporary filename if asciidoctor fails
-		return err
-	}
-	return os.Remove(tmpfn)
+	return adocCommand.Run()
 }

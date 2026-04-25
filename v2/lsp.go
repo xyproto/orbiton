@@ -667,6 +667,10 @@ func (lsp *LSPClient) Shutdown() error {
 	lsp.stderr.Close()
 	lsp.mutex.Unlock()
 
+	if lsp.cmd == nil {
+		return nil
+	}
+
 	done := make(chan error, 1)
 	go func() {
 		done <- lsp.cmd.Wait()
@@ -675,7 +679,9 @@ func (lsp *LSPClient) Shutdown() error {
 	select {
 	case <-done:
 	case <-time.After(lspShutdownTimeout):
-		lsp.cmd.Process.Kill()
+		if lsp.cmd.Process != nil {
+			lsp.cmd.Process.Kill()
+		}
 	}
 	return nil
 }
