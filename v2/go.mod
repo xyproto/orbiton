@@ -22,11 +22,11 @@ require (
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/imagepreview v1.1.3
+	github.com/xyproto/imagepreview v1.2.0
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.39
+	github.com/xyproto/megafile v1.6.40
 	github.com/xyproto/mode v0.12.6
 	github.com/xyproto/orchideous v1.0.7
 	github.com/xyproto/termtitle v1.5.1
@@ -51,21 +51,19 @@ require (
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
-	github.com/peterhellberg/gfx v0.0.0-20250602150231-2e41f5fad310 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xfmoulet/qoi v0.2.0 // indirect
 	github.com/xyproto/burnfont v1.2.3 // indirect
-	github.com/xyproto/burnpal v1.0.0 // indirect
+	github.com/xyproto/burnpal v1.1.0 // indirect
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/palgen v1.6.1 // indirect
+	github.com/xyproto/gfx v1.0.0 // indirect
+	github.com/xyproto/palgen v1.7.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
 	golang.org/x/sys v0.43.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
 )
-
-replace github.com/peterhellberg/gfx => ./third_party/gfx
