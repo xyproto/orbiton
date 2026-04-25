@@ -1253,6 +1253,9 @@ func (e *Editor) ensureGoImport(pkg string) bool {
 		insertLine = fset.Position(file.Package).Line
 		lineText = "import \"" + pkg + "\""
 	} else {
+		if len(importDecl.Specs) == 0 {
+			return false
+		}
 		lastSpec, ok := importDecl.Specs[len(importDecl.Specs)-1].(*ast.ImportSpec)
 		if !ok {
 			return false
