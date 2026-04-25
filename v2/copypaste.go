@@ -256,9 +256,12 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()
 				firstLine = leadingWhitespace + firstLine
+				// Create a new slice for tailLines to avoid modifying the original copyLines
+				newTailLines := make([]string, tailLineCount)
 				for i := range tailLineCount {
-					(*copyLines)[1+i] = leadingWhitespace + (*copyLines)[1+i]
+					newTailLines[i] = leadingWhitespace + tailLines[i]
 				}
+				tailLines = newTailLines
 			}
 		}
 
@@ -317,9 +320,12 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 				leadingWhitespace := e.LeadingWhitespace()
 				// add indentation to each line
 				firstLine = leadingWhitespace + firstLine
+				// Create a new slice for tailLines to avoid modifying the original copyLines
+				newTailLines := make([]string, tailLineCount)
 				for i := range tailLineCount {
-					(*copyLines)[1+i] = leadingWhitespace + (*copyLines)[1+i]
+					newTailLines[i] = leadingWhitespace + tailLines[i]
 				}
+				tailLines = newTailLines
 			}
 		}
 

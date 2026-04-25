@@ -33,11 +33,7 @@ func gZipData(data []byte) ([]byte, error) {
 	gz := gzip.NewWriter(&b)
 
 	if _, err := gz.Write(data); err != nil {
-		gz.Close()
-		return nil, err
-	}
-	if err := gz.Flush(); err != nil {
-		gz.Close()
+		_ = gz.Close()
 		return nil, err
 	}
 	if err := gz.Close(); err != nil {
