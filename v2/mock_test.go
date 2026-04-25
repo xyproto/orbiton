@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -12,6 +13,9 @@ import (
 // feed an orbiton-facing *vt.TTY from an in-memory byte stream, with no
 // real terminal required.
 func TestMockTTY_ReadsScriptedKeys(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("mock TTY key reading is not supported on Windows")
+	}
 	// "ab" then ESC-[A (Up arrow) then Ctrl-Q (0x11).
 	script := []byte{'a', 'b', 27, '[', 'A', 0x11}
 	tty := vt.NewTTYFromReader(bytes.NewReader(script))
