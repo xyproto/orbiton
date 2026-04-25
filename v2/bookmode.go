@@ -176,6 +176,9 @@ func (e *Editor) bookGraphicalStatusBarBG() color.NRGBA {
 // Picking the wrong value leaves a thin seam between the page's rounded
 // corners and the strip below.
 func (e *Editor) bookBottomCornerBG() color.NRGBA {
+	if env.Str("TERM") == "xterm-kitty" {
+		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
+	}
 	if !e.statusMode || bookModeGetStatusMsg() != "" {
 		return e.bookGraphicalStatusBarBG()
 	}
