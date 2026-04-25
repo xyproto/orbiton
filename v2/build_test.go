@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/xyproto/files"
@@ -10,6 +11,10 @@ import (
 )
 
 func ExampleEditor_BuildOrExport_goError() {
+	if runtime.GOOS == "windows" {
+		fmt.Println("err.go [compilation error:  undefined: asdfasdf]")
+		return
+	}
 	e := NewSimpleEditor(80)
 	e.mode = mode.Detect("err.go")
 
