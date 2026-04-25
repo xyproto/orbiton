@@ -23,6 +23,6 @@ A predefined palette, inspired by my old pixling program for DOS.
 
 ### General information
 
-* Version: 1.0.0
+* Version: 1.1.0
 * License: BSD-3
 * Author: Alexander F. Rødseth

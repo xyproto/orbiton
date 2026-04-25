@@ -1,7 +1,7 @@
 package burnpal
 
 import (
-	"github.com/peterhellberg/gfx"
+	"github.com/xyproto/gfx"
 	"image/color"
 )
 
