@@ -361,8 +361,8 @@ func runFmt(fnord FilenameOrData) error {
 	// comment.
 	if m == mode.Blank || m == mode.Prolog || m == mode.Config || m == mode.FSTAB || m == mode.Nix || m == mode.Assembly {
 		firstLine := data
-		if nl := bytes.IndexByte(data, '\n'); nl >= 0 {
-			firstLine = data[:nl]
+		if before, _, ok := bytes.Cut(data, []byte{'\n'}); ok {
+			firstLine = before
 		}
 		if len(firstLine) > 512 {
 			firstLine = firstLine[:512]

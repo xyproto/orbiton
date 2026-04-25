@@ -473,6 +473,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.SetTheme(NewXoria16Theme(), assumeLightBackground)
 		}
 		themeWasSet = true
+	case "gruvbox":
+		if termHas256Colors() {
+			registerGruvboxColors()
+			e.SetTheme(NewGruvboxTheme(), assumeLightBackground)
+		} else if !envNoColor {
+			e.SetTheme(NewGruvbox16Theme(), assumeLightBackground)
+		}
+		themeWasSet = true
 	case "default":
 		themeWasSet = true
 	}
