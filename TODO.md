@@ -2,6 +2,13 @@
 
 ## General
 
+- [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
+- [ ] Page layout: margins, alignment, line spacing, page breaks.
+- [ ] PDF export / print (WYSIWYG).
+- [ ] Create new files and directories.
+- [ ] Move/copy files.
+- [ ] Open files with their default application (xdg-open etc.).
+- [ ] Show size, type, and date as inline columns in the listing.
 - [x] The cursor is missing when running under Konsole.
 - [ ] Support the WordGrinder file formats.
 - [ ] Check that Orbiton still works well under the Linux Console.
