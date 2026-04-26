@@ -2,12 +2,12 @@
 
 ## General
 
+- [x] The cursor is missing when running under Konsole.
+- [ ] Support the WordGrinder file formats.
 - [ ] Check that Orbiton still works well under the Linux Console.
 - [ ] Check the vhs gif recordings.
 - [ ] Check og.
 - [ ] Check vt100.
-- [ ] The cursor is missing when running under konsole. Fix.
-- [ ] Find MIT fonts and use those, if possible.
 - [ ] Find a better solution for offering help at first start. Always print ie. "ctrl-k for help" in the lower right corner,
       and then in the help box, have an easy way to disable help so that ctrl-k is used for deleting to the end of the line instead?
 - [ ] Visual soft word wrap (no clipping at the right margin, when in book mode).
