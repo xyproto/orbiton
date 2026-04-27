@@ -115,8 +115,8 @@ github.com/xyproto/megafile v1.6.40 h1:38LCx4yiXqOOIq7proUo6nX9tzdYtVhJro4YFxJFk
 github.com/xyproto/megafile v1.6.40/go.mod h1:2arAUDxDdCl82ktEKKrLKxG6Q/6Tmwq8KkClpkrb4Dk=
 github.com/xyproto/mode v0.12.6 h1:+lPZ/SaKWcvAU58KWJ5lCzv3RcnFhdVtl5/o3fbsn0s=
 github.com/xyproto/mode v0.12.6/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
-github.com/xyproto/orchideous v1.0.7 h1:iUWO0M4CjDohWAkE6/ou0/HWZGL05mDzxUqyeTgdm3M=
-github.com/xyproto/orchideous v1.0.7/go.mod h1:FjZdLLJ3CJUDNV22Cb9PJc+vIi3rE/lQ3rrokcBKOmw=
+github.com/xyproto/orchideous v1.0.8 h1:/az0T87nv38dGPpGpapbPFfBnrgxM78kr3s1l8v5nTw=
+github.com/xyproto/orchideous v1.0.8/go.mod h1:Z3I/L46ksHfIizAUGX7eGMhfTO5vTdZlBaGur5JU0BE=
 github.com/xyproto/palgen v1.7.0 h1:WkSEeLxKUMSwDyQBnK1b8Pkk1HaZfGWmtQm2Qu++RE0=
 github.com/xyproto/palgen v1.7.0/go.mod h1:1rmddVQFMblytQg/mMwBHA9gwcTvJkBdXZ7ihZ/cXg4=
 github.com/xyproto/syntax v1.14.2 h1:1kt3qA1QFy8P4g5VQ9ntgprBO78/H1BZqBsZiIC+N2Q=

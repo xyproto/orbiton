@@ -478,10 +478,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 
 	// Compile sources in parallel
 	if len(jobs) > 0 {
-		maxWorkers := runtime.NumCPU()
-		if maxWorkers > len(jobs) {
-			maxWorkers = len(jobs)
-		}
+		maxWorkers := min(runtime.NumCPU(), len(jobs))
 		sem := make(chan struct{}, maxWorkers)
 		var mu sync.Mutex
 		var firstErr error
