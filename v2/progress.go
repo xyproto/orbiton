@@ -15,13 +15,13 @@ func (e *Editor) WriteProgress(c *vt.Canvas) {
 		lineNumberTop = float64(e.LineIndex())
 		allLines      = float64(e.Len())
 		x             = canvasWidth - 1
-		bottomLine    = canvasHeight - 1
-		y             = bottomLine
+		maxY          = canvasHeight - 2 // leave room for the status bar
+		y             = maxY
 	)
-	if allLines > 0 {
-		y = (canvasHeight * lineNumberTop * (allLines + canvasHeight)) / (allLines * allLines)
-		if y >= canvasHeight {
-			y = bottomLine
+	if allLines > 0 && maxY > 0 {
+		y = (maxY * lineNumberTop * (allLines + maxY)) / (allLines * allLines)
+		if y > maxY {
+			y = maxY
 		}
 	}
 	c.WriteBackground(x, uint(y), e.ProgressIndicatorBackground)
