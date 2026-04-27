@@ -18,6 +18,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
+	"github.com/xyproto/orchideous"
 	"github.com/xyproto/vt"
 )
 
@@ -95,6 +96,9 @@ func getEditorCommand() string {
 }
 
 func main() {
+	orchideous.ProgName = "o -b"
+	orchideous.ProgURL = "https://github.com/xyproto/orbiton"
+
 	var (
 		buildFlag              bool
 		catFlag                bool
