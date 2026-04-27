@@ -995,19 +995,20 @@ func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
 	term := env.Str("TERM")
 	switch term {
 	case "xterm-kitty":
-		// 24-bit true colour. Warm parchment (light) and deep sepia
-		// (dark) — no blue — with comfortable contrast.
+		// 24-bit true colour. Neutral gray — consistent with the ANSI-16
+		// palette used by vt220/linux/screen so the bar looks the same
+		// regardless of $TERM.
 		if dark {
-			return vt.TrueColor(232, 222, 200), vt.TrueColor(175, 160, 135), vt.TrueBackground(38, 30, 22)
+			return vt.TrueColor(238, 238, 238), vt.TrueColor(175, 175, 175), vt.TrueBackground(48, 48, 48)
 		}
-		return vt.TrueColor(48, 36, 24), vt.TrueColor(110, 90, 70), vt.TrueBackground(228, 216, 188)
+		return vt.TrueColor(0, 0, 0), vt.TrueColor(110, 110, 110), vt.TrueBackground(192, 192, 192)
 	case "xterm-256color":
-		// 256-colour palette. 223=wheat-ish (#ffd7af), 180=tan,
-		// 235=very dark gray, 94=sepia brown, 16=black, 230=cream.
+		// 256-colour palette. Neutral gray — matches the ANSI-16
+		// default below at higher fidelity.
 		if dark {
-			return vt.Color256(230), vt.Color256(180), vt.Background256(235)
+			return vt.Color256(255), vt.Color256(250), vt.Background256(239)
 		}
-		return vt.Color256(16), vt.Color256(94), vt.Background256(223)
+		return vt.Color256(16), vt.Color256(242), vt.Background256(250)
 	}
 	// All other TERMs (xterm, vt220, linux, screen, tmux, …): 16 ANSI
 	// colours. Use LightGray/Black (neutral, AbiWord-like) for light
