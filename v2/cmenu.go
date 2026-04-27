@@ -560,19 +560,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			bookContentCache = nil
 			e.redraw.Store(true)
 		})
-
-		// The walking-cat animation only exists in the text book-mode
-		// top bar, so only surface the toggle there.
-		if e.bookTextMode() {
-			catMenuText := "Stop cat from moving"
-			if e.bookCatPaused {
-				catMenuText = "Start cat"
-			}
-			actions.Add(catMenuText, func() {
-				e.bookCatPaused = !e.bookCatPaused
-				e.redraw.Store(true)
-			})
-		}
 	}
 
 	// Add a menu item to toggle primary/non-primary clipboard on Linux
