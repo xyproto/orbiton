@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] If altgr+space is pressed, then don't insert TWO spaces!
+- [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
 - [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
 - [ ] Page layout: margins, alignment, line spacing, page breaks.
 - [ ] PDF export / print (WYSIWYG).
