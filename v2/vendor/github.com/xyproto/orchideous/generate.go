@@ -14,6 +14,11 @@ import (
 	"github.com/xyproto/files"
 )
 
+var (
+	ProgName = "oh"
+	ProgURL  = "https://github.com/xyproto/orchideous"
+)
+
 // doGenerate generates a CMakeLists.txt file.
 func doGenerate(opts BuildOptions) error {
 	proj := detectProject()
@@ -38,7 +43,7 @@ func doGenerate(opts BuildOptions) error {
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
 	incPaths := flags.IncPaths
 
-	fmt.Fprintf(f, "# Generated using oh from https://github.com/xyproto/orchideous, %s\n", date)
+	fmt.Fprintf(f, "# Generated using %s from %s, %s\n", ProgName, ProgURL, date)
 	fmt.Fprintln(f, "cmake_minimum_required(VERSION 3.12)")
 	fmt.Fprintf(f, "project(%s)\n", exe)
 	fmt.Fprintf(f, "set(SOURCES %s)\n", strings.Join(srcs, " "))
@@ -203,7 +208,7 @@ func doNinja() error {
 	if fileExists("CMakeLists.txt") {
 		return doCMakeNinja()
 	}
-	return fmt.Errorf("no build/build.ninja or CMakeLists.txt found\n  hint: run 'oh generate' to create a CMakeLists.txt")
+	return fmt.Errorf("no build/build.ninja or CMakeLists.txt found\n  hint: run '%s generate' to create a CMakeLists.txt", ProgName)
 }
 
 // needsCMakeRegen checks whether cmake needs to be re-run in the build directory.
@@ -225,7 +230,7 @@ func needsCMakeRegen() bool {
 // Only re-runs cmake if CMakeLists.txt has changed; ninja handles incremental builds.
 func doCMakeNinja() error {
 	if !fileExists("CMakeLists.txt") {
-		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run 'oh generate' to create one")
+		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run '%s generate' to create one", ProgName)
 	}
 
 	if _, err := exec.LookPath("cmake"); err != nil {
@@ -283,7 +288,7 @@ func doMake() error {
 	if fileExists("CMakeLists.txt") {
 		return doCMakeMake()
 	}
-	return fmt.Errorf("no Makefile or CMakeLists.txt found\n  hint: run 'oh generate' to create a CMakeLists.txt, or 'oh export' to create a Makefile")
+	return fmt.Errorf("no Makefile or CMakeLists.txt found\n  hint: run '%s generate' to create a CMakeLists.txt, or '%s export' to create a Makefile", ProgName, ProgName)
 }
 
 // doCMakeBuild builds using cmake, preferring ninja over make.
@@ -594,7 +599,7 @@ func filterNonLinkFlags(flags []string) []string {
 // Only re-runs cmake if CMakeLists.txt has changed; make handles incremental builds.
 func doCMakeMake() error {
 	if !fileExists("CMakeLists.txt") {
-		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run 'oh generate' to create one")
+		return fmt.Errorf("could not find CMakeLists.txt\n  hint: run '%s generate' to create one", ProgName)
 	}
 
 	if _, err := exec.LookPath("cmake"); err != nil {
@@ -638,7 +643,7 @@ func doCMakeMake() error {
 // doCMakeMakeInstall installs from a cmake+make build.
 func doCMakeMakeInstall() error {
 	if !fileExists("build") {
-		return fmt.Errorf("no build/ directory found (run 'oh cmake' or 'oh make' first)")
+		return fmt.Errorf("no build/ directory found (run '%s cmake' or '%s make' first)", ProgName, ProgName)
 	}
 	if _, err := exec.LookPath("make"); err != nil {
 		return fmt.Errorf("make not found in PATH")
@@ -660,7 +665,7 @@ func doCMakeMakeClean() {
 // doNinjaInstall installs from a ninja build.
 func doNinjaInstall() error {
 	if !fileExists("build") {
-		return fmt.Errorf("no build/ directory found (run 'oh ninja' first)")
+		return fmt.Errorf("no build/ directory found (run '%s ninja' first)", ProgName)
 	}
 	if _, err := exec.LookPath("ninja"); err != nil {
 		return fmt.Errorf("ninja not found in PATH")

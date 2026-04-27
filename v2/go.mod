@@ -28,7 +28,7 @@ require (
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.6.40
 	github.com/xyproto/mode v0.12.6
-	github.com/xyproto/orchideous v1.0.7
+	github.com/xyproto/orchideous v1.0.8
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.9.8
