@@ -90,6 +90,10 @@ const (
 	bookTextMarginRight = 0.02 // tighter right margin for text book mode
 )
 
+// bookLineHeightMul scales the per-line vertical pitch in graphical book mode
+// relative to the terminal cell height; >1.0 adds breathing room between lines.
+const bookLineHeightMul = 1.25
+
 // Palette for text book mode. Using true-colour foregrounds avoids the
 // "black looks gray" problem on terminals whose 16-colour palette maps
 // color 0 to a dark gray (common with many xterm colour schemes). The vt
@@ -1034,131 +1038,121 @@ func bookReadingPercent(lineNumber, lastLineNumber LineNumber) int {
 	return p
 }
 
-// bookCatFrame picks the animated cat silhouette for the text-mode top
-// bar. Returns the glyph string and the column offset within the walk
-// strip. The cat walks back and forth over the left portion of the bar;
-// the column is derived from wall-clock time so the animation advances
-// even when the user is idle (driven by a ticker goroutine — see
-// bookCatAnimLoop). When paused is true the cat stays at column 0.
-//
-// The silhouette is always plain ASCII art so it renders identically on
-// every terminal (including TERM=vt100 / vt220 / xterm). No emoji. The
-// cat occupies 2 cells and keeps the ear oriented in the walk direction:
-//
-//	walking right →  "^>"     (ear leads, body trails)
-//	walking left  →  "<^"     (body leads, ear trails)
-//	sitting still →  "=^"     (a small loaf of cat)
-func bookCatFrame(walkCols int, paused bool) (glyph string, col int, width int) {
-	if walkCols < 2 {
-		walkCols = 2
+// bookCurrentHeading walks backwards from the given document line to find
+// the nearest preceding ATX heading and returns its body (without the
+// leading hashes). Returns the empty string when no heading is found.
+// Used by the text book-mode bottom bar so writers always see which
+// section they are currently in. The walk is bounded so that a long file
+// without headings does not slow down the per-keystroke redraw.
+func (e *Editor) bookCurrentHeading(line LineIndex) string {
+	const lookback = 5000
+	from := int(line)
+	to := max(from-lookback, 0)
+	for i := from; i >= to; i-- {
+		raw := strings.TrimRight(e.Line(LineIndex(i)), " \t")
+		// Match parseBookLine: only flush-left "#"-prefixed lines count.
+		if !strings.HasPrefix(raw, "#") {
+			continue
+		}
+		for _, prefix := range []string{"# ", "## ", "### ", "#### ", "##### ", "###### "} {
+			if strings.HasPrefix(raw, prefix) {
+				return strings.TrimSpace(raw[len(prefix):])
+			}
+		}
 	}
-	const catRight = "^>"
-	const catLeft = "<^"
-	const catStill = "=^"
-
-	if paused {
-		return catStill, 0, len(catStill)
-	}
-
-	// 250 ms per step → ~4 fps, gentle walk.
-	step := int(time.Now().UnixMilli() / 250)
-	period := 2 * (walkCols - 1)
-	phase := ((step % period) + period) % period
-	if phase < walkCols {
-		return catRight, phase, len(catRight)
-	}
-	return catLeft, period - phase, len(catLeft)
+	return ""
 }
 
-// drawBookTopBar paints the text book-mode top bar on row 0. Left side shows
-// an animated 1-character cat that walks back and forth. Right side shows
-// word count, ~reading time, and scroll percentage.
+// bookBarSlots holds the three text slots that make up a text book-mode
+// bar row. Empty strings are treated as "no slot" so the surrounding
+// slots can use the freed space.
+type bookBarSlots struct {
+	left, center, right string
+}
+
+// drawBookBar paints a text book-mode bar row at y. Side slots are
+// dim-foreground and capped at roughly a third of the bar width each so
+// neither can crowd out the others; the centre slot uses the primary
+// foreground and is truncated (with an ellipsis) when it would overlap
+// a side slot. Empty slots are simply omitted. This is the shared
+// painter for drawBookTopBar and the text-book branch of StatusBar.Draw,
+// so changing the layout of either bar is a matter of constructing the
+// right bookBarSlots value.
 //
 // Degrades gracefully:
-//   - NO_COLOR / TERM=vt100 → no colours; cat/stats in the terminal default.
-//   - TERM=vt100 / vt220    → ASCII cat ("<" / ">"), no · middle dot.
+//   - NO_COLOR / TERM=vt100 → no colours; bar text in the terminal default.
 //   - TERM=xterm*           → colour tier chosen by bookBarPalette.
-func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
+func (e *Editor) drawBookBar(c *vt.Canvas, y uint, w int, slots bookBarSlots) {
 	if w <= 0 {
 		return
 	}
-
-	statSep := " · "
-	if useASCII {
-		statSep = " | "
-	}
-
 	fg, dimFg, bg := bookBarPalette(e.bookDarkMode)
+	c.Write(0, y, fg, bg, strings.Repeat(" ", w))
 
-	blank := strings.Repeat(" ", w)
-	c.Write(0, 0, fg, bg, blank)
-
-	words := e.WordCount()
-	readingMinutes := words / 200
-	lineNumber := e.LineNumber()
-	lastLineNumber := LineNumber(e.Len())
-	percentage := bookReadingPercent(lineNumber, lastLineNumber)
-	var right string
-	if readingMinutes > 0 {
-		right = fmt.Sprintf("%d words%s~%d min%s%d%%", words, statSep, readingMinutes, statSep, percentage)
-	} else {
-		right = fmt.Sprintf("%d words%s%d%%", words, statSep, percentage)
+	const pad = 2
+	ellipsis := "…"
+	if useASCII {
+		ellipsis = "..."
+	}
+	truncate := func(s string, maxLen int) string {
+		if maxLen <= 0 || len(s) > maxLen && maxLen <= len(ellipsis) {
+			return ""
+		}
+		if len(s) <= maxLen {
+			return s
+		}
+		return s[:maxLen-len(ellipsis)] + ellipsis
 	}
 
-	const leftPad = 2
-	const rightPad = 2
-	rightLen := len(right)
+	sideMax := w/3 - pad
+	left := truncate(slots.left, sideMax)
+	right := truncate(slots.right, sideMax)
+	leftLen, rightLen := len(left), len(right)
+	rightStart := w - pad - rightLen
 
-	e.drawBookTopBarCat(c, w, fg, bg, leftPad, rightPad+rightLen)
-
-	if rightLen+rightPad <= w {
-		c.Write(uint(w-rightPad-rightLen), 0, dimFg, bg, right)
+	if leftLen > 0 {
+		c.Write(uint(pad), y, dimFg, bg, left)
 	}
-}
-
-// bookCatWalkCols returns the width (in cells) of the left-side strip the
-// animated cat walks within. Centralised so the keypress-driven full redraw
-// and the idle-tick cat-only redraw agree on the layout.
-func bookCatWalkCols(w int) int {
-	if w < 40 {
-		return max(w/4, 3)
+	if rightLen > 0 {
+		c.Write(uint(rightStart), y, dimFg, bg, right)
 	}
-	return 10
-}
 
-// drawBookTopBarCat repaints only the left-side cat walk strip on row 0 —
-// everything from column leftPad up to the start of the cat's maximum
-// reach. Everything else on the bar (stats on the right, padding) is left
-// untouched so the ticker-driven animation cannot redraw the statistics
-// text on every tick (the canvas diff-render would normally skip the
-// unchanged cells, but writing them would still pull the right-hand stats
-// into the animation conceptually, and subtle timing artefacts are visible
-// when the stats change between ticks). rightReserved is the number of
-// cells reserved at the right edge (rightPad + rightLen) so the cat never
-// overruns the stats.
-func (e *Editor) drawBookTopBarCat(c *vt.Canvas, w int, fg, bg vt.AttributeColor, leftPad, rightReserved int) {
-	walkCols := bookCatWalkCols(w)
-	cat, catCol, catW := bookCatFrame(walkCols, e.bookCatPaused)
-	// Maximum cells the cat region can ever occupy on this tick: from
-	// leftPad to leftPad+walkCols+catW-1. Clear that whole span (with
-	// the palette bg) before painting, so the previous position is erased
-	// without touching the stats area on the right.
-	stripStart := leftPad
-	// The cat can step up to walkCols-1 cells to the right of its home;
-	// its glyph is catW wide. The asciicat width changes with direction
-	// but never exceeds 2, so 2 is a safe upper bound for the clear span.
-	const maxCatWidth = 2
-	stripEnd := min(leftPad+walkCols-1+maxCatWidth, w-rightReserved)
-	if stripEnd <= stripStart {
+	if slots.center == "" {
 		return
 	}
-	c.Write(uint(stripStart), 0, fg, bg, strings.Repeat(" ", stripEnd-stripStart))
-
-	catX := uint(leftPad + catCol)
-	if int(catX)+catW > w-rightReserved {
+	leftBound := pad
+	if leftLen > 0 {
+		leftBound = pad + leftLen + 1
+	}
+	rightBound := w
+	if rightLen > 0 {
+		rightBound = rightStart - 1
+	}
+	center := truncate(slots.center, rightBound-leftBound)
+	if center == "" {
 		return
 	}
-	c.Write(catX, 0, fg, bg, cat)
+	cx := max((w-len(center))/2, leftBound)
+	if cx+len(center) > rightBound {
+		cx = max(rightBound-len(center), leftBound)
+	}
+	c.Write(uint(cx), y, fg, bg, center)
+}
+
+// drawBookTopBar paints the text book-mode top bar on row 0: the filename
+// (basename) is centred so the writer always has a reminder of the document
+// they are working on, and the running word count is shown on the right.
+// The matching bottom bar (see StatusBar.Draw) carries the current heading,
+// line position and scroll percentage.
+func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
+	base := filepath.Base(e.filename)
+	if base == "" || base == "." {
+		base = "untitled"
+	}
+	e.drawBookBar(c, 0, w, bookBarSlots{
+		center: base,
+		right:  fmt.Sprintf("%d words", e.WordCount()),
+	})
 }
 
 // isHeadingLine reports whether the given raw line is a Markdown ATX heading
@@ -3195,7 +3189,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 
 	ascent := faceAscent(fs.regular, fontSize)
 
-	lineH := int(cellH)
+	lineH := int(float64(cellH) * bookLineHeightMul)
 	if lineH <= 0 {
 		lineH = int(fontSize) + 4
 	}
@@ -3516,7 +3510,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 	}
 
 	ascent := faceAscent(fs.regular, fontSize)
-	lineH := int(cellH)
+	lineH := int(float64(cellH) * bookLineHeightMul)
 	if lineH <= 0 {
 		lineH = int(fontSize) + 4
 	}
@@ -4215,7 +4209,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	}
 
 	ascent := faceAscent(fs.regular, fontSize)
-	lineH := int(cellH)
+	lineH := int(float64(cellH) * bookLineHeightMul)
 	if lineH <= 0 {
 		lineH = int(fontSize) + 4
 	}
@@ -4669,7 +4663,7 @@ func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, 
 	if err != nil {
 		return
 	}
-	lineH := int(cellH)
+	lineH := int(float64(cellH) * bookLineHeightMul)
 	if lineH <= 0 {
 		lineH = int(fontSize) + 4
 	}
@@ -6626,7 +6620,7 @@ func bookScreenshot(mdPath, outPath string) error {
 // bookScreenshotAnnotate draws thin red horizontal guides at each display row
 // boundary and a small red dot at the cursor position for visual debugging.
 func bookScreenshotAnnotate(img *image.RGBA, e *Editor, pixW, pixH, editRows int, cellH uint) {
-	lineH := int(cellH)
+	lineH := int(float64(cellH) * bookLineHeightMul)
 	marginTop := int(float64(pixH) * bookMarginTop)
 	marginBottom := int(float64(pixH) * bookMarginBottom)
 	marginLeft := int(float64(pixW) * bookMarginLeft)
