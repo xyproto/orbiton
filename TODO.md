@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] If altgr+space is pressed, then don't insert TWO spaces!
 - [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
 - [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
 - [ ] Page layout: margins, alignment, line spacing, page breaks.
@@ -11,7 +10,6 @@
 - [ ] Move/copy files.
 - [ ] Open files with their default application (xdg-open etc.).
 - [ ] Show size, type, and date as inline columns in the listing.
-- [x] The cursor is missing when running under Konsole.
 - [ ] Support the WordGrinder file formats.
 - [ ] Check that Orbiton still works well under the Linux Console.
 - [ ] Check the vhs gif recordings.
@@ -26,17 +24,10 @@
 - [ ] Footnotes, for book mode ([^1] style).
 - [ ] Adjust line spacing in the ctrl-o menu.
 - [ ] Zoom, for graphical book mode?
-- [x] Also enable text selection with shift-arrows for .txt files.
-- [x] Also handle ctrl-left and ctrl-right under iTerm2.
 - [ ] Add a poetry mode for writing, reading, rating and browsing poetry.
-- [x] Add a book mode for writing books under Kitty or iTerm2, with the editor to the left and a preview to the right, nice text flow and a typewriter-like user experience.
-      OR let the book mode be fullscreen and only use text rendering, but be a "zoomed in" view of a document, with font rendering.
-      (Basic book mode added with `--book`/`-B`: word wrap at 72, no syntax highlighting, status bar shown.)
 - [ ] There is some duplication between this source code and the source code of the `syntax` package. Refactor and fix.
-- [x] When globbing, prioritize `.sh` over `.bat`, unless on Windows.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
-- [ ] `o -b` should also build Go projects, Rust projects etc. (similar to `ctrl-space`), not only C and C++.
 - [ ] If the user saves a file that ends with `.sh`, and there is no shebang, but the first word of the first line is an executable in the PATH, then `chmod +x` the file when saving.
 - [ ] Highlight `<tags>` differently in `JSX` files.
 - [ ] When piping command line output to `o -m` or `o -m -`, Orbiton should behave as a log colorizer.
