@@ -2766,7 +2766,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.GoToStartOfTextLine(c)
 			}
 		case "c:160": // altgr+space
-			key = " "
+			key = ""
 			fallthrough
 		default: // any other key
 			keyRunes := []rune(key)
