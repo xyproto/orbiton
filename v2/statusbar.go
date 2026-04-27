@@ -60,17 +60,27 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	msgX := max((w-len(sb.msg))/2, 0)
 
-	// In text book mode the regular themes are replaced by a simple
-	// black-on-bright-white reader theme, and the status bar must stand
-	// out against that. Use the same palette as the top book-mode bar so
-	// the reading area is framed by a matched pair, and degrade per-TERM
-	// (16-colour on vt*/xterm, 256-colour on xterm-256color, true-colour
-	// on xterm-kitty; no colour under NO_COLOR / vt100).
-	textBook := sb.editor.bookTextMode()
-	if textBook {
-		fg, _, bg := bookBarPalette(sb.editor.bookDarkMode)
-		c.Write(0, h, fg, bg, strings.Repeat(" ", w))
-		c.Write(uint(msgX), h, fg, bg, sb.msg)
+	// In text book mode drawBookBar owns the bottom row: the current
+	// heading on the left (echoing the upper-right function name in
+	// regular code mode), the pending status message (if any) centred,
+	// and a combined "L of T · NN%" slot on the right. The upper-right
+	// of the top bar shows the running word count. When statusMode is
+	// set the side slots are suppressed, matching the graphical
+	// book-mode bar.
+	if sb.editor.bookTextMode() {
+		e := sb.editor
+		slots := bookBarSlots{center: sb.msg}
+		if !e.statusMode {
+			sep := " · "
+			if useASCII {
+				sep = " | "
+			}
+			lastLineNumber := e.Len()
+			percentage := bookReadingPercent(e.LineNumber(), LineNumber(lastLineNumber))
+			slots.left = e.bookCurrentHeading(e.DataY())
+			slots.right = fmt.Sprintf("%d of %d%s%d%%", e.LineNumber(), lastLineNumber, sep, percentage)
+		}
+		e.drawBookBar(c, h, w, slots)
 		mut.Lock()
 		sb.offsetY = offsetY
 		mut.Unlock()
