@@ -1892,11 +1892,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case pgUpKey: // page up
 			e.ClearSelection()
 			if e.bookMode.Load() {
-				if !e.bookPgUp(c) {
-					status.Clear(c, false)
-					status.SetMessage("Start of file")
-					status.ShowNoTimeout(c, e)
-				}
+				e.bookPgUp(c)
 				break
 			}
 			h := int(c.H())
