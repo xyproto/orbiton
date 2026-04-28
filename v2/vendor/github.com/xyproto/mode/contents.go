@@ -73,6 +73,14 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return XML, true
 	} else if bytes.HasPrefix(firstLine, []byte("{\"")) {
 		return JSON, true
+	} else if bytes.HasPrefix(firstLine, []byte("{\\rtf")) {
+		return RTF, true
+	} else if bytes.HasPrefix(firstLine, []byte("WordGrinder")) {
+		return WordGrinder, true
+	} else if bytes.Contains(firstLine, []byte("<abiword")) {
+		return Abiword, true
+	} else if bytes.HasPrefix(firstLine, []byte("PK\x03\x04")) && bytes.Contains(firstLine, []byte("mimetypeapplication/vnd.oasis.opendocument")) {
+		return LibreOffice, true
 	} else if bytes.HasPrefix(bytes.ToLower(firstLine), []byte("<!doctype html")) || bytes.HasPrefix(bytes.ToLower(firstLine), []byte("<html")) {
 		return HTML, true
 	} else if bytes.Contains(firstLine, []byte("-*- nroff -*-")) {

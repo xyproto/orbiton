@@ -2,18 +2,14 @@ package mode
 
 import (
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 )
 
 // hasS checks if the given string slice contains the given string
 func hasS(sl []string, s string) bool {
-	for _, e := range sl {
-		if e == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(sl, s)
 }
 
 // Detect looks at the filename and tries to guess what could be an appropriate editor mode.
@@ -85,6 +81,8 @@ func Detect(filename string) Mode {
 			mode = SCDoc
 		case ".abc":
 			mode = ABC
+		case ".abw", ".zabw":
+			mode = Abiword
 		case ".aidl":
 			mode = AIDL
 		case ".agda":
@@ -135,6 +133,8 @@ func Detect(filename string) Mode {
 			mode = D
 		case ".dart":
 			mode = Dart
+		case ".docx":
+			mode = DOCX
 		case ".dingo":
 			mode = Dingo
 		case ".patch", ".diff":
@@ -205,6 +205,8 @@ func Detect(filename string) Mode {
 			mode = Lua
 		case ".ly":
 			mode = Lilypond
+		case ".odt", ".ods", ".odp", ".odg", ".odf":
+			mode = LibreOffice
 		case ".m":
 			mode = ObjC
 		case ".m4":
@@ -252,6 +254,8 @@ func Detect(filename string) Mode {
 			mode = Rust
 		case ".rst":
 			mode = ReStructured // reStructuredText
+		case ".rtf":
+			mode = RTF
 		case ".S", ".asm", ".mac", ".s":
 			// Temporary set the mode to Assembly. Go-style Assembly will be detected from the contents.
 			mode = Assembly
@@ -283,6 +287,8 @@ func Detect(filename string) Mode {
 			mode = Teal
 		case ".ts", ".tsx":
 			mode = TypeScript
+		case ".wg":
+			mode = WordGrinder
 		case ".txt", ".text", ".nfo", ".diz":
 			mode = Text
 		case ".v":

@@ -7,6 +7,7 @@ type Mode int
 const (
 	Blank          = iota // Blank is used if no file mode is found
 	ABC                   // ABC music notation
+	Abiword               // Abiword
 	AIDL                  // Android-related: Android Interface Definition Language
 	Ada                   // Ada
 	Agda                  // Agda
@@ -35,6 +36,7 @@ const (
 	Crystal               // Crystal
 	D                     // D
 	Dart                  // Dart
+	DOCX                  // DOCX
 	Diff                  // Diff / patch
 	Dingo                 // Dingo
 	Docker                // For Dockerfiles
@@ -72,6 +74,7 @@ const (
 	Just                  // Just
 	Koka                  // Koka
 	Kotlin                // Kotlin
+	LibreOffice           // LibreOffice
 	Lilypond              // Lilypond
 	Lisp                  // Common Lisp and Emacs Lisp
 	Log                   // All sorts of log files
@@ -99,6 +102,7 @@ const (
 	Python                // Python
 	R                     // R
 	ReStructured          // reStructuredText
+	RTF                   // RTF
 	Ruby                  // Ruby
 	Rust                  // Rust
 	Scala                 // Scala
@@ -120,6 +124,7 @@ const (
 	V                     // V programming language
 	Vibe67                // Vibe67
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
+	WordGrinder           // WordGrinder
 	XML                   // XML
 	Zig                   // Zig
 )
@@ -131,6 +136,8 @@ func (mode Mode) String() string {
 	switch mode {
 	case ABC:
 		return "ABC"
+	case Abiword:
+		return "Abiword"
 	case Ada:
 		return "Ada"
 	case Agda:
@@ -189,6 +196,8 @@ func (mode Mode) String() string {
 		return "D"
 	case Dart:
 		return "Dart"
+	case DOCX:
+		return "DOCX"
 	case Diff:
 		return "Diff / patch"
 	case Dingo:
@@ -265,6 +274,8 @@ func (mode Mode) String() string {
 		return "Koka"
 	case Kotlin:
 		return "Kotlin"
+	case LibreOffice:
+		return "LibreOffice"
 	case Lilypond:
 		return "Lilypond"
 	case Lisp:
@@ -319,6 +330,8 @@ func (mode Mode) String() string {
 		return "R"
 	case ReStructured:
 		return "reStructuredText"
+	case RTF:
+		return "RTF"
 	case Ruby:
 		return "Ruby"
 	case Rust:
@@ -357,6 +370,8 @@ func (mode Mode) String() string {
 		return "TypeScript"
 	case Vim:
 		return "ViM"
+	case WordGrinder:
+		return "WordGrinder"
 	case V:
 		return "V"
 	case XML:

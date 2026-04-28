@@ -1,6 +1,7 @@
 package mode
 
 import (
+	"slices"
 	"strings"
 )
 
@@ -28,10 +29,8 @@ var languageIndentation = map[TabsSpaces][]Mode{
 // Spaces returns true if spaces should be used for the current mode
 func (m Mode) Spaces() bool {
 	for k, vs := range languageIndentation {
-		for _, v := range vs {
-			if v == m {
-				return k.Spaces
-			}
+		if slices.Contains(vs, m) {
+			return k.Spaces
 		}
 	}
 	return DefaultTabsSpaces.Spaces
@@ -40,10 +39,8 @@ func (m Mode) Spaces() bool {
 // TabsSpaces tries to return the appropriate settings for tabs and spaces as a TabsSpaces struct
 func (m Mode) TabsSpaces() TabsSpaces {
 	for k, vs := range languageIndentation {
-		for _, v := range vs {
-			if v == m {
-				return k
-			}
+		if slices.Contains(vs, m) {
+			return k
 		}
 	}
 	return DefaultTabsSpaces
