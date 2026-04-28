@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] If a "- [ ] Checkbox" is ticked, in graphical book mode, then also gray out lines and bullet points/checkboxes
+      below it that "belongs" to this checkbox.
 - [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
 - [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
 - [ ] Page layout: margins, alignment, line spacing, page breaks.
