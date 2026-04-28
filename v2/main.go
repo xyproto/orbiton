@@ -553,9 +553,7 @@ func main() {
 		}
 	}
 
-	if bookModeFlag {
-		theme = NewLightVSTheme()
-	}
+	// --book does not force a theme here, so cycling out with ctrl-space lands in the user's normal theme
 
 	if catFlag {
 		// List the file in a colorful way and quit

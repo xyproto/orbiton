@@ -392,6 +392,49 @@ func (e *Editor) bookTextMode() bool {
 	return e.bookMode.Load() && (!bookGraphicsCapable() || e.bookForceTextMode.Load())
 }
 
+// enterBookModeText enables book mode with text rendering and saves the editor
+// settings that book mode overrides, so exitBookMode can restore them. The
+// dark/light auto-detect runs at most once per editor session.
+func (e *Editor) enterBookModeText() {
+	if !e.bookSaved {
+		e.bookSavedSyntaxHighlight = e.syntaxHighlight
+		e.bookSavedStatusMode = e.statusMode
+		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
+		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSaved = true
+	}
+	if !e.bookDarkModeInitialized {
+		if initialLightBackground != nil && !*initialLightBackground {
+			e.bookDarkMode = true
+		}
+		e.bookDarkModeInitialized = true
+	}
+	e.bookMode.Store(true)
+	e.bookForceTextMode.Store(true)
+	e.syntaxHighlight = false
+	e.wrapWidth = 72
+	e.wrapWhenTyping = false
+	e.statusMode = true
+	e.bookSavedLocalX = -1
+}
+
+// exitBookMode disables book mode and restores the saved editor settings.
+func (e *Editor) exitBookMode() {
+	if imagepreview.IsKitty {
+		imagepreview.DeleteInlineImages()
+	}
+	e.bookMode.Store(false)
+	e.bookForceTextMode.Store(false)
+	if e.bookSaved {
+		e.syntaxHighlight = e.bookSavedSyntaxHighlight
+		e.statusMode = e.bookSavedStatusMode
+		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
+		e.wrapWidth = e.bookSavedWrapWidth
+		e.bookSaved = false
+	}
+	bookModeResetCursor()
+}
+
 // bookTextTopBarRows is the number of terminal rows reserved at the top of
 // text book mode for a filename status bar. Graphical book mode has no such
 // top bar (it's always 0 there).

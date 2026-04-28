@@ -73,6 +73,12 @@ type Editor struct {
 	bookFocusMode               bool        // book mode: typewriter scrolling + dim non-active paragraphs
 	bookSavedLocalX             int         // sticky visual column within a sub-row for up/down movement (-1 = unset)
 	bookCursorAffinity          int         // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
+	bookSaved                   bool        // pre-book-mode editor settings have been saved, for later restore
+	bookDarkModeInitialized     bool        // the bookDarkMode auto-detect has already run
+	bookSavedSyntaxHighlight    bool        // saved syntaxHighlight from before book mode
+	bookSavedStatusMode         bool        // saved statusMode from before book mode
+	bookSavedWrapWhenTyping     bool        // saved wrapWhenTyping from before book mode
+	bookSavedWrapWidth          int         // saved wrapWidth from before book mode
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	statusMode                  bool        // display a status bar at all times at the bottom of the screen
@@ -190,6 +196,12 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.bookFocusMode = e.bookFocusMode
 	e2.bookSavedLocalX = e.bookSavedLocalX
 	e2.bookCursorAffinity = e.bookCursorAffinity
+	e2.bookSaved = e.bookSaved
+	e2.bookDarkModeInitialized = e.bookDarkModeInitialized
+	e2.bookSavedSyntaxHighlight = e.bookSavedSyntaxHighlight
+	e2.bookSavedStatusMode = e.bookSavedStatusMode
+	e2.bookSavedWrapWhenTyping = e.bookSavedWrapWhenTyping
+	e2.bookSavedWrapWidth = e.bookSavedWrapWidth
 	return &e2
 }
 
