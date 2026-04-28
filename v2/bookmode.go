@@ -392,6 +392,20 @@ func (e *Editor) bookTextMode() bool {
 	return e.bookMode.Load() && (!bookGraphicsCapable() || e.bookForceTextMode.Load())
 }
 
+// bookThemeIsLight reports whether the editor's regular-mode rendering looks light.
+// The Theme.Light field signals which terminal a theme is suitable for, not the visual
+// appearance, so this looks at the actual Background colour first and falls back to
+// initialLightBackground when the theme uses BackgroundDefault.
+func (e *Editor) bookThemeIsLight() bool {
+	switch e.Background {
+	case vt.BackgroundBlack, vt.BackgroundBrightBlack:
+		return false
+	case vt.BackgroundWhite, vt.BackgroundBrightWhite:
+		return true
+	}
+	return initialLightBackground == nil || *initialLightBackground
+}
+
 // enterBookModeText enables book mode with text rendering and saves the editor
 // settings that book mode overrides, so exitBookMode can restore them. The
 // dark/light auto-detect runs at most once per editor session.
@@ -404,7 +418,7 @@ func (e *Editor) enterBookModeText() {
 		e.bookSaved = true
 	}
 	if !e.bookDarkModeInitialized {
-		if initialLightBackground != nil && !*initialLightBackground {
+		if !e.bookThemeIsLight() {
 			e.bookDarkMode = true
 		}
 		e.bookDarkModeInitialized = true
