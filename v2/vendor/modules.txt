@@ -137,7 +137,7 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/megafile v1.6.40
 ## explicit; go 1.25.1
 github.com/xyproto/megafile
-# github.com/xyproto/mode v0.12.6
+# github.com/xyproto/mode v0.12.7
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/orchideous v1.0.8
