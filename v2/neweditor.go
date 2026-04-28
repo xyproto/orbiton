@@ -544,6 +544,13 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 	}
 
+	// --book always prefers a white book page, regardless of the editor theme. Mark the auto-detect as
+	// already done so cycling out and back in with ctrl-space preserves this choice.
+	if bookModeFlag && !e.bookDarkModeInitialized {
+		e.bookDarkMode = false
+		e.bookDarkModeInitialized = true
+	}
+
 	// Find the absolute path to this filename
 	absFilename := e.filename
 	if !fnord.stdin {
@@ -722,12 +729,9 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
 		e.statusMode = true
 		e.bookSavedLocalX = -1
-		// Use dark book mode only if a dark terminal background was detected. Mark the auto-detect as already done
-		// so re-entry via ctrl-space preserves whatever value was chosen here or via the menu.
-		if initialLightBackground != nil && !*initialLightBackground {
-			e.bookDarkMode = true
-		}
-		e.bookDarkModeInitialized = true
+		// The book dark/light auto-detect is deferred until after the final theme is chosen in NewEditor's
+		// themeWasSet block, so it can follow O_THEME and the executable-letter theme too, not just the
+		// terminal background.
 	}
 	e.mode = m
 	e.fastInputMode = !strings.HasPrefix(env.Str("TERM"), "vt") && env.Str("TERM") != "linux"
