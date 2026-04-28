@@ -61,33 +61,31 @@ var (
 	// Don't search for a corresponding header/source file for longer than ~0.5 seconds
 	fileSearchMaxTime = 500 * time.Millisecond
 
-	// lastBookModeToggle is the last time ctrl-w toggled graphical/text
-	// book mode. Used to debounce buffered repeats during slow renders.
+	// the last time ctrl-space stepped through the book-mode cycle, used to debounce buffered repeats
 	lastBookModeToggle time.Time
 )
 
-// bookModeToggleDebounce is the minimum time between successive ctrl-w
-// book-mode toggles. Shorter successive presses are dropped.
+// the shortest interval between successive ctrl-space book-mode cycle steps
 const bookModeToggleDebounce = 400 * time.Millisecond
 
-// toggleBookGraphical flips between graphical and text book-mode rendering
-// when the terminal supports graphics. Buffered presses during a slow render
-// are debounced so they do not immediately toggle back.
-func (e *Editor) toggleBookGraphical(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string) {
-	if !bookGraphicsCapable() {
-		return
-	}
+// cycleBookMode steps through: regular -> book mode (text) -> book mode (graphical, if available) -> regular.
+// On terminals without graphics support it toggles between regular and book mode (text).
+// Buffered key presses during a slow render are debounced.
+func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string) {
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 		return
 	}
 	lastBookModeToggle = time.Now()
-	if e.bookForceTextMode.Load() {
-		e.bookForceTextMode.Store(false)
-	} else {
+	switch {
+	case !e.bookMode.Load():
+		e.enterBookModeText()
+	case bookGraphicsCapable() && e.bookForceTextMode.Load():
 		if imagepreview.IsKitty {
 			imagepreview.DeleteInlineImages()
 		}
-		e.bookForceTextMode.Store(true)
+		e.bookForceTextMode.Store(false)
+	default:
+		e.exitBookMode()
 	}
 	drainKeys(tty, drainKey)
 	e.FullResetRedraw(c, status, true, false)
@@ -554,13 +552,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.quit = true
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
-			if e.bookMode.Load() {
-				// In book mode, ctrl-w toggles between graphical and text
-				// rendering when the terminal supports graphics (Kitty/iTerm2).
-				e.toggleBookGraphical(c, tty, status, "c:23")
-				break
-			}
-
 			if e.blockMode {
 				e.blockMode = false
 				e.blockCursors = nil
@@ -652,22 +643,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
-			// In book mode, ctrl-space toggles a Markdown checkbox when the
-			// cursor is on one; otherwise it toggles graphical/text rendering.
-			if e.bookMode.Load() {
+			// For Markdown files (or when already in book mode), ctrl-space toggles the checkbox on the current
+			// line if there is one, otherwise it cycles regular -> book (text) -> book (graphical) -> regular.
+			if e.mode == mode.Markdown || e.bookMode.Load() {
 				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
 					undo.Snapshot(e)
 					break
 				}
-				e.toggleBookGraphical(c, tty, status, "c:0")
+				e.cycleBookMode(c, tty, status, "c:0")
 				break
 			}
 			switch e.mode {
-			case mode.Markdown:
-				if e.ToggleCheckboxCurrentLine() { // Toggle checkbox
-					undo.Snapshot(e)
-					break
-				}
 			case mode.Config, mode.FSTAB:
 				break // do nothing
 			case mode.Nroff:

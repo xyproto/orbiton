@@ -85,9 +85,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	if envVT100 {
 		syntaxHighlight = false
 	}
-	if bookModeFlag {
-		syntaxHighlight = false
-	}
+	// --book does not force syntaxHighlight=false here, so cycling out leaves the user's value intact
 
 	adjustSyntaxHighlightingKeywords(m) // no theme changes, just language detection and keyword configuration
 
@@ -712,20 +710,24 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.wrapWhenTyping = false
 	}
 	if bookModeFlag {
+		// Save the pre-book values, so they can be restored if the user cycles back to regular mode with ctrl-space
+		e.bookSavedSyntaxHighlight = e.syntaxHighlight
+		e.bookSavedStatusMode = e.statusMode
+		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
+		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSaved = true
 		e.bookMode.Store(true)
 		e.syntaxHighlight = false
 		e.wrapWidth = 72
 		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
 		e.statusMode = true
 		e.bookSavedLocalX = -1
-		// Auto-detect terminal theme for the initial book dark/light
-		// choice. initialLightBackground is populated earlier by the
-		// normal theme-detection pipeline (COLORFGBG, terminal-emulator
-		// heuristics, optional OSC background query). Default to light
-		// mode; only use dark mode if we detected a dark background.
+		// Use dark book mode only if a dark terminal background was detected. Mark the auto-detect as already done
+		// so re-entry via ctrl-space preserves whatever value was chosen here or via the menu.
 		if initialLightBackground != nil && !*initialLightBackground {
 			e.bookDarkMode = true
 		}
+		e.bookDarkModeInitialized = true
 	}
 	e.mode = m
 	e.fastInputMode = !strings.HasPrefix(env.Str("TERM"), "vt") && env.Str("TERM") != "linux"
