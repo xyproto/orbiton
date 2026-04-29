@@ -41,11 +41,11 @@ const (
 	upArrow    = "↑"
 	downArrow  = "↓"
 
-	pgUpKey   = "⇞"       // page up
-	pgDnKey   = "⇟"       // page down
-	homeKey   = "⇱"       // home
-	endKey    = "⇲"       // end
-	deleteKey = "\x1b[3~" // delete (ESC [ 3 ~)
+	pgUpKey   = "⇞" // page up
+	pgDnKey   = "⇟" // page down
+	homeKey   = "⇱" // home
+	endKey    = "⇲" // end
+	deleteKey = "⌦" // delete / forward-delete
 
 	topLine = uint(1)
 )
@@ -1537,10 +1537,11 @@ func (s *State) Run() ([]string, error) {
 			s.setSelectedIndexIfMissing(-1)
 			clearWritten()
 			drawWritten()
-		case "c:17": // ctrl-q
+		case "c:17", "F10": // ctrl-q or F10
 			s.quit = true
-		case "c:18": // ctrl-r : rename selected file or directory
+		case "c:18", "F2": // ctrl-r or F2 : rename selected file or directory
 			rename.enter(&index, renameHooks)
+		case "F1", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F11", "F12": // unhandled function keys: do nothing
 		case "c:13": // return
 			okToAutoSelect := !s.autoSelected
 			if s.autoSelected && len(s.written) == 0 {
