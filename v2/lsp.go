@@ -32,14 +32,14 @@ type LSPClient struct {
 	stdout         io.ReadCloser
 	stderr         io.ReadCloser
 	cmd            *exec.Cmd
-	reader         *bufio.Reader // persistent reader for stdout
+	msgCh          chan map[string]any // receives parsed messages from the background readLoop
+	done           chan struct{}       // closed by Shutdown to unblock readLoop
 	workspaceRoot  string
 	openedURI      string
 	linkedProjects []any // inline rust-project.json objects for standalone Rust files
 	openedVersion  int
 	requestID      int
 	mutex          sync.Mutex
-	readerMu       sync.Mutex // protects reader access
 	running        bool
 	initialized    bool
 }
@@ -276,11 +276,14 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 		stdin:         stdin,
 		stdout:        stdout,
 		stderr:        stderr,
+		msgCh:         make(chan map[string]any, 32),
+		done:          make(chan struct{}),
 		requestID:     0,
 		running:       true,
 		initialized:   false,
 		workspaceRoot: workspaceRoot,
 	}
+	go client.readLoop()
 	// drain stderr in the background
 	go func() {
 		scanner := bufio.NewScanner(stderr)
@@ -346,69 +349,66 @@ func (lsp *LSPClient) sendRequest(method string, params any) (int, error) {
 	return id, nil
 }
 
-// readResponse reads the JSON-RPC response matching expectedID,
-// skipping notifications and acknowledging server-to-client requests
-func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[string]any, error) {
-	deadline := time.Now().Add(timeout)
-
-	lsp.readerMu.Lock()
-	defer lsp.readerMu.Unlock()
-
-	if lsp.reader == nil {
-		lsp.reader = bufio.NewReader(lsp.stdout)
-	}
-
-	for time.Now().Before(deadline) {
-		done := make(chan struct{})
+// readLoop is a persistent background goroutine that reads LSP messages from
+// stdout and sends them to msgCh. It exits when stdout is closed or returns an error.
+func (lsp *LSPClient) readLoop() {
+	defer close(lsp.msgCh)
+	reader := bufio.NewReader(lsp.stdout)
+	for {
+		headers := make(map[string]string)
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				return
+			}
+			line = strings.TrimSpace(line)
+			if line == "" {
+				break
+			}
+			parts := strings.SplitN(line, ": ", 2)
+			if len(parts) == 2 {
+				headers[parts[0]] = parts[1]
+			}
+		}
+		contentLength := 0
+		if cl, ok := headers["Content-Length"]; ok {
+			fmt.Sscanf(cl, "%d", &contentLength)
+		}
+		if contentLength == 0 {
+			continue
+		}
+		body := make([]byte, contentLength)
+		if _, err := io.ReadFull(reader, body); err != nil {
+			return
+		}
 		var result map[string]any
-		var readErr error
-
-		go func() {
-			defer close(done)
-			headers := make(map[string]string)
-			for {
-				line, err := lsp.reader.ReadString('\n')
-				if err != nil {
-					readErr = err
-					return
-				}
-				line = strings.TrimSpace(line)
-				if line == "" {
-					break
-				}
-				parts := strings.SplitN(line, ": ", 2)
-				if len(parts) == 2 {
-					headers[parts[0]] = parts[1]
-				}
-			}
-
-			contentLength := 0
-			if cl, ok := headers["Content-Length"]; ok {
-				fmt.Sscanf(cl, "%d", &contentLength)
-			}
-			if contentLength == 0 {
-				readErr = errors.New("no content length")
-				return
-			}
-			body := make([]byte, contentLength)
-			if _, err := io.ReadFull(lsp.reader, body); err != nil {
-				readErr = err
-				return
-			}
-			if err := json.Unmarshal(body, &result); err != nil {
-				readErr = err
-				return
-			}
-		}()
-
+		if err := json.Unmarshal(body, &result); err != nil {
+			continue
+		}
 		select {
-		case <-done:
-			if readErr != nil {
+		case lsp.msgCh <- result:
+		case <-lsp.done:
+			return
+		}
+	}
+}
+
+// readResponse reads the JSON-RPC response matching expectedID,
+// skipping notifications and acknowledging server-to-client requests.
+// NOTE: only one goroutine should call readResponse at a time;
+// concurrent callers would race on msgCh and discard each other's responses.
+func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[string]any, error) {
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	for {
+		select {
+		case result, ok := <-lsp.msgCh:
+			if !ok {
 				lsp.mutex.Lock()
 				lsp.running = false
 				lsp.openedURI = ""
 				lsp.mutex.Unlock()
-				return nil, readErr
+				return nil, errors.New("LSP connection closed")
 			}
 			// server-to-client request — acknowledge it
 			if _, hasMethod := result["method"]; hasMethod {
@@ -427,15 +427,13 @@ func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[s
 				if id, ok := idVal.(float64); ok && int(id) == expectedID {
 					return result, nil
 				}
-				continue // stale response
+				continue
 			}
 			// no id or method, skip
-		case <-time.After(time.Until(deadline)):
+		case <-timer.C:
 			return nil, errors.New("timeout reading LSP response")
 		}
 	}
-
-	return nil, errors.New("timeout reading LSP response")
 }
 
 // Initialize sends the initialize request to the language server
@@ -662,6 +660,7 @@ func (lsp *LSPClient) Shutdown() error {
 		"method":  "exit",
 	}
 	lsp.writeMessage(notification)
+	close(lsp.done)
 	lsp.stdin.Close()
 	lsp.stdout.Close()
 	lsp.stderr.Close()
