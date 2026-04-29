@@ -6,6 +6,38 @@ import (
 	"strings"
 )
 
+// splitRespectingQuotes splits s on sep without splitting inside single- or double-quoted substrings.
+func splitRespectingQuotes(s string, sep rune) []string {
+	var (
+		fields    []string
+		cur       strings.Builder
+		inSingleQ bool
+		inDoubleQ bool
+	)
+	for _, r := range s {
+		switch r {
+		case '\'':
+			if !inDoubleQ {
+				inSingleQ = !inSingleQ
+			}
+			cur.WriteRune(r)
+		case '"':
+			if !inSingleQ {
+				inDoubleQ = !inDoubleQ
+			}
+			cur.WriteRune(r)
+		default:
+			if r == sep && !inSingleQ && !inDoubleQ {
+				fields = append(fields, cur.String())
+				cur.Reset()
+			} else {
+				cur.WriteRune(r)
+			}
+		}
+	}
+	return append(fields, cur.String())
+}
+
 // Word is a type for a string in a list of strings, that may be quoted
 type Word struct {
 	s            string
@@ -119,15 +151,14 @@ func sortStrings(line string) (string, error) {
 	}
 
 	// Are we dealing with comma-separated or space-separated strings?
-	// TODO: This will not work if the strings contains spaces
 	commaSeparated := commaCount >= spaceCount
 
-	// Split the string into a []string
+	// Split the string into a []string, respecting quoted substrings
 	var fields []string
 	if commaSeparated {
-		fields = strings.Split(center, ",")
+		fields = splitRespectingQuotes(center, ',')
 	} else {
-		fields = strings.Split(center, " ")
+		fields = splitRespectingQuotes(center, ' ')
 	}
 
 	// Convert the string fields to Words

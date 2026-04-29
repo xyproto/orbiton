@@ -256,7 +256,7 @@ func (u *Undo) Restore(e *Editor) error {
 	const withLines = true
 
 	// Restore the state from this index
-	if lines := u.editorLineCopies[u.index]; len(lines) > 0 || u.index == 0 {
+	if lines := u.editorLineCopies[u.index]; lines != nil {
 		*e = *(u.editorCopies[u.index].Copy(withLines))
 		e.lines = lines
 		e.pos = u.editorPositionCopies[u.index]

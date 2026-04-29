@@ -159,14 +159,14 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 		if !containsTheWordSource {
 			if shebang && e.mode != mode.Rust && e.mode != mode.Python && e.mode != mode.Mojo && e.mode != mode.Starlark && !e.readOnly {
 				// Call Chmod, but ignore errors (since this is just a bonus and not critical)
-				os.Chmod(e.filename, fileMode)
+				os.Chmod(filename, fileMode)
 				e.syntaxHighlight = true
 			} else if e.mode == mode.ASCIIDoc || e.mode == mode.Just || e.mode == mode.Make || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.SCDoc {
 				fileMode = 0o644
-				os.Chmod(e.filename, fileMode)
-			} else if baseFilename := filepath.Base(e.filename); baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" {
+				os.Chmod(filename, fileMode)
+			} else if baseFilename := filepath.Base(filename); baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" {
 				fileMode = 0o644
-				os.Chmod(e.filename, fileMode)
+				os.Chmod(filename, fileMode)
 			}
 		}
 
