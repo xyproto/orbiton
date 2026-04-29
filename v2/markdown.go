@@ -262,7 +262,7 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	if pos := strings.Index(rest, "> "); pos >= 0 && pos < 5 {
 		words := strings.Fields(rest)
 		if len(words) >= 2 {
-			return e.QuoteColor.Get(words[0]) + " " + e.QuoteTextColor.Get(strings.Join(words[1:], " ")), true, false
+			return leadingSpace + e.QuoteColor.Get(words[0]) + " " + e.QuoteTextColor.Get(strings.Join(words[1:], " ")), true, false
 		}
 	}
 
