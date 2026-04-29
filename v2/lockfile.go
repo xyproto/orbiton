@@ -83,21 +83,14 @@ func (lk *LockKeeper) Lock(filename string) error {
 		return errors.New("locking '-' or '/dev/*' files is not allowed")
 	}
 
-	// Check if already locked
-	var has bool
-	lk.mut.RLock()
-	_, has = lk.lockedFiles[filename]
-	lk.mut.RUnlock()
+	lk.mut.Lock()
+	defer lk.mut.Unlock()
 
-	if has {
+	if _, has := lk.lockedFiles[filename]; has {
 		return errors.New("already locked: " + filename)
 	}
 
-	// Add the file to the map
-	lk.mut.Lock()
 	lk.lockedFiles[filename] = time.Now()
-	lk.mut.Unlock()
-
 	return nil
 }
 

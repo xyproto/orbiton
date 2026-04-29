@@ -2313,12 +2313,8 @@ func (e *Editor) ToggleCommentBlock(c *vt.Canvas) {
 		if e.AtOrAfterEndOfDocument() {
 			break
 		}
-		if e.Down(c, nil) { // reached the end
-			break
-		}
-		// TODO: Remove the safeguard
 		downCounter++
-		if downCounter > 10 { // safeguard at the end of the document
+		if e.Down(c, nil) { // reached the end
 			break
 		}
 	}

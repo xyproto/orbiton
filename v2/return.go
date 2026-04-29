@@ -142,8 +142,8 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 	if !noHome {
 		e.pos.mut.Lock()
 		e.pos.sx = 0
+		e.pos.offsetX = 0
 		e.pos.mut.Unlock()
-		// e.Home()
 		if scrollBack {
 			e.pos.SetX(c, 0)
 		}
@@ -169,9 +169,10 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 		e.pos.SetX(c, len([]rune(listPrefix)))
 	}
 
-	// Book-mode: after a heading, insert an extra blank line below so the
-	// cursor ends up in a clean paragraph two rows down from the heading.
-	if afterParagraph {
+	// Book-mode: insert an extra blank line below so the cursor ends up in
+	// a clean paragraph. Skip when continuing a list — the list prefix
+	// already placed the cursor on the right line.
+	if afterParagraph && listPrefix == "" {
 		e.InsertLineBelow()
 		e.pos.Down(c)
 		e.pos.SetX(c, 0)
