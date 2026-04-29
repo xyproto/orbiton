@@ -7,8 +7,12 @@ import (
 	"github.com/xyproto/vt"
 )
 
-// ReturnPressed is called when the user pressed return while editing text
-func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
+// ReturnPressed is called when the user pressed return while editing text.
+// When softReturn is true (e.g. shift-Return or alt-Return) and book mode is
+// active, the extra paragraph-trailing blank line and Markdown list prefix
+// auto-continuation are skipped, giving a soft line break inside the same
+// paragraph — like shift-Return in a word processor.
+func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool) {
 	var (
 		trimmedLine              = e.TrimmedLine()
 		currentLeadingWhitespace = e.LeadingWhitespace()
@@ -30,13 +34,15 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar) {
 	}
 
 	afterParagraph := false
-	if e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+	if !softReturn && e.bookMode.Load() && e.AtOrAfterEndOfLine() {
 		afterParagraph = true
 	}
 
 	// In book mode or Markdown mode, detect list prefixes for auto-continuation.
+	// Soft-return (shift/alt-Return) skips this so the user gets a clean
+	// in-paragraph line break instead of a new bullet.
 	var listPrefix string
-	if e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+	if !softReturn && e.bookMode.Load() && e.AtOrAfterEndOfLine() {
 		rawLine := e.CurrentLine()
 		pfx := rawMarkdownPrefix(strings.ReplaceAll(rawLine, "\t", "    "))
 		if pfx != "" {
