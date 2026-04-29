@@ -33,13 +33,33 @@ const (
 	downArrow  = "↓"
 
 	// These keys are undocumented features
-	pgUpKey    = "⇞"    // page up
-	pgDnKey    = "⇟"    // page down
-	homeKey    = "⇱"    // home
-	endKey     = "⇲"    // end
-	copyKey    = "⎘"    // ctrl-insert
-	altUpKey   = "alt↑" // alt-up (xterm-class terminals only)
-	altDownKey = "alt↓" // alt-down (xterm-class terminals only)
+	pgUpKey      = "⇞"     // page up
+	pgDnKey      = "⇟"     // page down
+	homeKey      = "⇱"     // home
+	endKey       = "⇲"     // end
+	copyKey      = "⎘"     // ctrl-insert
+	altUpKey     = "alt↑"  // alt-up (xterm-class terminals only)
+	altRightKey  = "alt→"  // alt-right (xterm-class terminals only)
+	altLeftKey   = "alt←"  // alt-left (xterm-class terminals only)
+	altDownKey   = "alt↓"  // alt-down (xterm-class terminals only)
+	ctrlUpKey    = "ctrl↑" // ctrl-up
+	ctrlDownKey  = "ctrl↓" // ctrl-down
+	ctrlLeftKey  = "ctrl←" // ctrl-left
+	ctrlRightKey = "ctrl→" // ctrl-right
+
+	shiftLeftKey  = "shift←" // shift-left
+	shiftRightKey = "shift→" // shift-right
+	shiftUpKey    = "shift↑" // shift-up
+	shiftDownKey  = "shift↓" // shift-down
+	shiftHomeKey  = "shift⇱" // shift-home
+	shiftEndKey   = "shift⇲" // shift-end
+	shiftPgUpKey  = "shift⇞" // shift-pgup
+	shiftPgDnKey  = "shift⇟" // shift-pgdn
+	shiftDelKey   = "shift⌦" // shift-delete
+	fwdDelKey     = "⌦"      // forward-delete (Delete key)
+
+	shiftReturnKey = "shift⏎" // shift-return
+	altReturnKey   = "alt⏎"   // alt-return
 
 	delayUntilSpeedUp = 700 * time.Millisecond
 
@@ -152,7 +172,7 @@ func (e *Editor) handlePasteModeKey(c *vt.Canvas, status *StatusBar, undo *Undo,
 
 	insertNewLine := func() {
 		takeSnapshot()
-		e.ReturnPressed(c, status)
+		e.ReturnPressed(c, status, false)
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 		handled = true
@@ -1120,19 +1140,19 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "alt→": // alt-right, jump to the start of the next paragraph
+		case altRightKey: // alt-right, jump to the start of the next paragraph
 			e.ClearSelection()
 			e.GoToNextParagraph(c, status)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "alt←": // alt-left, jump to the start of the previous paragraph
+		case altLeftKey: // alt-left, jump to the start of the previous paragraph
 			e.ClearSelection()
 			e.GoToPrevParagraph(c, status)
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "ctrl←", // ctrl-left, go to the start of the previous word
+		case ctrlLeftKey, // ctrl-left, go to the start of the previous word
 			"\x1bb",   // ESC+b: ctrl/alt-left in macOS Terminal.app and some iTerm2 configurations
 			"\x1b[5D": // ctrl-left without modifier parameter (some terminal emulators)
 			e.ClearSelection()
@@ -1141,7 +1161,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true) // cursor is embedded in the image
 			}
 
-		case "ctrl→", // ctrl-right, go to the start of the next word
+		case ctrlRightKey, // ctrl-right, go to the start of the next word
 			"\x1bf",   // ESC+f: ctrl/alt-right in macOS Terminal.app and some iTerm2 configurations
 			"\x1b[5C": // ctrl-right without modifier parameter (some terminal emulators)
 			e.ClearSelection()
@@ -1168,15 +1188,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "ctrl↑": // ctrl-up, go to the previous function/header/paragraph
+		case ctrlUpKey: // ctrl-up, go to the previous function/header/paragraph
 			e.ClearSelection()
 			e.GoToPrevFuncOrSection(c, status)
 
-		case "ctrl↓": // ctrl-down, go to the next function/header/paragraph
+		case ctrlDownKey: // ctrl-down, go to the next function/header/paragraph
 			e.ClearSelection()
 			e.GoToNextFuncOrSection(c, status)
 
-		case "shift←": // shift-left, extend selection one character to the left
+		case shiftLeftKey: // shift-left, extend selection one character to the left
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1194,7 +1214,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift→": // shift-right, extend selection one character to the right
+		case shiftRightKey: // shift-right, extend selection one character to the right
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1208,7 +1228,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift↑": // shift-up, extend selection one line up
+		case shiftUpKey: // shift-up, extend selection one line up
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1221,7 +1241,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift↓": // shift-down, extend selection one line down
+		case shiftDownKey: // shift-down, extend selection one line down
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1234,7 +1254,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift⇲": // shift-end, extend selection to end of line
+		case shiftEndKey: // shift-end, extend selection to end of line
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1253,7 +1273,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "shift⇱": // shift-home, extend selection to start of line
+		case shiftHomeKey: // shift-home, extend selection to start of line
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1274,7 +1294,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "⌦": // forward-delete (Delete key)
+		case fwdDelKey: // forward-delete (Delete key)
 			if e.bookMode.Load() {
 				// In book mode: delete the character to the right, standard word-processor behaviour.
 				undo.Snapshot(e)
@@ -1299,7 +1319,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.redrawCursor.Store(true)
 
-		case "shift⌦": // shift-delete, cut selection (or cut line if no selection)
+		case shiftDelKey: // shift-delete, cut selection (or cut line if no selection)
 			if e.HasSelection() {
 				undo.Snapshot(e)
 				selText := e.selection.Text(e)
@@ -1630,7 +1650,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.redraw.Store(true)
 
-		case "c:13", "\n": // return
+		case "c:13", "\n", shiftReturnKey, altReturnKey: // return (or shift/alt-Return: soft line break)
+
+			// Soft return: in book mode this skips the extra paragraph-
+			// trailing blank line and the list-prefix auto-continuation,
+			// giving a word-processor-style in-paragraph line break.
+			softReturn := key == shiftReturnKey || key == altReturnKey
 
 			if e.blockMode {
 				e.blockMode = false
@@ -1661,7 +1686,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.ClearSelection()
 			}
 
-			e.ReturnPressed(c, status)
+			e.ReturnPressed(c, status, softReturn)
 
 		case "c:8", "c:127": // ctrl-h or backspace
 
@@ -1862,7 +1887,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)
 
-		case "shift⇞": // shift-pgup, extend selection one page up
+		case shiftPgUpKey: // shift-pgup, extend selection one page up
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
@@ -1893,7 +1918,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.drawProgress.Store(true)
 			e.drawFuncName.Store(true)
 
-		case "shift⇟": // shift-pgdn, extend selection one page down
+		case shiftPgDnKey: // shift-pgdn, extend selection one page down
 			if !e.HasSelection() {
 				e.StartSelection()
 			}

@@ -21,7 +21,7 @@ func TestMarkdownQuoteHighlightPreservesLeadingSpaces(t *testing.T) {
 
 	// Build the scenario: line 0 is normal text, line 1 has leading spaces + "|-> c"
 	e.InsertStringAndMove(c, "a -> b -> c -> d -> e")
-	e.ReturnPressed(c, nil)
+	e.ReturnPressed(c, nil, false)
 	e.InsertStringAndMove(c, "         |-> c")
 
 	t.Logf("line 1 data: %q", e.CurrentLine())
