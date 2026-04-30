@@ -205,6 +205,53 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	return &e2
 }
 
+// RestoreFrom replaces the document state of e with the given snapshot,
+// lines and position, while keeping the current book-mode rendering state.
+func (e *Editor) RestoreFrom(snap Editor, lines map[int][]rune, pos Position) {
+	// Save the rendering state that book mode controls
+	bookMode := e.bookMode.Load()
+	bookForceTextMode := e.bookForceTextMode.Load()
+	bookDarkMode := e.bookDarkMode
+	bookParagraphIndent := e.bookParagraphIndent
+	bookFocusMode := e.bookFocusMode
+	bookSavedLocalX := e.bookSavedLocalX
+	bookCursorAffinity := e.bookCursorAffinity
+	bookSaved := e.bookSaved
+	bookDarkModeInitialized := e.bookDarkModeInitialized
+	bookSavedSyntaxHighlight := e.bookSavedSyntaxHighlight
+	bookSavedStatusMode := e.bookSavedStatusMode
+	bookSavedWrapWhenTyping := e.bookSavedWrapWhenTyping
+	bookSavedWrapWidth := e.bookSavedWrapWidth
+	syntaxHighlight := e.syntaxHighlight
+	statusMode := e.statusMode
+	wrapWhenTyping := e.wrapWhenTyping
+	wrapWidth := e.wrapWidth
+
+	const withLines = true
+	*e = *(snap.Copy(withLines))
+	e.lines = lines
+	e.pos = pos
+
+	// Re-apply the rendering state
+	e.bookMode.Store(bookMode)
+	e.bookForceTextMode.Store(bookForceTextMode)
+	e.bookDarkMode = bookDarkMode
+	e.bookParagraphIndent = bookParagraphIndent
+	e.bookFocusMode = bookFocusMode
+	e.bookSavedLocalX = bookSavedLocalX
+	e.bookCursorAffinity = bookCursorAffinity
+	e.bookSaved = bookSaved
+	e.bookDarkModeInitialized = bookDarkModeInitialized
+	e.bookSavedSyntaxHighlight = bookSavedSyntaxHighlight
+	e.bookSavedStatusMode = bookSavedStatusMode
+	e.bookSavedWrapWhenTyping = bookSavedWrapWhenTyping
+	e.bookSavedWrapWidth = bookSavedWrapWidth
+	e.syntaxHighlight = syntaxHighlight
+	e.statusMode = statusMode
+	e.wrapWhenTyping = wrapWhenTyping
+	e.wrapWidth = wrapWidth
+}
+
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
 func (e *Editor) CopyLines() map[int][]rune {
 	lines2 := make(map[int][]rune)

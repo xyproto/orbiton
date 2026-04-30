@@ -1232,11 +1232,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.bookMode.Load() {
-				e.Up(c, status)
-			} else {
-				e.Cursor().Up(c, status)
-			}
+			e.Cursor().Up(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
@@ -1245,11 +1241,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.bookMode.Load() {
-				e.Down(c, status)
-			} else {
-				e.Cursor().Down(c, status)
-			}
+			e.Cursor().Down(c, status)
 			e.UpdateSelection()
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)

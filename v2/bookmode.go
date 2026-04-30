@@ -967,6 +967,19 @@ func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
 	return inComment
 }
 
+// isBookHiddenLine reports whether the given data line is hidden in graphical
+// book mode. A line is hidden when it starts inside an HTML comment block, or
+// contains an opening <!-- or closing --> marker (matching bookContentImage).
+func (e *Editor) isBookHiddenLine(lineIdx int) bool {
+	const open = "<!--"
+	const close = "-->"
+	wasInComment := e.inHTMLCommentAtLine(lineIdx)
+	raw := e.Line(LineIndex(lineIdx))
+	commentStarted := strings.Contains(raw, open)
+	commentEnded := strings.Contains(raw, close)
+	return wasInComment || commentStarted || commentEnded
+}
+
 // isHorizontalRule reports whether the line is a Markdown thematic break
 // (three or more - or = characters, optionally separated by spaces).
 // '*' is intentionally excluded: it is overloaded for bold/italic markers
@@ -1794,6 +1807,7 @@ func measureSegmentsToRune(fs *bookFontSet, segs []textSegment, targetRune int) 
 	col := 0
 	for _, seg := range segs {
 		face := faceForSeg(fs, seg)
+		segStart := col
 		for _, r := range seg.text {
 			if col >= targetRune {
 				return total.Round()
@@ -1802,10 +1816,11 @@ func measureSegmentsToRune(fs *bookFontSet, segs []textSegment, targetRune int) 
 			if ok {
 				total += adv
 			}
-			if seg.bold {
-				total += fixed.I(1)
-			}
 			col++
+		}
+		// Faux-bold adds 1 pixel after the entire segment (matching drawSegments).
+		if seg.bold && col > segStart {
+			total += fixed.I(1)
 		}
 	}
 	return total.Round()
@@ -3055,16 +3070,18 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 	// Flatten all segments into a single rune+face list so we can measure
 	// and break across segment boundaries.
 	type runeInfo struct {
-		r    rune
-		face font.Face
-		seg  int // index into segs
-		bold bool
+		r      rune
+		face   font.Face
+		seg    int // index into segs
+		bold   bool
+		segEnd bool // true when this is the last rune in its segment
 	}
 	var runes []runeInfo
 	for si, seg := range segs {
 		f := faceForSeg(fs, seg)
-		for _, r := range seg.text {
-			runes = append(runes, runeInfo{r, f, si, seg.bold})
+		rs := []rune(seg.text)
+		for ri, r := range rs {
+			runes = append(runes, runeInfo{r, f, si, seg.bold, ri == len(rs)-1})
 		}
 	}
 	if len(runes) == 0 {
@@ -3081,8 +3098,10 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 		end := pos
 		for end < len(runes) {
 			adv, _ := faceGlyphAdvance(runes[end].face, runes[end].r)
+			// Faux-bold adds 1 pixel after the last rune of each segment,
+			// matching the accounting in drawSegments.
 			extra := fixed.Int26_6(0)
-			if runes[end].bold {
+			if runes[end].bold && runes[end].segEnd {
 				extra = fixed.I(1)
 			}
 			if (x+adv+extra).Round() > availPx && end > rowStart {
@@ -3594,8 +3613,9 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 	totalLines := e.Len()
 
 	// Map cursor document line to its display row, accounting for multi-row
-	// images, fenced code blocks, and soft-wrapped body/list lines.
+	// images, fenced code blocks, HTML comment lines, and soft-wrapped body/list lines.
 	inFence := e.fenceStateAtLine(startLine)
+	inComment := e.inHTMLCommentAtLine(startLine)
 	cursorDisplayRow := -1
 	cursorInFence := false
 	{
@@ -3603,15 +3623,44 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		for row := 0; row < maxLines && dl < totalLines; {
 			rl := e.Line(LineIndex(dl))
 			rl = strings.ReplaceAll(rl, "\t", "    ")
+
+			// Track HTML comment state: comment lines consume no display rows.
+			const htmlCommentOpen = "<!--"
+			const htmlCommentClose = "-->"
+			wasInComment := inComment
+			commentStarted := false
+			commentEnded := false
+			for j := 0; j < len(rl); {
+				if strings.HasPrefix(rl[j:], htmlCommentOpen) {
+					inComment = true
+					commentStarted = true
+					j += len(htmlCommentOpen)
+				} else if strings.HasPrefix(rl[j:], htmlCommentClose) {
+					inComment = false
+					commentEnded = true
+					j += len(htmlCommentClose)
+				} else {
+					j++
+				}
+			}
+			lineIsComment := wasInComment || commentStarted || commentEnded
+
+			dl++
+
+			// Fence marker: toggle state, render as blank row (matches bookContentImage).
 			if isFencedCodeMarker(rl) {
 				inFence = !inFence
-				if dl == cursorDataY {
+				if dl-1 == cursorDataY {
 					cursorDisplayRow = row
 					cursorInFence = false
 					break
 				}
 				row++
-				dl++
+				continue
+			}
+
+			// HTML comment line: skip without consuming a display row.
+			if lineIsComment {
 				continue
 			}
 			pl := parseBookLine(rl)
@@ -3622,9 +3671,8 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 				// Coalesce a group of image-only lines, then check whether
 				// the cursor is inside it. A cursor on any member maps to
 				// the top display row of the group.
-				groupStart := dl
+				groupStart := dl - 1
 				urls := []string{pl.body}
-				dl++
 				for dl < totalLines {
 					nextRaw := strings.ReplaceAll(e.Line(LineIndex(dl)), "\t", "    ")
 					nextPl := parseBookLine(nextRaw)
@@ -3642,13 +3690,12 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 				row += e.bookImageGroupRows(urls, textW, lineH)
 				continue
 			}
-			if dl == cursorDataY {
+			if dl-1 == cursorDataY {
 				cursorDisplayRow = row
 				cursorInFence = inFence
 				break
 			}
 			row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
-			dl++
 		}
 	}
 	if cursorDisplayRow < 0 {
@@ -4412,6 +4459,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	}
 
 	inFenceSel := e.fenceStateAtLine(startLine)
+	inCommentSel := e.inHTMLCommentAtLine(startLine)
 	codeBlockStartSel := false
 	docLine2 := startLine
 	for row := 0; row < maxLines && docLine2 < totalLines; {
@@ -4421,12 +4469,39 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		rawLine := e.Line(lineIdx)
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 
+		// Track HTML comment state (mirrors bookContentImage).
+		const htmlCommentOpen = "<!--"
+		const htmlCommentClose = "-->"
+		wasInCommentSel := inCommentSel
+		commentStartedSel := false
+		commentEndedSel := false
+		for j := 0; j < len(rawLine); {
+			if strings.HasPrefix(rawLine[j:], htmlCommentOpen) {
+				inCommentSel = true
+				commentStartedSel = true
+				j += len(htmlCommentOpen)
+			} else if strings.HasPrefix(rawLine[j:], htmlCommentClose) {
+				inCommentSel = false
+				commentEndedSel = true
+				j += len(htmlCommentClose)
+			} else {
+				j++
+			}
+		}
+		lineIsCommentSel := wasInCommentSel || commentStartedSel || commentEndedSel
+
+		// Fence marker: toggle state (matches bookContentImage ordering).
 		if isFencedCodeMarker(rawLine) {
 			if !inFenceSel {
 				codeBlockStartSel = true
 			}
 			inFenceSel = !inFenceSel
 			row++
+			continue
+		}
+
+		// HTML comment line: skip without consuming a display row.
+		if lineIsCommentSel {
 			continue
 		}
 
@@ -4453,13 +4528,10 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			continue
 		}
 
-		var rowsConsumed int
-		switch pl.kind {
-		default:
-			rowsConsumed = bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
-		}
-		if rowsConsumed < 1 {
-			rowsConsumed = 1
+		rowsConsumed := bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
+		if rowsConsumed == 0 {
+			// Table separator rows consume no display space (same as bookContentImage).
+			continue
 		}
 
 		if lineIdx < selStartY || lineIdx > selEndY {
@@ -4592,10 +4664,6 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			drawString(dst, fs.code, marginLeft+4, cellTop+topPad+codeVPad+codeAscent, pl.body, dark)
 
 		case lineKindTable:
-			// Separator rows take no visual space — nothing to highlight
-			if rowsConsumed == 0 {
-				break
-			}
 			// Selection inside a rendered table cell is approximated by a
 			// solid highlight across the visible row (across all its
 			// wrapped sub-rows) — accurate cell-level selection math
@@ -4975,6 +5043,12 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 		}
 		rl := e.Line(LineIndex(dl))
 		rl = strings.ReplaceAll(rl, "\t", "    ")
+		// Hidden HTML comment lines consume no display rows, matching
+		// the rendering in bookContentImage.
+		if e.isBookHiddenLine(dl) {
+			dl++
+			continue
+		}
 		pl := parseBookLine(rl)
 		switch {
 		case pl.kind == lineKindImage:
@@ -5978,6 +6052,11 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 		return false
 	}
 	e.pos.SetY(e.pos.sy + 1)
+	// Skip hidden HTML comment lines so the cursor doesn't land on an
+	// invisible line (matching the rendering in bookContentImage).
+	for int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
+		e.pos.SetY(e.pos.sy + 1)
+	}
 	// Land on the first sub-row of the new line at the saved visual column.
 	newX := bookSubRowX(e.Line(e.DataY()), textW, 0, savedX, pw)
 	e.pos.SetX(c, newX)
@@ -6035,6 +6114,11 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	// Advance DataY directly by decrementing sy; bookModeEnsureCursorVisible
 	// will handle scroll-up when sy goes below zero.
 	e.pos.SetY(e.pos.sy - 1)
+	// Skip hidden HTML comment lines so the cursor doesn't land on an
+	// invisible line (matching the rendering in bookContentImage).
+	for e.DataY() > 0 && e.isBookHiddenLine(int(e.DataY())) {
+		e.pos.SetY(e.pos.sy - 1)
+	}
 	// Land on the last sub-row of the previous line at the saved visual column.
 	lastSub := max(bookLineSubRowCount(e.Line(e.DataY()), textW, pw)-1, 0)
 	newX := bookSubRowX(e.Line(e.DataY()), textW, lastSub, savedX, pw)
