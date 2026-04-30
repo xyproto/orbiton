@@ -559,9 +559,30 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		return cmd, everythingIsFine, nil
 	case mode.D:
 		if e.debugMode {
-			cmd = exec.Command("gdc", "-Og", "-g", "-o", exeFirstName, sourceFilename)
+			cmd = exec.Command("dub", "--build=debug")
 		} else {
-			cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
+			cmd = exec.Command("dub", "--build=release")
+		}
+		if files.IsFile("dub.json") {
+			cmd.Dir = sourceDir
+			return cmd, everythingIsFine, nil
+		}
+		if files.IsFile(filepath.Join(parentDir, "dub.json")) {
+			cmd.Dir = parentDir
+			return cmd, everythingIsFine, nil
+		}
+		if files.WhichCached("gdc") != "" {
+			if e.debugMode {
+				cmd = exec.Command("gdc", "-Og", "-g", "-o", exeFirstName, sourceFilename)
+			} else {
+				cmd = exec.Command("gdc", "-o", exeFirstName, sourceFilename)
+			}
+		} else { // try ldc2
+			if e.debugMode {
+				cmd = exec.Command("ldc2", "-g", "--gc", "-d-debug", "-of=" + exeFirstName, sourceFilename)
+			} else {
+				cmd = exec.Command("ldc2", "-of=" + exeFirstName, sourceFilename)
+			}
 		}
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
@@ -864,7 +885,7 @@ analyzeOutput:
 	switch e.mode {
 	case mode.C3, mode.Crystal, mode.ObjectPascal, mode.StandardML, mode.Python:
 		errorMarker = "Error:"
-	case mode.Dart:
+	case mode.D, mode.Dart:
 		errorMarker = ": Error: "
 	case mode.CS:
 		errorMarker = ": error "
