@@ -253,13 +253,9 @@ func (u *Undo) Restore(e *Editor) error {
 	// Decrease count since we're moving backwards
 	u.count--
 
-	const withLines = true
-
 	// Restore the state from this index
 	if lines := u.editorLineCopies[u.index]; lines != nil {
-		*e = *(u.editorCopies[u.index].Copy(withLines))
-		e.lines = lines
-		e.pos = u.editorPositionCopies[u.index]
+		e.RestoreFrom(u.editorCopies[u.index], lines, u.editorPositionCopies[u.index])
 		return nil
 	}
 
