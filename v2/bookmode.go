@@ -5285,15 +5285,35 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	}
 
 	// Check whether the cursor is already within the visible rows.
-	if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs) >= 0 {
+	rowsToTarget := e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs)
+	if rowsToTarget >= 0 {
+		// The data line starts within the visible area, but in text book
+		// mode the cursor may be on a sub-row of a soft-wrapped line that
+		// extends past the bottom of the edit area into the status bar.
+		// Account for the sub-row offset before declaring visibility.
+		if !graphical {
+			subRow, _ := e.bookCursorSubRow(textW, nil)
+			if rowsToTarget+subRow >= maxDisplayRows {
+				// Cursor sub-row overflows — fall through to scroll.
+				goto scroll
+			}
+		}
 		return
 	}
 
+scroll:
+
 	// Cursor is below the visible area — advance offsetY one document line at
 	// a time until the cursor fits inside maxDisplayRows.
+	// In text mode, also account for the cursor's sub-row within a wrapped line.
+	var scrollSubRow int
+	if !graphical {
+		scrollSubRow, _ = e.bookCursorSubRow(textW, nil)
+	}
 	for e.pos.offsetY < cursorDataY && e.pos.offsetY < totalLines-1 {
 		e.pos.offsetY++
-		if e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs) >= 0 {
+		r := e.countDisplayRowsTo(e.pos.offsetY, cursorDataY, maxDisplayRows, lineH, textW, marginLeft, marginRight, fs)
+		if r >= 0 && r+scrollSubRow < maxDisplayRows {
 			break
 		}
 	}
@@ -5676,6 +5696,13 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	// The filename bar occupies row 0 in text mode; shift the cursor
 	// down by that many rows so it lands on the rendered text row.
 	y := displayRow + subRow + topMargin + bookTextTopBarRows
+
+	// Clamp y so the cursor never enters the bottom status bar row.
+	// yMax is the first row belonging to the status bar.
+	yMax := editRows + bookTextTopBarRows
+	if y >= yMax {
+		y = yMax - 1
+	}
 
 	if x >= w {
 		x = w - 1
