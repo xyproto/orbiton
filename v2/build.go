@@ -579,9 +579,9 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			}
 		} else { // try ldc2
 			if e.debugMode {
-				cmd = exec.Command("ldc2", "-g", "--gc", "-d-debug", "-of=" + exeFirstName, sourceFilename)
+				cmd = exec.Command("ldc2", "-g", "--gc", "-d-debug", "-of="+exeFirstName, sourceFilename)
 			} else {
-				cmd = exec.Command("ldc2", "-of=" + exeFirstName, sourceFilename)
+				cmd = exec.Command("ldc2", "-of="+exeFirstName, sourceFilename)
 			}
 		}
 		cmd.Dir = sourceDir
