@@ -37,38 +37,23 @@ import (
 	"golang.org/x/image/math/fixed"
 )
 
-//go:embed fonts/Vollkorn-Regular.ttf.gz
-var vollkornRegularTTFGz []byte
+//go:embed fonts/tenderness.otf.gz
+var tendernessRegularOTFGz []byte
 
-//go:embed fonts/Vollkorn-Italic.ttf.gz
-var vollkornItalicTTFGz []byte
+//go:embed fonts/Aileron-Italic.otf.gz
+var aileronItalicOTFGz []byte
 
-//go:embed fonts/Montserrat-Bold.ttf.gz
-var montserratBoldTTFGz []byte
+//go:embed fonts/Aileron-Bold.otf.gz
+var aileronBoldOTFGz []byte
 
-//go:embed fonts/FiraMono-Bold.ttf.gz
-var firaMonoBoldTTFGz []byte
+//go:embed fonts/Vegur-Bold.otf.gz
+var vegurBoldOTFGz []byte
 
-//go:embed fonts/Montserrat-Light.ttf.gz
-var montserratLightTTFGz []byte
+//go:embed fonts/Vegur-Light.otf.gz
+var vegurLightOTFGz []byte
 
-// DejaVu Sans is embedded as a broad-coverage fallback font: Greek, Cyrillic,
-// extended Latin, math symbols, arrows and other glyphs the stylistic primary
-// fonts lack.
-//
-// The embedded copy is a subset of the upstream DejaVuSans.ttf, containing
-// only the Unicode ranges we need as fallback glyphs for book mode and SVG
-// text rendering. This keeps the compiled binary small. To regenerate:
-//
-//	pyftsubset DejaVuSans.ttf \
-//	  --unicodes="U+0020-007E,U+00A0-00FF,U+0100-024F,U+0370-03FF,U+0400-04FF,\
-//	U+0500-052F,U+2000-206F,U+2070-209F,U+20A0-20CF,U+2100-214F,U+2150-218F,\
-//	U+2190-21FF,U+2200-22FF,U+2300-23FF,U+2460-24FF,U+2500-257F,U+2580-259F,\
-//	U+25A0-25FF,U+2600-26FF,U+2700-27BF,U+FB00-FB06,U+FFFD" \
-//	  --output-file=DejaVuSans.ttf && gzip -9 DejaVuSans.ttf
-//
-//go:embed fonts/DejaVuSans.ttf.gz
-var dejaVuSansTTFGz []byte
+//go:embed fonts/Aileron-Regular.otf.gz
+var aileronRegularOTFGz []byte
 
 // gunzipBytes decompresses the given gzip-compressed byte slice. Used to
 // decompress the embedded .ttf.gz font files on demand.
@@ -333,34 +318,34 @@ func parsedFonts() error {
 		// decompressed TTF bytes so we only keep the gzip'd originals plus
 		// the parsed font.SFNT tables in memory.
 		parseOne := func(gz []byte) (*opentype.Font, error) {
-			ttf, err := gunzipBytes(gz)
+			otf, err := gunzipBytes(gz)
 			if err != nil {
 				return nil, err
 			}
-			return opentype.Parse(ttf)
+			return opentype.Parse(otf)
 		}
 		var err error
-		if parsedVollkornRegular, err = parseOne(vollkornRegularTTFGz); err != nil {
+		if parsedVollkornRegular, err = parseOne(tendernessRegularOTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedVollkornItalic, err = parseOne(vollkornItalicTTFGz); err != nil {
+		if parsedVollkornItalic, err = parseOne(aileronItalicOTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedMontserratBold, err = parseOne(montserratBoldTTFGz); err != nil {
+		if parsedMontserratBold, err = parseOne(aileronBoldOTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedMontserratLight, err = parseOne(montserratLightTTFGz); err != nil {
+		if parsedMontserratLight, err = parseOne(vegurLightOTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedFiraMonoBold, err = parseOne(firaMonoBoldTTFGz); err != nil {
+		if parsedFiraMonoBold, err = parseOne(vegurBoldOTFGz); err != nil {
 			parseFontsErr = err
 			return
 		}
-		if parsedDejaVuSans, err = parseOne(dejaVuSansTTFGz); err != nil {
+		if parsedDejaVuSans, err = parseOne(aileronRegularOTFGz); err != nil {
 			// The fallback is optional — if it fails to parse, fewer
 			// glyphs render but book mode still works.
 			parsedDejaVuSans = nil
