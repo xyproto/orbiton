@@ -2,6 +2,9 @@
 
 ## General
 
+- [ ] Let anything that needs font files be a separate executable (or a separate project), perhaps named "book".
+- [ ] When moving around with ctrl-left, ctrl-right, ctrl-up and ctrl-down, the lines should be highlighted.
+- [ ] The cursor can move down into the lower status bar when in "book mode (text)".
 - [ ] If a "- [ ] Checkbox" is ticked, in graphical book mode, then also gray out lines and bullet points/checkboxes
       below it that "belongs" to this checkbox.
 - [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
