@@ -168,7 +168,7 @@ func (e *Editor) bookBottomCornerBG() color.NRGBA {
 	if env.Str("TERM") == "xterm-kitty" {
 		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
 	}
-	if !e.statusMode || bookModeGetStatusMsg() != "" {
+	if e.statusMode || bookModeGetStatusMsg() != "" {
 		return e.bookGraphicalStatusBarBG()
 	}
 	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
@@ -440,11 +440,11 @@ func (e *Editor) exitBookMode() {
 const bookTextTopBarRows = 1
 
 // bookEditRows returns the number of terminal rows available for the graphical
-// book content. When the status bar is hidden (statusMode==true), the full
-// terminal height is used; otherwise one row is reserved for the status bar.
+// book content. When the status bar is visible (statusMode==true), one row is
+// reserved for the status bar; otherwise the full terminal height is used.
 func (e *Editor) bookEditRows(totalRows uint) uint {
 	reserved := uint(0)
-	if !e.statusMode {
+	if e.bookTextMode() || e.statusMode || bookModeGetStatusMsg() != "" {
 		reserved++ // bottom status bar
 	}
 	if e.bookTextMode() {
@@ -4915,7 +4915,7 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	}
 
 	// No status bar content when stats are hidden and no message is pending.
-	if e.statusMode {
+	if !e.statusMode {
 		return img
 	}
 
@@ -4983,7 +4983,7 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 
 	// If the page already covers the full terminal (status bar hidden and no
 	// pending message), just return the page image unchanged.
-	showStatus := !e.statusMode || bookModeGetStatusMsg() != ""
+	showStatus := e.statusMode || bookModeGetStatusMsg() != ""
 	if !showStatus || rowsTotal <= editRows {
 		return pageImg
 	}
@@ -5037,7 +5037,34 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 		pl := parseBookLine(rl)
 		switch {
 		case pl.kind == lineKindImage:
-			row += e.bookImageRows(pl.body, lineH, textW)
+			// Coalesce consecutive image lines into a group, matching the
+			// rendering in bookContentImage and bookOverlayCursor.
+			groupStart := dl
+			urls := []string{pl.body}
+			dl++
+			for dl < totalLines {
+				nextRaw := strings.ReplaceAll(e.Line(LineIndex(dl)), "\t", "    ")
+				nextPl := parseBookLine(nextRaw)
+				if nextPl.kind != lineKindImage {
+					break
+				}
+				urls = append(urls, nextPl.body)
+				dl++
+			}
+			// If the target is inside this image group, return the row
+			// where the group starts (cursor maps to top of group).
+			if targetDoc >= groupStart && targetDoc < dl {
+				return row
+			}
+			if fs != nil {
+				row += e.bookImageGroupRows(urls, textW, lineH)
+			} else {
+				// Text mode: each image renders as a placeholder text line.
+				for _, u := range urls {
+					row += bookWrapRowCount(parsedLine{kind: lineKindImage, body: u}, textW)
+				}
+			}
+			continue
 		default:
 			if fs != nil {
 				row += bookPixelRowCount(fs, pl, lineH, marginLeft, marginRight)
@@ -5179,8 +5206,13 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 			cellW = 8
 		}
 		_, renderH := bookRenderCellSize(cellW, cellH)
-		lineH = int(renderH)
-		pixH := editRows * lineH
+		// Use the same lineH as the renderer (bookContentImage) which
+		// multiplies by bookLineHeightMul for line spacing.
+		lineH = int(float64(renderH) * bookLineHeightMul)
+		if lineH <= 0 {
+			lineH = int(renderH)
+		}
+		pixH := editRows * int(renderH)
 		pixW := int(uint(c.Width()) * cellW)
 
 		marginLeft = int(float64(pixW) * bookMarginLeft)
@@ -5491,7 +5523,7 @@ func (e *Editor) bookModeRenderImageAt(cols, rowsTotal, editRows, renderH uint, 
 func (e *Editor) bookModeStatusBar(c *vt.Canvas) {
 	// When the status bar is hidden, don't render anything — the content
 	// image already fills the full terminal height.
-	if e.statusMode && bookModeGetStatusMsg() == "" {
+	if !e.statusMode && bookModeGetStatusMsg() == "" {
 		return
 	}
 
@@ -6069,6 +6101,32 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 	for int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
 		e.pos.SetY(e.pos.sy + 1)
 	}
+	// In graphical mode, consecutive image lines are rendered as a single
+	// group at one visual row. If we landed on an image line whose previous
+	// line is also an image (meaning we're inside the group, not entering it
+	// for the first time), skip to the first line past the image group.
+	if e.bookGraphicalMode() && int(e.DataY()) > 0 {
+		curLine := strings.ReplaceAll(e.Line(e.DataY()), "\t", "    ")
+		prevLine := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
+		if parseBookLine(curLine).kind == lineKindImage && parseBookLine(prevLine).kind == lineKindImage {
+			// Already inside an image group — skip to the end of it.
+			for int(e.DataY()) < e.Len()-1 {
+				nextRaw := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())+1)), "\t", "    ")
+				if parseBookLine(nextRaw).kind != lineKindImage {
+					break
+				}
+				e.pos.SetY(e.pos.sy + 1)
+			}
+			// Move one more to land past the image group.
+			if int(e.DataY()) < e.Len()-1 {
+				e.pos.SetY(e.pos.sy + 1)
+			}
+			// Skip any hidden lines after the group.
+			for int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
+				e.pos.SetY(e.pos.sy + 1)
+			}
+		}
+	}
 	// Land on the first sub-row of the new line at the saved visual column.
 	newX := bookSubRowX(e.Line(e.DataY()), textW, 0, savedX, pw)
 	e.pos.SetX(c, newX)
@@ -6130,6 +6188,23 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	// invisible line (matching the rendering in bookContentImage).
 	for e.DataY() > 0 && e.isBookHiddenLine(int(e.DataY())) {
 		e.pos.SetY(e.pos.sy - 1)
+	}
+	// In graphical mode, if we landed inside an image group (not on the
+	// first line of it), jump to the first line of the group so the cursor
+	// lands at the visual top of the group, matching bookOverlayCursor.
+	if e.bookGraphicalMode() && e.DataY() > 0 {
+		curLine := strings.ReplaceAll(e.Line(e.DataY()), "\t", "    ")
+		prevLine := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
+		if parseBookLine(curLine).kind == lineKindImage && parseBookLine(prevLine).kind == lineKindImage {
+			// Walk backward to the first image line of this group.
+			for e.DataY() > 0 {
+				prevRaw := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
+				if parseBookLine(prevRaw).kind != lineKindImage {
+					break
+				}
+				e.pos.SetY(e.pos.sy - 1)
+			}
+		}
 	}
 	// Land on the last sub-row of the previous line at the saved visual column.
 	lastSub := max(bookLineSubRowCount(e.Line(e.DataY()), textW, pw)-1, 0)
