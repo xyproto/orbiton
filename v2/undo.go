@@ -255,7 +255,7 @@ func (u *Undo) Restore(e *Editor) error {
 
 	// Restore the state from this index
 	if lines := u.editorLineCopies[u.index]; lines != nil {
-		e.RestoreFrom(u.editorCopies[u.index], lines, u.editorPositionCopies[u.index])
+		e.RestoreFrom(&u.editorCopies[u.index], lines, u.editorPositionCopies[u.index])
 		return nil
 	}
 

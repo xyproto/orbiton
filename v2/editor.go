@@ -207,7 +207,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 
 // RestoreFrom replaces the document state of e with the given snapshot,
 // lines and position, while keeping the current book-mode rendering state.
-func (e *Editor) RestoreFrom(snap Editor, lines map[int][]rune, pos Position) {
+func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	// Save the rendering state that book mode controls
 	bookMode := e.bookMode.Load()
 	bookForceTextMode := e.bookForceTextMode.Load()
