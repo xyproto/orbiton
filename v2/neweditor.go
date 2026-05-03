@@ -719,7 +719,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	if bookModeFlag {
 		// Save the pre-book values, so they can be restored if the user cycles back to regular mode with ctrl-space
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
-		e.bookSavedStatusMode = e.statusMode
+		e.bookSavedBottomBarVisible = e.statusMode
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
 		e.bookSaved = true

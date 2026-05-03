@@ -168,7 +168,7 @@ func (e *Editor) bookBottomCornerBG() color.NRGBA {
 	if env.Str("TERM") == "xterm-kitty" {
 		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
 	}
-	if e.statusMode || bookModeGetStatusMsg() != "" {
+	if e.BottomStatusBar != nil && e.BottomStatusBar.Visible || bookModeGetStatusMsg() != "" {
 		return e.bookGraphicalStatusBarBG()
 	}
 	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
@@ -397,7 +397,7 @@ func (e *Editor) bookThemeIsLight() bool {
 func (e *Editor) enterBookModeText() {
 	if !e.bookSaved {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
-		e.bookSavedStatusMode = e.statusMode
+		e.bookSavedBottomBarVisible = e.statusMode
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
 		e.bookSaved = true
@@ -414,6 +414,25 @@ func (e *Editor) enterBookModeText() {
 	e.wrapWidth = 72
 	e.wrapWhenTyping = false
 	e.statusMode = true
+	if e.BottomStatusBar != nil {
+		e.BottomStatusBar.Visible = true
+		e.BottomStatusBar.FullWidth = true
+		e.BottomStatusBar.BlocksCursor = true
+	}
+	if e.TopStatusBar == nil && e.BottomStatusBar != nil {
+		e.TopStatusBar = &StatusBar{
+			editor:       e,
+			fg:           e.BottomStatusBar.fg,
+			bg:           e.BottomStatusBar.bg,
+			Visible:      true,
+			FullWidth:    true,
+			BlocksCursor: true,
+		}
+	} else if e.TopStatusBar != nil {
+		e.TopStatusBar.Visible = true
+		e.TopStatusBar.FullWidth = true
+		e.TopStatusBar.BlocksCursor = true
+	}
 	e.bookSavedLocalX = -1
 }
 
@@ -426,7 +445,15 @@ func (e *Editor) exitBookMode() {
 	e.bookForceTextMode.Store(false)
 	if e.bookSaved {
 		e.syntaxHighlight = e.bookSavedSyntaxHighlight
-		e.statusMode = e.bookSavedStatusMode
+		e.statusMode = e.bookSavedBottomBarVisible
+		if e.BottomStatusBar != nil {
+			e.BottomStatusBar.Visible = e.bookSavedBottomBarVisible
+			e.BottomStatusBar.FullWidth = false
+			e.BottomStatusBar.BlocksCursor = false
+		}
+		if e.TopStatusBar != nil {
+			e.TopStatusBar.Visible = false
+		}
 		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
 		e.wrapWidth = e.bookSavedWrapWidth
 		e.bookSaved = false
@@ -434,26 +461,45 @@ func (e *Editor) exitBookMode() {
 	bookModeResetCursor()
 }
 
-// bookTextTopBarRows is the number of terminal rows reserved at the top of
-// text book mode for a filename status bar. Graphical book mode has no such
-// top bar (it's always 0 there).
-const bookTextTopBarRows = 1
-
 // bookEditRows returns the number of terminal rows available for the graphical
 // book content. When the status bar is visible (statusMode==true), one row is
 // reserved for the status bar; otherwise the full terminal height is used.
 func (e *Editor) bookEditRows(totalRows uint) uint {
 	reserved := uint(0)
-	if e.bookTextMode() || e.statusMode || bookModeGetStatusMsg() != "" {
+	if e.bookTextMode() || (e.BottomStatusBar != nil && e.BottomStatusBar.Visible) || bookModeGetStatusMsg() != "" {
 		reserved++ // bottom status bar
 	}
 	if e.bookTextMode() {
-		reserved += uint(bookTextTopBarRows) // top filename bar (text mode only)
+		reserved += uint(e.TopBarRows()) // top filename bar (text mode only)
 	}
 	if totalRows <= reserved {
 		return 0
 	}
 	return totalRows - reserved
+}
+
+// EditableRows returns the number of terminal rows available for content,
+// accounting for any top/bottom status bars that block the cursor.
+func (e *Editor) EditableRows(totalRows uint) uint {
+	reserved := uint(0)
+	if e.TopStatusBar != nil && e.TopStatusBar.Visible && e.TopStatusBar.BlocksCursor {
+		reserved++
+	}
+	if e.BottomStatusBar != nil && e.BottomStatusBar.Visible && e.BottomStatusBar.BlocksCursor {
+		reserved++
+	}
+	if totalRows <= reserved {
+		return 0
+	}
+	return totalRows - reserved
+}
+
+// TopBarRows returns the number of rows reserved at the top of the screen.
+func (e *Editor) TopBarRows() int {
+	if e.TopStatusBar != nil && e.TopStatusBar.Visible && e.TopStatusBar.BlocksCursor {
+		return 1
+	}
+	return 0
 }
 
 // bookModeSetStatusMsg atomically sets the temporary status bar message.
@@ -4041,12 +4087,12 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	textW := marginRight - marginLeft
 	// topMargin already shifts content below the top status bar: it includes
 	// both the decorative top padding and the one-row filename bar.
-	topMargin := int(float64(editRows)*bookMarginTop) + bookTextTopBarRows
+	topMargin := int(float64(editRows)*bookMarginTop) + e.TopBarRows()
 	// yMax is the exclusive upper bound on y used by all loop guards below.
 	// editRows is already the content budget (top and bottom bars excluded);
-	// adding bookTextTopBarRows converts it to the absolute y just past the
+	// adding e.TopBarRows() converts it to the absolute y just past the
 	// last drawable row (i.e. the bottom status row).
-	yMax := editRows + bookTextTopBarRows
+	yMax := editRows + e.TopBarRows()
 
 	// Clear every row (including the status row) with the book theme's
 	// background. Clearing the status row too is important on startup:
@@ -4233,7 +4279,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		} else {
 			dimFg = vt.TrueColor(190, 190, 195)
 		}
-		for y := bookTextTopBarRows; y < yMax; y++ {
+		for y := e.TopBarRows(); y < yMax; y++ {
 			if activeRowLo != -1 && y >= activeRowLo && y <= activeRowHi {
 				continue
 			}
@@ -4915,7 +4961,7 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	}
 
 	// No status bar content when stats are hidden and no message is pending.
-	if !e.statusMode {
+	if e.BottomStatusBar == nil || !e.BottomStatusBar.Visible {
 		return img
 	}
 
@@ -4983,7 +5029,7 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 
 	// If the page already covers the full terminal (status bar hidden and no
 	// pending message), just return the page image unchanged.
-	showStatus := e.statusMode || bookModeGetStatusMsg() != ""
+	showStatus := (e.BottomStatusBar != nil && e.BottomStatusBar.Visible) || bookModeGetStatusMsg() != ""
 	if !showStatus || rowsTotal <= editRows {
 		return pageImg
 	}
@@ -5523,7 +5569,7 @@ func (e *Editor) bookModeRenderImageAt(cols, rowsTotal, editRows, renderH uint, 
 func (e *Editor) bookModeStatusBar(c *vt.Canvas) {
 	// When the status bar is hidden, don't render anything — the content
 	// image already fills the full terminal height.
-	if !e.statusMode && bookModeGetStatusMsg() == "" {
+	if (e.BottomStatusBar == nil || !e.BottomStatusBar.Visible) && bookModeGetStatusMsg() == "" {
 		return
 	}
 
@@ -5712,11 +5758,11 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 
 	// The filename bar occupies row 0 in text mode; shift the cursor
 	// down by that many rows so it lands on the rendered text row.
-	y := displayRow + subRow + topMargin + bookTextTopBarRows
+	y := displayRow + subRow + topMargin + e.TopBarRows()
 
 	// Clamp y so the cursor never enters the bottom status bar row.
 	// yMax is the first row belonging to the status bar.
-	yMax := editRows + bookTextTopBarRows
+	yMax := editRows + e.TopBarRows()
 	if y >= yMax {
 		y = yMax - 1
 	}

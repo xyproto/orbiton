@@ -1802,6 +1802,9 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 	}
 	e.Theme = theme
 	e.statusMode = theme.StatusMode
+	if e.BottomStatusBar != nil {
+		e.BottomStatusBar.Visible = theme.StatusMode
+	}
 	syntax.DefaultTextConfig = *(theme.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
@@ -1816,6 +1819,9 @@ func (e *Editor) setNoColorTheme() {
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
 	e.statusMode = e.StatusMode
+	if e.BottomStatusBar != nil {
+		e.BottomStatusBar.Visible = e.StatusMode
+	}
 	syntax.DefaultTextConfig = *(e.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()

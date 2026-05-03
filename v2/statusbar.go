@@ -32,6 +32,9 @@ type StatusBar struct {
 	offsetY            int               // scroll offset
 	isError            bool              // is this an error message that should be shown after redraw?
 	nanoMode           bool              // Nano emulation?
+	Visible            bool              // whether this bar is active/shown
+	FullWidth          bool              // full-width colored bar vs centered text overlay
+	BlocksCursor       bool              // prevents cursor from entering this row
 }
 
 // Used for keeping track of how many status messages are lined up to be cleared
@@ -41,7 +44,19 @@ var statusBeingShown int
 // background color for clearing and a duration for how long to display status messages.
 func (e *Editor) NewStatusBar(statusDuration time.Duration, initialMessageAfterRedraw string) *StatusBar {
 	mutOnce.Do(func() { mut = &sync.RWMutex{} })
-	return &StatusBar{e, "", initialMessageAfterRedraw, e.StatusForeground, e.StatusBackground, e.StatusErrorForeground, e.StatusErrorBackground, statusDuration, 0, false, e.nanoMode.Load()}
+	sb := &StatusBar{
+		editor:             e,
+		messageAfterRedraw: initialMessageAfterRedraw,
+		fg:                 e.StatusForeground,
+		bg:                 e.StatusBackground,
+		errfg:              e.StatusErrorForeground,
+		errbg:              e.StatusErrorBackground,
+		show:               statusDuration,
+		nanoMode:           e.nanoMode.Load(),
+		Visible:            e.statusMode,
+	}
+	e.BottomStatusBar = sb
+	return sb
 }
 
 // Draw will draw the status bar to the canvas
@@ -60,17 +75,17 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	msgX := max((w-len(sb.msg))/2, 0)
 
-	// In text book mode drawBookBar owns the bottom row: the current
-	// heading on the left (echoing the upper-right function name in
-	// regular code mode), the pending status message (if any) centred,
+	// When the bar is full width, drawBookBar owns the bottom row: the
+	// current heading on the left (echoing the upper-right function name
+	// in regular code mode), the pending status message (if any) centred,
 	// and a combined "L of T · NN%" slot on the right. The upper-right
-	// of the top bar shows the running word count. When statusMode is
-	// set the side slots are suppressed, matching the graphical
-	// book-mode bar.
-	if sb.editor.bookTextMode() {
+	// of the top bar shows the running word count. When Visible is true
+	// (stats toggled on) the side slots are suppressed, matching the
+	// graphical book-mode bar.
+	if sb.FullWidth && sb.editor.bookTextMode() {
 		e := sb.editor
 		slots := bookBarSlots{center: sb.msg}
-		if !e.statusMode {
+		if !sb.Visible {
 			sep := " · "
 			if useASCII {
 				sep = " | "
