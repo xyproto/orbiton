@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/xyproto/burnfont"
@@ -105,11 +106,11 @@ func fillViaFcMatch(sf *SystemFonts) {
 // does not contain it (case-insensitive), guarding against silent fontconfig
 // substitutions for unavailable families.
 func fcMatchFile(pattern, wantFamily string) string {
-	out, err := exec.Command("fc-match", "--format=%{family}|%{file}", pattern).Output()
+	out, err := exec.Command("fc-match", "--format=%{family}\x00%{file}", pattern).Output()
 	if err != nil {
 		return ""
 	}
-	parts := strings.SplitN(strings.TrimSpace(string(out)), "|", 2)
+	parts := strings.SplitN(strings.TrimSpace(string(out)), "\x00", 2)
 	if len(parts) != 2 {
 		return ""
 	}
@@ -168,7 +169,18 @@ func fillViaDirScan(sf *SystemFonts) {
 		{[]string{"sourcecodepro", "regular"}, &sf.Mono},
 		{[]string{"dejavusans.ttf"}, &sf.Unicode},
 	}
+	allFilled := func() bool {
+		for i := range rules {
+			if *rules[i].dest == "" {
+				return false
+			}
+		}
+		return true
+	}
 	for _, dir := range systemFontDirs() {
+		if allFilled() {
+			break
+		}
 		_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
 			if err != nil || d.IsDir() || validFontPath(p) == "" {
 				return nil
@@ -293,9 +305,14 @@ const (
 	burnD = 2 // descent below baseline in pixels
 )
 
-func (burnFace) Close() error                              { return nil }
-func (burnFace) Kern(_, _ rune) fixed.Int26_6              { return 0 }
-func (burnFace) GlyphAdvance(_ rune) (fixed.Int26_6, bool) { return fixed.I(burnW), true }
+func (burnFace) Close() error                 { return nil }
+func (burnFace) Kern(_, _ rune) fixed.Int26_6 { return 0 }
+func (burnFace) GlyphAdvance(r rune) (fixed.Int26_6, bool) {
+	if slices.Contains(burnfont.Available, r) {
+		return fixed.I(burnW), true
+	}
+	return fixed.I(burnW), false
+}
 
 func (burnFace) Metrics() font.Metrics {
 	return font.Metrics{
