@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"compress/gzip"
-	_ "embed"
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
@@ -36,35 +34,6 @@ import (
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 )
-
-//go:embed fonts/tenderness.otf.gz
-var tendernessRegularOTFGz []byte
-
-//go:embed fonts/Aileron-Italic.otf.gz
-var aileronItalicOTFGz []byte
-
-//go:embed fonts/Aileron-Bold.otf.gz
-var aileronBoldOTFGz []byte
-
-//go:embed fonts/Vegur-Bold.otf.gz
-var vegurBoldOTFGz []byte
-
-//go:embed fonts/Vegur-Light.otf.gz
-var vegurLightOTFGz []byte
-
-//go:embed fonts/Aileron-Regular.otf.gz
-var aileronRegularOTFGz []byte
-
-// gunzipBytes decompresses the given gzip-compressed byte slice. Used to
-// decompress the embedded .ttf.gz font files on demand.
-func gunzipBytes(gz []byte) ([]byte, error) {
-	r, err := gzip.NewReader(bytes.NewReader(gz))
-	if err != nil {
-		return nil, err
-	}
-	defer r.Close()
-	return io.ReadAll(r)
-}
 
 // Margin ratios for book mode (fraction of pixel/column dimensions).
 const (
@@ -314,42 +283,29 @@ var (
 
 func parsedFonts() error {
 	parseFontsOnce.Do(func() {
-		// Decompress the embedded .ttf.gz blobs once, parse, and drop the
-		// decompressed TTF bytes so we only keep the gzip'd originals plus
-		// the parsed font.SFNT tables in memory.
-		parseOne := func(gz []byte) (*opentype.Font, error) {
-			otf, err := gunzipBytes(gz)
-			if err != nil {
-				return nil, err
+		sf := FindSystemFonts()
+		load := func(path string) *opentype.Font {
+			f, _ := parseFontFile(path)
+			return f
+		}
+		parsedVollkornRegular = load(sf.Regular)
+		parsedVollkornItalic = load(sf.Italic)
+		parsedMontserratBold = load(sf.Bold)
+		parsedMontserratLight = load(sf.Light)
+		parsedFiraMonoBold = load(sf.Mono)
+		parsedDejaVuSans = load(sf.Unicode)
+		// Fill any missing role from the nearest available alternative so
+		// callers always get a real font; newFaceOrBurn handles the rest.
+		or := func(a, b *opentype.Font) *opentype.Font {
+			if a != nil {
+				return a
 			}
-			return opentype.Parse(otf)
+			return b
 		}
-		var err error
-		if parsedVollkornRegular, err = parseOne(tendernessRegularOTFGz); err != nil {
-			parseFontsErr = err
-			return
-		}
-		if parsedVollkornItalic, err = parseOne(aileronItalicOTFGz); err != nil {
-			parseFontsErr = err
-			return
-		}
-		if parsedMontserratBold, err = parseOne(aileronBoldOTFGz); err != nil {
-			parseFontsErr = err
-			return
-		}
-		if parsedMontserratLight, err = parseOne(vegurLightOTFGz); err != nil {
-			parseFontsErr = err
-			return
-		}
-		if parsedFiraMonoBold, err = parseOne(vegurBoldOTFGz); err != nil {
-			parseFontsErr = err
-			return
-		}
-		if parsedDejaVuSans, err = parseOne(aileronRegularOTFGz); err != nil {
-			// The fallback is optional — if it fails to parse, fewer
-			// glyphs render but book mode still works.
-			parsedDejaVuSans = nil
-		}
+		parsedVollkornItalic = or(parsedVollkornItalic, parsedVollkornRegular)
+		parsedMontserratBold = or(parsedMontserratBold, or(parsedMontserratLight, parsedVollkornRegular))
+		parsedMontserratLight = or(parsedMontserratLight, or(parsedMontserratBold, parsedVollkornRegular))
+		parsedFiraMonoBold = or(parsedFiraMonoBold, or(parsedMontserratLight, parsedVollkornRegular))
 	})
 	return parseFontsErr
 }
@@ -570,66 +526,36 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if err := parsedFonts(); err != nil {
 		return nil, err
 	}
-	reg, err := newFace(parsedVollkornRegular, pixelSize)
-	if err != nil {
-		return nil, err
-	}
-	ita, err := newFace(parsedVollkornItalic, pixelSize)
-	if err != nil {
-		return nil, err
-	}
+	reg := newFaceOrBurn(parsedVollkornRegular, pixelSize)
+	ita := newFaceOrBurn(parsedVollkornItalic, pixelSize)
 	h1Size := pixelSize * 1.55
 	h2Size := pixelSize * 1.35
 	h3Size := pixelSize * 1.2
 	h4Size := pixelSize * 1.1
 	h5Size := pixelSize * 1.0
-	h1, err := newFace(parsedMontserratBold, h1Size)
-	if err != nil {
-		return nil, err
-	}
-	h2, err := newFace(parsedMontserratBold, h2Size)
-	if err != nil {
-		return nil, err
-	}
-	h3, err := newFace(parsedMontserratBold, h3Size)
-	if err != nil {
-		return nil, err
-	}
-	h4, err := newFace(parsedMontserratBold, h4Size)
-	if err != nil {
-		return nil, err
-	}
-	h5, err := newFace(parsedMontserratBold, h5Size)
-	if err != nil {
-		return nil, err
-	}
+	h1 := newFaceOrBurn(parsedMontserratBold, h1Size)
+	h2 := newFaceOrBurn(parsedMontserratBold, h2Size)
+	h3 := newFaceOrBurn(parsedMontserratBold, h3Size)
+	h4 := newFaceOrBurn(parsedMontserratBold, h4Size)
+	h5 := newFaceOrBurn(parsedMontserratBold, h5Size)
 	statusBarSize := pixelSize * 0.75
 	if statusBarSize < 8 {
 		statusBarSize = 8
 	}
-	sb, err := newFace(parsedMontserratLight, statusBarSize)
-	if err != nil {
-		return nil, err
-	}
+	sb := newFaceOrBurn(parsedMontserratLight, statusBarSize)
 	// Code font is slightly smaller than the body to visually distinguish it.
 	codeSize := pixelSize * 0.88
 	if codeSize < 6 {
 		codeSize = 6
 	}
-	cod, err := newFace(parsedFiraMonoBold, codeSize)
-	if err != nil {
-		return nil, err
-	}
-	// Code faces sized to match each header level. Inline `code` segments
-	// inside a header should render at the header's font size (in the
-	// FiraMono Bold face) instead of being shrunk to the body-code size.
-	// Individual failures are non-fatal — headerCodeForLevel falls back to
-	// fs.code in that case.
-	h1Code, _ := newFace(parsedFiraMonoBold, h1Size)
-	h2Code, _ := newFace(parsedFiraMonoBold, h2Size)
-	h3Code, _ := newFace(parsedFiraMonoBold, h3Size)
-	h4Code, _ := newFace(parsedFiraMonoBold, h4Size)
-	h5Code, _ := newFace(parsedFiraMonoBold, h5Size)
+	cod := newFaceOrBurn(parsedFiraMonoBold, codeSize)
+	// Code faces sized to match each header level. Inline `code` inside a
+	// header renders at the header's font size rather than the body-code size.
+	h1Code := newFaceOrBurn(parsedFiraMonoBold, h1Size)
+	h2Code := newFaceOrBurn(parsedFiraMonoBold, h2Size)
+	h3Code := newFaceOrBurn(parsedFiraMonoBold, h3Size)
+	h4Code := newFaceOrBurn(parsedFiraMonoBold, h4Size)
+	h5Code := newFaceOrBurn(parsedFiraMonoBold, h5Size)
 	bookFontCache = &bookFontSet{
 		regular:       reg,
 		italic:        ita,
