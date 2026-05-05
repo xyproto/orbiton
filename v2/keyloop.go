@@ -73,6 +73,22 @@ const (
 	ctrlShiftRightKey = "\x1b[1;6C" // ctrl-shift-right (not in the vt library)
 )
 
+// movementKeys lists all keys treated as cursor movement for highlighting
+// and book-mode affinity purposes.
+var movementKeys = []string{
+	upArrow, downArrow, leftArrow, rightArrow,
+	pgUpKey, pgDnKey, homeKey, endKey,
+	altUpKey, altDownKey,
+	ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey,
+	ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey,
+	"c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25",
+}
+
+// isMovementKey reports whether key is a cursor movement key.
+func isMovementKey(key string) bool {
+	return slices.Contains(movementKeys, key)
+}
+
 var (
 	// Create a LockKeeper for keeping track of which files are being edited
 	fileLock = NewLockKeeper(defaultLockFile)
@@ -704,7 +720,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 			switch e.mode {
-			case mode.Config, mode.FSTAB:
+			case mode.Config, mode.CSV, mode.Dhall, mode.FSTAB, mode.HCL, mode.Pkl, mode.TOML, mode.YAML:
 				break // do nothing
 			case mode.Nroff:
 				// Switch to man page mode, just in case the switching over does not work out
@@ -3063,7 +3079,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
-		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == altUpKey || key == altDownKey || key == ctrlUpKey || key == ctrlDownKey || key == ctrlLeftKey || key == ctrlRightKey || key == ctrlPgUpKey || key == ctrlPgDnKey || key == ctrlHomeKey || key == ctrlEndKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
+		justMovedByKeypress := isMovementKey(key)
 
 		notEmptyLine := !e.EmptyLine()
 		if key != "" && notEmptyLine && ProgrammingLanguage(e.mode) {
@@ -3071,7 +3087,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey, ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, movementKeys...)
 		// Frame skipping: in book mode (both graphical and text) a single
 		// redraw can cost tens of milliseconds, which lets buffered key
 		// presses pile up while the user holds arrow keys. If more input
@@ -3095,7 +3111,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
-					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey, ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, movementKeys...)
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
