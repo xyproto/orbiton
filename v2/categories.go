@@ -23,7 +23,7 @@ func cLikeSwitch(m mode.Mode) bool {
 func ProgrammingLanguage(m mode.Mode) bool {
 	// TODO: Update this, and the NoSmartIndentation. Make sure all languages are covered.
 	switch m {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.GoAssembly, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Text, mode.XML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.CSV, mode.Dhall, mode.Email, mode.FSTAB, mode.Git, mode.GoAssembly, mode.HCL, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nmap, mode.Nroff, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Text, mode.TOML, mode.WGSL, mode.XML, mode.YAML:
 		return false
 	}
 	return true
@@ -32,7 +32,7 @@ func ProgrammingLanguage(m mode.Mode) bool {
 // NoSmartIndentation returns true if the current mode should probably not have smart tab indentation
 func (e *Editor) NoSmartIndentation() bool {
 	switch e.mode {
-	case mode.Assembly, mode.Blank, mode.Email, mode.GoAssembly, mode.Ini, mode.Log, mode.ManPage, mode.Markdown, mode.Nroff, mode.OCaml, mode.Perl, mode.SQL, mode.Spec, mode.StandardML, mode.Text:
+	case mode.Assembly, mode.Blank, mode.CSV, mode.Email, mode.GoAssembly, mode.Ini, mode.Log, mode.ManPage, mode.Markdown, mode.Nroff, mode.OCaml, mode.Perl, mode.SQL, mode.Spec, mode.StandardML, mode.Text:
 		return true
 	}
 	return false
@@ -41,7 +41,7 @@ func (e *Editor) NoSmartIndentation() bool {
 // UsingGDBMightWork evaluates if using GDB might work, for this file type
 func (e *Editor) UsingGDBMightWork() bool {
 	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.Dart, mode.Email, mode.Erlang, mode.FSTAB, mode.Git, mode.Gradle, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nix, mode.Nroff, mode.Oak, mode.Perl, mode.PolicyLanguage, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TypeScript, mode.Vim, mode.XML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.CSV, mode.Dart, mode.Dhall, mode.Email, mode.Erlang, mode.FSTAB, mode.Git, mode.Gradle, mode.HCL, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nix, mode.Nroff, mode.Oak, mode.Perl, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TOML, mode.TypeScript, mode.WGSL, mode.Vim, mode.XML, mode.YAML:
 		// Most likely "no"
 		return false
 	case mode.Zig:
@@ -61,7 +61,7 @@ func (e *Editor) UsingGDBMightWork() bool {
 // CanRun checks if the current file mode supports running executables after building
 func (e *Editor) CanRun() bool {
 	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.Email, mode.FSTAB, mode.Git, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.PolicyLanguage, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.XML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.CSV, mode.Dhall, mode.Email, mode.FSTAB, mode.Git, mode.HCL, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.TOML, mode.WGSL, mode.XML, mode.YAML:
 		return false
 	case mode.Shell: // don't run, because it's not a good idea
 		return false

@@ -89,12 +89,20 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 	foundMatch := LineIndex(-1)
 	var foundMutex sync.RWMutex
 
+	// Snapshot the search range and line contents before launching the
+	// goroutine so it doesn't race with the main loop mutating editor state.
+	startY := e.DataY()
+	lineCount := LineIndex(e.Len())
+	lines := make([]string, 0, lineCount-startY)
+	for y := startY; y < lineCount; y++ {
+		lines = append(lines, e.Line(y))
+	}
+
 	// run the search in a separate goroutine
 	caseInsensitive := !ProgrammingLanguage(e.mode)
 	lowerS := strings.ToLower(s)
 	go func() {
-		for y := e.DataY(); y < LineIndex(e.Len()); y++ {
-			line := e.Line(y)
+		for i, line := range lines {
 			found := false
 			if caseInsensitive {
 				found = strings.Contains(strings.ToLower(line), lowerS)
@@ -103,7 +111,7 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 			}
 			if found {
 				foundMutex.Lock()
-				foundMatch = y
+				foundMatch = startY + LineIndex(i)
 				foundMutex.Unlock()
 				matchFound <- true
 				return

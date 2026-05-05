@@ -192,7 +192,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		}
 
 		// Specifically enable syntax highlighting if the opened file is a configuration file or log file
-		if e.mode == mode.Config || e.mode == mode.Log {
+		if e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.Dhall || e.mode == mode.HCL || e.mode == mode.Janet || e.mode == mode.Log || e.mode == mode.Nushell || e.mode == mode.Pkl || e.mode == mode.Protobuf || e.mode == mode.TOML || e.mode == mode.WGSL || e.mode == mode.YAML {
 			e.syntaxHighlight = true
 		}
 
@@ -315,7 +315,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				}
 			}
 			// Specifically enable syntax highlighting if the opened file is a configuration file or a Man page
-			if e.mode == mode.Config {
+			if e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.Dhall || e.mode == mode.HCL || e.mode == mode.Janet || e.mode == mode.Nushell || e.mode == mode.Pkl || e.mode == mode.Protobuf || e.mode == mode.TOML || e.mode == mode.WGSL || e.mode == mode.YAML {
 				e.syntaxHighlight = true
 			}
 		}

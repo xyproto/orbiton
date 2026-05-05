@@ -252,7 +252,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		)
 
 		// Consider smart indentation for programming languages
-		if ProgrammingLanguage(e.mode) || e.mode == mode.Config {
+		if ProgrammingLanguage(e.mode) || e.mode == mode.Config || e.mode == mode.HCL || e.mode == mode.TOML || e.mode == mode.YAML {
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()
 				firstLine = leadingWhitespace + firstLine
@@ -314,7 +314,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		)
 
 		// Consider smart indentation for programming languages
-		if ProgrammingLanguage(e.mode) || e.mode == mode.Config { // not mode.Ini and mode.Fstab, since those seldom have indentations
+		if ProgrammingLanguage(e.mode) || e.mode == mode.Config || e.mode == mode.HCL || e.mode == mode.TOML || e.mode == mode.YAML { // not mode.Ini and mode.Fstab, since those seldom have indentations
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()

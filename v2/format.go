@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/lookslikegoasm"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
+	"gopkg.in/yaml.v3"
 )
 
 // FormatMap maps from format command to file extensions
@@ -221,6 +222,27 @@ func formatJSON(data []byte, jsonFormatToggle *bool, indentationPerTab int) ([]b
 	return indentedJSON, nil
 }
 
+// formatYAML parses YAML data, validates it, and re-emits it with
+// consistent indentation. Returns the formatted bytes or an error
+// describing the syntax issue (with line number when available).
+func formatYAML(data []byte, indent int) ([]byte, error) {
+	if indent < 1 {
+		indent = 2
+	}
+	var doc yaml.Node
+	if err := yaml.Unmarshal(data, &doc); err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(indent)
+	if err := enc.Encode(&doc); err != nil {
+		return nil, err
+	}
+	enc.Close()
+	return buf.Bytes(), nil
+}
+
 // organizeImports can fix, sort and organize imports for Kotlin and for Java
 func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) []byte {
 	ima, err := autoimport.New(onlyJava, removeExistingImports, deGlob)
@@ -250,6 +272,16 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 	case mode.FSTAB: // Format /etc/fstab files
 		const spaces = 2
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
+		e.redraw.Store(true)
+		return
+	case mode.YAML: // Format YAML files
+		data, err := formatYAML([]byte(e.String()), e.indentation.PerTab)
+		if err != nil {
+			status.ClearAll(c, true)
+			status.SetErrorAfterRedraw(err)
+			return
+		}
+		e.LoadBytes(data)
 		e.redraw.Store(true)
 		return
 	case mode.Assembly:
@@ -393,6 +425,12 @@ func runFmt(fnord FilenameOrData) error {
 	case mode.FSTAB:
 		const spaces = 2
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
+	case mode.YAML:
+		out, err := formatYAML([]byte(e.String()), e.indentation.PerTab)
+		if err != nil {
+			return err
+		}
+		e.LoadBytes(out)
 	case mode.Assembly:
 		if lookslikegoasm.Consider(e.String()) {
 			e.mode = mode.GoAssembly

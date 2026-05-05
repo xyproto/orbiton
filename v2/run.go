@@ -177,7 +177,9 @@ func (e *Editor) Run() (string, bool, error) {
 		}
 		allEnv = append(allEnv, "PYTHONUTF8=1")
 		if !files.Exists(pyCacheDir) {
-			os.MkdirAll(pyCacheDir, 0o700)
+			if err := os.MkdirAll(pyCacheDir, 0o700); err != nil {
+				return "", false, err
+			}
 		}
 		allEnv = append(allEnv, "PYTHONPYCACHEPREFIX="+pyCacheDir)
 	case mode.SuperCollider:

@@ -340,7 +340,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					}
-				case mode.Config, mode.CMake, mode.JSON, mode.Ini, mode.FSTAB, mode.Nix:
+				case mode.Config, mode.CMake, mode.HCL, mode.JSON, mode.Ini, mode.FSTAB, mode.Nix, mode.TOML, mode.YAML:
 					if !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (strings.Contains(trimmedLine, "/*") || strings.HasSuffix(trimmedLine, "*/")) {
 						// No highlight
 						coloredString = line
@@ -567,7 +567,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just) && strings.Contains(line, "->") {
+					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.HCL || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just || e.mode == mode.TOML || e.mode == mode.YAML) && strings.Contains(line, "->") {
 						arrowIndex = strings.Index(line, "->")
 						arrowBeforeCommentMarker = true
 
