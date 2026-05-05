@@ -76,7 +76,6 @@ type Editor struct {
 	bookSaved                   bool        // pre-book-mode editor settings have been saved, for later restore
 	bookDarkModeInitialized     bool        // the bookDarkMode auto-detect has already run
 	bookSavedSyntaxHighlight    bool        // saved syntaxHighlight from before book mode
-	bookSavedStatusMode         bool        // saved statusMode from before book mode
 	bookSavedWrapWhenTyping     bool        // saved wrapWhenTyping from before book mode
 	bookSavedWrapWidth          int         // saved wrapWidth from before book mode
 	rainbowParenthesis          bool        // rainbow parenthesis
@@ -199,7 +198,6 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.bookSaved = e.bookSaved
 	e2.bookDarkModeInitialized = e.bookDarkModeInitialized
 	e2.bookSavedSyntaxHighlight = e.bookSavedSyntaxHighlight
-	e2.bookSavedStatusMode = e.bookSavedStatusMode
 	e2.bookSavedWrapWhenTyping = e.bookSavedWrapWhenTyping
 	e2.bookSavedWrapWidth = e.bookSavedWrapWidth
 	return &e2
@@ -219,7 +217,6 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	bookSaved := e.bookSaved
 	bookDarkModeInitialized := e.bookDarkModeInitialized
 	bookSavedSyntaxHighlight := e.bookSavedSyntaxHighlight
-	bookSavedStatusMode := e.bookSavedStatusMode
 	bookSavedWrapWhenTyping := e.bookSavedWrapWhenTyping
 	bookSavedWrapWidth := e.bookSavedWrapWidth
 	syntaxHighlight := e.syntaxHighlight
@@ -243,7 +240,6 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	e.bookSaved = bookSaved
 	e.bookDarkModeInitialized = bookDarkModeInitialized
 	e.bookSavedSyntaxHighlight = bookSavedSyntaxHighlight
-	e.bookSavedStatusMode = bookSavedStatusMode
 	e.bookSavedWrapWhenTyping = bookSavedWrapWhenTyping
 	e.bookSavedWrapWidth = bookSavedWrapWidth
 	e.syntaxHighlight = syntaxHighlight

@@ -348,7 +348,6 @@ func (e *Editor) bookThemeIsLight() bool {
 func (e *Editor) enterBookModeText() {
 	if !e.bookSaved {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
-		e.bookSavedStatusMode = e.statusMode
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
 		e.bookSaved = true
@@ -364,7 +363,6 @@ func (e *Editor) enterBookModeText() {
 	e.syntaxHighlight = false
 	e.wrapWidth = 72
 	e.wrapWhenTyping = false
-	e.statusMode = true
 	e.bookSavedLocalX = -1
 }
 
@@ -377,7 +375,6 @@ func (e *Editor) exitBookMode() {
 	e.bookForceTextMode.Store(false)
 	if e.bookSaved {
 		e.syntaxHighlight = e.bookSavedSyntaxHighlight
-		e.statusMode = e.bookSavedStatusMode
 		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
 		e.wrapWidth = e.bookSavedWrapWidth
 		e.bookSaved = false
