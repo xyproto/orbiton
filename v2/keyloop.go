@@ -46,6 +46,10 @@ const (
 	ctrlDownKey  = "ctrl↓" // ctrl-down
 	ctrlLeftKey  = "ctrl←" // ctrl-left
 	ctrlRightKey = "ctrl→" // ctrl-right
+	ctrlPgUpKey  = "ctrl⇞" // ctrl-pgup
+	ctrlPgDnKey  = "ctrl⇟" // ctrl-pgdn
+	ctrlHomeKey  = "ctrl⇱" // ctrl-home
+	ctrlEndKey   = "ctrl⇲" // ctrl-end
 
 	shiftLeftKey  = "shift←" // shift-left
 	shiftRightKey = "shift→" // shift-right
@@ -553,7 +557,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// Movement keys manage affinity themselves.
 		switch key {
 		case upArrow, downArrow, leftArrow, rightArrow, homeKey, endKey,
-			pgUpKey, pgDnKey, "c:1", "c:5":
+			pgUpKey, pgDnKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey,
+			ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:5":
 			// movement — leave affinity alone
 		default:
 			e.bookCursorAffinity = bookAffinityForward
@@ -1213,6 +1218,76 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.highlightCurrentLine || e.highlightCurrentText {
 				e.drawFuncName.Store(true)
 			}
+
+		case ctrlPgUpKey: // ctrl-pgup, previous file or page up
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+				e.SaveLocation()
+				return "", megafile.PreviousFile, nil
+			}
+			e.ClearSelection()
+			if e.bookMode.Load() {
+				e.bookPgUp(c)
+				break
+			}
+			h := int(c.H())
+			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
+			e.redrawCursor.Store(true)
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			}
+			e.drawProgress.Store(true)
+			e.drawFuncName.Store(true)
+
+		case ctrlPgDnKey: // ctrl-pgdn, next file or page down
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+				e.SaveLocation()
+				return "", megafile.NextFile, nil
+			}
+			e.ClearSelection()
+			if e.bookMode.Load() {
+				if !e.bookPgDn(c) {
+					status.Clear(c, false)
+					status.SetMessage(endOfFileMessage)
+					status.ShowNoTimeout(c, e)
+				}
+				break
+			}
+			h := int(c.H())
+			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
+			e.redraw.Store(redraw)
+			if !redraw {
+				status.Clear(c, false)
+				status.SetMessage(endOfFileMessage)
+				status.ShowNoTimeout(c, e)
+			}
+			e.redrawCursor.Store(true)
+			if e.AfterLineScreenContents() {
+				e.End(c)
+			}
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			}
+			e.drawProgress.Store(true)
+			e.drawFuncName.Store(true)
+
+		case ctrlHomeKey: // ctrl-home, go to the top of the document
+			e.ClearSelection()
+			e.GoToTop(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			e.drawProgress.Store(true)
+			e.drawFuncName.Store(true)
+
+		case ctrlEndKey: // ctrl-end, go to the bottom of the document
+			e.ClearSelection()
+			e.GoToEnd(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			e.drawProgress.Store(true)
+			e.drawFuncName.Store(true)
 
 		case shiftLeftKey: // shift-left, extend selection one character to the left
 			if !e.HasSelection() {
@@ -2963,7 +3038,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		const arrowKeyHighlightTime = 1200 * time.Millisecond
-		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == altUpKey || key == altDownKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
+		justMovedByKeypress := key == upArrow || key == downArrow || key == leftArrow || key == rightArrow || key == pgUpKey || key == pgDnKey || key == homeKey || key == endKey || key == altUpKey || key == altDownKey || key == ctrlUpKey || key == ctrlDownKey || key == ctrlLeftKey || key == ctrlRightKey || key == ctrlPgUpKey || key == ctrlPgDnKey || key == ctrlHomeKey || key == ctrlEndKey || key == "c:1" || key == "c:2" || key == "c:5" || key == "c:6" || key == "c:12" || key == "c:14" || key == "c:16" || key == "c:25"
 
 		notEmptyLine := !e.EmptyLine()
 		if key != "" && notEmptyLine && ProgrammingLanguage(e.mode) {
@@ -2971,7 +3046,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey, ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
 		// Frame skipping: in book mode (both graphical and text) a single
 		// redraw can cost tens of milliseconds, which lets buffered key
 		// presses pile up while the user holds arrow keys. If more input
@@ -2995,7 +3070,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					highlightTimerMut.Lock()
 					defer highlightTimerMut.Unlock()
-					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
+					justMovedUpOrDownOrLeftOrRight := kh.PrevIsWithin(arrowKeyHighlightTime, downArrow, upArrow, leftArrow, rightArrow, pgUpKey, pgDnKey, homeKey, endKey, altUpKey, altDownKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey, ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25")
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
