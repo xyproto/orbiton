@@ -507,8 +507,33 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	for !e.quit {
 
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
-			// Read the next key in the regular way
-			key = tty.ReadKey()
+			// In book mode, use a short read timeout while images are
+			// downloading so that completed downloads trigger a redraw
+			// without waiting for a keypress.
+			if e.bookMode.Load() && bookImgHasInFlight() {
+				savedTimeout, _ := tty.SetTimeout(200 * time.Millisecond)
+				key = tty.ReadKey()
+				tty.SetTimeout(savedTimeout)
+				if key == "" {
+					// Timeout — no keypress, but check for image redraws
+					if bookImgNeedRedraw.CompareAndSwap(true, false) {
+						e.redraw.Store(true)
+						e.redrawCursor.Store(true)
+						e.RedrawAtEndOfKeyLoop(c, status, false, true)
+					}
+					continue
+				}
+			} else if e.bookMode.Load() && bookImgNeedRedraw.CompareAndSwap(true, false) {
+				// No downloads in flight, but a redraw was requested
+				// just before we got here — pick it up immediately.
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				e.RedrawAtEndOfKeyLoop(c, status, false, true)
+				key = tty.ReadKey()
+			} else {
+				// Read the next key in the regular way
+				key = tty.ReadKey()
+			}
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {
