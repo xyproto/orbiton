@@ -8,6 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
@@ -494,7 +495,7 @@ func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 			"{{funcname}}<->[[line {{linenr}} of {{total_lines}}]]<->{{book_percentage}}"
 	case e.bookGraphicalMode():
 		return "", // the graphical book mode has no top bar
-			"Line {{linenr:5}} of {{total_lines:-5}}   Col {{col:4}}<->[[{{filename}}]]<->Words {{word_count:6}}{|}{{est_reading_time}}{|}{{book_percentage:4}}"
+			"Line {{linenr:*}} of {{total_lines}}   Col {{col:*}}<->[[{{filename}}]]<->Words {{word_count:*}}{|}{{est_reading_time}}{|}{{book_percentage:4}}"
 	default: // regular mode
 		return "<-><->{{funcname}}",
 			"{{filename}}<->[[line {{linenr}} of {{total_lines}}]]<->{{mode}} [{{indentation}}]"
@@ -520,8 +521,11 @@ func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 // Fields support an optional width specifier: {{field:width}}. A positive
 // width right-aligns (pads with leading spaces), a negative width
 // left-aligns (pads with trailing spaces). For example {{linenr:5}} pads
-// the line number to 5 characters, right-aligned. In proportional-font
-// mode, padding uses U+2007 FIGURE SPACE for stable column widths.
+// the line number to 5 characters, right-aligned. The special width "*"
+// auto-sizes: {{linenr:*}} pads to the digit count of total_lines,
+// {{word_count:*}} pads to its own digit count, and so on. In
+// proportional-font mode, padding uses U+2007 FIGURE SPACE for stable
+// column widths.
 //
 // Using [[...]] instead of {{...}} shows the current status message
 // when one is active, falling back to the enclosed content otherwise.
@@ -570,9 +574,20 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 		"est_reading_time":  readingTime,
 	}
 
+	// Auto-width map: for {{field:*}}, look up how wide the field should
+	// be based on a related maximum value. Fields not listed here use
+	// their own string length.
+	totalDigits := len(fields["total_lines"])
+	autoWidth := map[string]int{
+		"linenr":      totalDigits,
+		"total_lines": totalDigits,
+		"col":         totalDigits,
+		"colnr":       totalDigits,
+	}
+
 	// Replace {{field}} and {{field:width}} with the corresponding value.
 	// A width specifier pads the value: positive = right-align, negative =
-	// left-align (matching fmt.Sprintf behavior).
+	// left-align (matching fmt.Sprintf behavior). The width "*" auto-sizes.
 	for name, value := range fields {
 		// Plain {{field}} replacement (most common path).
 		format = strings.ReplaceAll(format, "{{"+name+"}}", value)
@@ -591,9 +606,19 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 				break
 			}
 			widthStr := before
-			width, err := strconv.Atoi(widthStr)
-			if err != nil {
-				break
+			var width int
+			if widthStr == "*" {
+				if w, ok := autoWidth[name]; ok {
+					width = w
+				} else {
+					width = len(value)
+				}
+			} else {
+				var err error
+				width, err = strconv.Atoi(widthStr)
+				if err != nil {
+					break
+				}
 			}
 			padded := fmt.Sprintf("%*s", width, value)
 			if useFigureSpace {
@@ -609,22 +634,27 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 	// between the brackets is kept as-is (its {{}} placeholders have
 	// already been expanded above).
 	msg := strings.TrimSpace(statusMsg)
+	searchFrom := 0
 	for {
-		start := strings.Index(format, "[[")
+		start := strings.Index(format[searchFrom:], "[[")
 		if start < 0 {
 			break
 		}
+		start += searchFrom
 		end := strings.Index(format[start:], "]]")
 		if end < 0 {
 			break
 		}
 		end += start + len("]]")
 		inner := format[start+len("[[") : end-len("]]")]
+		var replacement string
 		if msg != "" {
-			format = format[:start] + msg + format[end:]
+			replacement = msg
 		} else {
-			format = format[:start] + inner + format[end:]
+			replacement = inner
 		}
+		format = format[:start] + replacement + format[end:]
+		searchFrom = start + len(replacement)
 	}
 
 	// In terminal mode, column separators become regular spaces. In
@@ -720,17 +750,30 @@ func (e *Editor) drawBar(c *vt.Canvas, y uint, w int, text string, s barStyle) {
 	}
 
 	ellipsis := "…"
+	ellipsisW := 1
 	if useASCII {
 		ellipsis = "..."
+		ellipsisW = 3
 	}
-	truncate := func(str string, maxLen int) string {
-		if maxLen <= 0 || (len(str) > maxLen && maxLen <= len(ellipsis)) {
+	truncate := func(str string, maxW int) string {
+		sw := runewidth.StringWidth(str)
+		if maxW <= 0 || (sw > maxW && maxW <= ellipsisW) {
 			return ""
 		}
-		if len(str) <= maxLen {
+		if sw <= maxW {
 			return str
 		}
-		return str[:maxLen-len(ellipsis)] + ellipsis
+		// Truncate rune-by-rune to fit within maxW - ellipsisW columns.
+		target := maxW - ellipsisW
+		w := 0
+		for i, r := range str {
+			rw := runewidth.RuneWidth(r)
+			if w+rw > target {
+				return str[:i] + ellipsis
+			}
+			w += rw
+		}
+		return str + ellipsis
 	}
 
 	// Split on <-> to get left / center / right segments.
@@ -753,8 +796,8 @@ func (e *Editor) drawBar(c *vt.Canvas, y uint, w int, text string, s barStyle) {
 	left = truncate(left, sideMax)
 	right = truncate(right, sideMax)
 
-	leftLen := len(left)
-	rightLen := len(right)
+	leftLen := runewidth.StringWidth(left)
+	rightLen := runewidth.StringWidth(right)
 	rightStart := w - pad - rightLen
 
 	if leftLen > 0 {
@@ -779,9 +822,10 @@ func (e *Editor) drawBar(c *vt.Canvas, y uint, w int, text string, s barStyle) {
 	if center == "" {
 		return
 	}
-	cx := max((w-len(center))/2, leftBound)
-	if cx+len(center) > rightBound {
-		cx = max(rightBound-len(center), leftBound)
+	centerLen := runewidth.StringWidth(center)
+	cx := max((w-centerLen)/2, leftBound)
+	if cx+centerLen > rightBound {
+		cx = max(rightBound-centerLen, leftBound)
 	}
 	c.Write(uint(cx), y, s.fg, s.bg, center)
 }
