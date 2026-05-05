@@ -3,6 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.25.1
 
 require (
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
 	github.com/creack/pty v1.1.24
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
@@ -13,8 +14,11 @@ require (
 	github.com/mattn/go-runewidth v0.0.23
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.10
+	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
+	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.4.0
+	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/clip v1.0.0
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.6
@@ -29,23 +33,18 @@ require (
 	github.com/xyproto/megafile v1.6.41
 	github.com/xyproto/mode v0.12.8
 	github.com/xyproto/orchideous v1.0.8
+	github.com/xyproto/syntax v1.14.2
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.2.3
 	github.com/xyproto/vt v1.9.10
 	github.com/xyproto/wordwrap v1.0.2
 	golang.org/x/image v0.39.0
-)
-
-require (
-	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.0
-	github.com/xyproto/syntax v1.14.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/JohannesKaufmann/dom v0.2.0 // indirect
-
 require (
 	github.com/DataDog/gostackparse v0.7.0 // indirect
+	github.com/JohannesKaufmann/dom v0.2.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -53,10 +52,7 @@ require (
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
-	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
-	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xfmoulet/qoi v0.2.0 // indirect
-	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/burnpal v1.1.0 // indirect
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
