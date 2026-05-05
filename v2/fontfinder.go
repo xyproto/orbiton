@@ -61,25 +61,37 @@ func fillViaFcMatch(sf *SystemFonts) {
 		dest       *string
 	}
 
-	// Gentium Plus is preferred for serif: excellent readability and wide
-	// language coverage. Noto Serif covers most modern Linux installs.
+	// Georgia is preferred for serif: it was designed for screen readability
+	// and is widely available. EB Garamond is an elegant alternative. Liberation
+	// Serif is metrically compatible with Times New Roman and very common on
+	// Linux/BSD. Gentium Plus has excellent language coverage.
 	// Cantarell is the GNOME default and has a true Light weight.
 	// Source Code Pro Bold and Fira Code Bold are the top code-font choices.
 	// Generic fallbacks let fontconfig pick the distro's configured default.
 	queries := []q{
+		{"Georgia:style=Regular", "Georgia", &sf.Regular},
+		{"EB Garamond:style=Regular", "EB Garamond", &sf.Regular},
+		{"Liberation Serif:style=Regular", "Liberation Serif", &sf.Regular},
 		{"Gentium Plus:style=Regular", "Gentium", &sf.Regular},
 		{"Noto Serif:style=Regular", "Noto Serif", &sf.Regular},
 		{"serif", "", &sf.Regular},
 
+		{"Georgia:style=Italic", "Georgia", &sf.Italic},
+		{"EB Garamond:style=Italic", "EB Garamond", &sf.Italic},
+		{"Liberation Serif:style=Italic", "Liberation Serif", &sf.Italic},
 		{"Gentium Plus:style=Italic", "Gentium", &sf.Italic},
 		{"Noto Serif:style=Italic", "Noto Serif", &sf.Italic},
 		{"serif:slant=italic", "", &sf.Italic},
 
 		{"Cantarell:style=Bold", "Cantarell", &sf.Bold},
+		{"Source Sans Pro:style=Bold", "Source Sans", &sf.Bold},
+		{"Liberation Sans:style=Bold", "Liberation Sans", &sf.Bold},
 		{"sans:bold", "", &sf.Bold},
 
 		{"Cantarell:style=Light", "Cantarell", &sf.Light},
 		{"Cantarell:style=Regular", "Cantarell", &sf.Light},
+		{"Source Sans Pro:style=Light", "Source Sans", &sf.Light},
+		{"Liberation Sans:style=Regular", "Liberation Sans", &sf.Light},
 		{"sans", "", &sf.Light},
 
 		{"Source Code Pro:style=Bold", "Source Code Pro", &sf.Mono},
@@ -160,10 +172,20 @@ func fillViaDirScan(sf *SystemFonts) {
 		dest  *string
 	}
 	rules := []rule{
+		{[]string{"georgia"}, &sf.Regular},
+		{[]string{"ebgaramond", "regular"}, &sf.Regular},
+		{[]string{"liberationserif", "regular"}, &sf.Regular},
 		{[]string{"notoserif", "regular"}, &sf.Regular},
+		{[]string{"georgiai"}, &sf.Italic},
+		{[]string{"ebgaramond", "italic"}, &sf.Italic},
+		{[]string{"liberationserif", "italic"}, &sf.Italic},
 		{[]string{"notoserif", "italic"}, &sf.Italic},
 		{[]string{"cantarell", "bold"}, &sf.Bold},
+		{[]string{"sourcesans", "bold"}, &sf.Bold},
+		{[]string{"liberationsans", "bold"}, &sf.Bold},
 		{[]string{"cantarell", "regular"}, &sf.Light},
+		{[]string{"sourcesans", "light"}, &sf.Light},
+		{[]string{"liberationsans", "regular"}, &sf.Light},
 		{[]string{"sourcecodepro", "bold"}, &sf.Mono},
 		{[]string{"sourcecodepro", "regular"}, &sf.Mono},
 		{[]string{"dejavusans.ttf"}, &sf.Unicode},
