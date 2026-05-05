@@ -58,7 +58,7 @@ func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 		setKeywords(clojureWords)
 	case mode.CMake:
 		addAndRemoveKeywords(cmakeWords, []string{"build", "package"})
-	case mode.Config, mode.Ini, mode.FSTAB:
+	case mode.Config, mode.Ini, mode.FSTAB, mode.TOML, mode.YAML:
 		removeKeywords([]string{"auto", "build", "def", "default", "for", "from", "get", "install", "int", "local", "no", "not", "package", "return", "super", "type", "var", "with"})
 		addKeywords([]string{"bind", "bindsym", "DB_PASSWORD", "exec_always", "PASSWORD", "Password", "password", "POSTGRES_PASSWORD", "PWD", "Pwd", "pwd", "Secret", "SECRET", "secret", "Secrets", "SECRETS", "secrets", "set-option", "set-window-option", "unbind", "uses"})
 	case mode.Nix:
@@ -238,7 +238,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 		return "'"
 	case mode.Bat:
 		return "@rem" // or rem or just ":" ...
-	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.FSTAB, mode.GDScript, mode.Ignore, mode.Just, mode.Make, mode.Nim, mode.Nix, mode.Mojo, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Spec, mode.Starlark:
+	case mode.Algol68, mode.Bazel, mode.CMake, mode.Config, mode.Crystal, mode.Docker, mode.FSTAB, mode.GDScript, mode.HCL, mode.Ignore, mode.Janet, mode.Just, mode.Make, mode.Nim, mode.Nix, mode.Mojo, mode.Nushell, mode.PolicyLanguage, mode.Python, mode.R, mode.Ruby, mode.Shell, mode.Spec, mode.Starlark, mode.TOML, mode.YAML:
 		return "#"
 	case mode.Clojure, mode.Lisp:
 		return ";;"
@@ -251,7 +251,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 	case mode.OCaml, mode.StandardML:
 		// Not applicable, just return the multiline comment start marker
 		return "(*"
-	case mode.Ada, mode.Agda, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.Nmap, mode.SQL, mode.Teal, mode.Terra:
+	case mode.Ada, mode.Agda, mode.Dhall, mode.Elm, mode.Garnet, mode.Haskell, mode.Lua, mode.Nmap, mode.SQL, mode.Teal, mode.Terra:
 		return "--"
 	case mode.M4:
 		return "dnl"
