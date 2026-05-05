@@ -28,14 +28,16 @@ const (
 	CS                    // C#
 	CSound                // CSound // music
 	CSS                   // CSS
+	CSV                   // CSV and TSV data files
 	Chuck                 // Chuck // music
 	Clojure               // Clojure
 	COBOL                 // COBOL
-	Config                // Config like yaml, yml, toml, and ini files
+	Config                // Config files like ini, bp and various service/socket files
 	Cpp                   // C++
 	Crystal               // Crystal
 	D                     // D
 	Dart                  // Dart
+	Dhall                 // Dhall configuration language
 	DOCX                  // DOCX
 	Diff                  // Diff / patch
 	Dingo                 // Dingo
@@ -57,6 +59,7 @@ const (
 	GoMod                 // go.mod files
 	GoAssembly            // Go-style Assembly
 	Gradle                // Gradle
+	HCL                   // HashiCorp Configuration Language (Terraform)
 	Haxe                  // Haxe: .hx and .hxml files
 	HIDL                  // Android-related: Hardware Abstraction Layer Interface Definition Language
 	HTML                  // HTML
@@ -71,6 +74,7 @@ const (
 	Jakt                  // Jakt
 	Java                  // Java
 	JavaScript            // JavaScript
+	Janet                 // Janet
 	Just                  // Just
 	Koka                  // Koka
 	Kotlin                // Kotlin
@@ -87,6 +91,7 @@ const (
 	Nim                   // Nim
 	Nix                   // Nix
 	Nmap                  // Nmap scripts
+	Nushell               // Nushell
 	Nroff                 // editing man pages
 	OCaml                 // OCaml
 	Oak                   // Oak
@@ -96,9 +101,11 @@ const (
 	Ollama                // For Modelfiles
 	Perl                  // Perl
 	PHP                   // PHP
+	Pkl                   // Pkl configuration language
 	PolicyLanguage        // SE Linux configuration files
 	POV                   // POV-Ray raytracer
 	Prolog                // Prolog
+	Protobuf              // Protocol Buffers
 	Python                // Python
 	R                     // R
 	ReStructured          // reStructuredText
@@ -120,12 +127,15 @@ const (
 	Teal                  // Teal
 	Terra                 // Terra
 	Text                  // plain text documents
+	TOML                  // TOML configuration
 	TypeScript            // TypeScript
 	V                     // V programming language
 	Vibe67                // Vibe67
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
+	WGSL                  // WebGPU Shading Language
 	WordGrinder           // WordGrinder
 	XML                   // XML
+	YAML                  // YAML
 	Zig                   // Zig
 )
 
@@ -190,12 +200,16 @@ func (mode Mode) String() string {
 		return "C#"
 	case CSound:
 		return "Csound"
+	case CSV:
+		return "CSV"
 	case CSS:
 		return "CSS"
 	case D:
 		return "D"
 	case Dart:
 		return "Dart"
+	case Dhall:
+		return "Dhall"
 	case DOCX:
 		return "DOCX"
 	case Diff:
@@ -244,6 +258,8 @@ func (mode Mode) String() string {
 		return "Hare"
 	case Haskell:
 		return "Haskell"
+	case HCL:
+		return "HCL"
 	case Haxe:
 		return "Haxe"
 	case HIDL:
@@ -268,6 +284,8 @@ func (mode Mode) String() string {
 		return "JavaScript"
 	case JSON:
 		return "JSON"
+	case Janet:
+		return "Janet"
 	case Just:
 		return "Just"
 	case Koka:
@@ -300,6 +318,8 @@ func (mode Mode) String() string {
 		return "Nix"
 	case Nmap:
 		return "Nmap"
+	case Nushell:
+		return "Nushell"
 	case Nroff:
 		return "Nroff"
 	case Oak:
@@ -318,12 +338,16 @@ func (mode Mode) String() string {
 		return "Perl"
 	case PHP:
 		return "PHP"
+	case Pkl:
+		return "Pkl"
 	case PolicyLanguage:
 		return "SELinux"
 	case POV:
 		return "POV-Ray"
 	case Prolog:
 		return "Prolog"
+	case Protobuf:
+		return "Protobuf"
 	case Python:
 		return "Python"
 	case R:
@@ -366,16 +390,22 @@ func (mode Mode) String() string {
 		return "Terra"
 	case Text:
 		return "Text"
+	case TOML:
+		return "TOML"
 	case TypeScript:
 		return "TypeScript"
 	case Vim:
 		return "ViM"
+	case WGSL:
+		return "WGSL"
 	case WordGrinder:
 		return "WordGrinder"
 	case V:
 		return "V"
 	case XML:
 		return "XML"
+	case YAML:
+		return "YAML"
 	case Zig:
 		return "Zig"
 	default:

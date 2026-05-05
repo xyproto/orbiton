@@ -62,6 +62,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 			switch string(lastWord) {
 			case "ash", "bash", "fish", "ksh", "oil", "sh", "tcsh", "zsh": // TODO: support Fish and Oil with their own file modes
 				return Shell, true
+			case "nu":
+				return Nushell, true
 			}
 
 		}
@@ -92,6 +94,18 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return Vim, true
 	} else if bytes.HasPrefix(firstLine, []byte("diff -")) {
 		return Diff, true
+	} else if bytes.HasPrefix(firstLine, []byte("%YAML ")) {
+		return YAML, true
+	} else if bytes.Equal(bytes.TrimSpace(firstLine), []byte("---")) && (m == YAML || m == Blank) {
+		return YAML, true
+	} else if bytes.HasPrefix(firstLine, []byte(`syntax = "proto`)) {
+		return Protobuf, true
+	} else if bytes.HasPrefix(firstLine, []byte("terraform {")) || bytes.HasPrefix(firstLine, []byte(`resource "`)) || bytes.HasPrefix(firstLine, []byte(`variable "`)) || bytes.HasPrefix(firstLine, []byte(`provider "`)) {
+		return HCL, true
+	} else if bytes.HasPrefix(firstLine, []byte(`amends "`)) {
+		return Pkl, true
+	} else if bytes.HasPrefix(firstLine, []byte("@vertex")) || bytes.HasPrefix(firstLine, []byte("@fragment")) || bytes.HasPrefix(firstLine, []byte("@compute")) {
+		return WGSL, true
 	}
 	// If more lines start with "# " than "// " or "/* ", and mode is blank,
 	// set the mode to Config and enable syntax highlighting.
