@@ -128,7 +128,7 @@ func (e *Editor) bookBottomCornerBG() color.NRGBA {
 	if env.Str("TERM") == "xterm-kitty" {
 		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
 	}
-	if e.stickyStatusBar || bookGetTemporaryStatusMsg() != "" {
+	if e.stickyStatusBars || bookGetTemporaryStatusMsg() != "" {
 		return e.bookGraphicalStatusBarBG()
 	}
 	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
@@ -388,11 +388,11 @@ func (e *Editor) exitBookMode() {
 const bookTextTopBarRows = 1
 
 // bookEditRows returns the number of terminal rows available for the graphical
-// book content. When the status bar is visible (stickyStatusBar==true), one row is
+// book content. When the status bar is visible (stickyStatusBars==true), one row is
 // reserved for the status bar; otherwise the full terminal height is used.
 func (e *Editor) bookEditRows(totalRows uint) uint {
 	reserved := uint(0)
-	if e.bookTextMode() || e.stickyStatusBar || bookGetTemporaryStatusMsg() != "" {
+	if e.bookTextMode() || e.stickyStatusBars || bookGetTemporaryStatusMsg() != "" {
 		reserved++ // bottom status bar
 	}
 	if e.bookTextMode() {
@@ -4643,7 +4643,7 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	}
 
 	// No status bar content when stats are hidden and no message is pending.
-	if !e.stickyStatusBar {
+	if !e.stickyStatusBars {
 		return img
 	}
 
@@ -4711,7 +4711,7 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 
 	// If the page already covers the full terminal (status bar hidden and no
 	// pending message), just return the page image unchanged.
-	showStatus := e.stickyStatusBar || bookGetTemporaryStatusMsg() != ""
+	showStatus := e.stickyStatusBars || bookGetTemporaryStatusMsg() != ""
 	if !showStatus || rowsTotal <= editRows {
 		return pageImg
 	}

@@ -80,7 +80,9 @@ type Editor struct {
 	bookSavedWrapWidth          int         // saved wrapWidth from before book mode
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	stickyStatusBar             bool        // show a sticky status bar at all times at the bottom of the screen
+	stickyStatusBars            bool        // show sticky status bars at the top and bottom of the screen
+	stickyTopBarFormat          string      // template for the top sticky bar
+	stickyBottomBarFormat       string      // template for the bottom sticky bar
 	showColumnLimit             bool        // show the line where the wrapWidth is (at 79 by default)
 	expandTags                  bool        // can be used for XML and HTML
 	syntaxHighlight             bool        // syntax highlighting
@@ -144,7 +146,9 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.rainbowParenthesis = e.rainbowParenthesis
 	e2.debugMode = e.debugMode
 	e2.debugLine.Store(e.debugLine.Load())
-	e2.stickyStatusBar = e.stickyStatusBar
+	e2.stickyStatusBars = e.stickyStatusBars
+	e2.stickyTopBarFormat = e.stickyTopBarFormat
+	e2.stickyBottomBarFormat = e.stickyBottomBarFormat
 	e2.showColumnLimit = e.showColumnLimit
 	e2.expandTags = e.expandTags
 	e2.syntaxHighlight = e.syntaxHighlight
@@ -220,7 +224,7 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	bookSavedWrapWhenTyping := e.bookSavedWrapWhenTyping
 	bookSavedWrapWidth := e.bookSavedWrapWidth
 	syntaxHighlight := e.syntaxHighlight
-	stickyStatusBar := e.stickyStatusBar
+	stickyStatusBars := e.stickyStatusBars
 	wrapWhenTyping := e.wrapWhenTyping
 	wrapWidth := e.wrapWidth
 
@@ -243,7 +247,7 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	e.bookSavedWrapWhenTyping = bookSavedWrapWhenTyping
 	e.bookSavedWrapWidth = bookSavedWrapWidth
 	e.syntaxHighlight = syntaxHighlight
-	e.stickyStatusBar = stickyStatusBar
+	e.stickyStatusBars = stickyStatusBars
 	e.wrapWhenTyping = wrapWhenTyping
 	e.wrapWidth = wrapWidth
 }
@@ -3173,7 +3177,7 @@ func (e *Editor) JoinLineWithNext(c *vt.Canvas) bool {
 func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 	//e.pos.mut.Lock()
 	x := uint(e.pos.ScreenX())
-	y := uint(e.pos.ScreenY())
+	y := uint(e.pos.ScreenY()) + e.stickyTopBarHeight()
 	//e.pos.mut.Unlock()
 	c.ShowCursor()
 	vt.SetXY(x, y)
