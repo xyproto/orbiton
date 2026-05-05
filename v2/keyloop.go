@@ -1157,6 +1157,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			"\x1b[5D": // ctrl-left without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToPrevWord(c, status)
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
+			}
 			if e.bookMode.Load() {
 				e.redraw.Store(true) // cursor is embedded in the image
 			}
@@ -1166,6 +1170,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			"\x1b[5C": // ctrl-right without modifier parameter (some terminal emulators)
 			e.ClearSelection()
 			e.GoToNextWord(c, status)
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.redraw.Store(true)
+				e.drawFuncName.Store(true)
+			}
 			if e.bookMode.Load() {
 				e.redraw.Store(true) // cursor is embedded in the image
 			}
@@ -1191,10 +1199,20 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case ctrlUpKey: // ctrl-up, go to the previous function/header/paragraph
 			e.ClearSelection()
 			e.GoToPrevFuncOrSection(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.drawFuncName.Store(true)
+			}
 
 		case ctrlDownKey: // ctrl-down, go to the next function/header/paragraph
 			e.ClearSelection()
 			e.GoToNextFuncOrSection(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			if e.highlightCurrentLine || e.highlightCurrentText {
+				e.drawFuncName.Store(true)
+			}
 
 		case shiftLeftKey: // shift-left, extend selection one character to the left
 			if !e.HasSelection() {
