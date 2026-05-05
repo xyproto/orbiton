@@ -80,7 +80,7 @@ type Editor struct {
 	bookSavedWrapWidth          int         // saved wrapWidth from before book mode
 	rainbowParenthesis          bool        // rainbow parenthesis
 	debugMode                   bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	statusMode                  bool        // display a status bar at all times at the bottom of the screen
+	stickyStatusBar             bool        // show a sticky status bar at all times at the bottom of the screen
 	showColumnLimit             bool        // show the line where the wrapWidth is (at 79 by default)
 	expandTags                  bool        // can be used for XML and HTML
 	syntaxHighlight             bool        // syntax highlighting
@@ -144,7 +144,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.rainbowParenthesis = e.rainbowParenthesis
 	e2.debugMode = e.debugMode
 	e2.debugLine.Store(e.debugLine.Load())
-	e2.statusMode = e.statusMode
+	e2.stickyStatusBar = e.stickyStatusBar
 	e2.showColumnLimit = e.showColumnLimit
 	e2.expandTags = e.expandTags
 	e2.syntaxHighlight = e.syntaxHighlight
@@ -220,7 +220,7 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	bookSavedWrapWhenTyping := e.bookSavedWrapWhenTyping
 	bookSavedWrapWidth := e.bookSavedWrapWidth
 	syntaxHighlight := e.syntaxHighlight
-	statusMode := e.statusMode
+	stickyStatusBar := e.stickyStatusBar
 	wrapWhenTyping := e.wrapWhenTyping
 	wrapWidth := e.wrapWidth
 
@@ -243,7 +243,7 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	e.bookSavedWrapWhenTyping = bookSavedWrapWhenTyping
 	e.bookSavedWrapWidth = bookSavedWrapWidth
 	e.syntaxHighlight = syntaxHighlight
-	e.statusMode = statusMode
+	e.stickyStatusBar = stickyStatusBar
 	e.wrapWhenTyping = wrapWhenTyping
 	e.wrapWidth = wrapWidth
 }

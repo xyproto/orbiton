@@ -128,7 +128,7 @@ func (e *Editor) bookBottomCornerBG() color.NRGBA {
 	if env.Str("TERM") == "xterm-kitty" {
 		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
 	}
-	if e.statusMode || bookModeGetStatusMsg() != "" {
+	if e.stickyStatusBar || bookGetTemporaryStatusMsg() != "" {
 		return e.bookGraphicalStatusBarBG()
 	}
 	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
@@ -232,25 +232,25 @@ func (fs *bookFontSet) headerCodeForLevel(level int) font.Face {
 }
 
 var (
-	bookFontMu              sync.Mutex
-	bookFontCache           *bookFontSet
-	parsedVollkornRegular   *opentype.Font
-	parsedVollkornItalic    *opentype.Font
-	parsedMontserratBold    *opentype.Font
-	parsedMontserratLight   *opentype.Font
-	parsedFiraMonoBold      *opentype.Font
-	parsedDejaVuSans        *opentype.Font // Unicode-rich fallback
-	parseFontsOnce          sync.Once
-	parseFontsErr           error
-	bookContentCache        *image.RGBA
-	bookContentCacheW       int
-	bookContentCacheH       int
-	bookContentCacheOffsetY int
-	bookContentCacheGen     uint64 // generation counter when content cache was built
-	bookContentGen          uint64 // bumped each time document content changes
-	bookContentGenMu        sync.Mutex
-	bookStatusMsg           string
-	bookStatusMsgMu         sync.Mutex
+	bookFontMu               sync.Mutex
+	bookFontCache            *bookFontSet
+	parsedVollkornRegular    *opentype.Font
+	parsedVollkornItalic     *opentype.Font
+	parsedMontserratBold     *opentype.Font
+	parsedMontserratLight    *opentype.Font
+	parsedFiraMonoBold       *opentype.Font
+	parsedDejaVuSans         *opentype.Font // Unicode-rich fallback
+	parseFontsOnce           sync.Once
+	parseFontsErr            error
+	bookContentCache         *image.RGBA
+	bookContentCacheW        int
+	bookContentCacheH        int
+	bookContentCacheOffsetY  int
+	bookContentCacheGen      uint64 // generation counter when content cache was built
+	bookContentGen           uint64 // bumped each time document content changes
+	bookContentGenMu         sync.Mutex
+	bookTemporaryStatusMsg   string
+	bookTemporaryStatusMsgMu sync.Mutex
 	// bookStatusClearGen coalesces status auto-clear goroutines: each
 	// status message bumps the counter and only the freshest goroutine
 	// actually clears + re-renders after the timeout.
@@ -388,11 +388,11 @@ func (e *Editor) exitBookMode() {
 const bookTextTopBarRows = 1
 
 // bookEditRows returns the number of terminal rows available for the graphical
-// book content. When the status bar is visible (statusMode==true), one row is
+// book content. When the status bar is visible (stickyStatusBar==true), one row is
 // reserved for the status bar; otherwise the full terminal height is used.
 func (e *Editor) bookEditRows(totalRows uint) uint {
 	reserved := uint(0)
-	if e.bookTextMode() || e.statusMode || bookModeGetStatusMsg() != "" {
+	if e.bookTextMode() || e.stickyStatusBar || bookGetTemporaryStatusMsg() != "" {
 		reserved++ // bottom status bar
 	}
 	if e.bookTextMode() {
@@ -404,18 +404,18 @@ func (e *Editor) bookEditRows(totalRows uint) uint {
 	return totalRows - reserved
 }
 
-// bookModeSetStatusMsg atomically sets the temporary status bar message.
-func bookModeSetStatusMsg(msg string) {
-	bookStatusMsgMu.Lock()
-	bookStatusMsg = msg
-	bookStatusMsgMu.Unlock()
+// bookSetTemporaryStatusMsg atomically sets the temporary status bar message.
+func bookSetTemporaryStatusMsg(msg string) {
+	bookTemporaryStatusMsgMu.Lock()
+	bookTemporaryStatusMsg = msg
+	bookTemporaryStatusMsgMu.Unlock()
 }
 
-// bookModeGetStatusMsg atomically reads the temporary status bar message.
-func bookModeGetStatusMsg() string {
-	bookStatusMsgMu.Lock()
-	defer bookStatusMsgMu.Unlock()
-	return bookStatusMsg
+// bookGetTemporaryStatusMsg atomically reads the temporary status bar message.
+func bookGetTemporaryStatusMsg() string {
+	bookTemporaryStatusMsgMu.Lock()
+	defer bookTemporaryStatusMsgMu.Unlock()
+	return bookTemporaryStatusMsg
 }
 
 // bookBumpContentGen increments the content generation counter so the content
@@ -4633,7 +4633,7 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	baseline := (statusPixH+sbAscent)/2 + 1
 
 	// A centered message takes over the whole bar.
-	if msg := bookModeGetStatusMsg(); msg != "" {
+	if msg := bookGetTemporaryStatusMsg(); msg != "" {
 		text := strings.TrimSpace(msg)
 		d := &font.Drawer{Face: fs.statusBar}
 		w := d.MeasureString(text).Round()
@@ -4643,7 +4643,7 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	}
 
 	// No status bar content when stats are hidden and no message is pending.
-	if !e.statusMode {
+	if !e.stickyStatusBar {
 		return img
 	}
 
@@ -4711,7 +4711,7 @@ func (e *Editor) bookComposeFullPage(pixW, rowsTotal, editRows int, renderH uint
 
 	// If the page already covers the full terminal (status bar hidden and no
 	// pending message), just return the page image unchanged.
-	showStatus := e.statusMode || bookModeGetStatusMsg() != ""
+	showStatus := e.stickyStatusBar || bookGetTemporaryStatusMsg() != ""
 	if !showStatus || rowsTotal <= editRows {
 		return pageImg
 	}
@@ -5135,7 +5135,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 		if msg := status.messageAfterRedraw; len(msg) > 0 {
 			status.SetMessage(msg)
 			status.messageAfterRedraw = ""
-			bookModeSetStatusMsg(msg)
+			bookSetTemporaryStatusMsg(msg)
 			hasPendingMsg = true
 			mut.RLock()
 			dur := status.show
@@ -5152,7 +5152,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 				if bookStatusClearGen.Load() != myGen {
 					return
 				}
-				bookModeSetStatusMsg("")
+				bookSetTemporaryStatusMsg("")
 				mut.Lock()
 				status.msg = ""
 				status.isError = false
