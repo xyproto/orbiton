@@ -1270,7 +1270,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.bookPgUp(c)
 				break
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
@@ -1296,7 +1296,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
 			if !redraw {
@@ -2017,7 +2017,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
@@ -2032,7 +2032,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.bookPgUp(c)
 				break
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			e.redraw.Store(e.ScrollUp(c, status, int(float64(h)*0.9)))
 			e.redrawCursor.Store(true)
 			if e.AfterLineScreenContents() {
@@ -2048,7 +2048,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
 			e.redrawCursor.Store(true)
@@ -2068,7 +2068,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-			h := int(c.H())
+			h := int(c.H()) - e.stickyBarRows()
 			redraw := e.ScrollDown(c, status, int(float64(h)*0.9), h)
 			e.redraw.Store(redraw)
 			// If redraw is false, the end of file is reached
@@ -2221,7 +2221,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			if e.bookMode.Load() { // book mode: toggle word-statistics display
-				e.stickyStatusBar = !e.stickyStatusBar
+				e.stickyStatusBars = !e.stickyStatusBars
 				if e.bookGraphicalMode() {
 					// Invalidate cached content so it re-renders at the new height
 					bookContentCache = nil
@@ -2241,7 +2241,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.bookModeEnsureCursorVisible(c)
 					vt.BeginSyncUpdate()
 					e.bookTextModeRender(c)
-					if !e.stickyStatusBar {
+					if !e.stickyStatusBars {
 						status.Draw(c, 0)
 					}
 					c.HideCursorAndDraw()
@@ -2324,9 +2324,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				} else {
 					// Toggle status bar (for non-programming languages or when at/before start of text), when not on include lines
 					status.ClearAll(c, false)
-					e.stickyStatusBar = !e.stickyStatusBar
-					if e.stickyStatusBar {
-						status.ShowFilenameLineColWordCount(c, e)
+					e.stickyStatusBars = !e.stickyStatusBars
+					if e.stickyStatusBars {
+						msg := status.Message()
+						e.drawStickyTopBar(c, msg)
+						e.drawStickyBottomBar(c, msg)
 						e.showColumnLimit = e.wrapWhenTyping
 					}
 					status.Show(c, e)
@@ -3069,7 +3071,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Clear status line, if needed
-		if (e.stickyStatusBar || e.blockMode) && e.redrawCursor.Load() {
+		if (e.stickyStatusBars || e.blockMode) && e.redrawCursor.Load() {
 			status.ClearAll(c, false)
 		}
 
@@ -3100,7 +3102,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 		}
 
-		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.stickyStatusBar && notEmptyLine && !e.debugMode {
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.stickyStatusBars && notEmptyLine && !e.debugMode {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
 			if status.messageAfterRedraw == "" && justMovedByKeypress {
 				go func() {

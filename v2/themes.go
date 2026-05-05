@@ -126,7 +126,7 @@ type Theme struct {
 	HighlightForeground         vt.AttributeColor
 	HighlightBackground         vt.AttributeColor
 	MultiCursorBackground       vt.AttributeColor
-	StickyStatusBar             bool
+	StickyStatusBars            bool
 	Light                       bool
 }
 
@@ -896,7 +896,7 @@ func NewLightBlueEditTheme() Theme {
 	return Theme{
 		Name:                        "Blue Edit Light",
 		Light:                       true,
-		StickyStatusBar:             false,
+		StickyStatusBars:            false,
 		Foreground:                  vt.White,
 		Background:                  vt.BackgroundBlue,
 		StatusForeground:            vt.Black,
@@ -992,7 +992,7 @@ func NewDarkBlueEditTheme() Theme {
 	return Theme{
 		Name:                        "Blue Edit Dark",
 		Light:                       false,
-		StickyStatusBar:             false,
+		StickyStatusBars:            false,
 		Foreground:                  vt.LightYellow,
 		Background:                  vt.BackgroundBlue,
 		StatusForeground:            vt.White,
@@ -1801,7 +1801,7 @@ func (e *Editor) SetTheme(theme Theme, bs ...bool) {
 		initialLightBackground = &(bs[0])
 	}
 	e.Theme = theme
-	e.stickyStatusBar = theme.StickyStatusBar
+	e.stickyStatusBars = theme.StickyStatusBars
 	syntax.DefaultTextConfig = *(theme.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()
@@ -1815,7 +1815,7 @@ func (e *Editor) setNoColorTheme() {
 	} else { //dark
 		e.Theme = NewNoColorDarkBackgroundTheme()
 	}
-	e.stickyStatusBar = e.StickyStatusBar
+	e.stickyStatusBars = e.StickyStatusBars
 	syntax.DefaultTextConfig = *(e.TextConfig())
 	if initialLightBackground != nil && *initialLightBackground { // light
 		e.makeLightAdjustments()

@@ -135,7 +135,7 @@ func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
 	// Redraw the cursor, if needed
 	e.pos.mut.RLock()
 	x := uint(e.pos.ScreenX())
-	y := uint(e.pos.ScreenY())
+	y := uint(e.pos.ScreenY()) + e.stickyTopBarHeight()
 	e.pos.mut.RUnlock()
 
 	c.ShowCursor()
@@ -150,7 +150,7 @@ func (e *Editor) RepositionCursorIfNeeded(c *vt.Canvas) {
 	// Redraw the cursor, if needed
 	e.pos.mut.RLock()
 	x := e.pos.ScreenX()
-	y := e.pos.ScreenY()
+	y := e.pos.ScreenY() + int(e.stickyTopBarHeight())
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
@@ -170,12 +170,13 @@ func (e *Editor) HideCursorDrawLines(c *vt.Canvas, respectOffset, redrawCanvas, 
 
 	// TODO: Use a channel for queuing up calls to the package to avoid race conditions
 
-	h := int(c.Height())
+	h := int(c.Height()) - e.stickyBarRows()
+	cy := e.stickyTopBarHeight()
 	if respectOffset {
 		offsetY := e.pos.OffsetY()
-		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
+		e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, cy, shouldHighlightCurrentLine, hideCursorWhenDrawing)
 	} else {
-		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
+		e.WriteLines(c, LineIndex(0), LineIndex(h), 0, cy, shouldHighlightCurrentLine, hideCursorWhenDrawing)
 	}
 	if redrawCanvas {
 		c.HideCursorAndRedraw()
@@ -210,7 +211,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		e.bookTextModeRender(c)
 		// status.Draw owns the bottom row in text book mode and paints
 		// the heading / line-position / word-count slots itself, or
-		// centres a pending message. stickyStatusBar is honoured inside Draw.
+		// centres a pending message. stickyStatusBars is honoured inside Draw.
 		status.Draw(c, e.pos.OffsetY())
 		c.HideCursorAndDraw()
 		e.redraw.Store(false)
@@ -231,20 +232,34 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	} else if e.bookMode.Load() {
 		status.NanoInfo(c, e)
-	} else if e.stickyStatusBar {
-		status.ShowFilenameLineColWordCount(c, e)
-	} else if status.IsError() {
-		status.Show(c, e)
+	} else {
+		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {
+			msg := status.Message()
+			e.drawStickyTopBar(c, msg)
+			e.drawStickyBottomBar(c, msg)
+		}
+		if !e.stickyBarsHandleStatus() && status.IsError() {
+			status.Show(c, e)
+		}
 	}
 
 	if msg := status.messageAfterRedraw; len(msg) > 0 {
-		status.Clear(c, false)
-		status.SetMessage(msg)
-		status.messageAfterRedraw = ""
-		status.Show(c, e)
+		if e.stickyBarsHandleStatus() {
+			// The bars will pick up the message on the next redraw
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			e.redraw.Store(true)
+		} else {
+			status.Clear(c, false)
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			status.Show(c, e)
+		}
 	}
 
-	e.WriteCurrentFunctionName(c) // not drawing immediately
+	if e.stickyTopBarHeight() == 0 {
+		e.WriteCurrentFunctionName(c) // not drawing immediately
+	}
 
 	// Draw the function description if function description mode is enabled
 	if ollama.Loaded() {
@@ -261,10 +276,11 @@ func (e *Editor) updateCanvasLines(c *vt.Canvas, shouldHighlightCurrentLine bool
 	if c == nil {
 		return
 	}
-	h := int(c.Height())
+	h := int(c.Height()) - e.stickyBarRows()
+	cy := e.stickyTopBarHeight()
 	offsetY := e.pos.OffsetY()
 	const hideCursorWhenDrawing = false
-	e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, 0, shouldHighlightCurrentLine, hideCursorWhenDrawing)
+	e.WriteLines(c, LineIndex(offsetY), LineIndex(h+offsetY), 0, cy, shouldHighlightCurrentLine, hideCursorWhenDrawing)
 }
 
 // RedrawAtEndOfKeyLoop is called after each main loop
@@ -319,7 +335,8 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 
 		// Draw the function name if drawFuncName is set and Nano mode is not enabled.
 		// Also redraw while Ollama is thinking, so the upper-right indicator is not lost on redraw.
-		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() {
+		// Skip when the sticky top bar is active — the function name is shown there instead.
+		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() && e.stickyTopBarHeight() == 0 {
 			e.WriteCurrentFunctionName(c) // not drawing immediately
 			e.drawFuncName.Store(false)
 		}
@@ -341,20 +358,32 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		status.Show(c, e)
 	} else if e.bookMode.Load() {
 		status.NanoInfo(c, e)
-	} else if e.stickyStatusBar {
-		status.ShowFilenameLineColWordCount(c, e)
-	} else if status.IsError() {
-		// Show the status message, if *statusMessage is not set
-		if status.messageAfterRedraw == "" {
-			status.Show(c, e)
+	} else {
+		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {
+			msg := status.Message()
+			e.drawStickyTopBar(c, msg)
+			e.drawStickyBottomBar(c, msg)
+			c.Draw()
+		}
+		if !e.stickyBarsHandleStatus() && status.IsError() {
+			// Show the status message, if *statusMessage is not set
+			if status.messageAfterRedraw == "" {
+				status.Show(c, e)
+			}
 		}
 	}
 
 	if msg := status.messageAfterRedraw; len(msg) > 0 {
-		status.Clear(c, false)
-		status.SetMessage(msg)
-		status.messageAfterRedraw = ""
-		status.Show(c, e)
+		if e.stickyBarsHandleStatus() {
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			e.redraw.Store(true)
+		} else {
+			status.Clear(c, false)
+			status.SetMessage(msg)
+			status.messageAfterRedraw = ""
+			status.Show(c, e)
+		}
 	}
 
 	if e.blockMode {
