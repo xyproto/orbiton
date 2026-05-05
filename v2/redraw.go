@@ -210,7 +210,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		e.bookTextModeRender(c)
 		// status.Draw owns the bottom row in text book mode and paints
 		// the heading / line-position / word-count slots itself, or
-		// centres a pending message. statusMode is honoured inside Draw.
+		// centres a pending message. stickyStatusBar is honoured inside Draw.
 		status.Draw(c, e.pos.OffsetY())
 		c.HideCursorAndDraw()
 		e.redraw.Store(false)
@@ -231,7 +231,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		status.Show(c, e)
 	} else if e.bookMode.Load() {
 		status.NanoInfo(c, e)
-	} else if e.statusMode {
+	} else if e.stickyStatusBar {
 		status.ShowFilenameLineColWordCount(c, e)
 	} else if status.IsError() {
 		status.Show(c, e)
@@ -341,7 +341,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		status.Show(c, e)
 	} else if e.bookMode.Load() {
 		status.NanoInfo(c, e)
-	} else if e.statusMode {
+	} else if e.stickyStatusBar {
 		status.ShowFilenameLineColWordCount(c, e)
 	} else if status.IsError() {
 		// Show the status message, if *statusMessage is not set

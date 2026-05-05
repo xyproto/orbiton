@@ -64,13 +64,13 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 	// heading on the left (echoing the upper-right function name in
 	// regular code mode), the pending status message (if any) centred,
 	// and a combined "L of T · NN%" slot on the right. The upper-right
-	// of the top bar shows the running word count. When statusMode is
+	// of the top bar shows the running word count. When stickyStatusBar is
 	// set the side slots are suppressed, matching the graphical
 	// book-mode bar.
 	if sb.editor.bookTextMode() {
 		e := sb.editor
 		slots := bookBarSlots{center: sb.msg}
-		if !e.statusMode {
+		if !e.stickyStatusBar {
 			sep := " · "
 			if useASCII {
 				sep = " | "
@@ -190,7 +190,7 @@ func (sb *StatusBar) Clear(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 	// Just clear the state; bookModeRenderAll at the end of the key loop
 	// will render the updated status bar as part of the full frame.
 	if sb.editor.bookGraphicalMode() {
-		bookModeSetStatusMsg("")
+		bookSetTemporaryStatusMsg("")
 		return
 	}
 
@@ -236,7 +236,7 @@ func (sb *StatusBar) ClearAll(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 	// Just clear the state; bookModeRenderAll at the end of the key loop
 	// will render the updated status bar as part of the full frame.
 	if sb.editor.bookGraphicalMode() {
-		bookModeSetStatusMsg("")
+		bookSetTemporaryStatusMsg("")
 		return
 	}
 
@@ -279,7 +279,7 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 			if isErr {
 				dur *= 3
 			}
-			bookModeSetStatusMsg(msg)
+			bookSetTemporaryStatusMsg(msg)
 			redrawMutex.Lock()
 			sb.editor.bookModeFullFrame(c)
 			redrawMutex.Unlock()
@@ -294,7 +294,7 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 				if bookStatusClearGen.Load() != myGen {
 					return
 				}
-				bookModeSetStatusMsg("")
+				bookSetTemporaryStatusMsg("")
 				mut.Lock()
 				sb.msg = ""
 				sb.isError = false

@@ -141,7 +141,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// emulate Nano?
 	e.nanoMode.Store(nanoMode)
 	if nanoMode {
-		e.statusMode = true
+		e.stickyStatusBar = true
 	}
 
 	// We wish to redraw the canvas and reposition the cursor
@@ -726,7 +726,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.syntaxHighlight = false
 		e.wrapWidth = 72
 		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
-		e.statusMode = true
+		e.stickyStatusBar = true
 		e.bookSavedLocalX = -1
 		// The book dark/light auto-detect is deferred until after the final theme is chosen in NewEditor's
 		// themeWasSet block, so it can follow O_THEME and the executable-letter theme too, not just the

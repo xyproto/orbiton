@@ -2221,7 +2221,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			if e.bookMode.Load() { // book mode: toggle word-statistics display
-				e.statusMode = !e.statusMode
+				e.stickyStatusBar = !e.stickyStatusBar
 				if e.bookGraphicalMode() {
 					// Invalidate cached content so it re-renders at the new height
 					bookContentCache = nil
@@ -2241,7 +2241,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.bookModeEnsureCursorVisible(c)
 					vt.BeginSyncUpdate()
 					e.bookTextModeRender(c)
-					if !e.statusMode {
+					if !e.stickyStatusBar {
 						status.Draw(c, 0)
 					}
 					c.HideCursorAndDraw()
@@ -2324,8 +2324,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				} else {
 					// Toggle status bar (for non-programming languages or when at/before start of text), when not on include lines
 					status.ClearAll(c, false)
-					e.statusMode = !e.statusMode
-					if e.statusMode {
+					e.stickyStatusBar = !e.stickyStatusBar
+					if e.stickyStatusBar {
 						status.ShowFilenameLineColWordCount(c, e)
 						e.showColumnLimit = e.wrapWhenTyping
 					}
@@ -3069,7 +3069,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Clear status line, if needed
-		if (e.statusMode || e.blockMode) && e.redrawCursor.Load() {
+		if (e.stickyStatusBar || e.blockMode) && e.redrawCursor.Load() {
 			status.ClearAll(c, false)
 		}
 
@@ -3100,7 +3100,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 		}
 
-		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.statusMode && notEmptyLine && !e.debugMode {
+		if (e.highlightCurrentLine || e.highlightCurrentText) && !e.stickyStatusBar && notEmptyLine && !e.debugMode {
 			// When not moving up or down, turn off the text highlight after arrowHighlightTime
 			if status.messageAfterRedraw == "" && justMovedByKeypress {
 				go func() {
