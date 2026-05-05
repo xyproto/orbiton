@@ -997,105 +997,30 @@ func (e *Editor) bookCurrentHeading(line LineIndex) string {
 	return ""
 }
 
-// bookBarSlots holds the three text slots that make up a text book-mode
-// bar row. Empty strings are treated as "no slot" so the surrounding
-// slots can use the freed space.
-type bookBarSlots struct {
-	left, center, right string
-}
-
-// drawBookBar paints a text book-mode bar row at y. Side slots are
-// dim-foreground and capped at roughly a third of the bar width each so
-// neither can crowd out the others; the centre slot uses the primary
-// foreground and is truncated (with an ellipsis) when it would overlap
-// a side slot. Empty slots are simply omitted. This is the shared
-// painter for drawBookTopBar and the text-book branch of StatusBar.Draw,
-// so changing the layout of either bar is a matter of constructing the
-// right bookBarSlots value.
-//
-// Degrades gracefully:
-//   - NO_COLOR / TERM=vt100 → no colours; bar text in the terminal default.
-//   - TERM=xterm*           → colour tier chosen by bookBarPalette.
-func (e *Editor) drawBookBar(c *vt.Canvas, y uint, w int, slots bookBarSlots) {
-	if w <= 0 {
-		return
-	}
+// bookBarStyle returns the barStyle used by text book-mode bars.
+func (e *Editor) bookBarStyle() barStyle {
 	fg, dimFg, bg := bookBarPalette(e.bookDarkMode)
-	c.Write(0, y, fg, bg, strings.Repeat(" ", w))
-
-	const pad = 2
-	ellipsis := "…"
-	if useASCII {
-		ellipsis = "..."
+	return barStyle{
+		fg:    fg,
+		dimFg: dimFg,
+		bg:    bg,
+		pad:   2,
 	}
-	truncate := func(s string, maxLen int) string {
-		if maxLen <= 0 || len(s) > maxLen && maxLen <= len(ellipsis) {
-			return ""
-		}
-		if len(s) <= maxLen {
-			return s
-		}
-		return s[:maxLen-len(ellipsis)] + ellipsis
-	}
-
-	sideMax := w/3 - pad
-	left := truncate(slots.left, sideMax)
-	right := truncate(slots.right, sideMax)
-	leftLen, rightLen := len(left), len(right)
-	rightStart := w - pad - rightLen
-
-	if leftLen > 0 {
-		c.Write(uint(pad), y, dimFg, bg, left)
-	}
-	if rightLen > 0 {
-		c.Write(uint(rightStart), y, dimFg, bg, right)
-	}
-
-	if slots.center == "" {
-		return
-	}
-	leftBound := pad
-	if leftLen > 0 {
-		leftBound = pad + leftLen + 1
-	}
-	rightBound := w
-	if rightLen > 0 {
-		rightBound = rightStart - 1
-	}
-	center := truncate(slots.center, rightBound-leftBound)
-	if center == "" {
-		return
-	}
-	cx := max((w-len(center))/2, leftBound)
-	if cx+len(center) > rightBound {
-		cx = max(rightBound-len(center), leftBound)
-	}
-	c.Write(uint(cx), y, fg, bg, center)
 }
 
 // drawBookTopBar paints the text book-mode top bar on row 0 using the
 // stickyTopBarFormat (or the book text mode default). The expanded format
 // is split on <-> into left/center/right slots and drawn with book colors.
 func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
+	if !e.stickyStatusBars {
+		return
+	}
 	format := e.stickyTopBarFormat
 	if format == "" {
 		format, _ = e.defaultStickyBarFormats()
 	}
 	text := e.expandStatusBarFormat(format, "")
-	parts := strings.Split(text, "<->")
-	var slots bookBarSlots
-	switch len(parts) {
-	case 1:
-		slots.center = strings.TrimSpace(parts[0])
-	case 2:
-		slots.left = strings.TrimSpace(parts[0])
-		slots.right = strings.TrimSpace(parts[1])
-	default:
-		slots.left = strings.TrimSpace(parts[0])
-		slots.center = strings.TrimSpace(parts[1])
-		slots.right = strings.TrimSpace(parts[2])
-	}
-	e.drawBookBar(c, 0, w, slots)
+	e.drawBar(c, 0, w, text, e.bookBarStyle())
 }
 
 // extractImgSrc extracts the src attribute value from an <img ...> tag.
