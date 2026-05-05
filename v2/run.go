@@ -95,11 +95,17 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			// standalone file: use the temporary Gleam project
 			gleamTmpDir := filepath.Join(userCacheDir, "o", "gleam")
-			os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755)
+			if err := os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755); err != nil {
+				return "", false, err
+			}
 			gleamToml := "name = \"main\"\nversion = \"0.1.0\"\n\n[dependencies]\ngleam_stdlib = \">= 0.44.0 and < 2.0.0\"\n"
-			os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644)
-			if data, err := os.ReadFile(sourceFilename); err == nil {
-				os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644)
+			if err := os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644); err != nil {
+				return "", false, err
+			}
+			if data, err := os.ReadFile(sourceFilename); err != nil {
+				return "", false, err
+			} else if err := os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644); err != nil {
+				return "", false, err
 			}
 			cmd.Dir = gleamTmpDir
 		}
