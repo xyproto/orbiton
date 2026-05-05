@@ -357,6 +357,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 	e.SetTheme(e.Theme)
 
+	// Re-enable sticky status bars after the theme has been (re-)applied,
+	// since SetTheme overwrites the flag with the theme's default.
+	if e.bookMode.Load() && bookModeFlag {
+		e.stickyStatusBars = true
+	}
+
 	// ctrl-c, USR1 and terminal resize handlers
 	const onlyClearSignals = false
 	e.SetUpSignalHandlers(c, tty, status, onlyClearSignals)
