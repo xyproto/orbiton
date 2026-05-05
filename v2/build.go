@@ -435,14 +435,20 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		}
 		// standalone file: create a temporary Gleam project
 		gleamTmpDir := filepath.Join(userCacheDir, "o", "gleam")
-		os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755)
+		if err := os.MkdirAll(filepath.Join(gleamTmpDir, "src"), 0o755); err != nil {
+			return cmd, nothingIsFine, err
+		}
 		gleamToml := "name = \"main\"\nversion = \"0.1.0\"\n\n[dependencies]\ngleam_stdlib = \">= 0.44.0 and < 2.0.0\"\n"
-		os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644)
+		if err := os.WriteFile(filepath.Join(gleamTmpDir, "gleam.toml"), []byte(gleamToml), 0o644); err != nil {
+			return cmd, nothingIsFine, err
+		}
 		data, err := os.ReadFile(sourceFilename)
 		if err != nil {
 			return cmd, nothingIsFine, err
 		}
-		os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644)
+		if err := os.WriteFile(filepath.Join(gleamTmpDir, "src", "main.gleam"), data, 0o644); err != nil {
+			return cmd, nothingIsFine, err
+		}
 		cmd.Dir = gleamTmpDir
 		return cmd, everythingIsFine, nil
 	case mode.Rust:
