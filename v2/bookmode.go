@@ -256,11 +256,8 @@ var (
 	// actually clears + re-renders after the timeout.
 	bookStatusClearGen atomic.Uint64
 
-	// bookImgRedrawGen coalesces redraw requests from image download
-	// goroutines: each completed download bumps the counter and schedules
-	// a short delay; only the freshest goroutine sets the flag, so
-	// multiple images arriving together produce a single redraw.
-	bookImgRedrawGen  atomic.Uint64
+	// bookImgNeedRedraw is set when an image download completes and the
+	// page should be redrawn.
 	bookImgNeedRedraw atomic.Bool
 
 	// bookPNGEncoder and bookPNGBuf are reused across frames to avoid
@@ -2196,16 +2193,10 @@ func bookLoadImage(absPath string) image.Image {
 			// Invalidate the content cache so the next frame includes
 			// the newly-available image
 			bookBumpContentGen()
-			// Schedule a coalesced redraw so the image appears without
-			// waiting for a keypress. Multiple downloads completing in
-			// quick succession produce only a single redraw.
-			thisGen := bookImgRedrawGen.Add(1)
-			go func() {
-				time.Sleep(100 * time.Millisecond)
-				if thisGen == bookImgRedrawGen.Load() {
-					bookImgNeedRedraw.Store(true)
-				}
-			}()
+			// Signal a redraw so the image appears without waiting
+			// for a keypress. The 200ms read timeout in the key loop
+			// naturally coalesces multiple downloads.
+			bookImgNeedRedraw.Store(true)
 		}(absPath)
 		return nil
 	}
