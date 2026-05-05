@@ -32,15 +32,12 @@ func smartTrimSearch(s string) string {
 // searchContains checks if haystack contains needle, using case-insensitive
 // comparison for non-programming-language modes.
 func (e *Editor) searchContains(haystack, needle string) bool {
-	if !ProgrammingLanguage(e.mode) {
-		return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle))
-	}
-	return strings.Contains(haystack, needle)
+	return e.searchFind(haystack, needle) >= 0
 }
 
-// searchIndex returns the byte index of needle in haystack, using case-insensitive
-// comparison for non-programming-language modes.
-func (e *Editor) searchIndex(haystack, needle string) int {
+// searchFind returns the byte index of needle in haystack (-1 if not found),
+// using case-insensitive comparison for non-programming-language modes.
+func (e *Editor) searchFind(haystack, needle string) int {
 	if !ProgrammingLanguage(e.mode) {
 		return strings.Index(strings.ToLower(haystack), strings.ToLower(needle))
 	}
@@ -94,12 +91,13 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 
 	// run the search in a separate goroutine
 	caseInsensitive := !ProgrammingLanguage(e.mode)
+	lowerS := strings.ToLower(s)
 	go func() {
 		for y := e.DataY(); y < LineIndex(e.Len()); y++ {
 			line := e.Line(y)
 			found := false
 			if caseInsensitive {
-				found = strings.Contains(strings.ToLower(line), strings.ToLower(s))
+				found = strings.Contains(strings.ToLower(line), lowerS)
 			} else {
 				found = strings.Contains(line, s)
 			}
@@ -194,14 +192,14 @@ func (e *Editor) forwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex)
 			if byteOffset >= len(lineContents) {
 				continue
 			}
-			if e.searchContains(lineContents[byteOffset:], s) {
-				foundX = byteOffset + e.searchIndex(lineContents[byteOffset:], s)
+			if idx := e.searchFind(lineContents[byteOffset:], s); idx >= 0 {
+				foundX = byteOffset + idx
 				foundY = y
 				break
 			}
 		} else {
-			if e.searchContains(lineContents, s) {
-				foundX = e.searchIndex(lineContents, s)
+			if idx := e.searchFind(lineContents, s); idx >= 0 {
+				foundX = idx
 				foundY = y
 				break
 			}
@@ -245,14 +243,14 @@ func (e *Editor) backwardSearch(startIndex, stopIndex LineIndex) (int, LineIndex
 			if byteOffset >= len(lineContents) {
 				continue
 			}
-			if e.searchContains(lineContents[byteOffset:], s) {
-				foundX = byteOffset + e.searchIndex(lineContents[byteOffset:], s)
+			if idx := e.searchFind(lineContents[byteOffset:], s); idx >= 0 {
+				foundX = byteOffset + idx
 				foundY = y
 				break
 			}
 		} else {
-			if e.searchContains(lineContents, s) {
-				foundX = e.searchIndex(lineContents, s)
+			if idx := e.searchFind(lineContents, s); idx >= 0 {
+				foundX = idx
 				foundY = y
 				break
 			}
