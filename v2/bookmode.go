@@ -1073,20 +1073,29 @@ func (e *Editor) drawBookBar(c *vt.Canvas, y uint, w int, slots bookBarSlots) {
 	c.Write(uint(cx), y, fg, bg, center)
 }
 
-// drawBookTopBar paints the text book-mode top bar on row 0: the filename
-// (basename) is centred so the writer always has a reminder of the document
-// they are working on, and the running word count is shown on the right.
-// The matching bottom bar (see StatusBar.Draw) carries the current heading,
-// line position and scroll percentage.
+// drawBookTopBar paints the text book-mode top bar on row 0 using the
+// stickyTopBarFormat (or the book text mode default). The expanded format
+// is split on <-> into left/center/right slots and drawn with book colors.
 func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
-	base := filepath.Base(e.filename)
-	if base == "" || base == "." {
-		base = "untitled"
+	format := e.stickyTopBarFormat
+	if format == "" {
+		format, _ = e.defaultStickyBarFormats()
 	}
-	e.drawBookBar(c, 0, w, bookBarSlots{
-		center: base,
-		right:  fmt.Sprintf("%d words", e.WordCount()),
-	})
+	text := e.expandStatusBarFormat(format, "")
+	parts := strings.Split(text, "<->")
+	var slots bookBarSlots
+	switch len(parts) {
+	case 1:
+		slots.center = strings.TrimSpace(parts[0])
+	case 2:
+		slots.left = strings.TrimSpace(parts[0])
+		slots.right = strings.TrimSpace(parts[1])
+	default:
+		slots.left = strings.TrimSpace(parts[0])
+		slots.center = strings.TrimSpace(parts[1])
+		slots.right = strings.TrimSpace(parts[2])
+	}
+	e.drawBookBar(c, 0, w, slots)
 }
 
 // extractImgSrc extracts the src attribute value from an <img ...> tag.
@@ -1301,6 +1310,23 @@ func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
 		return fs.italic
 	}
 	return fs.regular
+}
+
+// stableDigitString returns s with every ASCII digit replaced by "0". This
+// produces a string whose pixel width (in a proportional font) represents the
+// maximum width the original string can have, since "0" is typically the
+// widest digit. Used to compute fixed column positions for status bar fields.
+func stableDigitString(s string) string {
+	var b strings.Builder
+	b.Grow(len(s))
+	for _, r := range s {
+		if r >= '1' && r <= '9' {
+			b.WriteByte('0')
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 // drawString renders text at (x, baselineY) using face and returns the new X.
@@ -4632,70 +4658,111 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	sbAscent := faceAscent(fs.statusBar, fs.statusBarSize)
 	baseline := (statusPixH+sbAscent)/2 + 1
 
-	// A centered message takes over the whole bar.
-	if msg := bookGetTemporaryStatusMsg(); msg != "" {
-		text := strings.TrimSpace(msg)
-		d := &font.Drawer{Face: fs.statusBar}
-		w := d.MeasureString(text).Round()
-		x := max((pixW-w)/2, 8)
-		drawString(img, fs.statusBar, x, baseline, text, textClr)
+	// When stats are hidden and no message is pending, the bar is empty.
+	statusMsg := strings.TrimSpace(bookGetTemporaryStatusMsg())
+	if !e.stickyStatusBars && statusMsg == "" {
 		return img
 	}
 
-	// No status bar content when stats are hidden and no message is pending.
-	if !e.stickyStatusBars {
-		return img
+	// Use the format string to produce the bar text, passing any pending
+	// status message so [[...]] blocks can show it.
+	format := e.stickyBottomBarFormat
+	if format == "" {
+		_, format = e.defaultStickyBarFormats()
+	}
+	text := e.expandStatusBarFormat(format, statusMsg, true)
+
+	// Split on <-> into left / center / right segments.
+	parts := strings.Split(text, "<->")
+	var leftText, centerText, rightText string
+	switch len(parts) {
+	case 1:
+		centerText = strings.TrimSpace(parts[0])
+	case 2:
+		leftText = strings.TrimSpace(parts[0])
+		rightText = strings.TrimSpace(parts[1])
+	default:
+		leftText = strings.TrimSpace(parts[0])
+		centerText = strings.TrimSpace(parts[1])
+		rightText = strings.TrimSpace(parts[2])
 	}
 
-	_, lineNumber, lastLineNumber := e.PLA()
-	// Reading progress: 0% at the very top, 100% at the very bottom.
-	// Using the raw line / lastLine ratio would show 16% on line 1 of 6.
-	percentage := bookReadingPercent(lineNumber, lastLineNumber)
-
-	// Left half: cursor position — fixed-width so digits don't shift the
-	// surrounding labels as the cursor moves. The widths (5 / 4) are chosen
-	// to cover documents up to 99 999 lines and 9999 columns comfortably;
-	// longer values still render correctly, they just push the separator.
-	leftText := fmt.Sprintf("Line %5d of %-5d   Col %4d",
-		int(lineNumber), int(lastLineNumber), e.ColNumber())
-
-	// Right half: enhanced document stats with more useful information
-	words := e.WordCount()
-	// Estimate reading time: ~200 words per minute
-	readingTimeMinutes := words / 200
-	var rightText string
-	if readingTimeMinutes > 0 {
-		rightText = fmt.Sprintf("Words %6d   ~%d min   %3d%%", words, readingTimeMinutes, percentage)
-	} else {
-		rightText = fmt.Sprintf("Words %6d   %3d%%", words, percentage)
-	}
-
-	// Draw left, left-anchored with a small padding.
 	marginX := 16
-	drawString(img, fs.statusBar, marginX, baseline, leftText, textClr)
 
-	// Draw right, right-anchored.
-	dRight := &font.Drawer{Face: fs.statusBar}
-	rightW := dRight.MeasureString(rightText).Round()
-	drawString(img, fs.statusBar, pixW-marginX-rightW, baseline, rightText, textClr)
+	// drawColumns draws column-separated text ({|} tokens) at stable pixel
+	// positions. Each column is measured with all digits replaced by "0"
+	// (the widest digit in most fonts), so changing digit values do not
+	// shift adjacent columns. anchor is the starting X pixel position;
+	// rightToLeft controls the drawing direction.
+	colGap := (&font.Drawer{Face: fs.statusBar}).MeasureString("   ").Round()
+	measureStable := func(s string) int {
+		stable := stableDigitString(s)
+		return (&font.Drawer{Face: fs.statusBar}).MeasureString(stable).Round()
+	}
+	measureActual := func(s string) int {
+		return (&font.Drawer{Face: fs.statusBar}).MeasureString(s).Round()
+	}
 
-	// Draw a small center crumb: the basename of the current file, dimmed,
-	// so the user always has a reminder of what they're editing. We only
-	// show it when there's room between the left and right halves.
-	dLeft := &font.Drawer{Face: fs.statusBar}
-	leftW := dLeft.MeasureString(leftText).Round()
-	leftEnd := marginX + leftW
-	rightStart := pixW - marginX - rightW
-	if rightStart-leftEnd > 80 && e.filename != "" {
-		base := e.filename
-		if i := strings.LastIndexAny(base, "/\\"); i >= 0 {
-			base = base[i+1:]
+	// drawColumnsLTR draws columns left-to-right from anchor x.
+	// Returns the x position after the last column.
+	drawColumnsLTR := func(text string, anchor int, clr color.Color) int {
+		cols := strings.Split(text, "{|}")
+		x := anchor
+		for _, col := range cols {
+			col = strings.TrimSpace(col)
+			if col == "" {
+				continue
+			}
+			drawString(img, fs.statusBar, x, baseline, col, clr)
+			x += measureStable(col) + colGap
 		}
-		dCenter := &font.Drawer{Face: fs.statusBar}
-		cw := dCenter.MeasureString(base).Round()
+		return x
+	}
+
+	// drawColumnsRTL draws columns right-to-left ending at anchor x.
+	// Returns the x position of the leftmost column's left edge.
+	drawColumnsRTL := func(text string, anchor int, clr color.Color) int {
+		cols := strings.Split(text, "{|}")
+		x := anchor
+		for i := len(cols) - 1; i >= 0; i-- {
+			col := strings.TrimSpace(cols[i])
+			if col == "" {
+				continue
+			}
+			sw := measureStable(col)
+			aw := measureActual(col)
+			// Right-align the actual text within the stable-width box.
+			drawString(img, fs.statusBar, x-sw+(sw-aw), baseline, col, clr)
+			x -= sw + colGap
+		}
+		return x
+	}
+
+	// Draw left segment, left-anchored.
+	leftEnd := marginX
+	if leftText != "" {
+		leftEnd = drawColumnsLTR(leftText, marginX, textClr)
+	}
+
+	// Draw right segment, right-anchored.
+	rightStart := pixW - marginX
+	if rightText != "" {
+		rightStart = drawColumnsRTL(rightText, pixW-marginX, textClr)
+	}
+
+	// Draw center, centered and dimmed. Only shown when there is room
+	// between the left and right segments.
+	if centerText != "" {
+		cw := measureActual(centerText)
 		cx := (pixW - cw) / 2
+		// Use dimClr for the center slot unless there is no left/right
+		// (in which case it is the only content and should be prominent).
+		clr := dimClr
+		if leftText == "" && rightText == "" {
+			clr = textClr
+		}
 		if cx-leftEnd >= 20 && rightStart-(cx+cw) >= 20 {
-			drawString(img, fs.statusBar, cx, baseline, base, dimClr)
+			drawString(img, fs.statusBar, cx, baseline, centerText, clr)
 		}
 	}
 

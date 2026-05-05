@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -71,25 +72,28 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	msgX := max((w-len(sb.msg))/2, 0)
 
-	// In text book mode drawBookBar owns the bottom row: the current
-	// heading on the left (echoing the upper-right function name in
-	// regular code mode), the pending status message (if any) centered,
-	// and a combined "L of T · NN%" slot on the right. The upper-right
-	// of the top bar shows the running word count. When stickyStatusBars is
-	// set the side slots are suppressed, matching the graphical
-	// book-mode bar.
+	// In text book mode the bottom bar uses stickyBottomBarFormat (or
+	// the book text mode default). The status message, if any, is passed
+	// through [[...]] fields in the format string.
 	if sb.editor.bookTextMode() {
 		e := sb.editor
-		slots := bookBarSlots{center: sb.msg}
-		if !e.stickyStatusBars {
-			sep := " · "
-			if useASCII {
-				sep = " | "
-			}
-			lastLineNumber := e.Len()
-			percentage := bookReadingPercent(e.LineNumber(), LineNumber(lastLineNumber))
-			slots.left = e.bookCurrentHeading(e.DataY())
-			slots.right = fmt.Sprintf("%d of %d%s%d%%", e.LineNumber(), lastLineNumber, sep, percentage)
+		format := e.stickyBottomBarFormat
+		if format == "" {
+			_, format = e.defaultStickyBarFormats()
+		}
+		text := e.expandStatusBarFormat(format, sb.msg)
+		parts := strings.Split(text, "<->")
+		var slots bookBarSlots
+		switch len(parts) {
+		case 1:
+			slots.center = strings.TrimSpace(parts[0])
+		case 2:
+			slots.left = strings.TrimSpace(parts[0])
+			slots.right = strings.TrimSpace(parts[1])
+		default:
+			slots.left = strings.TrimSpace(parts[0])
+			slots.center = strings.TrimSpace(parts[1])
+			slots.right = strings.TrimSpace(parts[2])
 		}
 		e.drawBookBar(c, h, w, slots)
 		mut.Lock()
@@ -498,8 +502,12 @@ func (e *Editor) IndentationDescription() string {
 // format strings for the current editor mode.
 func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 	switch {
-	case e.bookGraphicalMode(), e.bookTextMode():
-		return "", ""
+	case e.bookTextMode():
+		return "<->{{filename}}<->{{word_count}} words",
+			"{{funcname}}<->[[line {{linenr}} of {{total_lines}}]]<->{{book_percentage}}"
+	case e.bookGraphicalMode():
+		return "", // the graphical book mode has no top bar
+			"Line {{linenr:5}} of {{total_lines:-5}}   Col {{col:4}}<->[[{{filename}}]]<->Words {{word_count:6}}{|}{{est_reading_time}}{|}{{book_percentage:4}}"
 	default: // regular mode
 		return "<-><->{{funcname}}",
 			"{{filename}}<->[[line {{linenr}} of {{total_lines}}]]<->{{mode}} [{{indentation}}]"
@@ -513,19 +521,37 @@ func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 //	{{mode}}              - file mode / language (e.g. "Go", "Markdown")
 //	{{linenr}}            - current line number (1-based)
 //	{{colnr}}             - current column number
+//	{{col}}               - alias for {{colnr}}
 //	{{total_lines}}       - total number of lines in the document
 //	{{scroll_percentage}} - vertical scroll position as "NN%"
+//	{{book_percentage}}   - reading progress as "NN%" (0% at top, 100% at bottom)
 //	{{indentation}}       - "tabs" or "spaces"
 //	{{funcname}}          - current function name or heading
 //	{{word_count}}        - total word count of the document
+//	{{est_reading_time}}  - estimated reading time (e.g. "~3 min")
+//
+// Fields support an optional width specifier: {{field:width}}. A positive
+// width right-aligns (pads with leading spaces), a negative width
+// left-aligns (pads with trailing spaces). For example {{linenr:5}} pads
+// the line number to 5 characters, right-aligned. In proportional-font
+// mode, padding uses U+2007 FIGURE SPACE for stable column widths.
 //
 // Using [[...]] instead of {{...}} shows the current status message
 // when one is active, falling back to the enclosed content otherwise.
 // The content inside [[...]] may itself contain {{field}} placeholders.
 //
+// The token {|} acts as a column separator within a segment. In terminal
+// mode it becomes spaces. In graphical (proportional font) mode the
+// pixel-based renderer positions each column independently so that
+// variable-width digits in one column do not shift adjacent columns.
+//
 // The special token <-> separates the result into left, center and right
 // segments (1 separator = left | right, 2 = left | center | right).
-func (e *Editor) expandStatusBarFormat(format, statusMsg string) string {
+//
+// When proportional is true, width padding uses U+2007 FIGURE SPACE instead
+// of regular spaces so that columns stay aligned in proportional fonts.
+func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ...bool) string {
+	useFigureSpace := len(proportional) > 0 && proportional[0]
 	// Resolve {{funcname}}
 	funcName := ""
 	if ProgrammingLanguage(e.mode) || e.mode == mode.GoAssembly || e.mode == mode.Assembly {
@@ -535,21 +561,60 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string) string {
 	}
 
 	percentage, lineNumber, lastLineNumber := e.PLA()
+	bookPct := bookReadingPercent(lineNumber, lastLineNumber)
+	colNr := fmt.Sprintf("%d", e.ColNumber())
+	words := e.WordCount()
+	readingTime := ""
+	if minutes := words / 200; minutes > 0 {
+		readingTime = fmt.Sprintf("~%d min", minutes)
+	}
 	fields := map[string]string{
 		"filename":          e.filename,
 		"mode":              e.mode.String(),
 		"linenr":            fmt.Sprintf("%d", lineNumber),
-		"colnr":             fmt.Sprintf("%d", e.ColNumber()),
+		"colnr":             colNr,
+		"col":               colNr,
 		"total_lines":       fmt.Sprintf("%d", lastLineNumber),
 		"scroll_percentage": fmt.Sprintf("%d%%", percentage),
+		"book_percentage":   fmt.Sprintf("%d%%", bookPct),
 		"indentation":       e.IndentationDescription(),
 		"funcname":          funcName,
-		"word_count":        fmt.Sprintf("%d", e.WordCount()),
+		"word_count":        fmt.Sprintf("%d", words),
+		"est_reading_time":  readingTime,
 	}
 
-	// Replace {{field}} with the field value
+	// Replace {{field}} and {{field:width}} with the corresponding value.
+	// A width specifier pads the value: positive = right-align, negative =
+	// left-align (matching fmt.Sprintf behavior).
 	for name, value := range fields {
+		// Plain {{field}} replacement (most common path).
 		format = strings.ReplaceAll(format, "{{"+name+"}}", value)
+
+		// {{field:width}} replacement — scan for the prefix and parse the
+		// width from the characters between ":" and "}}".
+		prefix := "{{" + name + ":"
+		for {
+			idx := strings.Index(format, prefix)
+			if idx < 0 {
+				break
+			}
+			rest := format[idx+len(prefix):]
+			before, _, ok := strings.Cut(rest, "}}")
+			if !ok {
+				break
+			}
+			widthStr := before
+			width, err := strconv.Atoi(widthStr)
+			if err != nil {
+				break
+			}
+			padded := fmt.Sprintf("%*s", width, value)
+			if useFigureSpace {
+				padded = strings.ReplaceAll(padded, " ", "\u2007")
+			}
+			tag := prefix + widthStr + "}}"
+			format = format[:idx] + padded + format[idx+len(tag):]
+		}
 	}
 
 	// Replace [[...]] blocks: if a status message is active, the entire
@@ -573,6 +638,13 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string) string {
 		} else {
 			format = format[:start] + inner + format[end:]
 		}
+	}
+
+	// In terminal mode, column separators become regular spaces. In
+	// graphical (proportional font) mode they are left intact so the
+	// pixel-based renderer can position each column independently.
+	if !useFigureSpace {
+		format = strings.ReplaceAll(format, "{|}", "   ")
 	}
 
 	return format
