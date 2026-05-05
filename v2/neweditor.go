@@ -551,6 +551,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.bookDarkModeInitialized = true
 	}
 
+	// Re-enable sticky status bars after the theme has been applied, since
+	// SetTheme overwrites the flag with the theme's default (usually false).
+	if bookModeFlag {
+		e.stickyStatusBars = true
+	}
+
 	// Find the absolute path to this filename
 	absFilename := e.filename
 	if !fnord.stdin {

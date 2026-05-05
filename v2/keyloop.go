@@ -2232,18 +2232,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				} else {
 					// Text book mode: force a full canvas redraw so
 					// the status row is blanked (when hidden) or
-					// repainted white-on-blue (when shown). The
-					// graphical bookModeStatusBar path emits a
-					// Kitty/iTerm/Sixel image and doesn't belong
-					// here — calling it from text mode would paint
-					// a mismatched graphical status bar on top of
-					// the text-mode canvas.
+					// repainted (when shown).
 					e.bookModeEnsureCursorVisible(c)
 					vt.BeginSyncUpdate()
 					e.bookTextModeRender(c)
-					if !e.stickyStatusBars {
-						status.Draw(c, 0)
-					}
+					status.Draw(c, 0)
 					c.HideCursorAndDraw()
 					vt.EndSyncUpdate()
 					e.redrawCursor.Store(true)

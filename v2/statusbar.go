@@ -74,28 +74,17 @@ func (sb *StatusBar) Draw(c *vt.Canvas, offsetY int) {
 
 	// In text book mode the bottom bar uses stickyBottomBarFormat (or
 	// the book text mode default). The status message, if any, is passed
-	// through [[...]] fields in the format string.
-	if sb.editor.bookTextMode() {
+	// through [[...]] fields in the format string. When the bars are
+	// toggled off, skip the formatted bar and fall through to the normal
+	// centered-message path.
+	if sb.editor.bookTextMode() && sb.editor.stickyStatusBars {
 		e := sb.editor
 		format := e.stickyBottomBarFormat
 		if format == "" {
 			_, format = e.defaultStickyBarFormats()
 		}
 		text := e.expandStatusBarFormat(format, sb.msg)
-		parts := strings.Split(text, "<->")
-		var slots bookBarSlots
-		switch len(parts) {
-		case 1:
-			slots.center = strings.TrimSpace(parts[0])
-		case 2:
-			slots.left = strings.TrimSpace(parts[0])
-			slots.right = strings.TrimSpace(parts[1])
-		default:
-			slots.left = strings.TrimSpace(parts[0])
-			slots.center = strings.TrimSpace(parts[1])
-			slots.right = strings.TrimSpace(parts[2])
-		}
-		e.drawBookBar(c, h, w, slots)
+		e.drawBar(c, h, w, text, e.bookBarStyle())
 		mut.Lock()
 		sb.offsetY = offsetY
 		mut.Unlock()
@@ -333,8 +322,7 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 	// the bar reverts to showing the field value after the normal timeout.
 	if e.stickyBarsHandleStatus() {
 		msg := sb.Message()
-		e.drawStickyTopBar(c, msg)
-		e.drawStickyBottomBar(c, msg)
+		e.drawBothBars(c, msg)
 		c.Draw()
 		stickyBarsJustDrawn.Store(true)
 		mut.RLock()
@@ -444,8 +432,7 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 	// before the redraw loop picks it up.
 	if e.stickyBarsHandleStatus() {
 		msg := sb.Message()
-		e.drawStickyTopBar(c, msg)
-		e.drawStickyBottomBar(c, msg)
+		e.drawBothBars(c, msg)
 		c.Draw()
 		stickyBarsJustDrawn.Store(true)
 		return
@@ -503,7 +490,7 @@ func (e *Editor) IndentationDescription() string {
 func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 	switch {
 	case e.bookTextMode():
-		return "<->{{filename}}<->{{word_count}} words",
+		return "<->{{filename}}<->{{word_count}} words   {{est_reading_time}}",
 			"{{funcname}}<->[[line {{linenr}} of {{total_lines}}]]<->{{book_percentage}}"
 	case e.bookGraphicalMode():
 		return "", // the graphical book mode has no top bar
@@ -693,138 +680,60 @@ func (e *Editor) stickyBarsHandleStatus() bool {
 	return strings.Contains(top, "[[") || strings.Contains(bottom, "[[")
 }
 
-// drawStickyTopBar paints the sticky status bar at row 0 using the current
-// stickyTopBarFormat. The bar uses the editor's normal foreground and
-// background colors so it appears invisible, only the text is visible.
-//
-// The expanded format string is split on <-> into up to three segments
-// (left, center, right). With one <->, the text is split into left and
-// right. With two, it becomes left, center, right.
-func (e *Editor) drawStickyTopBar(c *vt.Canvas, statusMsg string) {
-	w := int(c.W())
-	if w <= 0 {
-		return
-	}
-
-	format := e.stickyTopBarFormat
-	if format == "" {
-		format, _ = e.defaultStickyBarFormats()
-	}
-	text := e.expandStatusBarFormat(format, statusMsg)
-
-	fg := e.TopRightForeground
-	bg := e.TopRightBackground
-
-	// Clear the row with the editor background so it is invisible
-	c.Write(0, 0, e.Foreground, e.Background, strings.Repeat(" ", w))
-
-	const pad = 1
-
-	ellipsis := "…"
-	if useASCII {
-		ellipsis = "..."
-	}
-	truncate := func(s string, maxLen int) string {
-		if maxLen <= 0 || (len(s) > maxLen && maxLen <= len(ellipsis)) {
-			return ""
-		}
-		if len(s) <= maxLen {
-			return s
-		}
-		return s[:maxLen-len(ellipsis)] + ellipsis
-	}
-
-	// Split on <-> to get left / center / right segments
-	parts := strings.Split(text, "<->")
-
-	var left, center, right string
-	switch len(parts) {
-	case 1:
-		center = strings.TrimSpace(parts[0])
-	case 2:
-		left = strings.TrimSpace(parts[0])
-		right = strings.TrimSpace(parts[1])
-	default: // 3+
-		left = strings.TrimSpace(parts[0])
-		center = strings.TrimSpace(parts[1])
-		right = strings.TrimSpace(parts[2])
-	}
-
-	sideMax := w/3 - pad
-	left = truncate(left, sideMax)
-	right = truncate(right, sideMax)
-
-	leftLen := len(left)
-	rightLen := len(right)
-	rightStart := w - pad - rightLen
-
-	if leftLen > 0 {
-		c.Write(uint(pad), 0, fg, bg, left)
-	}
-	if rightLen > 0 {
-		c.Write(uint(rightStart), 0, fg, bg, right)
-	}
-
-	if center == "" {
-		return
-	}
-	leftBound := pad
-	if leftLen > 0 {
-		leftBound = pad + leftLen + 1
-	}
-	rightBound := w
-	if rightLen > 0 {
-		rightBound = rightStart - 1
-	}
-	center = truncate(center, rightBound-leftBound)
-	if center == "" {
-		return
-	}
-	cx := max((w-len(center))/2, leftBound)
-	if cx+len(center) > rightBound {
-		cx = max(rightBound-len(center), leftBound)
-	}
-	c.Write(uint(cx), 0, fg, bg, center)
+// barStyle controls the appearance of a terminal status bar drawn by drawBar.
+type barStyle struct {
+	fg      vt.AttributeColor // foreground for center text and single-segment bars
+	dimFg   vt.AttributeColor // foreground for side slots (left/right); if zero, fg is used
+	bg      vt.AttributeColor // background color
+	clearBg vt.AttributeColor // background used to clear the row; if zero, bg is used
+	clearFg vt.AttributeColor // foreground used to clear the row; if zero, fg is used
+	pad     int               // horizontal padding in columns (typically 1 or 2)
 }
 
-// drawStickyBottomBar paints the sticky bottom bar at the last row using
-// the stickyBottomBarFormat (or the mode default). The bar uses the same
-// colors as the top bar so the two bars appear as a matched pair.
-func (e *Editor) drawStickyBottomBar(c *vt.Canvas, statusMsg string) {
-	w := int(c.W())
+// drawBar paints a single-row status bar at row y on canvas c. The
+// expanded text is split on <-> into up to three segments (left, center,
+// right). Side slots are capped at roughly a third of the bar width and
+// drawn in dimFg; the center slot uses fg and is truncated with an
+// ellipsis when it would overlap a side slot.
+func (e *Editor) drawBar(c *vt.Canvas, y uint, w int, text string, s barStyle) {
 	if w <= 0 {
 		return
 	}
 
-	format := e.stickyBottomBarFormat
-	if format == "" {
-		_, format = e.defaultStickyBarFormats()
+	clearFg := s.clearFg
+	if clearFg == 0 {
+		clearFg = s.fg
 	}
-	text := e.expandStatusBarFormat(format, statusMsg)
+	clearBg := s.clearBg
+	if clearBg == 0 {
+		clearBg = s.bg
+	}
+	c.Write(0, y, clearFg, clearBg, strings.Repeat(" ", w))
 
-	fg := e.TopRightForeground
-	bg := e.TopRightBackground
-	h := c.H() - 1
-
-	// Clear the row with the editor background so it matches the top bar
-	c.Write(0, h, e.Foreground, e.Background, strings.Repeat(" ", w))
-
-	const pad = 1
+	dimFg := s.dimFg
+	if dimFg == 0 {
+		dimFg = s.fg
+	}
+	pad := s.pad
+	if pad <= 0 {
+		pad = 1
+	}
 
 	ellipsis := "…"
 	if useASCII {
 		ellipsis = "..."
 	}
-	truncate := func(s string, maxLen int) string {
-		if maxLen <= 0 || (len(s) > maxLen && maxLen <= len(ellipsis)) {
+	truncate := func(str string, maxLen int) string {
+		if maxLen <= 0 || (len(str) > maxLen && maxLen <= len(ellipsis)) {
 			return ""
 		}
-		if len(s) <= maxLen {
-			return s
+		if len(str) <= maxLen {
+			return str
 		}
-		return s[:maxLen-len(ellipsis)] + ellipsis
+		return str[:maxLen-len(ellipsis)] + ellipsis
 	}
 
+	// Split on <-> to get left / center / right segments.
 	parts := strings.Split(text, "<->")
 
 	var left, center, right string
@@ -849,10 +758,10 @@ func (e *Editor) drawStickyBottomBar(c *vt.Canvas, statusMsg string) {
 	rightStart := w - pad - rightLen
 
 	if leftLen > 0 {
-		c.Write(uint(pad), h, fg, bg, left)
+		c.Write(uint(pad), y, dimFg, s.bg, left)
 	}
 	if rightLen > 0 {
-		c.Write(uint(rightStart), h, fg, bg, right)
+		c.Write(uint(rightStart), y, dimFg, s.bg, right)
 	}
 
 	if center == "" {
@@ -874,7 +783,75 @@ func (e *Editor) drawStickyBottomBar(c *vt.Canvas, statusMsg string) {
 	if cx+len(center) > rightBound {
 		cx = max(rightBound-len(center), leftBound)
 	}
-	c.Write(uint(cx), h, fg, bg, center)
+	c.Write(uint(cx), y, s.fg, s.bg, center)
+}
+
+// stickyBarStyle returns the barStyle used by the regular-mode sticky bars.
+func (e *Editor) stickyBarStyle() barStyle {
+	return barStyle{
+		fg:      e.TopRightForeground,
+		bg:      e.TopRightBackground,
+		clearFg: e.Foreground,
+		clearBg: e.Background,
+		pad:     1,
+	}
+}
+
+// drawStickyTopBar paints the sticky status bar at row 0 using the current
+// stickyTopBarFormat and the regular-mode color scheme.
+func (e *Editor) drawStickyTopBar(c *vt.Canvas, statusMsg string) {
+	w := int(c.W())
+	format := e.stickyTopBarFormat
+	if format == "" {
+		format, _ = e.defaultStickyBarFormats()
+	}
+	text := e.expandStatusBarFormat(format, statusMsg)
+	e.drawBar(c, 0, w, text, e.stickyBarStyle())
+}
+
+// drawStickyBottomBar paints the sticky bottom bar at the last row using
+// the stickyBottomBarFormat and the regular-mode color scheme.
+func (e *Editor) drawStickyBottomBar(c *vt.Canvas, statusMsg string) {
+	w := int(c.W())
+	format := e.stickyBottomBarFormat
+	if format == "" {
+		_, format = e.defaultStickyBarFormats()
+	}
+	text := e.expandStatusBarFormat(format, statusMsg)
+	e.drawBar(c, c.H()-1, w, text, e.stickyBarStyle())
+}
+
+// drawBothBars draws the top and bottom sticky bars using the correct
+// style for the current editor mode (regular or book text). The status
+// message is passed through so [[...]] fields can display it.
+func (e *Editor) drawBothBars(c *vt.Canvas, statusMsg string) {
+	w := int(c.W())
+	if w <= 0 {
+		return
+	}
+	defaultTop, defaultBottom := e.defaultStickyBarFormats()
+	topFmt := e.stickyTopBarFormat
+	if topFmt == "" {
+		topFmt = defaultTop
+	}
+	bottomFmt := e.stickyBottomBarFormat
+	if bottomFmt == "" {
+		bottomFmt = defaultBottom
+	}
+
+	style := e.stickyBarStyle()
+	if e.bookTextMode() {
+		style = e.bookBarStyle()
+	}
+
+	if topFmt != "" {
+		text := e.expandStatusBarFormat(topFmt, statusMsg)
+		e.drawBar(c, 0, w, text, style)
+	}
+	if bottomFmt != "" {
+		text := e.expandStatusBarFormat(bottomFmt, statusMsg)
+		e.drawBar(c, c.H()-1, w, text, style)
+	}
 }
 
 // ShowBlockModeStatusLine shows a status message for when block mode is enabled
