@@ -137,7 +137,7 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/megafile v1.6.41
 ## explicit; go 1.25.1
 github.com/xyproto/megafile
-# github.com/xyproto/mode v0.12.7
+# github.com/xyproto/mode v0.12.8
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/orchideous v1.0.8
@@ -210,6 +210,9 @@ golang.org/x/text/internal/utf8internal
 golang.org/x/text/language
 golang.org/x/text/runes
 golang.org/x/text/transform
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3
 # mvdan.cc/sh/v3 v3.13.1
 ## explicit; go 1.25.0
 mvdan.cc/sh/v3/expand
