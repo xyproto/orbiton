@@ -36,12 +36,14 @@ func stopBackgroundProcesses() bool {
 func parentProcessIs(name string) bool {
 	parentPID := os.Getppid()
 
-	// Fast path for systems with Linux-style /proc/<pid>/exe.
-	if parentPath, err := files.GetProcPath(parentPID, "exe"); err == nil {
-		return filepath.Base(parentPath) == name
+	// Fast path for Linux, where /proc is always mounted.
+	if isLinux {
+		if parentPath, err := files.GetProcPath(parentPID, "exe"); err == nil {
+			return filepath.Base(parentPath) == name
+		}
 	}
 
-	// Fallback for systems where /proc/<pid>/exe is unavailable, like OpenBSD.
+	// Portable fallback using ps (works on FreeBSD, macOS, OpenBSD, etc.)
 	output, err := exec.Command("ps", "-o", "comm=", "-p", strconv.Itoa(parentPID)).Output()
 	if err != nil {
 		return false
@@ -60,11 +62,14 @@ func parentProcessIs(name string) bool {
 func parentCommand() string {
 	parentPID := os.Getppid()
 
-	if commandString, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", parentPID)); err == nil { // success
-		return string(commandString)
+	// Fast path for Linux, where /proc is always mounted.
+	if isLinux {
+		if commandString, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", parentPID)); err == nil {
+			return string(commandString)
+		}
 	}
 
-	// Fallback for systems where /proc/<pid>/cmdline is unavailable.
+	// Portable fallback using ps (works on FreeBSD, macOS, OpenBSD, etc.)
 	output, err := exec.Command("ps", "-o", "command=", "-p", strconv.Itoa(parentPID)).Output()
 	if err != nil {
 		return ""
