@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Make `MANPAGER='o -b'` possible by implementing man page rendering also for "book mode".
 - [ ] The cursor can move down into the lower status bar when in "book mode (text)".
 - [ ] If a "- [ ] Checkbox" is ticked, in graphical book mode, then also gray out lines and bullet points/checkboxes
       below it that "belongs" to this checkbox.
