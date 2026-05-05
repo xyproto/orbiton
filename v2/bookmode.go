@@ -5667,10 +5667,11 @@ func (e *Editor) bookPgDn(c *vt.Canvas) bool {
 		return false
 	}
 	step := e.bookVisibleDataLines(e.pos.offsetY, editRows, textW, pw)
-	newOffset := e.pos.offsetY + step
-	if newOffset >= totalLines {
-		newOffset = totalLines - 1
+	// If the last document line is already visible, we're at the end.
+	if e.pos.offsetY+step >= totalLines {
+		return false
 	}
+	newOffset := e.pos.offsetY + step
 	if newOffset == e.pos.offsetY && int(e.DataY()) == newOffset {
 		return false
 	}
