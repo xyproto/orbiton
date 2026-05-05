@@ -657,7 +657,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							matchForAnotherN--
 						} else if hasSearchTerm && (ra.R == searchTermRunes[0] || (searchCaseInsensitive && unicode.ToLower(ra.R) == unicode.ToLower(searchTermRunes[0]))) {
 							// Potential search highlight match
-							length = utf8.RuneCountInString(e.searchTerm)
+							length = len(searchTermRunes)
 							counter = 0
 							match = true
 							for i = runeIndex; i < (runeIndex + length); i++ {
@@ -666,7 +666,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 									break
 								}
 								ra2 = runesAndAttributes[i]
-								searchRune := []rune(e.searchTerm)[counter]
+								searchRune := searchTermRunes[counter]
 								if searchCaseInsensitive {
 									if unicode.ToLower(ra2.R) != unicode.ToLower(searchRune) {
 										match = false
