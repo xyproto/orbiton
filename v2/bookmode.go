@@ -275,6 +275,17 @@ func parsedFonts() error {
 	return parseFontsErr
 }
 
+// parseLineForBook dispatches to parseManPageLine or parseBookLine based on
+// the editor mode. Used by helpers where per-line synopsis state tracking is
+// not required (sizing, cursor positioning, etc.).
+func (e *Editor) parseLineForBook(line string) parsedLine {
+	if e.bookManPageMode() {
+		pl, _ := parseManPageLine(line, false)
+		return pl
+	}
+	return parseBookLine(line)
+}
+
 // bookGraphicsCapable reports whether the terminal can display inline pixel images.
 // Not gated on NO_COLOR: Kitty/iTerm2/Sixel use out-of-band pixel transport, not ANSI colour.
 func bookGraphicsCapable() bool {
@@ -2934,6 +2945,8 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
+	isManPage := e.bookManPageMode()
+
 	// Determine whether we start inside a fenced code block.
 	inFence := e.fenceStateAtLine(startLine)
 	// Determine whether we start inside an HTML comment block.
@@ -2943,6 +2956,12 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	// to inset its gray background by a few pixels, producing a visible
 	// margin below the preceding text.
 	codeBlockStart := false
+	// For man page book mode: track whether the current line is inside a
+	// SYNOPSIS/SYNTAX section (triggers code-block rendering).
+	inSynopsis := false
+	if isManPage {
+		inSynopsis = e.manPageSynopsisAtLine(startLine)
+	}
 
 	codeBg := e.bookCodeBG() // light-gray (dark gray in dark mode) background for code blocks
 
@@ -2999,9 +3018,14 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			continue
 		}
 
-		pl := parseBookLineInContext(rawLine, false)
-		if inFence {
-			pl = parsedLine{kind: lineKindCode, body: rawLine}
+		var pl parsedLine
+		if isManPage {
+			pl, inSynopsis = parseManPageLine(rawLine, inSynopsis)
+		} else {
+			pl = parseBookLineInContext(rawLine, false)
+			if inFence {
+				pl = parsedLine{kind: lineKindCode, body: rawLine}
+			}
 		}
 		cellTop := marginTop + row*lineH
 
@@ -3012,7 +3036,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			urls := []string{pl.body}
 			for docLine < totalLines {
 				nextRaw := strings.ReplaceAll(e.Line(LineIndex(docLine)), "\t", "    ")
-				nextPl := parseBookLine(nextRaw)
+				nextPl := e.parseLineForBook(nextRaw)
 				if nextPl.kind != lineKindImage {
 					break
 				}
@@ -3134,7 +3158,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			for blockStart > 0 {
 				prev := e.Line(LineIndex(blockStart - 1))
 				prev = strings.ReplaceAll(prev, "\t", "    ")
-				if parseBookLine(prev).kind != lineKindTable {
+				if e.parseLineForBook(prev).kind != lineKindTable {
 					break
 				}
 				blockStart--
@@ -3143,7 +3167,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			for blockEnd < totalLines {
 				nxt := e.Line(LineIndex(blockEnd))
 				nxt = strings.ReplaceAll(nxt, "\t", "    ")
-				if parseBookLine(nxt).kind != lineKindTable {
+				if e.parseLineForBook(nxt).kind != lineKindTable {
 					break
 				}
 				blockEnd++
@@ -3314,7 +3338,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 			if lineIsComment {
 				continue
 			}
-			pl := parseBookLine(rl)
+			pl := e.parseLineForBook(rl)
 			if inFence {
 				pl = parsedLine{kind: lineKindCode, body: rl}
 			}
@@ -3326,7 +3350,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 				urls := []string{pl.body}
 				for dl < totalLines {
 					nextRaw := strings.ReplaceAll(e.Line(LineIndex(dl)), "\t", "    ")
-					nextPl := parseBookLine(nextRaw)
+					nextPl := e.parseLineForBook(nextRaw)
 					if nextPl.kind != lineKindImage {
 						break
 					}
@@ -3360,7 +3384,7 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 
 	rawLine := e.Line(LineIndex(cursorDataY))
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-	pl := parseBookLine(rawLine)
+	pl := e.parseLineForBook(rawLine)
 	if cursorInFence {
 		pl = parsedLine{kind: lineKindCode, body: rawLine}
 	}
@@ -3757,12 +3781,23 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		activeEndY = e.bookParagraphEnd(activeDocY)
 	}
 
+	isManPageText := e.bookManPageMode()
+	inSynopsisText := false
+	if isManPageText {
+		inSynopsisText = e.manPageSynopsisAtLine(startLine)
+	}
+
 	row := 0
 	docLine := startLine
 	for row+topMargin < yMax && docLine < totalLines {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-		pl := parseBookLine(rawLine)
+		var pl parsedLine
+		if isManPageText {
+			pl, inSynopsisText = parseManPageLine(rawLine, inSynopsisText)
+		} else {
+			pl = parseBookLine(rawLine)
+		}
 		rowBefore := row
 		currentDocLine := LineIndex(docLine)
 		docLine++
@@ -4123,7 +4158,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			continue
 		}
 
-		pl := parseBookLine(rawLine)
+		pl := e.parseLineForBook(rawLine)
 		if inFenceSel {
 			pl = parsedLine{kind: lineKindCode, body: rawLine}
 		}
@@ -4135,7 +4170,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 			urls := []string{pl.body}
 			for docLine2 < totalLines {
 				nextRaw := strings.ReplaceAll(e.Line(LineIndex(docLine2)), "\t", "    ")
-				nextPl := parseBookLine(nextRaw)
+				nextPl := e.parseLineForBook(nextRaw)
 				if nextPl.kind != lineKindImage {
 					break
 				}
@@ -4407,7 +4442,7 @@ func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, 
 	for row < maxLines && int(dl) < totalLines {
 		rl := e.Line(dl)
 		rl = strings.ReplaceAll(rl, "\t", "    ")
-		pl := parseBookLine(rl)
+		pl := e.parseLineForBook(rl)
 		rows := bookPixelRowCount(fs, pl, lineH, marginLeft, rightMargin)
 		pxBot := pxTop + rows*lineH
 		if dl >= activeStart && dl <= activeEnd {
@@ -4523,6 +4558,10 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 		_, format = e.defaultStickyBarFormats()
 	}
 	text := e.expandStatusBarFormat(format, statusMsg, true)
+	// U+2007 FIGURE SPACE is used for digit-width padding by expandStatusBarFormat,
+	// but Montserrat Light lacks that glyph — replace with a regular space for the
+	// pixel renderer, which uses measureStable for alignment anyway.
+	text = strings.ReplaceAll(text, " ", " ")
 
 	// Split on <-> into left / center / right segments.
 	parts := strings.Split(text, "<->")
@@ -4681,7 +4720,7 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 			dl++
 			continue
 		}
-		pl := parseBookLine(rl)
+		pl := e.parseLineForBook(rl)
 		switch {
 		case pl.kind == lineKindImage:
 			// Coalesce consecutive image lines into a group, matching the
@@ -4691,7 +4730,7 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 			dl++
 			for dl < totalLines {
 				nextRaw := strings.ReplaceAll(e.Line(LineIndex(dl)), "\t", "    ")
-				nextPl := parseBookLine(nextRaw)
+				nextPl := e.parseLineForBook(nextRaw)
 				if nextPl.kind != lineKindImage {
 					break
 				}
@@ -5159,7 +5198,7 @@ func (e *Editor) bookModeShowCursor(c *vt.Canvas) {
 	rawLine := e.Line(e.DataY())
 	cursorRawX := e.pos.sx + e.pos.offsetX
 
-	pl := parseBookLine(rawLine)
+	pl := e.parseLineForBook(rawLine)
 	var x int
 	if pl.kind == lineKindHeader {
 		prefixLen := pl.headerLevel + 1
@@ -5200,7 +5239,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 	cursorRawX := e.pos.sx + e.pos.offsetX
 
-	pl := parseBookLine(rawLine)
+	pl := e.parseLineForBook(rawLine)
 
 	// Count display rows from offsetY to DataY, accounting for soft wrapping.
 	startLine := e.pos.offsetY
@@ -5210,7 +5249,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	for dl := startLine; dl < cursorDataY && dl < totalLines; dl++ {
 		rl := e.Line(LineIndex(dl))
 		rl = strings.ReplaceAll(rl, "\t", "    ")
-		dpl := parseBookLine(rl)
+		dpl := e.parseLineForBook(rl)
 		displayRow += bookWrapRowCount(dpl, textW)
 	}
 
@@ -5401,7 +5440,7 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 	rawLine := e.Line(e.DataY())
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 	cursorRawX := e.pos.sx + e.pos.offsetX
-	pl := parseBookLine(rawLine)
+	pl := e.parseLineForBook(rawLine)
 
 	switch pl.kind {
 	case lineKindHeader, lineKindCode, lineKindTable, lineKindBlank, lineKindRule, lineKindImage:
@@ -5496,7 +5535,7 @@ func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, tot
 func (e *Editor) bookLineDisplayRows(dl int, textW int, pw *bookPixelWrapInfo) int {
 	rl := e.Line(LineIndex(dl))
 	rl = strings.ReplaceAll(rl, "\t", "    ")
-	pl := parseBookLine(rl)
+	pl := e.parseLineForBook(rl)
 	if pl.kind == lineKindImage {
 		// In text mode (pw == nil) an image line renders as a single
 		// "[image: url]" row, matching bookTextModeRender and
@@ -5672,11 +5711,11 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 	if e.bookGraphicalMode() && int(e.DataY()) > 0 {
 		curLine := strings.ReplaceAll(e.Line(e.DataY()), "\t", "    ")
 		prevLine := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
-		if parseBookLine(curLine).kind == lineKindImage && parseBookLine(prevLine).kind == lineKindImage {
+		if e.parseLineForBook(curLine).kind == lineKindImage && e.parseLineForBook(prevLine).kind == lineKindImage {
 			// Already inside an image group — skip to the end of it.
 			for int(e.DataY()) < e.Len()-1 {
 				nextRaw := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())+1)), "\t", "    ")
-				if parseBookLine(nextRaw).kind != lineKindImage {
+				if e.parseLineForBook(nextRaw).kind != lineKindImage {
 					break
 				}
 				e.pos.SetY(e.pos.sy + 1)
@@ -5759,11 +5798,11 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	if e.bookGraphicalMode() && e.DataY() > 0 {
 		curLine := strings.ReplaceAll(e.Line(e.DataY()), "\t", "    ")
 		prevLine := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
-		if parseBookLine(curLine).kind == lineKindImage && parseBookLine(prevLine).kind == lineKindImage {
+		if e.parseLineForBook(curLine).kind == lineKindImage && e.parseLineForBook(prevLine).kind == lineKindImage {
 			// Walk backward to the first image line of this group.
 			for e.DataY() > 0 {
 				prevRaw := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
-				if parseBookLine(prevRaw).kind != lineKindImage {
+				if e.parseLineForBook(prevRaw).kind != lineKindImage {
 					break
 				}
 				e.pos.SetY(e.pos.sy - 1)
@@ -5789,7 +5828,7 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 func (e *Editor) bookLineKindAt(dl LineIndex) lineKind {
 	rl := e.Line(dl)
 	rl = strings.ReplaceAll(rl, "\t", "    ")
-	return parseBookLine(rl).kind
+	return e.parseLineForBook(rl).kind
 }
 
 // bookLineSubRowCount returns the total number of display sub-rows for a data
@@ -6047,7 +6086,7 @@ func (e *Editor) bookEnd(c *vt.Canvas) {
 	// start of the next sub-row (which is the end of the current one).
 	rawLine := e.Line(e.DataY())
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
-	pl := parseBookLine(rawLine)
+	pl := e.parseLineForBook(rawLine)
 
 	rawPfxLen := 0
 	if pl.kind != lineKindBody {

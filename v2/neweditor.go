@@ -68,7 +68,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	}
 
 	if fnord.stdin {
-		if *parentIsMan {
+		if *parentIsMan || hasManPageEscapes(fnord.data) {
 			m = mode.ManPage
 		} else {
 			m = mode.SimpleDetectBytes(fnord.data)
@@ -158,9 +158,19 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			return e, "", false, megafile.NoAction, err
 		}
 
-		if *parentIsMan {
+		if *parentIsMan || hasManPageEscapes(fnord.data) {
 			e.mode = mode.ManPage
 			e.binaryFile = false
+			// In book mode convert nroff bold/underline to inline Markdown markers
+			// (`code` for bold, *italic* for underline) so the graphical renderer
+			// can display them in the right font. In other modes strip them cleanly.
+			stripFn := handleManPageEscape
+			if bookModeFlag {
+				stripFn = nroffToInlineMarkdown
+			}
+			for i, runes := range e.lines {
+				e.lines[i] = []rune(strings.TrimRight(stripFn(string(runes)), " \t"))
+			}
 		}
 
 		// Detect the file mode if the current editor mode is blank, or Prolog (since it could be Perl)
@@ -299,10 +309,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				if *parentIsMan {
 					e.mode = mode.ManPage
 					e.binaryFile = false
-					// Strip nroff/ANSI escape codes and trailing whitespace from each stored line,
-					// so that cursor navigation and rendering both see clean content.
+					// Strip nroff/ANSI escape codes and trailing whitespace. In book mode,
+					// preserve bold/underline as inline Markdown markers for graphical rendering.
+					stripFn := handleManPageEscape
+					if bookModeFlag {
+						stripFn = nroffToInlineMarkdown
+					}
 					for i, runes := range e.lines {
-						e.lines[i] = []rune(strings.TrimRight(handleManPageEscape(string(runes)), " \t"))
+						e.lines[i] = []rune(strings.TrimRight(stripFn(string(runes)), " \t"))
 					}
 				} else {
 					if m, found := mode.DetectFromContents(e.mode, firstLine, e.String); found {
