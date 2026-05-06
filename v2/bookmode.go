@@ -325,6 +325,32 @@ func (e *Editor) enterBookModeText() {
 	e.bookSavedLocalX = -1
 }
 
+// enterBookModeGraphical enables graphical book mode, saving settings so exitBookMode can restore them.
+func (e *Editor) enterBookModeGraphical() {
+	if imagepreview.IsKitty && e.bookMode.Load() {
+		imagepreview.DeleteInlineImages()
+	}
+	if !e.bookSaved {
+		e.bookSavedSyntaxHighlight = e.syntaxHighlight
+		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
+		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSaved = true
+	}
+	if !e.bookDarkModeInitialized {
+		if !e.bookThemeIsLight() {
+			e.bookDarkMode = true
+		}
+		e.bookDarkModeInitialized = true
+	}
+	e.bookMode.Store(true)
+	e.bookForceTextMode.Store(false)
+	e.syntaxHighlight = false
+	e.wrapWidth = 72
+	e.wrapWhenTyping = false
+	e.stickyStatusBars = true
+	e.bookSavedLocalX = -1
+}
+
 // exitBookMode disables book mode and restores the saved editor settings.
 func (e *Editor) exitBookMode() {
 	if imagepreview.IsKitty {
