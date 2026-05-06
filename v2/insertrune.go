@@ -4,8 +4,8 @@ import (
 	"github.com/xyproto/vt"
 )
 
-// InsertRune will insert a rune at the current data position, with word wrap
-// Returns true if the line was wrapped
+// InsertRune will insert a rune at the current data position, with word wrap.
+// Returns true if the line was wrapped.
 func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	// Re-enable typo highlights when the user starts typing
 	e.showTypoHighlights = true
@@ -13,7 +13,7 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	// Nobody likes non-breaking spaces.
 	// Normalise runes that look like ASCII punctuation so the user
 	// doesn't accidentally commit them (they're invisible or ambiguous
-	// in most fonts). The values used here are Unicode code points —
+	// in most fonts). The values used here are Unicode code points -
 	// earlier revisions compared against UTF-8 byte sequences like
 	// 0xC2A0, which never matched a decoded rune (NBSP is U+00A0,
 	// decoded to rune 0x00A0 = 160, not 0xC2A0) so the substitutions
@@ -31,56 +31,62 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 		r = '.'
 	}
 
-	// The document will be changed
 	e.MarkChanged()
-
-	// Repaint afterwards
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 
-	// Wrap a bit before the limit if the inserted rune is a space?
-	limit := e.wrapWidth
-	if r == ' ' {
-		// This is how long a word can be before being broken,
-		// and it "eats from" the right margin, so it needs to be balanced.
-		// TODO: Use an established method of word wrapping / breaking lines.
-		limit -= 5
-	}
-
-	// If wrapWhenTyping is enabled, check if we should wrap to the next line.
-	// Never wrap immediately before a character that must follow its preceding
-	// word (apostrophe, closing punctuation, etc.) — e.g. typing 's should
-	// not break the line before the apostrophe.
-	if e.wrapWhenTyping && e.wrapWidth > 0 && e.pos.sx >= limit && !noLineStartRune(r) {
-
-		e.InsertLineBelow()
-		e.pos.sy++
-		y := e.pos.sy
-		e.Home()
-		e.pos.sx = 0
-		if r != ' ' {
-			e.Insert(c, r)
-			e.pos.sx = 1
-		}
-		e.pos.sy = y
-
-		h := 80
-		if c != nil {
-			h = int(c.Height())
-		}
-		if e.pos.sy >= (h - 1) {
-			e.ScrollDown(c, nil, 1, h)
-		}
-
-		e.Center(c)
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-
-		return true
-	}
-
-	// A regular insert, no wrapping
+	// Insert the rune first, then check if the line needs wrapping.
+	// Capture line length before insertion so we only auto-fill when this
+	// keystroke itself pushes the line past the limit (not for pre-existing
+	// long lines that the user is editing).
+	lenBefore := len([]rune(e.Line(e.DataY())))
 	e.Insert(c, r)
+
+	// Emacs auto-fill style: if this insertion caused the line to exceed
+	// wrapWidth, break at the last space before the limit and move the tail
+	// to a new line below.
+	if e.wrapWhenTyping && e.wrapWidth > 0 && lenBefore <= e.wrapWidth {
+		runes := []rune(e.Line(e.DataY()))
+		if len(runes) > e.wrapWidth {
+			breakAt := -1
+			for i := e.wrapWidth - 1; i >= 0; i-- {
+				if runes[i] == ' ' {
+					breakAt = i
+					break
+				}
+			}
+			if breakAt >= 0 {
+				// skip any run of spaces at the break point
+				rightStart := breakAt + 1
+				for rightStart < len(runes) && runes[rightStart] == ' ' {
+					rightStart++
+				}
+				y := e.DataY()
+				e.SetLine(y, string(runes[:breakAt]))
+				e.InsertLineBelowAt(y)
+				e.SetLine(y+1, string(runes[rightStart:]))
+				// move cursor to the new line if it was in the wrapped portion
+				cursorX := e.pos.sx + e.pos.offsetX
+				if cursorX > breakAt {
+					newX := max(cursorX-rightStart, 0)
+					e.pos.sy++
+					e.pos.sx = newX
+					e.pos.offsetX = 0
+				}
+				h := 80
+				if c != nil {
+					h = int(c.Height())
+				}
+				if e.pos.sy >= (h - 1) {
+					e.ScrollDown(c, nil, 1, h)
+				}
+				e.Center(c)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				return true
+			}
+		}
+	}
 
 	// Scroll right when reaching 95% of the terminal width
 	wf := 80.0
@@ -88,7 +94,6 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 		wf = float64(c.Width())
 	}
 	if e.pos.sx > int(wf*0.95) {
-		// scroll
 		e.pos.offsetX++
 		e.pos.sx--
 	}
