@@ -538,16 +538,19 @@ func main() {
 		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already checked for)
 		specificLetter = true
 		switch firstLetterOfExecutable {
-		case 'b', 'e': // borland, ed, edit etc.
+		case 'b':
+			if editorExecutable == "book" { // book mode
+				bookModeFlag = true
+				break
+			}
+			// not book mode, but perhaps "borland"
+			fallthrough
+		case 'e': // borland, ed, edit etc.
 			theme = NewDarkBlueEditTheme()
 			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 			editTheme = true
 		case 'l': // lo, light etc
 			theme = NewLitmusTheme()
-		case 'o': // book mode
-			if strings.HasPrefix(editorExecutable, "oo") { // oo, ooo, oooo etc: book mode
-				bookModeFlag = true
-			}
 		case 'r': // rb, ro, rt, red etc.
 			theme = NewRedBlackTheme()
 		case 's': // s, sw, synthwave etc.
