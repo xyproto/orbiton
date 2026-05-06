@@ -84,6 +84,9 @@ Flags:
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use $OLLAMA$
                                  to explain the function under the cursor.
+  -B, --book                     Open in best available book mode (graphical if supported, text otherwise).
+  -T, --book-mode-text           Open in text book mode: word wrap, plain text, word count.
+  -G, --book-mode-graphical      Open in graphical book mode (requires Kitty, iTerm2 or Sixel support).
   -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,

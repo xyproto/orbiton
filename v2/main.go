@@ -60,8 +60,14 @@ var (
 	// Build with release mode instead of debug mode whenever applicable
 	releaseBuildFlag bool
 
-	// Book mode: word wrap, no syntax highlighting, text focus
+	// Best available book mode: graphical if supported, text otherwise
 	bookModeFlag bool
+
+	// Text book mode: word wrap, no graphics, word count
+	bookModeTextFlag bool
+
+	// Graphical book mode: Kitty/iTerm2/Sixel rendering
+	bookModeGraphicalFlag bool
 
 	// Book screenshot: render one frame in graphical book mode and save as PNG
 	bookScreenshotFlag string
@@ -126,7 +132,7 @@ func main() {
 		upsieFlag              bool
 	)
 
-	// Available short options: j
+	// Available short options: j A C D E F H I J K L M N O P Q R S U V W X Y Z
 
 	pflag.BoolVarP(&buildFlag, "build", "b", false, "Try to build the file instead of editing it")
 	pflag.BoolVarP(&catFlag, "list", "t", false, "List the file with colors instead of editing it")
@@ -146,7 +152,9 @@ func main() {
 	pflag.BoolVarP(&ollamaEnabled, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "enable Ollama-specific features")
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
-	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in book mode: word wrap, plain text, word count")
+	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in best available book mode (graphical if the terminal supports it, text otherwise)")
+	pflag.BoolVarP(&bookModeTextFlag, "book-mode-text", "T", false, "open in text book mode: word wrap, plain text, word count")
+	pflag.BoolVarP(&bookModeGraphicalFlag, "book-mode-graphical", "G", false, "open in graphical book mode (requires Kitty, iTerm2 or Sixel support)")
 	pflag.StringVar(&bookScreenshotFlag, "bookscreenshot", "", "render graphical book mode and save a PNG screenshot to the given path")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
@@ -160,6 +168,11 @@ func main() {
 	pflag.CommandLine.MarkHidden("cycle")
 
 	pflag.Parse()
+
+	// -T and -G both imply -B
+	if bookModeTextFlag || bookModeGraphicalFlag {
+		bookModeFlag = true
+	}
 
 	if versionFlag {
 		fmt.Println(versionString)
@@ -553,7 +566,7 @@ func main() {
 		}
 	}
 
-	// --book does not force a theme here, so cycling out with ctrl-space lands in the user's normal theme
+	// --book/--book-mode-text/--book-mode-graphical do not force a theme, so cycling out with ctrl-space lands in the user's normal theme
 
 	if catFlag {
 		// List the file in a colorful way and quit

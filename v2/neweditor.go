@@ -729,6 +729,9 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.bookSavedWrapWidth = e.wrapWidth
 		e.bookSaved = true
 		e.bookMode.Store(true)
+		if bookModeTextFlag {
+			e.bookForceTextMode.Store(true)
+		}
 		e.syntaxHighlight = false
 		e.wrapWidth = 72
 		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
