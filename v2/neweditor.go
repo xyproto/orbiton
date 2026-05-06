@@ -410,7 +410,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// Respect explicit theme choice (O_THEME / THEME) and platform defaults (BSD)
 	// even for read-only modes like man pages.
 	assumeLightBackground := env.Bool("O_LIGHT")
-	themeOverride := env.StrAlt("O_THEME", "THEME")
+	themeOverride := env.StrAlt("O_THEME", "OTHEME", "THEME")
 	if envNoColor {
 		themeOverride = ""
 	}
