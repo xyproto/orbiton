@@ -7,6 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
@@ -54,6 +55,57 @@ func handleManPageEscape(input string) string {
 	})
 	cleanedString = shellColorCodePattern.ReplaceAllString(cleanedString, "")
 	return oscPattern.ReplaceAllString(cleanedString, "")
+}
+
+// nroffToInlineMarkdown converts nroff overstrike sequences to Markdown inline
+// markers so that graphical book mode can render them in the right font:
+//   - bold (c\bc) → `code` — rendered in the monospace code font
+//   - underline (_\bc) → *italic* — rendered in the italic book font
+//
+// ANSI/OSC escape sequences are stripped entirely, as in handleManPageEscape.
+func nroffToInlineMarkdown(input string) string {
+	runes := []rune(input)
+	n := len(runes)
+	out := make([]rune, 0, n)
+	i := 0
+	for i < n {
+		r := runes[i]
+		// Bold: r BS r (non-underscore char repeated over a backspace)
+		if r != '_' && i+2 < n && runes[i+1] == '\b' && runes[i+2] == r {
+			out = append(out, '`')
+			for i+2 < n && runes[i] != '_' && runes[i+1] == '\b' && runes[i+2] == runes[i] {
+				out = append(out, runes[i])
+				i += 3
+			}
+			out = append(out, '`')
+			continue
+		}
+		// Underline: _ BS c
+		if r == '_' && i+2 < n && runes[i+1] == '\b' {
+			out = append(out, '*')
+			for i+2 < n && runes[i] == '_' && runes[i+1] == '\b' {
+				out = append(out, runes[i+2])
+				i += 3
+			}
+			out = append(out, '*')
+			continue
+		}
+		// Stray backspace: skip it and the following rune
+		if r == '\b' && i+1 < n {
+			i += 2
+			continue
+		}
+		out = append(out, r)
+		i++
+	}
+	// Strip ANSI and OSC sequences using the same patterns as handleManPageEscape
+	result := string(out)
+	escapePatternOnce.Do(func() {
+		shellColorCodePattern = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+		oscPattern = regexp.MustCompile(`\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)`)
+	})
+	result = shellColorCodePattern.ReplaceAllString(result, "")
+	return oscPattern.ReplaceAllString(result, "")
 }
 
 // findFlagTokenEnd returns the byte offset in s where the leading flag token(s)
@@ -108,6 +160,87 @@ func looksLikeFlags(s string) bool {
 		}
 	}
 	return true
+}
+
+// hasManPageEscapes reports whether data looks like man page output by checking
+// for nroff overstrike sequences (char+BS+char for bold, _+BS+char for underline)
+// or ANSI colour/bold escapes (\x1b[…) that groff emits when writing to a pager.
+func hasManPageEscapes(data []byte) bool {
+	for i, b := range data {
+		switch b {
+		case '\b':
+			return true // backspace: nroff overstrike
+		case '\x1b':
+			if i+1 < len(data) && data[i+1] == '[' {
+				return true // CSI escape: ANSI bold/colour from groff -T ansi
+			}
+		}
+	}
+	return false
+}
+
+// bookManPageMode reports whether the editor is in man page mode, used by
+// bookmode.go to dispatch line parsing without importing the mode package.
+func (e *Editor) bookManPageMode() bool {
+	return e.mode == mode.ManPage
+}
+
+// manPageSynopsisAtLine scans from the start of the document to lineIdx and
+// returns whether the line at lineIdx falls inside a SYNOPSIS or SYNTAX section.
+// Used to initialise the inSynopsis state before a rendering loop that starts
+// mid-document (e.g. after scrolling).
+func (e *Editor) manPageSynopsisAtLine(lineIdx int) bool {
+	inSynopsis := false
+	for i := range lineIdx {
+		line := e.Line(LineIndex(i))
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			inSynopsis = false
+			continue
+		}
+		indent := len(line) - len(strings.TrimLeft(line, " "))
+		if indent == 0 && hasWords(trimmed) && trimmed == strings.ToUpper(trimmed) && !strings.HasPrefix(trimmed, "-") {
+			inSynopsis = trimmed == "SYNOPSIS" || trimmed == "SYNTAX"
+		}
+	}
+	return inSynopsis
+}
+
+// parseManPageLine parses a clean (nroff-stripped) man page line into a
+// parsedLine for graphical book mode rendering. inSynopsis must be true when
+// the current line falls inside a SYNOPSIS or SYNTAX section. The returned
+// bool is the updated inSynopsis state for the caller to carry forward.
+func parseManPageLine(line string, inSynopsis bool) (parsedLine, bool) {
+	trimmed := strings.TrimSpace(line)
+
+	if trimmed == "" {
+		// A blank line ends the SYNOPSIS section.
+		return parsedLine{kind: lineKindBlank}, false
+	}
+
+	indent := len(line) - len(strings.TrimLeft(line, " "))
+
+	// Man page header/footer navigation lines: flush-left, multiple large
+	// whitespace gaps, contains a parenthesised page-name token.
+	// e.g. "LS(1)      User Commands      LS(1)" or "GNU coreutils … LS(1)"
+	if indent == 0 && strings.Count(line, "  ") > 3 && strings.ContainsAny(trimmed, "()") {
+		return parsedLine{kind: lineKindBlank}, inSynopsis
+	}
+
+	// Section header: flush-left, ALL CAPS, has alphabetic words, no leading dash.
+	if indent == 0 && hasWords(trimmed) && trimmed == strings.ToUpper(trimmed) && !strings.HasPrefix(trimmed, "-") {
+		newSynopsis := trimmed == "SYNOPSIS" || trimmed == "SYNTAX"
+		return parsedLine{kind: lineKindHeader, headerLevel: 1, body: trimmed}, newSynopsis
+	}
+
+	// SYNOPSIS/SYNTAX content: render as a code block so command signatures
+	// appear in monospace and stand apart from prose.
+	if inSynopsis && indent > 0 {
+		return parsedLine{kind: lineKindCode, body: trimmed}, true
+	}
+
+	// Everything else: regular body text (indentation already stripped).
+	return parsedLine{kind: lineKindBody, body: trimmed}, inSynopsis
 }
 
 // manPageHighlight returns the given line with man page syntax highlighting
