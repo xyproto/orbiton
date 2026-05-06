@@ -495,7 +495,7 @@ func (e *Editor) defaultStickyBarFormats() (top, bottom string) {
 			"{{funcname}}<->[[line {{linenr}} of {{total_lines}}]]<->{{book_percentage}}"
 	case e.bookGraphicalMode():
 		return "", // the graphical book mode has no top bar
-			"Line {{linenr:*}} of {{total_lines}}   Col {{col:*}}<->[[{{filename}}]]<->Words {{word_count:*}}{|}{{est_reading_time}}{|}{{book_percentage:4}}"
+			"Line {{linenr:*}} of {{total_lines}}  Col {{col:*}}<->[[{{filename}}]]<->{{word_count:*}} words{|}{{est_reading_time}}{|}{{book_percentage:4}}"
 	default: // regular mode
 		return "<-><->{{funcname}}",
 			"{{filename}}<->[[line {{linenr}} of {{total_lines}}]]<->{{mode}} [{{indentation}}]"
