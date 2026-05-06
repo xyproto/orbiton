@@ -108,24 +108,35 @@ var (
 // the shortest interval between successive ctrl-space book-mode cycle steps
 const bookModeToggleDebounce = 400 * time.Millisecond
 
-// cycleBookMode steps through: regular -> book mode (text) -> book mode (graphical, if available) -> regular.
-// On terminals without graphics support it toggles between regular and book mode (text).
-// Buffered key presses during a slow render are debounced.
-func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string) {
+// cycleBookMode toggles book mode. Single tap: regular ↔ graphical (or text if graphics unavailable).
+// Double tap (graphical available): regular ↔ text. Buffered key presses are debounced.
+func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string, doubleTap bool) {
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 		return
 	}
 	lastBookModeToggle = time.Now()
-	switch {
-	case !e.bookMode.Load():
-		e.enterBookModeText()
-	case bookGraphicsCapable() && e.bookForceTextMode.Load():
-		if imagepreview.IsKitty {
-			imagepreview.DeleteInlineImages()
+	if bookGraphicsCapable() {
+		switch {
+		case doubleTap && e.bookTextMode():
+			e.exitBookMode()
+		case doubleTap && e.bookGraphicalMode():
+			if imagepreview.IsKitty {
+				imagepreview.DeleteInlineImages()
+			}
+			e.bookForceTextMode.Store(true)
+		case doubleTap:
+			e.enterBookModeText()
+		case e.bookGraphicalMode():
+			e.exitBookMode()
+		default:
+			e.enterBookModeGraphical()
 		}
-		e.bookForceTextMode.Store(false)
-	default:
-		e.exitBookMode()
+	} else {
+		if e.bookMode.Load() {
+			e.exitBookMode()
+		} else {
+			e.enterBookModeText()
+		}
 	}
 	drainKeys(tty, drainKey)
 	e.FullResetRedraw(c, status, true, false)
@@ -715,14 +726,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
-			// For Markdown files (or when already in book mode), ctrl-space toggles the checkbox on the current
-			// line if there is one, otherwise it cycles regular -> book (text) -> book (graphical) -> regular.
-			if e.mode == mode.Markdown || e.bookMode.Load() {
+			// For prose files (or when already in book mode), ctrl-space toggles book mode.
+			// Markdown also checks for a checkbox on the current line first.
+			proseMode := e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
+			if proseMode || e.bookMode.Load() {
 				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
 					undo.Snapshot(e)
 					break
 				}
-				e.cycleBookMode(c, tty, status, "c:0")
+				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
 				break
 			}
 			switch e.mode {
