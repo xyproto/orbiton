@@ -495,6 +495,10 @@ func main() {
 		}
 	}
 
+	if editorExecutable == "book" {
+		bookModeFlag = true
+	}
+
 	// Check if the given filename contains something
 	implicitBuild := false
 	if fnord.Empty() {
@@ -503,6 +507,8 @@ func main() {
 			if buildFlag {
 				// When building without a filename, assume the current directory
 				fnord.filename = "."
+			} else if bookModeFlag {
+				fnord.filename = "book.md"
 			} else if sourceFile, err := guessMainFileOfDirectory("."); err == nil {
 				// No arguments: a source file was found, open it for editing
 				fnord.filename = sourceFile
@@ -540,7 +546,7 @@ func main() {
 		switch firstLetterOfExecutable {
 		case 'b':
 			if editorExecutable == "book" { // book mode
-				bookModeFlag = true
+				//bookModeFlag = true // already set to true, above
 				break
 			}
 			// not book mode, but perhaps "borland"
