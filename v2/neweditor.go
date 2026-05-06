@@ -720,7 +720,6 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.wrapWhenTyping = true
 	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
 		e.wrapWidth = 79
-		e.wrapWhenTyping = false
 	}
 	if bookModeFlag {
 		// Save the pre-book values, so they can be restored if the user cycles back to regular mode with ctrl-space
