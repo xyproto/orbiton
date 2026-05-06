@@ -43,15 +43,10 @@ const (
 	bookTextMarginRight = 0.02 // tighter right margin for text book mode
 )
 
-// bookLineHeightMul scales the per-line vertical pitch in graphical book mode
-// relative to the terminal cell height; >1.0 adds breathing room between lines.
+// bookLineHeightMul is the vertical pitch multiplier for graphical book mode; >1.0 adds breathing room.
 const bookLineHeightMul = 1.25
 
-// Palette for text book mode. Using true-colour foregrounds avoids the
-// "black looks gray" problem on terminals whose 16-colour palette maps
-// color 0 to a dark gray (common with many xterm colour schemes). The vt
-// library degrades true-colour values to xterm-256 or ANSI-16 automatically
-// on terminals that don't advertise 24-bit colour support.
+// Text book mode palette. True-colour avoids the "black looks gray" problem on terminals that map color 0 to dark gray.
 var (
 	bookTextFGBlack    = vt.TrueColor(0, 0, 0)
 	bookTextFGDarkGray = vt.TrueColor(80, 80, 80)
@@ -63,8 +58,7 @@ var (
 	bookTextBGDark      = vt.TrueBackground(26, 26, 26)
 )
 
-// bookFG returns the appropriate foreground color for book mode rendering
-// based on dark/light mode preference.
+// bookFG returns the foreground color for book mode.
 func (e *Editor) bookFG() color.NRGBA {
 	if e.bookDarkMode {
 		return color.NRGBA{0xe8, 0xe8, 0xe8, 0xff}
@@ -80,7 +74,7 @@ func (e *Editor) bookBG() color.NRGBA {
 	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
 }
 
-// bookBGImage returns the background as a uniform image, suitable for draw.Draw.
+// bookBGImage returns the background as a uniform image for draw.Draw.
 func (e *Editor) bookBGImage() image.Image {
 	if e.bookDarkMode {
 		return image.NewUniform(e.bookBG())
@@ -104,10 +98,7 @@ func (e *Editor) bookTextModeBG() vt.AttributeColor {
 	return bookTextBG
 }
 
-// bookGraphicalStatusBarBG returns the page-pixel colour that the
-// graphical-mode status bar paints its background with. Kept in sync with
-// bookStatusBarImage: light mode uses black, dark mode uses white. Used by
-// the rounded-corner carver so the bottom corners blend into the bar.
+// bookGraphicalStatusBarBG returns the status bar background color for graphical mode.
 func (e *Editor) bookGraphicalStatusBarBG() color.NRGBA {
 	if e.bookDarkMode {
 		return color.NRGBA{0xff, 0xff, 0xff, 0xff}
@@ -115,15 +106,8 @@ func (e *Editor) bookGraphicalStatusBarBG() color.NRGBA {
 	return color.NRGBA{0x00, 0x00, 0x00, 0xff}
 }
 
-// bookBottomCornerBG returns the colour that the bottom rounded corners of
-// the page should fade into. That's whatever is drawn directly below the
-// page in the composed frame:
-//
-//   - status bar visible → the status bar background
-//   - status bar hidden  → terminal chrome (black)
-//
-// Picking the wrong value leaves a thin seam between the page's rounded
-// corners and the strip below.
+// bookBottomCornerBG returns the color the page's bottom corners fade into.
+// Must match what is drawn below the page or a visible seam appears.
 func (e *Editor) bookBottomCornerBG() color.NRGBA {
 	if env.Str("TERM") == "xterm-kitty" {
 		return color.NRGBA{0x00, 0x00, 0x00, 0x00}
@@ -150,9 +134,7 @@ func (e *Editor) bookTextModeFGDim() vt.AttributeColor {
 	return bookTextFGDarkGray
 }
 
-// bookFontSet caches Vollkorn body faces, Montserrat Bold header faces, a small
-// Montserrat Bold face for the status bar, and a FiraMono Bold face for code,
-// all derived from the same base pixel size.
+// bookFontSet caches font faces for graphical book mode.
 type bookFontSet struct {
 	regular       font.Face
 	italic        font.Face
@@ -207,10 +189,7 @@ func (fs *bookFontSet) headerSizeForLevel(level int) float64 {
 	}
 }
 
-// headerCodeForLevel returns a code (FiraMono Bold) face sized to match the
-// given header level so inline `code` segments inside a header render at the
-// same visual size as the surrounding header text. Falls back to fs.code if
-// the level-specific code face could not be created.
+// headerCodeForLevel returns the code face sized to match the given header level.
 func (fs *bookFontSet) headerCodeForLevel(level int) font.Face {
 	var f font.Face
 	switch level {
@@ -251,25 +230,20 @@ var (
 	bookContentGenMu         sync.Mutex
 	bookTemporaryStatusMsg   string
 	bookTemporaryStatusMsgMu sync.Mutex
-	// bookStatusClearGen coalesces status auto-clear goroutines: each
-	// status message bumps the counter and only the freshest goroutine
-	// actually clears + re-renders after the timeout.
+	// coalesces auto-clear goroutines; only the freshest clears after the timeout
 	bookStatusClearGen atomic.Uint64
 
-	// bookImgNeedRedraw is set when an image download completes and the
-	// page should be redrawn.
+	// set when an image download completes and a page redraw is needed
 	bookImgNeedRedraw atomic.Bool
 
-	// bookPNGEncoder and bookPNGBuf are reused across frames to avoid
-	// per-frame allocations. BestSpeed keeps encoding time low.
+	// reused across frames to avoid per-frame allocations; BestSpeed keeps encoding fast
 	bookPNGEncoder = png.Encoder{CompressionLevel: png.BestSpeed}
 	bookPNGBuf     bytes.Buffer
 	// bookPageImageBuf is the reusable RGBA destination for bookPageToImage.
 	bookPageImageBuf *image.RGBA
 	// bookComposeBuf is the reusable RGBA destination for bookComposeFullPage.
 	bookComposeBuf *image.RGBA
-	// bookWriteBuf batches a frame's escape sequences and image payload into
-	// one Write so the terminal sees it atomically.
+	// batches a frame's escape sequences and image payload into one Write for atomic rendering
 	bookWriteBuf bytes.Buffer
 )
 
@@ -286,8 +260,7 @@ func parsedFonts() error {
 		parsedMontserratLight = load(sf.Light)
 		parsedFiraMonoBold = load(sf.Mono)
 		parsedDejaVuSans = load(sf.Unicode)
-		// Fill any missing role from the nearest available alternative so
-		// callers always get a real font; newFaceOrBurn handles the rest.
+		// fill any missing role with the nearest available alternative
 		or := func(a, b *opentype.Font) *opentype.Font {
 			if a != nil {
 				return a
@@ -302,33 +275,24 @@ func parsedFonts() error {
 	return parseFontsErr
 }
 
-// bookGraphicsCapable reports whether the current terminal can display inline
-// pixel images via Kitty, iTerm2 or Sixel. Unlike imagepreview.HasGraphics it
-// does NOT gate on NO_COLOR: NO_COLOR is a contract about ANSI colour escape
-// sequences; Kitty/iTerm2/Sixel transport pixels out-of-band and do not emit
-// ANSI colour, so honouring NO_COLOR there would spuriously disable the
-// graphical book mode on perfectly capable terminals (the original bug that
-// made NBOOKG/DNBOOKG/NBOOKSX/DNBOOKSX unreachable).
+// bookGraphicsCapable reports whether the terminal can display inline pixel images.
+// Not gated on NO_COLOR: Kitty/iTerm2/Sixel use out-of-band pixel transport, not ANSI colour.
 func bookGraphicsCapable() bool {
 	return (imagepreview.IsKitty || imagepreview.IsITerm2 || imagepreview.IsSixel) && !imagepreview.IsVT
 }
 
-// bookGraphicalMode returns true when book mode uses the Kitty/iTerm2/Sixel
-// graphics protocol for rendering (terminal supports pixel-level image display).
+// bookGraphicalMode reports whether graphical book mode is active.
 func (e *Editor) bookGraphicalMode() bool {
 	return e.bookMode.Load() && bookGraphicsCapable() && !e.bookForceTextMode.Load()
 }
 
-// bookTextMode returns true when book mode uses VT100/xterm text rendering
-// (vt100, vt220, xterm, xterm-color, xterm-256color, linux terminals).
+// bookTextMode reports whether text book mode is active.
 func (e *Editor) bookTextMode() bool {
 	return e.bookMode.Load() && (!bookGraphicsCapable() || e.bookForceTextMode.Load())
 }
 
-// bookThemeIsLight reports whether the editor's regular-mode rendering looks light.
-// The Theme.Light field signals which terminal a theme is suitable for, not the visual
-// appearance, so this looks at the actual Background colour first and falls back to
-// initialLightBackground when the theme uses BackgroundDefault.
+// bookThemeIsLight reports whether the current theme appears light.
+// Theme.Light marks terminal suitability, not appearance; this checks the actual background.
 func (e *Editor) bookThemeIsLight() bool {
 	switch e.Background {
 	case vt.BackgroundBlack, vt.BackgroundBrightBlack:
@@ -339,9 +303,7 @@ func (e *Editor) bookThemeIsLight() bool {
 	return initialLightBackground == nil || *initialLightBackground
 }
 
-// enterBookModeText enables book mode with text rendering and saves the editor
-// settings that book mode overrides, so exitBookMode can restore them. The
-// dark/light auto-detect runs at most once per editor session.
+// enterBookModeText enables text book mode, saving settings so exitBookMode can restore them.
 func (e *Editor) enterBookModeText() {
 	if !e.bookSaved {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
@@ -379,14 +341,10 @@ func (e *Editor) exitBookMode() {
 	bookModeResetCursor()
 }
 
-// bookTextTopBarRows is the number of terminal rows reserved at the top of
-// text book mode for a filename status bar. Graphical book mode has no such
-// top bar (it's always 0 there).
+// bookTextTopBarRows is the number of rows reserved at the top for text book mode.
 const bookTextTopBarRows = 1
 
-// bookEditRows returns the number of terminal rows available for the graphical
-// book content. When the status bar is visible (stickyStatusBars==true), one row is
-// reserved for the status bar; otherwise the full terminal height is used.
+// bookEditRows returns the number of terminal rows available for book content.
 func (e *Editor) bookEditRows(totalRows uint) uint {
 	reserved := uint(0)
 	if e.bookTextMode() || e.stickyStatusBars || bookGetTemporaryStatusMsg() != "" {
@@ -415,9 +373,7 @@ func bookGetTemporaryStatusMsg() string {
 	return bookTemporaryStatusMsg
 }
 
-// bookBumpContentGen increments the content generation counter so the content
-// cache is invalidated on the next render. This is cheaper than using
-// e.Changed() which stays true until the file is saved.
+// bookBumpContentGen increments the content generation counter, invalidating the content cache.
 func bookBumpContentGen() {
 	bookContentGenMu.Lock()
 	bookContentGen++
@@ -431,27 +387,20 @@ func bookCurrentContentGen() uint64 {
 	return bookContentGen
 }
 
-// Cursor affinity values used at wrap boundaries. When the cursor's raw
-// rune position is exactly at a soft-wrap boundary, it maps to two distinct
-// visual positions: the end of the earlier sub-row and the start of the
-// next sub-row. The editor uses bookCursorAffinity to remember which of the
-// two the cursor belongs to. Without this disambiguation, pressing End on
-// a soft-wrapped line would place the cursor visually at the start of the
-// next sub-row, and pressing Up from there would no-op.
+// Cursor affinity at soft-wrap boundaries: a rune exactly at a boundary maps to two visual
+// positions. Affinity remembers which side the cursor is on so End/Up/Home work correctly.
 const (
 	bookAffinityForward  = 0 // cursor belongs to the start of the next sub-row
 	bookAffinityBackward = 1 // cursor belongs to the end of the previous sub-row
 )
 
-// bookFallbackFaces maps a primary font.Face to a same-size DejaVu Sans face
-// used when the primary lacks a glyph (e.g. Greek, Cyrillic, math).
+// bookFallbackFaces maps a font.Face to a same-size DejaVu Sans fallback for missing glyphs.
 var bookFallbackFaces sync.Map // font.Face -> font.Face
 
 func newFace(f *opentype.Font, size float64) (font.Face, error) {
 	face, err := opentype.NewFace(f, &opentype.FaceOptions{
 		Size: size,
-		// The page image is rendered at the terminal's real cell size, so we
-		// always use 96 DPI here; environment-based probes proved unreliable.
+		// 96 DPI: rendered at terminal cell size; environment-based probes proved unreliable
 		DPI:     96,
 		Hinting: font.HintingFull,
 	})
@@ -504,8 +453,7 @@ func measureStringFB(face font.Face, s string) fixed.Int26_6 {
 	return total
 }
 
-// bookFaces returns a font set for the requested base pixel size, using a
-// cached set when the size hasn't changed.
+// bookFaces returns a font set for the given pixel size, cached.
 func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	bookFontMu.Lock()
 	defer bookFontMu.Unlock()
@@ -594,19 +542,7 @@ type textSegment struct {
 	linkURL   string // non-empty for inline links: the hyperlink target
 }
 
-// parseLineSegments converts a line with Markdown-like inline markers into
-// styled segments. Markers consumed (not rendered):
-//
-//	***text***              bold + italic
-//	**text**                bold
-//	*text*                  italic
-//	__text__                underline
-//	~~text~~                strikethrough
-//	`code`                  code style (backticks stripped)
-//	[text](url)             rendered as literal "[text](url)" in code style
-//	![alt](url)             rendered as literal "![alt](url)" in code style
-//	[![alt](img)](url)      rendered as a single literal code segment so that
-//	                        the trailing "](url)" is also styled as code
+// parseLineSegments parses Markdown inline markers into styled segments.
 func parseLineSegments(line string) []textSegment {
 	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline, strike bool) []textSegment {
 		if cur.Len() > 0 {
@@ -829,8 +765,7 @@ func isFencedCodeMarker(line string) bool {
 	return strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")
 }
 
-// fenceStateAtLine returns true if document line lineIdx is inside a fenced
-// code block, by counting opening/closing fence markers from line 0.
+// fenceStateAtLine reports whether line lineIdx is inside a fenced code block.
 func (e *Editor) fenceStateAtLine(lineIdx int) bool {
 	inFence := false
 	for i := range lineIdx {
@@ -843,9 +778,7 @@ func (e *Editor) fenceStateAtLine(lineIdx int) bool {
 	return inFence
 }
 
-// inHTMLCommentAtLine reports whether the given line is inside an HTML
-// comment block (<!-- ... -->). Tracks <!-- and --> markers across the
-// document from the start to the given lineIdx.
+// inHTMLCommentAtLine reports whether line lineIdx is inside an HTML comment block.
 func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
 	const open = "<!--"
 	const close = "-->"
@@ -1005,9 +938,7 @@ func (e *Editor) bookBarStyle() barStyle {
 	}
 }
 
-// drawBookTopBar paints the text book-mode top bar on row 0 using the
-// stickyTopBarFormat (or the book text mode default). The expanded format
-// is split on <-> into left/center/right slots and drawn with book colors.
+// drawBookTopBar paints the text book-mode top bar on row 0.
 func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
 	if !e.stickyStatusBars {
 		return
@@ -1020,9 +951,7 @@ func (e *Editor) drawBookTopBar(c *vt.Canvas, w int) {
 	e.drawBar(c, 0, w, text, e.bookBarStyle())
 }
 
-// extractImgSrc extracts the src attribute value from an <img ...> tag.
-// Returns the src path if found, empty string otherwise. Handles both
-// src="path" and src='path' quote styles.
+// extractImgSrc extracts the src attribute from an <img ...> tag.
 func extractImgSrc(htmlSnippet string) string {
 	srcStart := strings.Index(htmlSnippet, "src=")
 	if srcStart < 0 {
@@ -1044,14 +973,12 @@ func extractImgSrc(htmlSnippet string) string {
 	return htmlSnippet[srcStart : srcStart+endIdx]
 }
 
-// parseBookLine converts a raw Markdown line into a parsedLine, with an
-// optional inComment flag to indicate the line is inside an HTML comment block.
+// parseBookLine converts a raw Markdown line into a parsedLine.
 func parseBookLine(line string) parsedLine {
 	return parseBookLineInContext(line, false)
 }
 
-// parseBookLineInContext converts a raw Markdown line into a parsedLine,
-// accounting for context like being inside an HTML comment block.
+// parseBookLineInContext converts a raw Markdown line into a parsedLine with HTML comment context.
 func parseBookLineInContext(line string, inComment bool) parsedLine {
 	if strings.TrimSpace(line) == "" {
 		return parsedLine{kind: lineKindBlank}
@@ -1447,17 +1374,13 @@ func (e *Editor) bookLinkURLUnderCursor() string {
 	return ""
 }
 
-// bookLinkUnvisited is the paint colour for unvisited Markdown links in
-// graphical book mode. bookLinkVisited is used after a link has been
-// followed during this session.
+// Link colors for graphical book mode: unvisited and visited.
 var (
 	bookLinkUnvisited = color.NRGBA{0x46, 0xa3, 0xbf, 0xff}
 	bookLinkVisited   = color.NRGBA{0x7e, 0x46, 0xbf, 0xff}
 )
 
-// bookVisitedLinks is a session-wide, concurrency-safe set of URLs the user
-// has followed via Ctrl-R in book mode. The set is intentionally not
-// persisted to disk — it resets on every Orbiton invocation.
+// bookVisitedLinks tracks visited URLs for this session; reset on exit.
 var bookVisitedLinks sync.Map
 
 // bookMarkLinkVisited records that url has been visited this session so
@@ -1486,11 +1409,7 @@ func bookLinkColor(url string) color.Color {
 	return bookLinkUnvisited
 }
 
-// Session-wide navigation history for book-mode URL browsing. bookCurrentURL
-// remembers the URL of the document currently displayed (empty for local
-// files). bookURLHistory is a stack of previously-visited URLs: following a
-// link pushes the current URL, Ctrl-R on a non-link location pops and loads
-// the top entry.
+// Session-wide navigation history for book-mode URL browsing.
 var (
 	bookHistoryMu  sync.Mutex
 	bookCurrentURL string
@@ -1498,23 +1417,20 @@ var (
 )
 
 // bookSetCurrentURL records the URL of the document currently being viewed.
-// Called from main.go on startup and from the link-follow handler.
 func bookSetCurrentURL(url string) {
 	bookHistoryMu.Lock()
 	bookCurrentURL = url
 	bookHistoryMu.Unlock()
 }
 
-// bookGetCurrentURL returns the URL of the document currently being viewed,
-// or "" if none.
+// bookGetCurrentURL returns the URL of the document currently being viewed.
 func bookGetCurrentURL() string {
 	bookHistoryMu.Lock()
 	defer bookHistoryMu.Unlock()
 	return bookCurrentURL
 }
 
-// bookPushHistory appends url to the back-navigation stack. Consecutive
-// duplicates are collapsed so rapid re-follows don't bloat the stack.
+// bookPushHistory appends url to the back-navigation stack, collapsing consecutive duplicates.
 func bookPushHistory(url string) {
 	if url == "" {
 		return
@@ -2076,10 +1992,7 @@ func bookLooksLikeSVG(data []byte) bool {
 	return false
 }
 
-// bookRenderSVG rasterises SVG bytes to an image.Image. Returns nil on any
-// parse or render error. oksvg only handles the geometric shapes, so any
-// <text> / <tspan> content is composited afterwards using Orbiton's built-in
-// fonts (bookRenderSVGTextOverlay).
+// bookRenderSVG rasterises SVG bytes to an image. Returns nil on error.
 func bookRenderSVG(data []byte) image.Image {
 	icon, err := oksvg.ReadIconStream(bytes.NewReader(data))
 	if err != nil {
@@ -2410,10 +2323,7 @@ func (e *Editor) bookDrawImageGroup(img *image.RGBA, urls []string, marginLeft, 
 	return rows
 }
 
-// bookImageRows returns the number of display rows a Markdown image line will
-// occupy. The size is fixed — it does not depend on where on the page the image
-// appears — so that images don't change size when scrolled.
-// Returns 1 if the image cannot be loaded.
+// bookImageRows returns the number of display rows a Markdown image line occupies.
 func (e *Editor) bookImageRows(imgPath string, lineH, maxW int) int {
 	if lineH < 1 {
 		lineH = 1
@@ -4877,9 +4787,7 @@ func bookPixelRowCount(fs *bookFontSet, pl parsedLine, lineH, marginLeft, rightM
 	}
 }
 
-// bookModeEnsureCursorVisible adjusts e.pos.offsetY (and e.pos.sy) so that
-// the cursor document line is always rendered inside the visible image area.
-// It accounts for multi-row image lines that consume more than one display row.
+// bookModeEnsureCursorVisible scrolls so the cursor is always inside the visible area.
 func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	rows := int(c.Height())
 	editRows := int(e.bookEditRows(uint(rows)))
@@ -4887,16 +4795,9 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 		return
 	}
 
-	// Two code paths share this helper:
-	//  - graphical book mode: sub-row counting happens in pixels via
-	//    bookPixelRowCount, so we build a font set and pass pixel widths.
-	//  - text book mode: sub-row counting happens in character cells via
-	//    bookWrapRowCount, so we pass the cell-based wrap width and leave
-	//    fs nil. The pixel branch used to be the only branch, which made
-	//    scrolling in text mode spuriously believe the cursor was always
-	//    "visible" (because bookWrapRowCount returned 1 for pixel-wide
-	//    lines that actually soft-wrap across many cell rows) and the
-	//    viewport never advanced when the cursor walked off the bottom.
+	// Graphical mode counts sub-rows by pixel (bookPixelRowCount); text mode by character cells
+	// (bookWrapRowCount). Using pixels for text mode made scrolling fail because pixel math
+	// returned 1 for lines that actually soft-wrap across many cell rows.
 	graphical := e.bookGraphicalMode()
 
 	var (
@@ -5147,10 +5048,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 		}
 	}
 
-	// Fast path: if the content cache is valid (no scroll, no edits) and no
-	// pending message requires a status-bar re-render, skip re-encoding the
-	// full page image. Just reposition the terminal cursor and update the
-	// (small) status-bar image — both are very cheap compared to PNG encoding.
+	// Fast path: cache valid and no pending message — skip PNG re-encoding.
 	gen := bookCurrentContentGen()
 	contentCacheValid := bookContentCache != nil &&
 		bookContentCacheW == pixW &&
@@ -5179,8 +5077,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 	vt.EndSyncUpdate()
 }
 
-// bookModeFullFrame re-composes and flushes the whole page image.
-// The caller must hold redrawMutex.
+// bookModeFullFrame re-composes and flushes the page image. Caller must hold redrawMutex.
 func (e *Editor) bookModeFullFrame(c *vt.Canvas) {
 	cols := uint(c.Width())
 	rows := uint(c.Height())
@@ -5397,11 +5294,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 
 // bookWrapWidth returns the available text width in runes for wrapping
 // in the current terminal (marginRight - marginLeft).
-// bookWrapWidth returns the column width available to book-mode text after
-// subtracting the left and right margins. The right margin differs between
-// text and graphical modes (tighter in text mode) — branching here keeps
-// scroll-row-counting in sync with what bookTextModeRender/bookContentImage
-// actually paint.
+// bookWrapWidth returns the column width available for book-mode text, accounting for mode-specific margins.
 func (e *Editor) bookWrapWidth(c *vt.Canvas) int {
 	w := int(c.Width())
 	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
@@ -5413,10 +5306,7 @@ func (e *Editor) bookWrapWidth(c *vt.Canvas) int {
 	return marginRight - marginLeft
 }
 
-// bookPixelWrapInfo holds the pixel-based wrapping parameters needed by the
-// graphical book mode cursor movement functions. When non-nil it causes
-// sub-row calculations to use bookWrapSegmentsPixel (proportional font) instead
-// of bookWrapBody (fixed-width rune count).
+// bookPixelWrapInfo holds pixel wrapping parameters for graphical book mode cursor movement.
 type bookPixelWrapInfo struct {
 	fs                *bookFontSet
 	marginLeft        int
@@ -5425,8 +5315,7 @@ type bookPixelWrapInfo struct {
 	bodyTextPxFullRow int // pixel width available for body text on a full-width row (marginRight - marginLeft)
 }
 
-// bookGetPixelWrapInfo returns the pixel wrapping parameters when in graphical
-// book mode, or nil when in text mode.
+// bookGetPixelWrapInfo returns pixel wrap parameters for graphical mode, or nil in text mode.
 func (e *Editor) bookGetPixelWrapInfo(c *vt.Canvas) *bookPixelWrapInfo {
 	if !e.bookGraphicalMode() {
 		return nil
@@ -5465,9 +5354,7 @@ func (e *Editor) bookGetPixelWrapInfo(c *vt.Canvas) *bookPixelWrapInfo {
 	}
 }
 
-// pixelBodyAvailPx returns the pixel width available for body text on a
-// list/checkbox line, matching the calculation in bookContentImage and
-// bookOverlayCursor.
+// pixelBodyAvailPx returns the pixel width available for body text on the given line.
 func (pw *bookPixelWrapInfo) pixelBodyAvailPx(pl parsedLine) int {
 	switch pl.kind {
 	case lineKindUnchecked, lineKindChecked:
@@ -5482,15 +5369,8 @@ func (pw *bookPixelWrapInfo) pixelBodyAvailPx(pl parsedLine) int {
 	}
 }
 
-// bookCursorSubRow returns (subRow, totalSubRows) for the current cursor
-// within a soft-wrapped line. For non-wrapping line kinds (header, code,
-// blank, rule, image) it returns (0, 1). When pw is non-nil, pixel-based
-// wrapping (proportional font) is used instead of character-count wrapping.
-//
-// When the cursor's raw position falls exactly at a wrap boundary (shared
-// by the end of row N and the start of row N+1), the editor's
-// bookCursorAffinity disambiguates: bookAffinityBackward places the cursor
-// on row N; bookAffinityForward (the default) places it on row N+1.
+// bookCursorSubRow returns (subRow, totalSubRows) for the cursor within a soft-wrapped line.
+// Uses pixel wrapping when pw is non-nil; bookCursorAffinity disambiguates wrap boundaries.
 func (e *Editor) bookCursorSubRow(textW int, pw *bookPixelWrapInfo) (subRow, totalRows int) {
 	rawLine := e.Line(e.DataY())
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
@@ -6042,10 +5922,7 @@ func bookSubRowX(rawLine string, textW, targetSub, savedX int, pw *bookPixelWrap
 	return newX
 }
 
-// bookSubRowEndX returns the raw rune position that corresponds to the end
-// (wrap boundary) of the given soft-wrapped sub-row. For the last sub-row
-// it returns the raw rune position of the end of the data line. Used to
-// decide cursor affinity when placing the cursor at a wrap boundary.
+// bookSubRowEndX returns the rune position of the end of the given soft-wrapped sub-row.
 func bookSubRowEndX(rawLine string, textW, sub int, pw *bookPixelWrapInfo) int {
 	rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 	pl := parseBookLine(rawLine)
@@ -6567,11 +6444,7 @@ func bookTableCellAlign(cell string) int {
 	}
 }
 
-// bookTableLayout returns per-column alignments and equal-division pixel
-// widths (summing to exactly avail) for a table block. Column count is
-// the maximum across non-separator rows. Widths are distributed equally
-// regardless of content length so all rows align; overflow within a cell
-// is handled by wrapping in bookDrawTableRow.
+// bookTableLayout returns per-column alignments and pixel widths for a table block.
 func bookTableLayout(fs *bookFontSet, block []string, avail int) (aligns []int, widths []int) {
 	nCols := 0
 	rows := make([][]string, len(block))
@@ -6615,11 +6488,7 @@ func bookTableLayout(fs *bookFontSet, block []string, avail int) (aligns []int, 
 	return aligns, widths
 }
 
-// bookTableRowHeight returns the number of pixel sub-rows a single table
-// row needs when each cell is wrapped into its equal-width column.
-// Separator rows take zero rows — the top border of the row below (and
-// the bottom border of the header above) already paint the visual divider,
-// so rendering a separate empty row just adds dead space.
+// bookTableRowHeight returns the pixel sub-row count for a table row. Separator rows return 0.
 func bookTableRowHeight(fs *bookFontSet, body string, marginLeft, rightMargin int) int {
 	if bookIsTableSeparator(body) {
 		return 0
