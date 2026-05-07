@@ -5,7 +5,9 @@ import (
 )
 
 // InsertRune will insert a rune at the current data position, with word wrap.
-// Returns true if the line was wrapped.
+// Returns true if the cursor was repositioned to a new (wrapped) line.
+// When true the caller must NOT advance the cursor; when false the caller
+// should call Next as usual.
 func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	// Re-enable typo highlights when the user starts typing
 	e.showTypoHighlights = true
@@ -65,25 +67,35 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 				e.SetLine(y, string(runes[:breakAt]))
 				e.InsertLineBelowAt(y)
 				e.SetLine(y+1, string(runes[rightStart:]))
-				// move cursor to the new line if it was in the wrapped portion
+				// cursorX is the position where the rune was inserted
+				// (Insert does not advance the cursor). The post-insertion
+				// cursor should be one past that.
 				cursorX := e.pos.sx + e.pos.offsetX
-				if cursorX > breakAt {
-					newX := max(cursorX-rightStart, 0)
-					e.pos.sy++
-					e.pos.sx = newX
-					e.pos.offsetX = 0
-				}
 				h := 80
 				if c != nil {
 					h = int(c.Height())
 				}
-				if e.pos.sy >= (h - 1) {
-					e.ScrollDown(c, nil, 1, h)
+				if cursorX >= breakAt {
+					// cursor is in the wrapped portion — reposition it
+					// onto the new line, one past the inserted rune
+					newX := max(cursorX+1-rightStart, 0)
+					e.pos.sy++
+					e.pos.sx = newX
+					e.pos.offsetX = 0
+					if e.pos.sy >= (h - 1) {
+						e.ScrollDown(c, nil, 1, h)
+					}
+					e.Center(c)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					return true
 				}
+				// cursor is before the break — the line split happened
+				// behind the cursor. Let the caller advance normally.
 				e.Center(c)
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
-				return true
+				return false
 			}
 		}
 	}
