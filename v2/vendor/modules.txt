@@ -144,6 +144,9 @@ github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.8
 ## explicit; go 1.23.2
 github.com/xyproto/mode
+# github.com/xyproto/oksvg v1.0.0
+## explicit; go 1.25.1
+github.com/xyproto/oksvg
 # github.com/xyproto/orchideous v1.0.8
 ## explicit; go 1.24
 github.com/xyproto/orchideous
