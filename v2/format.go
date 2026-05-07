@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/BurntSushi/toml"
 	"github.com/klauspost/asmfmt"
 	"github.com/xyproto/autoimport"
 	"github.com/xyproto/files"
@@ -243,6 +244,20 @@ func formatYAML(data []byte, indent int) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+// formatTOML parses TOML data, validates it, and re-emits it with consistent
+// formatting. Returns the formatted bytes or a parse error.
+func formatTOML(data []byte) ([]byte, error) {
+	var v any
+	if err := toml.Unmarshal(data, &v); err != nil {
+		return nil, err
+	}
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(v); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
 // organizeImports can fix, sort and organize imports for Kotlin and for Java
 func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) []byte {
 	ima, err := autoimport.New(onlyJava, removeExistingImports, deGlob)
@@ -276,6 +291,16 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 		return
 	case mode.YAML: // Format YAML files
 		data, err := formatYAML([]byte(e.String()), e.indentation.PerTab)
+		if err != nil {
+			status.ClearAll(c, true)
+			status.SetErrorAfterRedraw(err)
+			return
+		}
+		e.LoadBytes(data)
+		e.redraw.Store(true)
+		return
+	case mode.TOML: // Format TOML files
+		data, err := formatTOML([]byte(e.String()))
 		if err != nil {
 			status.ClearAll(c, true)
 			status.SetErrorAfterRedraw(err)
@@ -427,6 +452,12 @@ func runFmt(fnord FilenameOrData) error {
 		e.LoadBytes(formatFstab([]byte(e.String()), spaces))
 	case mode.YAML:
 		out, err := formatYAML([]byte(e.String()), e.indentation.PerTab)
+		if err != nil {
+			return err
+		}
+		e.LoadBytes(out)
+	case mode.TOML:
+		out, err := formatTOML([]byte(e.String()))
 		if err != nil {
 			return err
 		}
