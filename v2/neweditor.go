@@ -488,6 +488,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.SetTheme(NewGruvbox16Theme(), assumeLightBackground)
 		}
 		themeWasSet = true
+	case "monokai":
+		if termHas256Colors() {
+			registerMonokaiColors()
+			e.SetTheme(NewMonokaiTheme(), assumeLightBackground)
+		} else if !envNoColor {
+			e.SetTheme(NewMonokai16Theme(), assumeLightBackground)
+		}
+		themeWasSet = true
 	case "default":
 		themeWasSet = true
 	}

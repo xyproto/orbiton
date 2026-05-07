@@ -382,6 +382,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				"Zulu           (O_THEME=zulu)",
 				"Xoria          (O_THEME=xoria)",
 				"Gruvbox        (O_THEME=gruvbox)",
+				"Monokai        (O_THEME=monokai)",
 				"Gray Mono      (O_THEME=graymono)",
 				"Amber Mono     (O_THEME=ambermono)",
 				"Green Mono     (O_THEME=greenmono)",
@@ -499,6 +500,20 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				} else {
 					envNoColor = false
 					e.SetTheme(NewGruvbox16Theme())
+					e.syntaxHighlight = true
+				}
+			case "monokai":
+				if termHas256Colors() {
+					envNoColor = false
+					registerMonokaiColors()
+					e.SetTheme(NewMonokaiTheme())
+					e.syntaxHighlight = true
+				} else if envNoColor {
+					e.setNoColorTheme()
+					e.syntaxHighlight = false
+				} else {
+					envNoColor = false
+					e.SetTheme(NewMonokai16Theme())
 					e.syntaxHighlight = true
 				}
 			case "nocolor":
