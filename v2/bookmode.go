@@ -24,10 +24,10 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/xyproto/oksvg"
 	"github.com/srwiley/rasterx"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/imagepreview"
+	"github.com/xyproto/oksvg"
 	"github.com/xyproto/vt"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"

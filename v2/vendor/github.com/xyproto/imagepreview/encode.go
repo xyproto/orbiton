@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	_ "github.com/dkua/go-ico"
-	"github.com/srwiley/oksvg"
+	"github.com/xyproto/oksvg"
 	"github.com/srwiley/rasterx"
 	_ "github.com/xfmoulet/qoi"
 )
