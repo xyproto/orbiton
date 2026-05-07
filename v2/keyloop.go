@@ -478,6 +478,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if !e.Changed() {
 					continue
 				}
+				e.linesMut.Lock()
 				if err := e.Save(c, tty); err != nil {
 					// Silent best-effort: surface via status bar
 					// (auto-clears on next keypress).
@@ -485,6 +486,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					status.SetErrorMessage(fmt.Sprintf("autosave: %v", err))
 					status.Show(c, e)
 				}
+				e.linesMut.Unlock()
 			}
 		}()
 	}
@@ -588,6 +590,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 			}
 		}
+
+		e.linesMut.Lock()
 
 		if e.pasteMode && key != "c:15" {
 			e.handlePasteModeKey(c, status, undo, key)
@@ -2572,6 +2576,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// e.Save(c, tty)
 
 			go func() {
+				e.linesMut.Lock()
+				defer e.linesMut.Unlock()
 
 				y := e.DataY()
 
@@ -3128,11 +3134,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					if e.waitWithRedrawing.Load() {
 						e.waitWithRedrawing.Store(false)
 					} else if !justMovedUpOrDownOrLeftOrRight && !notRegularEditingRightNow.Load() {
+						e.linesMut.Lock()
 						e.redraw.Store(true)
 						e.redrawCursor.Store(true)
 						e.RedrawAtEndOfKeyLoop(c, status, false, true)
 						e.redraw.Store(false)
 						e.redrawCursor.Store(false)
+						e.linesMut.Unlock()
 					}
 				}()
 			}
@@ -3155,6 +3163,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.DrawDebugKeybindings(c, repositionCursor)
 			}
 		}
+
+		e.linesMut.Unlock()
 
 	} // end of main loop
 
