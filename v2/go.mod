@@ -14,7 +14,6 @@ require (
 	github.com/mattn/go-runewidth v0.0.23
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.10
-	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.4.0
@@ -32,6 +31,7 @@ require (
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.6.41
 	github.com/xyproto/mode v0.12.8
+	github.com/xyproto/oksvg v1.0.0
 	github.com/xyproto/orchideous v1.0.8
 	github.com/xyproto/syntax v1.14.2
 	github.com/xyproto/termtitle v1.5.1
@@ -41,6 +41,8 @@ require (
 	golang.org/x/image v0.39.0
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 
 require (
 	github.com/BurntSushi/toml v1.6.0
