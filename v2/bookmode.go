@@ -138,13 +138,13 @@ func (e *Editor) bookTextModeFGDim() vt.AttributeColor {
 type bookFontSet struct {
 	regular       font.Face
 	italic        font.Face
-	code          font.Face // FiraMono Bold — used for inline code, fenced blocks, indented code
+	code          font.Face // monospace bold — used for inline code, fenced blocks, indented code
 	h1            font.Face
 	h2            font.Face
 	h3            font.Face
 	h4            font.Face
 	h5            font.Face
-	h1Code        font.Face // FiraMono Bold sized to h1 — for inline `code` in H1 headers
+	h1Code        font.Face // monospace bold sized to h1 — for inline `code` in H1 headers
 	h2Code        font.Face
 	h3Code        font.Face
 	h4Code        font.Face
@@ -213,12 +213,12 @@ func (fs *bookFontSet) headerCodeForLevel(level int) font.Face {
 var (
 	bookFontMu              sync.Mutex
 	bookFontCache           *bookFontSet
-	parsedVollkornRegular   *opentype.Font
-	parsedVollkornItalic    *opentype.Font
-	parsedMontserratBold    *opentype.Font
-	parsedMontserratLight   *opentype.Font
-	parsedFiraMonoBold      *opentype.Font
-	parsedDejaVuSans        *opentype.Font // Unicode-rich fallback
+	parsedBodyRegular       *opentype.Font
+	parsedBodyItalic        *opentype.Font
+	parsedHeadingBold       *opentype.Font
+	parsedUILight           *opentype.Font
+	parsedCodeMono          *opentype.Font
+	parsedUnicodeFallback   *opentype.Font // Unicode-rich fallback
 	parseFontsOnce          sync.Once
 	parseFontsErr           error
 	bookContentCache        *image.RGBA
@@ -252,12 +252,12 @@ func parsedFonts() error {
 			f, _ := parseFontFile(path)
 			return f
 		}
-		parsedVollkornRegular = load(sf.Regular)
-		parsedVollkornItalic = load(sf.Italic)
-		parsedMontserratBold = load(sf.Bold)
-		parsedMontserratLight = load(sf.Light)
-		parsedFiraMonoBold = load(sf.Mono)
-		parsedDejaVuSans = load(sf.Unicode)
+		parsedBodyRegular = load(sf.Regular)
+		parsedBodyItalic = load(sf.Italic)
+		parsedHeadingBold = load(sf.Bold)
+		parsedUILight = load(sf.Light)
+		parsedCodeMono = load(sf.Mono)
+		parsedUnicodeFallback = load(sf.Unicode)
 		// fill any missing role with the nearest available alternative
 		or := func(a, b *opentype.Font) *opentype.Font {
 			if a != nil {
@@ -265,10 +265,10 @@ func parsedFonts() error {
 			}
 			return b
 		}
-		parsedVollkornItalic = or(parsedVollkornItalic, parsedVollkornRegular)
-		parsedMontserratBold = or(parsedMontserratBold, or(parsedMontserratLight, parsedVollkornRegular))
-		parsedMontserratLight = or(parsedMontserratLight, or(parsedMontserratBold, parsedVollkornRegular))
-		parsedFiraMonoBold = or(parsedFiraMonoBold, or(parsedMontserratLight, parsedVollkornRegular))
+		parsedBodyItalic = or(parsedBodyItalic, parsedBodyRegular)
+		parsedHeadingBold = or(parsedHeadingBold, or(parsedUILight, parsedBodyRegular))
+		parsedUILight = or(parsedUILight, or(parsedHeadingBold, parsedBodyRegular))
+		parsedCodeMono = or(parsedCodeMono, or(parsedUILight, parsedBodyRegular))
 	})
 	return parseFontsErr
 }
@@ -413,7 +413,7 @@ const (
 	bookAffinityBackward = 1 // cursor belongs to the end of the previous sub-row
 )
 
-// bookFallbackFaces maps a font.Face to a same-size DejaVu Sans fallback for missing glyphs.
+// bookFallbackFaces maps a font.Face to a same-size Unicode fallback for missing glyphs.
 var bookFallbackFaces sync.Map // font.Face -> font.Face
 
 func newFace(f *opentype.Font, size float64) (font.Face, error) {
@@ -426,9 +426,9 @@ func newFace(f *opentype.Font, size float64) (font.Face, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Register a matching-size DejaVu Sans fallback for this face
-	if parsedDejaVuSans != nil && f != parsedDejaVuSans {
-		if fb, e2 := opentype.NewFace(parsedDejaVuSans, &opentype.FaceOptions{
+	// Register a matching-size Unicode fallback for this face
+	if parsedUnicodeFallback != nil && f != parsedUnicodeFallback {
+		if fb, e2 := opentype.NewFace(parsedUnicodeFallback, &opentype.FaceOptions{
 			Size:    size,
 			DPI:     96,
 			Hinting: font.HintingFull,
@@ -447,7 +447,7 @@ func faceFallback(primary font.Face) font.Face {
 	return nil
 }
 
-// faceGlyphAdvance is like face.GlyphAdvance but falls back to DejaVu Sans
+// faceGlyphAdvance is like face.GlyphAdvance but falls back to the Unicode fallback font
 // for runes the primary face does not cover
 func faceGlyphAdvance(face font.Face, r rune) (fixed.Int26_6, bool) {
 	if adv, ok := face.GlyphAdvance(r); ok {
@@ -461,7 +461,7 @@ func faceGlyphAdvance(face font.Face, r rune) (fixed.Int26_6, bool) {
 	return face.GlyphAdvance(r)
 }
 
-// measureStringFB measures the pixel width of s, falling back to DejaVu Sans
+// measureStringFB measures the pixel width of s, falling back to the Unicode fallback font
 // for runes the primary face lacks
 func measureStringFB(face font.Face, s string) fixed.Int26_6 {
 	var total fixed.Int26_6
@@ -482,36 +482,36 @@ func bookFaces(pixelSize float64) (*bookFontSet, error) {
 	if err := parsedFonts(); err != nil {
 		return nil, err
 	}
-	reg := newFaceOrBurn(parsedVollkornRegular, pixelSize)
-	ita := newFaceOrBurn(parsedVollkornItalic, pixelSize)
+	reg := newFaceOrBurn(parsedBodyRegular, pixelSize)
+	ita := newFaceOrBurn(parsedBodyItalic, pixelSize)
 	h1Size := pixelSize * 1.55
 	h2Size := pixelSize * 1.35
 	h3Size := pixelSize * 1.2
 	h4Size := pixelSize * 1.1
 	h5Size := pixelSize * 1.0
-	h1 := newFaceOrBurn(parsedMontserratBold, h1Size)
-	h2 := newFaceOrBurn(parsedMontserratBold, h2Size)
-	h3 := newFaceOrBurn(parsedMontserratBold, h3Size)
-	h4 := newFaceOrBurn(parsedMontserratBold, h4Size)
-	h5 := newFaceOrBurn(parsedMontserratBold, h5Size)
+	h1 := newFaceOrBurn(parsedHeadingBold, h1Size)
+	h2 := newFaceOrBurn(parsedHeadingBold, h2Size)
+	h3 := newFaceOrBurn(parsedHeadingBold, h3Size)
+	h4 := newFaceOrBurn(parsedHeadingBold, h4Size)
+	h5 := newFaceOrBurn(parsedHeadingBold, h5Size)
 	statusBarSize := pixelSize * 0.75
 	if statusBarSize < 8 {
 		statusBarSize = 8
 	}
-	sb := newFaceOrBurn(parsedMontserratLight, statusBarSize)
+	sb := newFaceOrBurn(parsedUILight, statusBarSize)
 	// Code font is slightly smaller than the body to visually distinguish it.
 	codeSize := pixelSize * 0.88
 	if codeSize < 6 {
 		codeSize = 6
 	}
-	cod := newFaceOrBurn(parsedFiraMonoBold, codeSize)
+	cod := newFaceOrBurn(parsedCodeMono, codeSize)
 	// Code faces sized to match each header level. Inline `code` inside a
 	// header renders at the header's font size rather than the body-code size.
-	h1Code := newFaceOrBurn(parsedFiraMonoBold, h1Size)
-	h2Code := newFaceOrBurn(parsedFiraMonoBold, h2Size)
-	h3Code := newFaceOrBurn(parsedFiraMonoBold, h3Size)
-	h4Code := newFaceOrBurn(parsedFiraMonoBold, h4Size)
-	h5Code := newFaceOrBurn(parsedFiraMonoBold, h5Size)
+	h1Code := newFaceOrBurn(parsedCodeMono, h1Size)
+	h2Code := newFaceOrBurn(parsedCodeMono, h2Size)
+	h3Code := newFaceOrBurn(parsedCodeMono, h3Size)
+	h4Code := newFaceOrBurn(parsedCodeMono, h4Size)
+	h5Code := newFaceOrBurn(parsedCodeMono, h5Size)
 	bookFontCache = &bookFontSet{
 		regular:       reg,
 		italic:        ita,
@@ -557,7 +557,7 @@ type textSegment struct {
 	italic    bool
 	underline bool
 	strike    bool   // rendered with a strikethrough line
-	code      bool   // rendered in the monospace code font (FiraMono Bold)
+	code      bool   // rendered in the monospace code font
 	linkURL   string // non-empty for inline links: the hyperlink target
 }
 
@@ -1168,8 +1168,8 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 }
 
 // faceForSeg returns the font face for a text segment. Bold is served by the
-// regular Vollkorn face (faux bold is applied by the caller). Italic uses the
-// Vollkorn Italic face. Code segments use FiraMono Bold.
+// regular body face (faux bold is applied by the caller). Italic uses the
+// italic body face. Code segments use the monospace bold face.
 func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
 	if seg.code {
 		return fs.code
@@ -1198,7 +1198,7 @@ func stableDigitString(s string) string {
 }
 
 // drawString renders text at (x, baselineY) using face and returns the new X.
-// Runes the primary face lacks are rendered with the registered DejaVu Sans
+// Runes the primary face lacks are rendered with the registered Unicode
 // fallback face.
 func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, clr color.Color) int {
 	fb := faceFallback(face)
@@ -1246,7 +1246,7 @@ func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, 
 
 // drawHeaderSegments renders styled inline segments of a header line at
 // (x, baselineY). Non-code segments use the header face for the given level;
-// code segments use a FiraMono Bold face sized to match the header so
+// code segments use a monospace bold face sized to match the header so
 // inline `code` inside a header visually matches the surrounding header
 // text. Headers are always bold, so all segments are drawn with faux-bold.
 func drawHeaderSegments(img *image.RGBA, fs *bookFontSet, level, x, baselineY int, segs []textSegment, clr color.Color) int {
@@ -1906,9 +1906,9 @@ func svgExtractTextSpans(data []byte) (viewW, viewH float64, spans []svgTextSpan
 // bookRenderSVGTextOverlay draws <text>/<tspan> content onto img after oksvg
 // has rasterized the shapes. oksvg itself doesn't render SVG text, so this
 // recovers legibility for shields.io-style badges and similar SVGs that rely
-// on <text>. Text is rendered with Orbiton's bundled fonts — DejaVu Sans is
-// used as the Unicode-safe fallback for "sans-serif" / "Verdana" / "Arial"
-// requests, Fira Mono Bold for monospace, and Vollkorn for serif.
+// on <text>. Text is rendered with Orbiton's bundled fonts — the Unicode
+// fallback font is used for "sans-serif" / "Verdana" / "Arial"
+// requests, the monospace bold font for monospace, and the body serif font for serif.
 func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64) {
 	w, h := viewW, viewH
 	if w <= 0 || h <= 0 {
@@ -1924,7 +1924,7 @@ func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64
 	sy := float64(b.Dy()) / h
 	_ = parsedFonts() // ensure fonts are loaded; safe to ignore error here
 	for _, sp := range spans {
-		// Apply a small legibility adjustment: DejaVu Sans at the SVG's
+		// Apply a small legibility adjustment: the Unicode fallback font at the SVG's
 		// declared px size tends to render visually larger than Verdana
 		// (shields.io's intended face), which nudges text past the badge
 		// edges. Shave a touch off the size so it fits cleanly.
@@ -1935,16 +1935,16 @@ func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64
 		// Pick a face
 		var baseFont *opentype.Font
 		switch {
-		case sp.monospace && parsedFiraMonoBold != nil:
-			baseFont = parsedFiraMonoBold
-		case sp.bold && parsedMontserratBold != nil:
-			baseFont = parsedMontserratBold
-		case parsedDejaVuSans != nil:
-			baseFont = parsedDejaVuSans
-		case parsedMontserratLight != nil:
-			baseFont = parsedMontserratLight
-		case parsedVollkornRegular != nil:
-			baseFont = parsedVollkornRegular
+		case sp.monospace && parsedCodeMono != nil:
+			baseFont = parsedCodeMono
+		case sp.bold && parsedHeadingBold != nil:
+			baseFont = parsedHeadingBold
+		case parsedUnicodeFallback != nil:
+			baseFont = parsedUnicodeFallback
+		case parsedUILight != nil:
+			baseFont = parsedUILight
+		case parsedBodyRegular != nil:
+			baseFont = parsedBodyRegular
 		}
 		if baseFont == nil {
 			continue
@@ -6577,11 +6577,11 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 		dataIdx = n
 	}
 
-	// Header face: Montserrat Bold at the body size, falling back to
+	// Header face: heading bold font at the body size, falling back to
 	// the regular body face if it can't be loaded
 	headerBoldFace := fs.regular
-	if parsedMontserratBold != nil {
-		if hf, err := newFace(parsedMontserratBold, fs.baseSize*0.9); err == nil {
+	if parsedHeadingBold != nil {
+		if hf, err := newFace(parsedHeadingBold, fs.baseSize*0.9); err == nil {
 			headerBoldFace = hf
 		}
 	}
@@ -6648,7 +6648,7 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 		// Wrap the cell to the column's inner width
 		var rows []wrappedRow
 		if isHeader {
-			// Header uses Montserrat Bold uniformly, so wrap by measuring
+			// Header uses the heading bold font uniformly, so wrap by measuring
 			// that face directly instead of via parseLineSegments
 			rows = bookWrapPlainPixel(headerBoldFace, text, inner)
 		} else {
