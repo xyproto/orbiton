@@ -24,7 +24,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/srwiley/oksvg"
+	"github.com/xyproto/oksvg"
 	"github.com/srwiley/rasterx"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/imagepreview"
