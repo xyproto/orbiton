@@ -211,25 +211,23 @@ func (fs *bookFontSet) headerCodeForLevel(level int) font.Face {
 }
 
 var (
-	bookFontMu               sync.Mutex
-	bookFontCache            *bookFontSet
-	parsedVollkornRegular    *opentype.Font
-	parsedVollkornItalic     *opentype.Font
-	parsedMontserratBold     *opentype.Font
-	parsedMontserratLight    *opentype.Font
-	parsedFiraMonoBold       *opentype.Font
-	parsedDejaVuSans         *opentype.Font // Unicode-rich fallback
-	parseFontsOnce           sync.Once
-	parseFontsErr            error
-	bookContentCache         *image.RGBA
-	bookContentCacheW        int
-	bookContentCacheH        int
-	bookContentCacheOffsetY  int
-	bookContentCacheGen      uint64 // generation counter when content cache was built
-	bookContentGen           uint64 // bumped each time document content changes
-	bookContentGenMu         sync.Mutex
-	bookTemporaryStatusMsg   string
-	bookTemporaryStatusMsgMu sync.Mutex
+	bookFontMu              sync.Mutex
+	bookFontCache           *bookFontSet
+	parsedVollkornRegular   *opentype.Font
+	parsedVollkornItalic    *opentype.Font
+	parsedMontserratBold    *opentype.Font
+	parsedMontserratLight   *opentype.Font
+	parsedFiraMonoBold      *opentype.Font
+	parsedDejaVuSans        *opentype.Font // Unicode-rich fallback
+	parseFontsOnce          sync.Once
+	parseFontsErr           error
+	bookContentCache        *image.RGBA
+	bookContentCacheW       int
+	bookContentCacheH       int
+	bookContentCacheOffsetY int
+	bookContentCacheGen     uint64        // generation counter when content cache was built
+	bookContentGen          atomic.Uint64 // bumped each time document content changes
+	bookTemporaryStatusMsg  atomic.Value  // stores string; set/get without mutex
 	// coalesces auto-clear goroutines; only the freshest clears after the timeout
 	bookStatusClearGen atomic.Uint64
 
@@ -387,30 +385,25 @@ func (e *Editor) bookEditRows(totalRows uint) uint {
 
 // bookSetTemporaryStatusMsg atomically sets the temporary status bar message.
 func bookSetTemporaryStatusMsg(msg string) {
-	bookTemporaryStatusMsgMu.Lock()
-	bookTemporaryStatusMsg = msg
-	bookTemporaryStatusMsgMu.Unlock()
+	bookTemporaryStatusMsg.Store(msg)
 }
 
 // bookGetTemporaryStatusMsg atomically reads the temporary status bar message.
 func bookGetTemporaryStatusMsg() string {
-	bookTemporaryStatusMsgMu.Lock()
-	defer bookTemporaryStatusMsgMu.Unlock()
-	return bookTemporaryStatusMsg
+	if v := bookTemporaryStatusMsg.Load(); v != nil {
+		return v.(string)
+	}
+	return ""
 }
 
 // bookBumpContentGen increments the content generation counter, invalidating the content cache.
 func bookBumpContentGen() {
-	bookContentGenMu.Lock()
-	bookContentGen++
-	bookContentGenMu.Unlock()
+	bookContentGen.Add(1)
 }
 
 // bookCurrentContentGen returns the current content generation counter.
 func bookCurrentContentGen() uint64 {
-	bookContentGenMu.Lock()
-	defer bookContentGenMu.Unlock()
-	return bookContentGen
+	return bookContentGen.Load()
 }
 
 // Cursor affinity at soft-wrap boundaries: a rune exactly at a boundary maps to two visual

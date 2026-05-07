@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -704,6 +705,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	e.debugLine.Store(-1)
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
+	e.linesMut = &sync.Mutex{}
 	e.indentation = indentation
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis

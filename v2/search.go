@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -83,11 +82,8 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
 
-	// create a channel to signal when a match is found
-	matchFound := make(chan bool)
-
-	foundMatch := LineIndex(-1)
-	var foundMutex sync.RWMutex
+	// create a channel to receive the matching line index (or -1)
+	resultCh := make(chan LineIndex, 1)
 
 	// Snapshot the search range and line contents before launching the
 	// goroutine so it doesn't race with the main loop mutating editor state.
@@ -110,24 +106,19 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 				found = strings.Contains(line, s)
 			}
 			if found {
-				foundMutex.Lock()
-				foundMatch = startY + LineIndex(i)
-				foundMutex.Unlock()
-				matchFound <- true
+				resultCh <- startY + LineIndex(i)
 				return
 			}
 		}
-		matchFound <- false
+		resultCh <- -1
 	}()
 
 	// wait for either a match to be found or timeout
+	var foundMatch LineIndex = -1
 	select {
-	case <-matchFound:
+	case foundMatch = <-resultCh:
 	case <-time.After(timeout):
 	}
-
-	foundMutex.RLock()
-	defer foundMutex.RUnlock()
 
 	if foundMatch != -1 {
 		// Found an instance, scroll there

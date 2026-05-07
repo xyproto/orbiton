@@ -552,18 +552,22 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if key == "" {
 					// Timeout — no keypress, but check for image redraws
 					if bookImgNeedRedraw.CompareAndSwap(true, false) {
+						e.linesMut.Lock()
 						e.redraw.Store(true)
 						e.redrawCursor.Store(true)
 						e.RedrawAtEndOfKeyLoop(c, status, false, true)
+						e.linesMut.Unlock()
 					}
 					continue
 				}
 			} else if e.bookMode.Load() && bookImgNeedRedraw.CompareAndSwap(true, false) {
 				// No downloads in flight, but a redraw was requested
 				// just before we got here — pick it up immediately.
+				e.linesMut.Lock()
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
 				e.RedrawAtEndOfKeyLoop(c, status, false, true)
+				e.linesMut.Unlock()
 				key = tty.ReadKey()
 			} else {
 				// Read the next key in the regular way
@@ -1285,6 +1289,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case ctrlPgUpKey: // ctrl-pgup, previous file or page up
 			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
+				e.linesMut.Unlock()
 				return "", megafile.PreviousFile, nil
 			}
 			e.ClearSelection()
@@ -1307,6 +1312,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case ctrlPgDnKey: // ctrl-pgdn, next file or page down
 			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
+				e.linesMut.Unlock()
 				return "", megafile.NextFile, nil
 			}
 			e.ClearSelection()
@@ -1487,6 +1493,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
 				// go to the previous file, if launched from the file browser
+				e.linesMut.Unlock()
 				return "", megafile.PreviousFile, nil
 			}
 
@@ -1577,6 +1584,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
 				e.SaveLocation()
 				// go to the next file, if launched from the file browser
+				e.linesMut.Unlock()
 				return "", megafile.NextFile, nil
 			}
 
@@ -2955,6 +2963,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// Save the file
 					e.UserSave(c, tty, status)
 					// Skip the rest
+					e.linesMut.Unlock()
 					continue
 				}
 

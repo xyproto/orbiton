@@ -291,7 +291,6 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				}
 			}
 			if e.changed.Load() {
-				e.MakeConsistent()
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
 			}
