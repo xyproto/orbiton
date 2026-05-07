@@ -30,7 +30,7 @@ require (
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.6.41
-	github.com/xyproto/mode v0.12.8
+	github.com/xyproto/mode v0.12.9
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/orchideous v1.0.8
 	github.com/xyproto/syntax v1.14.2

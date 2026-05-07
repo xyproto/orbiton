@@ -227,7 +227,7 @@ func Detect(filename string) Mode {
 			mode = ObjC
 		case ".m4":
 			mode = M4
-		case ".md":
+		case ".md", ".markdown":
 			// Markdown mode
 			mode = Markdown
 		case ".ml":
