@@ -5626,18 +5626,25 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 	if sub < total-1 {
 		// Move within the same data line to the next sub-row.
 		targetSub := sub + 1
+		oldX := e.pos.sx + e.pos.offsetX
 		newX := bookSubRowX(e.Line(e.DataY()), textW, targetSub, savedX, pw)
 		e.pos.SetX(c, newX)
-		// If the new position lands at the wrap boundary of a non-last
-		// sub-row, pin it to the end of targetSub; otherwise forward.
-		if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
-			e.bookCursorAffinity = bookAffinityBackward
-		} else {
-			e.bookCursorAffinity = bookAffinityForward
+		actualX := e.pos.sx + e.pos.offsetX
+		if actualX != oldX {
+			// If the new position lands at the wrap boundary of a non-last
+			// sub-row, pin it to the end of targetSub; otherwise forward.
+			if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
+				e.bookCursorAffinity = bookAffinityBackward
+			} else {
+				e.bookCursorAffinity = bookAffinityForward
+			}
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			return true
 		}
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-		return true
+		// Position didn't change — savedX lands exactly at the wrap
+		// boundary between sub and targetSub. Staying here would be a
+		// no-op for selection, so fall through to the next data line.
 	}
 	// At the last sub-row — move to the next data line. Not using
 	// e.CursorDownward because it thinks in canvas cells and triggers a
@@ -5717,21 +5724,27 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 	if sub > 0 {
 		// Move within the same data line to the previous sub-row.
 		targetSub := sub - 1
+		oldX := e.pos.sx + e.pos.offsetX
 		newX := bookSubRowX(e.Line(e.DataY()), textW, targetSub, savedX, pw)
 		e.pos.SetX(c, newX)
-		// If savedX was at or past the end of targetSub, the cursor ends
-		// up at the wrap boundary shared with the next sub-row. Pin it to
-		// the end of targetSub with backward affinity so it renders on
-		// the expected row. Without this, pressing Up from the start of
-		// the second sub-row would be a no-op (bug fix).
-		if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
-			e.bookCursorAffinity = bookAffinityBackward
-		} else {
-			e.bookCursorAffinity = bookAffinityForward
+		actualX := e.pos.sx + e.pos.offsetX
+		if actualX != oldX {
+			// If savedX was at or past the end of targetSub, the cursor
+			// ends up at the wrap boundary shared with the next sub-row.
+			// Pin it to the end of targetSub with backward affinity so
+			// it renders on the expected row.
+			if targetSub < total-1 && newX == bookSubRowEndX(e.Line(e.DataY()), textW, targetSub, pw) {
+				e.bookCursorAffinity = bookAffinityBackward
+			} else {
+				e.bookCursorAffinity = bookAffinityForward
+			}
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			return true
 		}
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-		return true
+		// Position didn't change — savedX lands exactly at the wrap
+		// boundary between targetSub and sub. Staying here would be a
+		// no-op for selection, so fall through to the previous data line.
 	}
 	// At the first sub-row — move to the previous data line.
 	if e.DataY() == 0 {
