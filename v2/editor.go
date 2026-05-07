@@ -2802,24 +2802,40 @@ func (e *Editor) SortBlock(c *vt.Canvas, status *StatusBar) {
 	}
 	y := e.LineIndex()
 	e.Home()
-	s := e.Block(y)
-	var lines sort.StringSlice
-	lines = strings.Split(s, "\n")
-	if len(lines) == 0 {
+
+	// Find the extent of the block starting at y
+	startY := int(y)
+	endY := startY // exclusive end
+	for {
+		line, ok := e.lines[endY]
+		if !ok || len(line) == 0 {
+			break
+		}
+		if strings.TrimSpace(string(line)) == "" {
+			break
+		}
+		endY++
+	}
+
+	blockLen := endY - startY
+	if blockLen == 0 {
 		status.SetErrorMessage("no text block to sort")
 		return
 	}
-	// Remove the last empty line, if it's there
-	addEmptyLine := false
-	if lines[len(lines)-1] == "" {
-		lines = lines[:len(lines)-1]
-		addEmptyLine = true
+
+	// Collect the lines as strings for sorting
+	sortable := make(sort.StringSlice, blockLen)
+	for i := range blockLen {
+		sortable[i] = string(e.lines[startY+i])
 	}
-	lines.Sort()
-	e.GoTo(y, c, status)
-	e.DeleteBlock()
-	e.GoTo(y, c, status)
-	e.InsertBlock(c, lines, addEmptyLine)
+	sortable.Sort()
+
+	// Write sorted lines back in-place
+	for i := range blockLen {
+		e.lines[startY+i] = []rune(sortable[i])
+	}
+
+	e.MarkChanged()
 	e.GoTo(y, c, status)
 }
 
