@@ -69,11 +69,9 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 			case sig := <-sigChan:
 				switch sig {
 				case os.Interrupt:
-					mut.Lock()
 					e.linesMut.Lock()
 					e.UserSave(c, tty, status)
 					e.linesMut.Unlock()
-					mut.Unlock()
 				}
 			case <-ctx.Done():
 				return

@@ -34,7 +34,7 @@ type Editor struct {
 	bookmark           *Position         // for the bookmark/jump functionality
 	sameFilePortal     *Portal           // a portal that points to the same file
 	lines              map[int][]rune    // the contents of the current document
-	linesMut           sync.Mutex        // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
+	linesMut           *sync.Mutex       // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
 	macro              *Macro            // the contents of the current macro (will be cleared when esc is pressed)
 	debugWatches       map[string]string // watches preserved across debug sessions
 	blockCursors       map[int]int       // per-line cursor X positions for block editing (line Y -> X)
@@ -229,11 +229,13 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	stickyStatusBars := e.stickyStatusBars
 	wrapWhenTyping := e.wrapWhenTyping
 	wrapWidth := e.wrapWidth
+	linesMut := e.linesMut // preserve the live mutex
 
 	const withLines = true
 	*e = *(snap.Copy(withLines))
 	e.lines = lines
 	e.pos = pos
+	e.linesMut = linesMut // restore the live mutex
 
 	// Re-apply the rendering state
 	e.bookMode.Store(bookMode)
@@ -626,9 +628,6 @@ func (e *Editor) DeleteRestOfLine() {
 	}
 	e.lines[y] = e.lines[y][:x]
 	e.MarkChanged()
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // DeleteLine will delete the given line index
@@ -663,9 +662,6 @@ func (e *Editor) DeleteLine(n LineIndex) {
 
 	// This changes the document
 	e.MarkChanged()
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // DeleteLineMoveBookmark will delete the given line index and also move the bookmark if it's after n
@@ -727,8 +723,6 @@ func (e *Editor) Delete(c *vt.Canvas, useBlockMode bool) {
 	}
 
 	e.MarkChanged()
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // Empty will check if the current editor contents are empty or not.
@@ -905,7 +899,7 @@ func (e *Editor) WrapAllLines() bool {
 	}
 
 	// This appears to be needed as well
-	e.MakeConsistent()
+	// (No longer needed now that InsertLineBelowAt shifts in-place.)
 
 	return wrapped
 }
@@ -929,41 +923,18 @@ func (e *Editor) InsertLineAbove() {
 	}
 
 	y := int(lineIndex)
+	maxIndex := len(e.lines) - 1
 
-	// Create new set of lines
-	lines2 := make(map[int][]rune)
-
-	// If at the first line, just add a line at the top
-	if y == 0 {
-
-		// Insert a blank line
-		lines2[0] = make([]rune, 0)
-		// Then insert all the other lines, shifted by 1
-		for k, v := range e.lines {
-			lines2[k+1] = v
-		}
-		y++
-
-	} else {
-		// For each line in the old map, if at (y-1), insert a blank line
-		// (insert a blank line above)
-		for k, v := range e.lines {
-			if k < (y - 1) {
-				lines2[k] = v
-			} else if k == (y - 1) {
-				lines2[k] = v
-				lines2[k+1] = make([]rune, 0)
-			} else if k > (y - 1) {
-				lines2[k+1] = v
-			}
-		}
+	// Shift all lines from maxIndex down to y, each moving one position up
+	for i := maxIndex; i >= y; i-- {
+		e.lines[i+1] = e.lines[i]
 	}
+	// Insert a blank line at y
+	e.lines[y] = make([]rune, 0)
 
-	// Use the new set of lines
-	e.lines = lines2
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
+	if y == 0 {
+		y++
+	}
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
@@ -988,34 +959,21 @@ func (e *Editor) InsertLineBelow() {
 // InsertLineBelowAt will attempt to insert a new line below the given y position
 func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	y := int(index)
+	maxIndex := len(e.lines) - 1
 
-	// Make sure no lines are nil
-	e.MakeConsistent()
-
-	// If we are the the last line, add an empty line at the end and return
-	if y == (len(e.lines) - 1) {
-		e.lines[int(y)+1] = make([]rune, 0)
+	// If we are at the last line, add an empty line at the end and return
+	if y >= maxIndex {
+		e.lines[y+1] = make([]rune, 0)
 		e.MarkChanged()
 		return
 	}
 
-	// Create new set of lines, with room for one more
-	lines2 := make(map[int][]rune, len(e.lines)+1)
-
-	// For each line in the old map, if at y, insert a blank line
-	// (insert a blank line below)
-	for k, v := range e.lines {
-		if k < y {
-			lines2[k] = v
-		} else if k == y {
-			lines2[k] = v
-			lines2[k+1] = make([]rune, 0)
-		} else if k > y {
-			lines2[k+1] = v
-		}
+	// Shift all lines from maxIndex down to y+1, each moving one position up
+	for i := maxIndex; i > y; i-- {
+		e.lines[i+1] = e.lines[i]
 	}
-	// Use the new set of lines
-	e.lines = lines2
+	// Insert a blank line at y+1
+	e.lines[y+1] = make([]rune, 0)
 
 	// Skip trailing newlines after this line
 	for i := len(e.lines); i > y; i-- {
@@ -1029,8 +987,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	e.MarkChanged()
 }
 
-// Insert will insert a rune at the given position, with no word wrap,
-// and call MakeConsistent at the end.
+// Insert will insert a rune at the given position, with no word wrap.
 func (e *Editor) Insert(c *vt.Canvas, r rune) {
 
 	doInsert := func() bool {
@@ -1073,9 +1030,6 @@ func (e *Editor) Insert(c *vt.Canvas, r rune) {
 	}
 
 	e.MarkChanged()
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // CreateLineIfMissing will create a line at the given Y index, if it's missing
@@ -2277,9 +2231,6 @@ func (e *Editor) ForEachLineInBlock(c *vt.Canvas, f func() bool) {
 	finalAbsX := e.blockCursors[firstDataY]
 	e.pos.SetX(c, finalAbsX)
 	e.pos.sy = firstScreenY
-
-	// Make sure no lines are nil
-	e.MakeConsistent()
 }
 
 // Block will return the text from the given line until
@@ -2497,8 +2448,9 @@ func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *
 			switchBuffer.Snapshot(e)
 			// Now use e2 as the current editor
 			const withLines = true
+			linesMut := e.linesMut // preserve the live mutex
 			*e = *(e2.Copy(withLines))
-			//*e = *e2
+			e.linesMut = linesMut // restore the live mutex
 			//(*e).lines = (*e2).lines
 			//(*e).pos = (*e2).pos
 		} else if displayedImage {

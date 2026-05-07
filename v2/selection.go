@@ -195,7 +195,6 @@ func (e *Editor) DeleteSelection(c *vt.Canvas, status *StatusBar) {
 		for y := endY; y > startY; y-- {
 			e.DeleteLine(y)
 		}
-		e.MakeConsistent()
 	}
 
 	// Move cursor to the start of the deleted selection

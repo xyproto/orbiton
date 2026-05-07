@@ -118,7 +118,6 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 			indent = false
 		}
 	}
-	e.MakeConsistent()
 
 	h := int(c.Height())
 	// In graphical book mode the bottom terminal row belongs to the status bar,
