@@ -48,4 +48,4 @@ oksvg also requires the user to get or clone into the workspace the rasterx pack
 
 ### General info
 
-* Version: 1.0.0
+* Version: 1.0.1

@@ -75,9 +75,6 @@ github.com/sourcegraph/annotate
 # github.com/spf13/pflag v1.0.10
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
-## explicit; go 1.17
-github.com/srwiley/oksvg
 # github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 ## explicit; go 1.17
 github.com/srwiley/rasterx
@@ -126,7 +123,7 @@ github.com/xyproto/globi
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
-# github.com/xyproto/imagepreview v1.2.0
+# github.com/xyproto/imagepreview v1.2.1
 ## explicit; go 1.25.1
 github.com/xyproto/imagepreview
 # github.com/xyproto/javasig v1.0.3
@@ -144,7 +141,7 @@ github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.8
 ## explicit; go 1.23.2
 github.com/xyproto/mode
-# github.com/xyproto/oksvg v1.0.0
+# github.com/xyproto/oksvg v1.0.1
 ## explicit; go 1.25.1
 github.com/xyproto/oksvg
 # github.com/xyproto/orchideous v1.0.8
@@ -189,7 +186,6 @@ golang.org/x/image/webp
 ## explicit; go 1.25.0
 golang.org/x/net/html
 golang.org/x/net/html/atom
-golang.org/x/net/html/charset
 # golang.org/x/sys v0.43.0
 ## explicit; go 1.25.0
 golang.org/x/sys/plan9
@@ -202,20 +198,8 @@ golang.org/x/term
 ## explicit; go 1.25.0
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
-golang.org/x/text/encoding/htmlindex
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
-golang.org/x/text/encoding/japanese
-golang.org/x/text/encoding/korean
-golang.org/x/text/encoding/simplifiedchinese
-golang.org/x/text/encoding/traditionalchinese
-golang.org/x/text/encoding/unicode
-golang.org/x/text/internal/language
-golang.org/x/text/internal/language/compact
-golang.org/x/text/internal/tag
-golang.org/x/text/internal/utf8internal
-golang.org/x/text/language
-golang.org/x/text/runes
 golang.org/x/text/transform
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
