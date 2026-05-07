@@ -6,7 +6,7 @@ import (
 
 // cLikeFunction checks if the given mode is a language with C-like function definitions
 func cLikeFunction(m mode.Mode) bool {
-	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.JavaScript || m == mode.ObjC || m == mode.Scala || m == mode.Shader || m == mode.TypeScript || m == mode.Zig
+	return m == mode.Arduino || m == mode.C || m == mode.CS || m == mode.Cpp || m == mode.D || m == mode.Dart || m == mode.Hare || m == mode.Jakt || m == mode.JavaScript || m == mode.ObjC || m == mode.Scala || m == mode.Shader || m == mode.TypeScript || m == mode.Zig
 }
 
 // cLikeFor checks if the given mode is a language with C-like for expressions
