@@ -64,6 +64,8 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	switch e.mode {
 	case mode.Java:
 		return javasig.Is(trimmedLine)
+	case mode.CS:
+		return csLooksLikeFunctionDef(trimmedLine)
 	case mode.Kotlin:
 		return kotlinsig.Is(trimmedLine)
 	// C-like languages use specialized function detection
