@@ -359,14 +359,18 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		return
 	}
 	if !ProgrammingLanguage(e.mode) && e.mode != mode.GoAssembly && e.mode != mode.Assembly {
-		// For non-programming modes, show the current heading (if any)
-		// in the same top-right position that function names use.
-		heading := e.bookCurrentHeading(e.DataY())
-		if heading != "" {
-			heading = " " + heading + " "
-			canvasWidth := c.Width()
-			hx := (canvasWidth - ulen(heading)) - 2
-			c.Write(hx, 0, e.TopRightForeground, e.TopRightBackground, heading)
+		// For document/markup modes where "#" denotes a heading, show
+		// the current heading in the same top-right position that
+		// function names use. Skip configuration formats where "#" is a
+		// comment character.
+		if hasMarkdownHeadings(e.mode) {
+			heading := e.bookCurrentHeading(e.DataY())
+			if heading != "" {
+				heading = " " + heading + " "
+				canvasWidth := c.Width()
+				hx := (canvasWidth - ulen(heading)) - 2
+				c.Write(hx, 0, e.TopRightForeground, e.TopRightBackground, heading)
+			}
 		}
 		if ollama.Loaded() && hasBuildErrorExplanationThinking() {
 			ellipsisX := c.Width() - 1
