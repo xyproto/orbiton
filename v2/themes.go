@@ -1089,7 +1089,7 @@ func NewLightVSTheme() Theme {
 		Name:                        "VS Light",
 		Light:                       true,
 		Foreground:                  vt.Black,
-		Background:                  vt.BackgroundDefault,
+		Background:                  vt.BackgroundBrightWhite,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlack,
 		TopRightForeground:          vt.White,
@@ -1184,7 +1184,7 @@ func NewDarkVSTheme() Theme {
 		Name:                        "VS Dark",
 		Light:                       false,
 		Foreground:                  vt.Black,
-		Background:                  vt.BackgroundWhite,
+		Background:                  vt.BackgroundBrightWhite,
 		StatusForeground:            vt.White,
 		StatusBackground:            vt.BackgroundBlue,
 		TopRightForeground:          vt.White,
@@ -1195,7 +1195,7 @@ func NewDarkVSTheme() Theme {
 		MultiLineComment:            vt.Gray,
 		MultiLineString:             vt.Red,
 		HighlightForeground:         vt.Black,
-		HighlightBackground:         vt.BackgroundWhite,
+		HighlightBackground:         vt.BackgroundBrightWhite,
 		Git:                         vt.Blue,
 		String:                      "red",
 		Keyword:                     "blue",
@@ -1270,6 +1270,128 @@ func NewDarkVSTheme() Theme {
 		NanoHelpForeground:          vt.Black,
 		NanoHelpBackground:          vt.BackgroundGray,
 		MultiCursorBackground:       vt.BackgroundYellow,
+	}
+}
+
+// registerVSColors adds the VS Code light palette entries to the vt color maps
+// and rebuilds the tag replacers so the custom color names are recognized.
+func registerVSColors() {
+	vt.LightColorMap["vscomment"] = vt.TrueColor(0x00, 0x80, 0x00)  // green
+	vt.LightColorMap["vsstring"] = vt.TrueColor(0xa3, 0x15, 0x15)   // dark red
+	vt.LightColorMap["vssident"] = vt.TrueColor(0x00, 0x10, 0x80)   // dark blue (variables)
+	vt.LightColorMap["vsnumber"] = vt.TrueColor(0x09, 0x86, 0x58)   // dark green
+	vt.LightColorMap["vspreproc"] = vt.TrueColor(0xaf, 0x00, 0xdb)  // purple (preprocessor)
+	vt.LightColorMap["vskeyword"] = vt.TrueColor(0x00, 0x00, 0xff)  // blue
+	vt.LightColorMap["vstype"] = vt.TrueColor(0x26, 0x7f, 0x99)     // dark cyan
+	vt.LightColorMap["vsplain"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
+	vt.LightColorMap["vsescape"] = vt.TrueColor(0xee, 0x00, 0x00)   // bright red (escape sequences)
+	vt.LightColorMap["vspunct"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
+	vt.LightColorMap["vsfunc"] = vt.TrueColor(0x79, 0x5e, 0x26)     // dark yellow/brown (functions)
+	vt.LightColorMap["vscurly"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
+	vt.LightColorMap["vstag"] = vt.TrueColor(0x80, 0x00, 0x00)      // dark red (XML/HTML tags)
+	vt.LightColorMap["vsattrname"] = vt.TrueColor(0xff, 0x00, 0x00) // red (attribute names)
+	vt.LightColorMap["vsattrval"] = vt.TrueColor(0x00, 0x00, 0xff)  // blue (attribute values)
+	vt.LightColorMap["vsincsys"] = vt.TrueColor(0xa3, 0x15, 0x15)   // dark red (system includes)
+	vt.RebuildTagReplacers()
+	tout = vt.New()
+}
+
+// NewVSTrueColorTheme creates a true-color VS Code–inspired light theme
+// with a white background. Requires true-color or 256-color support.
+func NewVSTrueColorTheme() Theme {
+	return Theme{
+		Name:                  "VS Light",
+		Light:                 true,
+		Foreground:            vt.TrueColor(0x00, 0x00, 0x00),
+		Background:            vt.TrueBackground(0xff, 0xff, 0xff),
+		StatusForeground:      vt.TrueColor(0xff, 0xff, 0xff),
+		StatusBackground:      vt.TrueBackground(0x00, 0x7a, 0xcc),
+		TopRightForeground:    vt.TrueColor(0x6a, 0x6a, 0x6a),
+		TopRightBackground:    vt.TrueBackground(0xff, 0xff, 0xff),
+		StatusErrorForeground: vt.TrueColor(0xff, 0xff, 0xff),
+		StatusErrorBackground: vt.TrueBackground(0xc7, 0x25, 0x4e),
+		SearchHighlight:       vt.TrueColor(0xc7, 0x25, 0x4e),
+		MultiLineComment:      vt.TrueColor(0x00, 0x80, 0x00),
+		MultiLineString:       vt.TrueColor(0xa3, 0x15, 0x15),
+		HighlightForeground:   vt.TrueColor(0x00, 0x00, 0x00),
+		HighlightBackground:   vt.TrueBackground(0xff, 0xd3, 0x3d),
+		Git:                   vt.TrueColor(0x00, 0x00, 0xff),
+		String:                "vsstring",
+		Keyword:               "vskeyword",
+		Comment:               "vscomment",
+		Type:                  "vstype",
+		Literal:               "vsnumber",
+		Punctuation:           "vspunct",
+		Plaintext:             "vsplain",
+		Tag:                   "vstag",
+		TextTag:               "vstag",
+		TextAttrName:          "vsattrname",
+		TextAttrValue:         "vsattrval",
+		Decimal:               "vsnumber",
+		AndOr:                 "vskeyword",
+		AngleBracket:          "vstag",
+		Dollar:                "vspreproc",
+		Star:                  "vsplain",
+		Static:                "vskeyword",
+		Self:                  "vskeyword",
+		Class:                 "vstype",
+		Private:               "vssident",
+		Protected:             "vssident",
+		Public:                "vssident",
+		Whitespace:            "",
+		AssemblyEnd:           "vsescape",
+		Mut:                   "vskeyword",
+		CurlyBracket:          "vscurly",
+		IncludeSystem:         "vsincsys",
+		RainbowParenColors: []vt.AttributeColor{
+			vt.TrueColor(0x00, 0x00, 0xff), vt.TrueColor(0xa3, 0x15, 0x15), vt.TrueColor(0x09, 0x86, 0x58),
+			vt.TrueColor(0xaf, 0x00, 0xdb), vt.TrueColor(0x79, 0x5e, 0x26), vt.TrueColor(0x26, 0x7f, 0x99), vt.TrueColor(0x80, 0x00, 0x00),
+		},
+		MarkdownTextColor:           vt.TrueColor(0x00, 0x00, 0x00),
+		HeaderBulletColor:           vt.TrueColor(0x00, 0x00, 0xff),
+		HeaderTextColor:             vt.TrueColor(0x00, 0x00, 0xff),
+		ListBulletColor:             vt.TrueColor(0x00, 0x00, 0xff),
+		ListTextColor:               vt.TrueColor(0x00, 0x00, 0x00),
+		ListCodeColor:               vt.TrueColor(0xa3, 0x15, 0x15),
+		CodeColor:                   vt.TrueColor(0xa3, 0x15, 0x15),
+		CodeBlockColor:              vt.TrueColor(0xa3, 0x15, 0x15),
+		ImageColor:                  vt.TrueColor(0x09, 0x86, 0x58),
+		LinkColor:                   vt.TrueColor(0xaf, 0x00, 0xdb),
+		QuoteColor:                  vt.TrueColor(0x00, 0x80, 0x00),
+		QuoteTextColor:              vt.TrueColor(0x00, 0x00, 0x00),
+		HTMLColor:                   vt.TrueColor(0x80, 0x00, 0x00),
+		CommentColor:                vt.TrueColor(0x00, 0x80, 0x00),
+		BoldColor:                   vt.TrueColor(0x00, 0x00, 0xff),
+		ItalicsColor:                vt.TrueColor(0x00, 0x00, 0xff),
+		StrikeColor:                 vt.TrueColor(0x6a, 0x6a, 0x6a),
+		TableColor:                  vt.TrueColor(0x00, 0x00, 0xff),
+		CheckboxColor:               vt.TrueColor(0x00, 0x00, 0xff),
+		XColor:                      vt.TrueColor(0x00, 0x00, 0xff),
+		TableBackground:             vt.TrueBackground(0xf3, 0xf3, 0xf3),
+		UnmatchedParenColor:         vt.TrueColor(0xc7, 0x25, 0x4e),
+		MenuTitleColor:              vt.TrueColor(0x00, 0x00, 0xff),
+		MenuArrowColor:              vt.TrueColor(0xc7, 0x25, 0x4e),
+		MenuTextColor:               vt.TrueColor(0x44, 0x44, 0x44),
+		MenuHighlightColor:          vt.TrueColor(0x00, 0x7a, 0xcc),
+		MenuSelectedColor:           vt.TrueColor(0x00, 0x00, 0x00),
+		ManSectionColor:             vt.TrueColor(0xc7, 0x25, 0x4e),
+		ManSynopsisColor:            vt.TrueColor(0x00, 0x00, 0xff),
+		BoxTextColor:                vt.TrueColor(0x00, 0x00, 0x00),
+		BoxBackground:               vt.TrueBackground(0xe8, 0xe8, 0xe8),
+		ProgressIndicatorBackground: vt.TrueBackground(0x00, 0x7a, 0xcc),
+		BoxHighlight:                vt.TrueColor(0x00, 0x7a, 0xcc),
+		DebugRunningBackground:      vt.TrueBackground(0x09, 0x86, 0x58),
+		DebugStoppedBackground:      vt.TrueBackground(0xc7, 0x25, 0x4e),
+		DebugRegistersBackground:    vt.TrueBackground(0x00, 0x7a, 0xcc),
+		DebugOutputBackground:       vt.TrueBackground(0xf3, 0xf3, 0xf3),
+		DebugLineIndicator:          vt.TrueColor(0x09, 0x86, 0x58),
+		DebugInstructionsForeground: vt.TrueColor(0xff, 0xff, 0xff),
+		DebugInstructionsBackground: vt.TrueBackground(0xc7, 0x25, 0x4e),
+		BoxUpperEdge:                vt.TrueColor(0x00, 0x00, 0x00),
+		JumpToLetterColor:           vt.TrueColor(0xc7, 0x25, 0x4e),
+		NanoHelpForeground:          vt.TrueColor(0x00, 0x00, 0x00),
+		NanoHelpBackground:          vt.TrueBackground(0xe8, 0xe8, 0xe8),
+		MultiCursorBackground:       vt.TrueBackground(0xad, 0xd6, 0xff),
 	}
 }
 
@@ -1773,13 +1895,18 @@ func (e *Editor) setDefaultTheme() {
 	e.SetTheme(NewDefaultTheme())
 }
 
-// setVSTheme sets the VS theme
+// setVSTheme sets the VS theme, preferring true-color when supported
 func (e *Editor) setVSTheme(bs ...bool) {
 	if len(bs) == 1 {
 		initialLightBackground = &(bs[0])
 	}
 	if initialLightBackground != nil && *initialLightBackground { // light
-		e.SetTheme(NewLightVSTheme())
+		if termHas256Colors() {
+			registerVSColors()
+			e.SetTheme(NewVSTrueColorTheme())
+		} else {
+			e.SetTheme(NewLightVSTheme())
+		}
 	} else { // dark
 		e.SetTheme(NewDarkVSTheme())
 	}
@@ -1822,9 +1949,14 @@ func (e *Editor) setNoColorTheme() {
 	}
 }
 
-// setLightVSTheme sets the light theme suitable for xterm
+// setLightVSTheme sets the light VS theme, preferring true-color when supported
 func (e *Editor) setLightVSTheme() {
-	e.SetTheme(NewLightVSTheme())
+	if termHas256Colors() {
+		registerVSColors()
+		e.SetTheme(NewVSTrueColorTheme())
+	} else {
+		e.SetTheme(NewLightVSTheme())
+	}
 }
 
 // setBlueEditTheme sets a blue/yellow/gray theme, for light or dark backgrounds
