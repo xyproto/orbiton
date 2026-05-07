@@ -29,6 +29,16 @@ func ProgrammingLanguage(m mode.Mode) bool {
 	return true
 }
 
+// hasMarkdownHeadings returns true if the mode uses "#" as a heading marker
+// (like Markdown), as opposed to a comment character (like most config formats).
+func hasMarkdownHeadings(m mode.Mode) bool {
+	switch m {
+	case mode.ASCIIDoc, mode.ManPage, mode.Markdown, mode.Nroff, mode.ReStructured, mode.SCDoc, mode.Text:
+		return true
+	}
+	return false
+}
+
 // NoSmartIndentation returns true if the current mode should probably not have smart tab indentation
 func (e *Editor) NoSmartIndentation() bool {
 	switch e.mode {
