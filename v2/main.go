@@ -378,6 +378,7 @@ func main() {
 	// Behave like if the "-b" flag was given if the executable name was "obuild"
 	if buildMode {
 		buildFlag = true
+		orchideous.ProgName = editorExecutable
 	}
 
 	// If -b was given (or obuild), try language-specific builds first (Go,
