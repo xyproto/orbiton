@@ -56,7 +56,9 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 				switch sig {
 				case syscall.SIGTERM:
 					mut.Lock()
+					e.linesMut.Lock()
 					e.UserSave(c, tty, status)
+					e.linesMut.Unlock()
 					mut.Unlock()
 				case syscall.SIGUSR1:
 					if absFilename, err := filepath.Abs(e.filename); err != nil {
@@ -67,9 +69,13 @@ func (e *Editor) SetUpSignalHandlers(c *vt.Canvas, tty *vt.TTY, status *StatusBa
 					fileLock.Save()
 				case syscall.SIGWINCH:
 					noDrawUntilResize.Store(false)
+					e.linesMut.Lock()
 					e.FullResetRedraw(c, status, true, false)
+					e.linesMut.Unlock()
 					time.Sleep(300 * time.Millisecond)
+					e.linesMut.Lock()
 					e.FullResetRedraw(c, status, true, false)
+					e.linesMut.Unlock()
 				}
 			case <-ctx.Done():
 				return

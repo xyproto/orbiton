@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -33,6 +34,7 @@ type Editor struct {
 	bookmark           *Position         // for the bookmark/jump functionality
 	sameFilePortal     *Portal           // a portal that points to the same file
 	lines              map[int][]rune    // the contents of the current document
+	linesMut           sync.Mutex        // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
 	macro              *Macro            // the contents of the current macro (will be cleared when esc is pressed)
 	debugWatches       map[string]string // watches preserved across debug sessions
 	blockCursors       map[int]int       // per-line cursor X positions for block editing (line Y -> X)
