@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -2934,7 +2935,37 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			fallthrough
 		default: // any other key
 			keyRunes := []rune(key)
-			if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // letter
+
+			// Multi-character printable input is likely a middle-click paste
+			// (X11 primary selection without bracketed-paste framing).
+			// Exclude modifier key names like "ctrl↑", "alt⇱", "shift⇟".
+			looksLikePaste := len(keyRunes) > 1 &&
+				(unicode.IsLetter(keyRunes[0]) || unicode.IsGraphic(keyRunes[0])) &&
+				!strings.HasPrefix(key, "ctrl") &&
+				!strings.HasPrefix(key, "alt") &&
+				!strings.HasPrefix(key, "shift")
+			if looksLikePaste {
+				if keyRunes[0] == 'q' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,q
+					undo.Snapshot(e)
+					e.Backspace(c)
+					e.quit = true
+					break
+				} else if keyRunes[0] == 'w' && !e.nanoMode.Load() && kh.PrevPrev() == "c:27" && kh.Prev() == "," { // <esc> ,w
+					undo.Snapshot(e)
+					e.Backspace(c)
+					e.UserSave(c, tty, status)
+					e.linesMut.Unlock()
+					continue
+				}
+				if e.bookMode.Load() && e.HasSelection() {
+					undo.Snapshot(e)
+					e.DeleteSelection(c, status)
+					e.ClearSelection()
+				}
+				e.handlePasteModeKey(c, status, undo, key)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+			} else if len(keyRunes) > 0 && unicode.IsLetter(keyRunes[0]) { // single letter
 				if keyRunes[0] == 'n' && kh.TwoLastAre("c:14") && kh.PrevWithin(500*time.Millisecond) {
 					// Avoid inserting "n" if the user very recently pressed ctrl-n twice
 					break
@@ -2975,20 +3006,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.ClearSelection()
 				}
 
-				// Type in the letters that were pressed
-				for _, r := range keyRunes {
-					// Insert a letter. This is what normally happens.
-					wrapped := e.InsertRune(c, r)
-					if !wrapped {
-						e.WriteRune(c)
-						if e.blockMode {
-							e.BlockCursorRight()
-						} else {
-							e.Next(c)
-						}
+				// Insert the single letter. This is what normally happens.
+				wrapped := e.InsertRune(c, keyRunes[0])
+				if !wrapped {
+					e.WriteRune(c)
+					if e.blockMode {
+						e.BlockCursorRight()
+					} else {
+						e.Next(c)
 					}
-					e.redraw.Store(true)
 				}
+				e.redraw.Store(true)
 				if e.blockMode {
 					e.redrawCursor.Store(true)
 				}
@@ -3063,6 +3091,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.redraw.Store(true)
 				}
 				e.redrawCursor.Store(true)
+			} else if len(key) > 0 {
+				// Unrecognized key combination, show an error message
+				displayKey := key
+				if strings.HasPrefix(key, "c:") {
+					if n, err := strconv.Atoi(key[2:]); err == nil && n >= 1 && n <= 26 {
+						displayKey = fmt.Sprintf("ctrl-%c", 'a'+n-1)
+					}
+				} else if strings.ContainsRune(key, '\x1b') {
+					displayKey = strings.ReplaceAll(key, "\x1b", "ESC ")
+					displayKey = strings.TrimSpace(displayKey)
+				}
+				status.SetErrorMessage(displayKey + " is not recognized")
 			}
 		}
 
