@@ -60,7 +60,7 @@ require (
 	github.com/xyproto/gfx v1.0.0 // indirect
 	github.com/xyproto/palgen v1.7.0 // indirect
 	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/sys v0.43.0 // indirect
+	golang.org/x/sys v0.44.0 // indirect
 	golang.org/x/term v0.42.0 // indirect
 	golang.org/x/text v0.36.0 // indirect
 	mvdan.cc/sh/v3 v3.13.1 // indirect
