@@ -5645,9 +5645,8 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 			e.redrawCursor.Store(true)
 			return true
 		}
-		// Position didn't change — savedX lands exactly at the wrap
-		// boundary between sub and targetSub. Staying here would be a
-		// no-op for selection, so fall through to the next data line.
+		// Position didn't change: savedX lands exactly at the wrap
+		// boundary between sub and targetSub. Fall through to the next data line.
 	}
 	// At the last sub-row — move to the next data line. Not using
 	// e.CursorDownward because it thinks in canvas cells and triggers a
@@ -5745,11 +5744,10 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
 			e.redrawCursor.Store(true)
 			return true
 		}
-		// Position didn't change — savedX lands exactly at the wrap
-		// boundary between targetSub and sub. Staying here would be a
-		// no-op for selection, so fall through to the previous data line.
+		// Position didn't change: savedX lands exactly at the wrap
+		// boundary between targetSub and sub. Fall through to the previous data line.
 	}
-	// At the first sub-row — move to the previous data line.
+	// At the first sub-row, move to the previous data line.
 	if e.DataY() == 0 {
 		return false
 	}

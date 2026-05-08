@@ -46,8 +46,8 @@ type Editor struct {
 	pos                 Position          // the current cursor and scroll position
 	Theme                                 // editor theme, embedded struct
 	indentation         mode.TabsSpaces   // spaces or tabs, and how many spaces per tab character
-	wrapWidth           int               // column limit for "word wrap now" (WrapAllLines/WrapNow) and the column indicator
-	wrapWhenTypingWidth int               // column limit for live word wrap when typing (0 means use wrapWidth)
+	wrapWidth           int               // wrap width for "word wrap now" and the column indicator
+	wrapWhenTypingWidth int               // wrap width when typing (0 means use wrapWidth)
 	mode                mode.Mode         // a filetype mode, like for git, markdown or various programming languages
 	debugShowRegisters  int               // show no register box, show changed registers, show all changed registers
 	previousY           int               // previous cursor position
