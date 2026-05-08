@@ -699,13 +699,16 @@ This also means that filenames containing `+` or `:`, and then followed by a num
   -l, --last-command             Output the last used build/format/export command.
   -e, --clear-locks              Clear all file locks and close all portals.
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
-  -o, --ollama                   Use Ollama and "deepseek-coder-v2" or $OLLAMA_MODEL
-                                 to explain the function under the cursor.
+  -o, --ollama                   Use Ollama to explain the function under the cursor.
+  -B, --book                     Open in best available book mode (graphical if supported, text otherwise).
+  -T, --book-mode-text           Open in text book mode: word wrap, plain text, word count.
+  -G, --book-mode-graphical      Open in graphical book mode (requires Kitty, iTerm2 or Sixel support).
   -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
                                  compilation and format command to ~/.cache/o.
-  -d, --create-dir               When opening a new file, create directories as needed.
+  -d, --debug                    Start the editor in debug mode.
+  -k, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
   -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
@@ -713,8 +716,9 @@ This also means that filenames containing `+` or `:`, and then followed by a num
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
   -z, --no-quick-help            Never display the quick help pane at start.
-  -g, --glob GLOB                Search for and open the first filename that matches the substring.
+  -g, --glob GLOB                Search for and open the first filename that matches the string.
   -h, --help                     Display this usage information.
+  -y, --esc                      Just pressing Esc will exit the program.
   -v, --version                  Display the current version.
 ```
 
