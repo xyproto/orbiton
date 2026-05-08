@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] Make `MANPAGER='o -b'` possible by implementing man page rendering also for "book mode".
 - [ ] The cursor can move down into the lower status bar when in "book mode (text)".
 - [ ] If a "- [ ] Checkbox" is ticked, in graphical book mode, then also gray out lines and bullet points/checkboxes
       below it that "belongs" to this checkbox.
@@ -32,7 +31,7 @@
 - [ ] There is some duplication between this source code and the source code of the `syntax` package. Refactor and fix.
 - [ ] Let the default theme have a 256-color variant that is like the default theme, only nicer.
 - [ ] If Orbiton is launched by a symlink starting with `p` (for `preview`), then act as an auto-reloading Markdown preview program.
-- [ ] If the user saves a file that ends with `.sh`, and there is no shebang, but the first word of the first line is an executable in the PATH, then `chmod +x` the file when saving.
+- [x] If the user saves a file that ends with `.sh`, and there is no shebang, but the first word of the first line is an executable in the PATH, then `chmod +x` the file when saving.
 - [ ] Highlight `<tags>` differently in `JSX` files.
 - [ ] When piping command line output to `o -m` or `o -m -`, Orbiton should behave as a log colorizer.
 - [ ] If pressing `ctrl-e` when block editing, then move all the cursors to the end of the lines.
@@ -43,7 +42,7 @@
 - [ ] Do not remove indentation from JS code in HTML when `ctrl-w` is pressed. See: https://github.com/yosssi/gohtml/issues/22
 - [ ] Fix and rewrite the multiline string detection for Python and Starlark.
 - [ ] Fix compilation of a single Scala file on macOS.
-- [ ] Fix pasting with midclick, also for multiline strings.
+- [x] Fix pasting with midclick, also for multiline strings.
 - [ ] Fix the "jump to matching paren/bracket" feature so that it can jump anywhere in a file.
 - [ ] Searching for a rune like "U+2713" does not work.
 - [ ] Add a `Run` option to the ctrl-o menu that will only build first if needed.
@@ -62,7 +61,7 @@
 - [ ] When pasting through a portal and reaching the end of the source, don't immediately start pasting from the clipboard. Require the cursor to be moved around first.
 - [ ] When pasting through a portal, make this even more apparent by changing the background color of lines being pasted in and also the background color of lines being pasted from, if in view.
 - [ ] When pasting through a portal, show a little window with the filename and line number that is being pasted from. Drop the status message.
-- [ ] Add a history for not only previous searches, but also for previous replacements.
+- [x] Add a history for not only previous searches, but also for previous replacements.
 - [ ] Add a megafile first-time tutorial.
 - [ ] Add support for emojis. Perhaps by drawing lines differently if an emoji is detected.
 - [ ] If a type is defined with `typealias`, then do not add an import to that type when formatting Kotlin code.
@@ -70,7 +69,7 @@
 - [ ] Let the `ctrl-o` menu have additional info, like time and date and GC stats.
 - [ ] Make it possible to export code to HTML or PNG, maybe by using Splash.
 - [ ] Make it possible to search for a string (like with rg or ag) and then go to the next file+match with a hotkey or menu option.
-- [ ] Make it possible to search for double space ("  ").
+- [x] Make it possible to search for double space ("  ").
 - [ ] Remove chorded keys (ctrl-l,? etc). Instead, display a menu when ctrl-l is pressed twice or something. Or at least add a visual indicator for when the first part of a chorded key is pressed.
 - [ ] For man pages: if the line contains "-*[a-z]" and then later "-*[a-z]" and a majority of words with "-", then color text red instead of blue (and consider the theme).
 - [ ] Adjust the fuzzyness of the spell checker.
@@ -87,13 +86,13 @@
 - [ ] If a line of code in C or C++ have two arrows, like `directory = S_ISDIR(p->fts_statp->st_mode);`, then color the second arrow differently from the first one.
 - [ ] If every other byte is 0x0 in a source code file, assume UTF-16 or Windows text formatting.
 - [ ] If parenthesis are unbalanced (too many `)`), then it's not a function name. Like `reinterpret_cast<char*>(&dq)) != 0= {`.
-- [ ] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line.
+- [x] If the cursor is at the end of the line on the final line of the screen view, and arrow right is pressed, move down to the next line.
 - [ ] In LISP, all strings starting with " and ending with " can be multiline strings?
 - [ ] Instead of updating the entire screen when typing, keep track of the regions of the canvas that needs to be updated. Perhaps create version 2 of the vt100 Canvas.
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Let `delete` ask if a file should be deleted, when browsing files.
 - [ ] Let `game` or the konami code from the file browser also launch the easter egg.
-- [ ] Let altgr+space not insert c:160.
+- [x] Let altgr+space not insert c:160.
 - [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
 - [ ] Parse some programming languages to improve the quality of the "go to definition" feature.
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
@@ -105,8 +104,8 @@
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
 - [ ] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
-- [ ] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
-- [ ] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
+- [x] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
+- [x] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
 - [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
@@ -116,7 +115,7 @@
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users), make the esc-pressing consistent. Either 3 or 4 times.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
-- [ ] When searching for text in Markdown or other text, use case-insensitive search. Use case-sensitive search in code.
+- [x] When searching for text in Markdown or other text, use case-insensitive search. Use case-sensitive search in code.
 - [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to `const val `, when it's being typed in.
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
@@ -198,8 +197,8 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 - [ ] Show a spinner when reading a lot of data from stdin.
 - [ ] When editing a file that then is deleted, `ctrl-s` should maybe create the file again? Or save it to `/tmp` or `~/.cache/o`? Or copy it to the clipboard?
-- [ ] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
-- [ ] Auto-detect tabs/spaces when opening a file.
+- [x] Auto-detect if a loaded file uses `\t` or 1, 2, 3, 4, or 8 spaces for indentation.
+- [x] Auto-detect tabs/spaces when opening a file.
 - [ ] Be able to open and edit large text files (60M+).
 - [ ] Introduce a hexedit mode for binary files that will: * Not load the entire file into memory. * Display all bytes as a grid of "0xff" style fields, with the string representation to the right. * This might be better solved by having a separate hex editor?
 - [ ] Plugins. When there's `txt2something` and `something2txt`, o should be able to edit "something" files in general. This could be used for hex editing, editing ELF files etc.
@@ -226,7 +225,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
 - [ ] When in `SuggestMode`, typing should start filtering the list.
 - [ ] When sorting comma-separated strings that do not start with (, [ or {, make sure to keep the same trailing comma status.
-- [ ] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return` before documenting the feature.
+- [x] Sort lines in a less opaque and unusual way than `left,up,right` `sort` `return` before documenting the feature.
 
 ## Syntax highlighting
 
