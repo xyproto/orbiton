@@ -84,9 +84,9 @@ Flags:
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use $OLLAMA$
                                  to explain the function under the cursor.
-  -B, --book                     Open in best available book mode (graphical if supported, text otherwise).
-  -T, --book-mode-text           Open in text book mode: word wrap, plain text, word count.
-  -G, --book-mode-graphical      Open in graphical book mode (requires Kitty, iTerm2 or Sixel support).
+  -B, --book                     Book mode (for writing prose).
+  -T, --book-mode-text           Book mode (text only).
+  -G, --book-mode-graphical      Book mode (graphics only, requires Kitty, iTerm2 or Sixel).
   -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
   -n, --no-cache                 Avoid writing the location history, search history, highscore,
@@ -100,7 +100,7 @@ Flags:
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
   -z, --no-quick-help            Never display the quick help pane at start.
-  -g, --glob GLOB                Search for and open the first filename that matches the substring.
+  -g, --glob GLOB                Search for and open the first filename that matches the string.
   -h, --help                     Display this usage information.
   -y, --esc                      Just pressing Esc will exit the program.
   -v, --version                  Display the current version.
