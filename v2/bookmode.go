@@ -307,6 +307,7 @@ func (e *Editor) enterBookModeText() {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
 		e.bookSaved = true
 	}
 	if !e.bookDarkModeInitialized {
@@ -332,6 +333,7 @@ func (e *Editor) enterBookModeGraphical() {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
 		e.bookSaved = true
 	}
 	if !e.bookDarkModeInitialized {
@@ -360,6 +362,7 @@ func (e *Editor) exitBookMode() {
 		e.syntaxHighlight = e.bookSavedSyntaxHighlight
 		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
 		e.wrapWidth = e.bookSavedWrapWidth
+		e.wrapWhenTypingWidth = e.bookSavedWrapWhenTypingWidth
 		e.bookSaved = false
 	}
 	bookModeResetCursor()

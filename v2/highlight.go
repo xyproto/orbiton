@@ -828,8 +828,12 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is
-		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(e.wrapWidth) {
-			c.WriteRune(uint(e.wrapWidth), yp, dottedLineColor, bg, wrapMarkerRune)
+		columnLimit := e.wrapWidth
+		if e.wrapWhenTyping && e.wrapWhenTypingWidth > 0 {
+			columnLimit = e.wrapWhenTypingWidth
+		}
+		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(columnLimit) {
+			c.WriteRune(uint(columnLimit), yp, dottedLineColor, bg, wrapMarkerRune)
 		}
 
 		// Draw virtual cursors for block editing mode by changing the background color
