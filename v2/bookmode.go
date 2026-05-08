@@ -995,6 +995,16 @@ func extractImgSrc(htmlSnippet string) string {
 	return htmlSnippet[srcStart : srcStart+endIdx]
 }
 
+// segmentsPlainText concatenates the display text of parsed segments,
+// stripping inline markdown markers.
+func segmentsPlainText(segs []textSegment) string {
+	var b strings.Builder
+	for _, s := range segs {
+		b.WriteString(s.text)
+	}
+	return b.String()
+}
+
 // parseBookLine converts a raw Markdown line into a parsedLine.
 func parseBookLine(line string) parsedLine {
 	return parseBookLineInContext(line, false)
@@ -6662,9 +6672,11 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 		// Wrap the cell to the column's inner width
 		var rows []wrappedRow
 		if isHeader {
-			// Header uses the heading bold font uniformly, so wrap by measuring
-			// that face directly instead of via parseLineSegments
-			rows = bookWrapPlainPixel(headerBoldFace, text, inner)
+			// Header uses the heading bold font uniformly. Strip inline
+			// markdown markers (bold/italic/code) from cell text so that
+			// ie. "**Name**" renders as "Name".
+			plain := segmentsPlainText(parseLineSegments(text))
+			rows = bookWrapPlainPixel(headerBoldFace, plain, inner)
 		} else {
 			rows = bookWrapSegmentsPixel(fs, text, inner)
 		}

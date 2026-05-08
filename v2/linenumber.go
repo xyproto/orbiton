@@ -75,23 +75,19 @@ func FilenameLineColNumber(filename, lineNumberString, colNumberString string) (
 	} else if strings.Contains(filepath.Base(filename), ":") {
 		fields := strings.SplitN(filename, ":", 2)
 		if lineNumberConverted, err := strconv.Atoi(fields[1]); err == nil { // no error
-			// Only treat as filename:N if the original doesn't exist but the base does
+			// Only treat as filename:N if "filename:N" doesn't exist as a file
 			if _, err := os.Stat(filename); err != nil {
-				if _, err := os.Stat(fields[0]); err == nil {
-					lineNumber = lineNumberConverted
-					filename = fields[0]
-				}
+				lineNumber = lineNumberConverted
+				filename = fields[0]
 			}
 		}
 	} else if strings.Contains(filepath.Base(filename), "+") {
 		fields := strings.SplitN(filename, "+", 2)
 		if lineNumberConverted, err := strconv.Atoi(fields[1]); err == nil { // no error
-			// Only treat as filename+N if the original doesn't exist but the base does
+			// Only treat as filename+N if "filename+N" doesn't exist as a file
 			if _, err := os.Stat(filename); err != nil {
-				if _, err := os.Stat(fields[0]); err == nil {
-					lineNumber = lineNumberConverted
-					filename = fields[0]
-				}
+				lineNumber = lineNumberConverted
+				filename = fields[0]
 			}
 		}
 	}
