@@ -265,6 +265,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	tty.RawMode()
 	defer tty.Restore()
 
+	// Enable bracketed paste mode
+	fmt.Fprint(os.Stdout, "\x1b[?2004h")
+	defer fmt.Fprint(os.Stdout, "\x1b[?2004l")
+
 	var (
 		statusDuration = 2700 * time.Millisecond
 
@@ -642,6 +646,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			e.quit = true
+
+		case "\x1b[200~": // bracketed paste start
+			var pasteContent strings.Builder
+			for {
+				pk := tty.ReadKey()
+				if pk == "\x1b[201~" || pk == "" {
+					break
+				}
+				pasteContent.WriteString(pk)
+			}
+			if s := pasteContent.String(); s != "" {
+				e.handlePasteModeKey(c, status, undo, s)
+			}
+
+		case "\x1b[201~": // bracketed paste end (stray)
+			break // do nothing
+
+		case "\x1b[E": // focus / "begin" event
+			break // do nothing
+
+		case "\x1b[I", "\x1b[O": // focus in/out
+			break // do nothing
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
 			if e.blockMode {
@@ -2942,6 +2968,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			fallthrough
 		default: // any other key
 			keyRunes := []rune(key)
+
+			// Ignore CSI escape sequence remnants (e.g. "[E", "[200~")
+			if len(keyRunes) >= 2 && keyRunes[0] == '[' &&
+				(unicode.IsUpper(keyRunes[1]) || unicode.IsDigit(keyRunes[1])) {
+				break
+			}
 
 			// Multi-character printable input is likely a middle-click paste
 			// (X11 primary selection without bracketed-paste framing).
