@@ -103,7 +103,7 @@
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
-- [ ] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
+- [x] When jumping to a parenthesis with ctrl-p, remember to scroll horizontally if needed.
 - [x] When opening `file.txt+7`, only assume that 7 is the line number if no file named `file.txt+7` exists, but `file.txt` exists.
 - [x] When opening a file and pressing `ctrl-f` and then `return`: search for the previously searched for string.
 - [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.

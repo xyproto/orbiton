@@ -473,6 +473,8 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 		}
 		e.redrawCursor.Store(true)
 		e.redraw.Store(true)
+		e.HorizontalScrollIfNeeded(c)
+		e.VerticalScrollIfNeeded(c)
 		return true
 	}
 	return false
