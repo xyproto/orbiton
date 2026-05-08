@@ -789,6 +789,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				}
 			default:
+				// For PKGBUILD/APKBUILD, require double ctrl-space to avoid accidental builds
+				baseFilename := filepath.Base(e.filename)
+				if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped("c:0") {
+					status.ClearAll(c, false)
+					status.SetMessageAfterRedraw("Press ctrl-space again to build")
+					break
+				}
 				// Then build, and run if ctrl-space was double-tapped
 				e.runAfterBuild.Store(kh.DoubleTapped("c:0"))
 				// Stop background processes first (if any)
