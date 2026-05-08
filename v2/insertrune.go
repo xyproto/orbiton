@@ -45,13 +45,18 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	e.Insert(c, r)
 
 	// Emacs auto-fill style: if this insertion caused the line to exceed
-	// wrapWidth, break at the last space before the limit and move the tail
-	// to a new line below.
-	if e.wrapWhenTyping && e.wrapWidth > 0 && lenBefore <= e.wrapWidth {
+	// the typing wrap limit, break at the last space before the limit and
+	// move the tail to a new line below.
+	// Use wrapWhenTypingWidth if set, otherwise fall back to wrapWidth.
+	typingLimit := e.wrapWhenTypingWidth
+	if typingLimit <= 0 {
+		typingLimit = e.wrapWidth
+	}
+	if e.wrapWhenTyping && typingLimit > 0 && lenBefore <= typingLimit {
 		runes := []rune(e.Line(e.DataY()))
-		if len(runes) > e.wrapWidth {
+		if len(runes) > typingLimit {
 			breakAt := -1
-			for i := e.wrapWidth - 1; i >= 0; i-- {
+			for i := typingLimit - 1; i >= 0; i-- {
 				if runes[i] == ' ' {
 					breakAt = i
 					break

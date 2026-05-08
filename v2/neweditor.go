@@ -395,10 +395,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		// TODO: Are these two needed, or covered by NewCustomEditor?
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
+		e.wrapWhenTypingWidth = 72
 	} else if e.mode == mode.Email {
 		// TODO: Are these two needed, or covered by NewCustomEditor?
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
+		e.wrapWhenTypingWidth = 72
 		e.GoToEnd(c, nil)
 	}
 
@@ -728,6 +730,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		// git commit message can be 72 characters long. Because e-mail standards.
 		e.wrapWidth = 72
 		e.wrapWhenTyping = true
+		e.wrapWhenTypingWidth = 72
 	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
 		e.wrapWidth = 79
 	}
@@ -736,6 +739,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
 		e.bookSavedWrapWidth = e.wrapWidth
+		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
 		e.bookSaved = true
 		e.bookMode.Store(true)
 		if bookModeTextFlag {
@@ -764,6 +768,7 @@ func NewSimpleEditor(wordWrapLimit int) *Editor {
 	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false, false, false)
 	e.wrapWidth = wordWrapLimit
 	e.wrapWhenTyping = true
+	e.wrapWhenTypingWidth = wordWrapLimit
 	return e
 }
 

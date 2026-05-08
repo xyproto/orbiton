@@ -240,9 +240,31 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			})
 		} else {
 			actions.Add("Word wrap when typing", func() {
-				e.wrapWhenTyping = true
-				if e.wrapWidth == 0 {
-					e.wrapWidth = wrapWidth
+				defaultWidth := wrapWidth
+				if e.wrapWidth > 0 {
+					defaultWidth = e.wrapWidth
+				}
+				const tabInputText = "79"
+				if widthStr, ok := e.UserInput(c, tty, status, fmt.Sprintf("Wrap when typing at [%d]", defaultWidth), "", []string{}, false, tabInputText); ok {
+					if strings.TrimSpace(widthStr) == "" {
+						e.wrapWhenTyping = true
+						e.wrapWhenTypingWidth = defaultWidth
+						if e.wrapWidth == 0 {
+							e.wrapWidth = defaultWidth
+						}
+						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap when typing at %d", defaultWidth))
+					} else if ww, err := strconv.Atoi(widthStr); err != nil {
+						status.Clear(c, false)
+						status.SetError(err)
+						status.Show(c, e)
+					} else {
+						e.wrapWhenTyping = true
+						e.wrapWhenTypingWidth = ww
+						if e.wrapWidth == 0 {
+							e.wrapWidth = wrapWidth
+						}
+						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap when typing at %d", ww))
+					}
 				}
 			})
 		}
