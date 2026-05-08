@@ -3012,11 +3012,9 @@ func (e *Editor) CursorForward(c *vt.Canvas, status *StatusBar) {
 		if e.AfterEndOfLine() {
 			e.Down(c, status)
 		}
-	} else if e.AfterEndOfLine() && e.pos.ScreenY() == int(c.H())-1 {
+	} else if e.AfterEndOfLine() {
 		e.Down(c, status)
 		e.Home()
-	} else if e.AfterEndOfLine() {
-		e.End(c)
 	}
 
 	e.SaveX(true)
