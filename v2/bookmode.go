@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"html"
@@ -11,7 +10,6 @@ import (
 	"image/draw"
 	_ "image/gif"
 	_ "image/jpeg"
-	"image/png"
 	"io"
 	"math"
 	"os"
@@ -234,9 +232,6 @@ var (
 	// set when an image download completes and a page redraw is needed
 	bookImgNeedRedraw atomic.Bool
 
-	// reused across frames to avoid per-frame allocations; BestSpeed keeps encoding fast
-	bookPNGEncoder = png.Encoder{CompressionLevel: png.BestSpeed}
-	bookPNGBuf     bytes.Buffer
 	// bookPageImageBuf is the reusable RGBA destination for bookPageToImage.
 	bookPageImageBuf *image.RGBA
 	// bookComposeBuf is the reusable RGBA destination for bookComposeFullPage.
@@ -4983,7 +4978,7 @@ scroll:
 	e.pos.sy = max(cursorDataY-e.pos.offsetY, 0)
 }
 
-func flushImageToTerminal(img image.Image, dispCols, dispRows uint) string {
+func flushImageToTerminal(img *image.RGBA, dispCols, dispRows uint) {
 	if imagepreview.IsSixel {
 		// DECSDM (CSI ? 80 h) keeps sixel output from scrolling the terminal.
 		// "\033[2J\033[H" clears any stale image remnants before the new frame.
@@ -4991,23 +4986,15 @@ func flushImageToTerminal(img image.Image, dispCols, dispRows uint) string {
 		imagepreview.FlushSixelImage(os.Stdout, img)
 		// Home the cursor again in case the terminal ignored DECSDM.
 		fmt.Fprintf(os.Stdout, "\033[H")
-		return "" // no cached encoded form for Sixel
+		return
 	}
-	bookPNGBuf.Reset()
-	// BestSpeed keeps per-frame PNG encoding fast; Kitty decodes to RGBA
-	// internally, so a larger base64 payload is cheap compared to deflate time.
-	if err := bookPNGEncoder.Encode(&bookPNGBuf, img); err != nil {
-		return ""
-	}
-	encoded := base64.StdEncoding.EncodeToString(bookPNGBuf.Bytes())
-	// Buffer the whole frame (cursor-home + kitty graphics payload) into a
-	// single Write so the terminal receives it atomically.
+	// For Kitty: send raw RGBA pixels with zlib compression (f=32,o=z).
+	// This skips PNG's per-scanline filter step and is significantly faster.
+	// For iTerm2: FlushRawRGBAWithID falls back to PNG internally.
 	bookWriteBuf.Reset()
 	fmt.Fprintf(&bookWriteBuf, "\033[H")
-	imagepreview.FlushImageWithID(&bookWriteBuf, encoded, dispCols, dispRows, 1)
+	imagepreview.FlushRawRGBAWithID(&bookWriteBuf, img, dispCols, dispRows, 1)
 	os.Stdout.Write(bookWriteBuf.Bytes())
-	// Stable image ID (1) lets Kitty replace the image in place; iTerm2 ignores it.
-	return encoded
 }
 
 // bookRenderCellSize returns the pixel (width, height) to use when building
@@ -6836,14 +6823,10 @@ func (e *Editor) bookGraphicalUserInput(c *vt.Canvas, tty *vt.TTY, title string)
 			imagepreview.FlushSixelImage(os.Stdout, img)
 			fmt.Fprintf(os.Stdout, "\033[H")
 		} else {
-			bookPNGBuf.Reset()
-			if encErr := bookPNGEncoder.Encode(&bookPNGBuf, img); encErr == nil {
-				encoded := base64.StdEncoding.EncodeToString(bookPNGBuf.Bytes())
-				bookWriteBuf.Reset()
-				fmt.Fprintf(&bookWriteBuf, "\033[H")
-				imagepreview.FlushImageWithID(&bookWriteBuf, encoded, cols, rows, 2)
-				os.Stdout.Write(bookWriteBuf.Bytes())
-			}
+			bookWriteBuf.Reset()
+			fmt.Fprintf(&bookWriteBuf, "\033[H")
+			imagepreview.FlushRawRGBAWithID(&bookWriteBuf, img, cols, rows, 2)
+			os.Stdout.Write(bookWriteBuf.Bytes())
 		}
 		vt.EndSyncUpdate()
 	}
