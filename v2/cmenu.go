@@ -131,6 +131,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		menuHeightThreshold = 22 // the canvas height threshold before some menu items should not be drawn
 	)
 
+	// Compute the menu background colour early so action closures that
+	// call UserInput can pass it to keep the background consistent.
+	menuBgColor := e.Background
+	if e.bookMode.Load() {
+		menuBgColor = vt.TrueColor(255, 255, 255)
+	}
+
 	// TODO: Create a string->[]string map from title to command, then add them
 	// TODO: Add the 6 first arguments to a context struct instead
 	actions.AddCommand(e, c, tty, status, undo, "Save and quit", "savequitclear")
@@ -192,7 +199,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		// Word wrap at a custom width + enable word wrap when typing
 		actions.Add("Word wrap at...", func() {
 			const tabInputText = "79"
-			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText); ok {
+			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText, menuBgColor); ok {
 				if strings.TrimSpace(wordWrapString) == "" {
 					undo.Snapshot(e)
 					e.WrapNow(wrapWidth)
@@ -239,13 +246,13 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				}
 			})
 		} else {
-			actions.Add("Word wrap when typing", func() {
+			actions.Add("Word wrap when typing at...", func() {
 				defaultWidth := wrapWidth
 				if e.wrapWidth > 0 {
 					defaultWidth = e.wrapWidth
 				}
 				const tabInputText = "79"
-				if widthStr, ok := e.UserInput(c, tty, status, fmt.Sprintf("Wrap when typing at [%d]", defaultWidth), "", []string{}, false, tabInputText); ok {
+				if widthStr, ok := e.UserInput(c, tty, status, fmt.Sprintf("Wrap when typing at [%d]", defaultWidth), "", []string{}, false, tabInputText, menuBgColor); ok {
 					if strings.TrimSpace(widthStr) == "" {
 						e.wrapWhenTyping = true
 						e.wrapWhenTypingWidth = defaultWidth

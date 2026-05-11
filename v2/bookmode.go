@@ -6760,3 +6760,114 @@ func bookWrapPlainPixel(face font.Face, body string, availPx int) []wrappedRow {
 	}
 	return rows
 }
+
+// bookGraphicalUserInput renders a full-screen graphical dialog that prompts
+// the user to enter a value. A single-line input bar is drawn at the bottom
+// of the screen using the monospace font. Returns the entered string and
+// whether it was confirmed (not cancelled).
+func (e *Editor) bookGraphicalUserInput(c *vt.Canvas, tty *vt.TTY, title string) (string, bool) {
+	cols := uint(c.Width())
+	rows := uint(c.Height())
+	if rows < 2 || cols < 10 {
+		return "", false
+	}
+
+	cellW, cellH := imagepreview.TerminalCellPixels()
+	if cellW == 0 {
+		cellW = 8
+	}
+	if cellH == 0 {
+		cellH = 16
+	}
+	renderW, renderH := bookRenderCellSize(cellW, cellH)
+	pixW := int(cols * renderW)
+	pixH := int(rows * renderH)
+
+	// Use the monospace font at a slightly smaller size.
+	mainFontSize := float64(renderH) * 0.72
+	if mainFontSize < 8 {
+		mainFontSize = 8
+	}
+	dialogFontSize := mainFontSize * 0.85
+	if dialogFontSize < 7 {
+		dialogFontSize = 7
+	}
+	if err := parsedFonts(); err != nil {
+		return "", false
+	}
+	dialogFace := newFaceOrBurn(parsedCodeMono, dialogFontSize)
+
+	// Colors matching the book mode theme.
+	var bgClr, boxBgClr, textClr color.NRGBA
+	if e.bookDarkMode {
+		bgClr = color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
+		boxBgClr = color.NRGBA{0x28, 0x28, 0x28, 0xff}
+		textClr = color.NRGBA{0xe0, 0xe0, 0xe0, 0xff}
+	} else {
+		bgClr = color.NRGBA{0xf0, 0xf0, 0xf0, 0xff}
+		boxBgClr = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+		textClr = color.NRGBA{0x10, 0x10, 0x10, 0xff}
+	}
+
+	ascent := faceAscent(dialogFace, dialogFontSize)
+	lineH := int(dialogFontSize * 1.5)
+	boxH := lineH + int(dialogFontSize*0.6)
+	boxPadX := int(dialogFontSize * 0.8)
+
+	// Render one frame of the input bar at the bottom.
+	renderDialog := func(prompt, entered string) {
+		img := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
+		draw.Draw(img, img.Bounds(), image.NewUniform(bgClr), image.Point{}, draw.Src)
+
+		// Input bar anchored to the bottom of the screen.
+		boxY := pixH - boxH
+		boxRect := image.Rect(0, boxY, pixW, pixH)
+		draw.Draw(img, boxRect, image.NewUniform(boxBgClr), image.Point{}, draw.Src)
+
+		// "Prompt: input_" all on one line.
+		displayText := prompt + ": " + entered + "_"
+		textY := boxY + (boxH+ascent)/2
+		drawString(img, dialogFace, boxPadX, textY, displayText, textClr)
+
+		// Flush to terminal.
+		vt.BeginSyncUpdate()
+		if imagepreview.IsSixel {
+			fmt.Fprintf(os.Stdout, "\033[?80h\033[2J\033[H")
+			imagepreview.FlushSixelImage(os.Stdout, img)
+			fmt.Fprintf(os.Stdout, "\033[H")
+		} else {
+			bookPNGBuf.Reset()
+			if encErr := bookPNGEncoder.Encode(&bookPNGBuf, img); encErr == nil {
+				encoded := base64.StdEncoding.EncodeToString(bookPNGBuf.Bytes())
+				bookWriteBuf.Reset()
+				fmt.Fprintf(&bookWriteBuf, "\033[H")
+				imagepreview.FlushImageWithID(&bookWriteBuf, encoded, cols, rows, 2)
+				os.Stdout.Write(bookWriteBuf.Bytes())
+			}
+		}
+		vt.EndSyncUpdate()
+	}
+
+	entered := ""
+	renderDialog(title, entered)
+
+	for {
+		pressed := tty.ReadKey()
+		switch pressed {
+		case "c:8", "c:127": // ctrl-h or backspace
+			if len(entered) > 0 {
+				entered = entered[:len(entered)-1]
+			}
+		case "c:27", "c:3", "c:17", "c:24": // esc, ctrl-c, ctrl-q or ctrl-x
+			return "", false
+		case "c:13": // return
+			return entered, true
+		case "c:9": // tab — no action
+		case leftArrow, rightArrow, upArrow, downArrow:
+			// Ignore arrow keys.
+		default:
+			entered += pressed
+		}
+		renderDialog(title, entered)
+	}
+}

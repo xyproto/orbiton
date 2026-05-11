@@ -2563,14 +2563,44 @@ func (e *Editor) LastLineNumber() LineNumber {
 }
 
 // UserInput asks the user to enter text, then collects the letters. No history.
-func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string) (string, bool) {
-	status.ClearAll(c, false)
-	if defaultValue != "" {
-		status.SetMessage(title + ": " + defaultValue)
-	} else {
-		status.SetMessage(title + ":")
+func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, defaultValue string, quickList []string, arrowsAreCountedAsLetters bool, tabInsertText string, menuBgColor ...vt.AttributeColor) (string, bool) {
+	hasMenuBg := len(menuBgColor) > 0 && menuBgColor[0] != vt.None
+
+	// In graphical book mode, use a dedicated graphical dialog widget.
+	if hasMenuBg && e.bookGraphicalMode() {
+		return e.bookGraphicalUserInput(c, tty, title)
 	}
-	status.ShowNoTimeout(c, e)
+
+	// showPrompt renders the current prompt message. When called from a
+	// menu action (hasMenuBg), it fills the background with the menu's
+	// colour instead of redrawing the document lines.
+	showPrompt := func(msg string) {
+		status.SetMessage(msg)
+		if hasMenuBg {
+			c.Clear()
+			c.FillBackground(menuBgColor[0])
+			offsetY := e.pos.OffsetY()
+			status.Draw(c, offsetY)
+			c.HideCursorAndDraw()
+		} else {
+			status.ShowNoTimeout(c, e)
+		}
+	}
+
+	// Clear existing status state.
+	if hasMenuBg {
+		// Only clear message state; do NOT call ClearAll which redraws
+		// document lines and causes the text to "shine through".
+		status.SetMessage("")
+	} else {
+		status.ClearAll(c, false)
+	}
+
+	if defaultValue != "" {
+		showPrompt(title + ": " + defaultValue)
+	} else {
+		showPrompt(title + ":")
+	}
 	cancel := false
 	entered := defaultValue
 	doneCollectingLetters := false
@@ -2590,16 +2620,14 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(entered) > 0 {
 				entered = entered[:len(entered)-1]
-				status.SetMessage(title + ": " + entered)
-				status.ShowNoTimeout(c, e)
+				showPrompt(title + ": " + entered)
 			}
 		case leftArrow, rightArrow: // left arrow or right arrow
 			fallthrough // cancel
 		case upArrow, downArrow: // up arrow or down arrow
 			if arrowsAreCountedAsLetters {
 				entered += pressed
-				status.SetMessage(title + ": " + entered)
-				status.ShowNoTimeout(c, e)
+				showPrompt(title + ": " + entered)
 			}
 			// Is this a special quick command, where return is not needed, like "wq"?
 			if slices.Contains(quickList, entered) {
@@ -2609,10 +2637,9 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 		case "c:9":
 			if tabInsertText != "" {
 				entered = tabInsertText
-				status.SetMessage(title + ": " + entered)
-				status.ShowNoTimeout(c, e)
+				showPrompt(title + ": " + entered)
 			}
-		case "c:27", "c:3", "c:24": // esc, ctrl-c or ctrl-x
+		case "c:27", "c:3", "c:17", "c:24": // esc, ctrl-c, ctrl-q or ctrl-x
 			cancel = true
 			entered = ""
 			fallthrough // done
@@ -2620,8 +2647,7 @@ func (e *Editor) UserInput(c *vt.Canvas, tty *vt.TTY, status *StatusBar, title, 
 			doneCollectingLetters = true
 		default:
 			entered += pressed
-			status.SetMessage(title + ": " + entered)
-			status.ShowNoTimeout(c, e)
+			showPrompt(title + ": " + entered)
 		}
 		// Is this a special quick command, where return is not needed, like "wq"?
 		if slices.Contains(quickList, entered) {
