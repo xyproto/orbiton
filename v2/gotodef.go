@@ -107,6 +107,12 @@ func (e *Editor) jumpToLSPLocation(location *LSPLocation, tty *vt.TTY, c *vt.Can
 	oldFilename := e.filename
 	oldLineIndex := e.LineIndex()
 
+	// If the definition is on the same line in the same file, don't jump
+	targetLine := LineIndex(location.Range.Start.Line)
+	if targetPath == e.filename && targetLine == oldLineIndex {
+		return false
+	}
+
 	// Switch to target file if different
 	if targetPath != e.filename {
 		if err := e.Switch(c, tty, status, fileLock, targetPath); err != nil {
@@ -115,7 +121,6 @@ func (e *Editor) jumpToLSPLocation(location *LSPLocation, tty *vt.TTY, c *vt.Can
 	}
 
 	// Jump to line
-	targetLine := LineIndex(location.Range.Start.Line)
 	redraw, _ := e.GoTo(targetLine, c, status)
 	e.redraw.Store(redraw)
 
@@ -212,6 +217,10 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 		foundX, foundY = e.backwardSearch(startIndex, stopIndex)
 	}
 	if foundY != -1 {
+		// If the definition is on the same line we're already on, skip the jump
+		if foundY == oldLineIndex {
+			return false
+		}
 		// Go to the found match
 		redraw, _ := e.GoTo(foundY, c, status)
 		e.redraw.Store(redraw)
@@ -344,6 +353,11 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 						if e.LooksLikeFunctionDef(line, funcPrefix) && e.FunctionName(line) == name {
 							//logf("FOUND FUNC: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
 
+							// Skip if definition is on the same line in the same file
+							if absGoFile == oldFilename && LineIndex(i) == oldLineIndex {
+								continue
+							}
+
 							if absGoFile != oldFilename {
 								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
 									return false // could not switch
@@ -370,6 +384,11 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 						// go to a type definition
 						if !functionCall && emptyBeforeWord && !strings.Contains(trimmedLine, ":") && !strings.Contains(trimmedLine, "=") && !strings.Contains(trimmedLine, ",") {
 							//logf("PROLLY TYPE: %s LINE %d WORD %s NAME %s\n", goFile, i+1, word, name)
+
+							// Skip if definition is on the same line in the same file
+							if absGoFile == oldFilename && LineIndex(i) == oldLineIndex {
+								continue
+							}
 
 							if absGoFile != oldFilename {
 								if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
