@@ -14,9 +14,9 @@ import (
 	"strings"
 
 	_ "github.com/dkua/go-ico"
-	"github.com/xyproto/oksvg"
 	"github.com/srwiley/rasterx"
 	_ "github.com/xfmoulet/qoi"
+	"github.com/xyproto/oksvg"
 )
 
 // LoadAndEncode decodes an image file, re-encodes it as PNG, and base64-encodes

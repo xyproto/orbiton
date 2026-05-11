@@ -2,6 +2,7 @@ package imagepreview
 
 import (
 	"bytes"
+	"compress/zlib"
 	"encoding/base64"
 	"fmt"
 	"image"
@@ -118,4 +119,76 @@ func flushSixelFromEncoded(w io.Writer, encoded string) {
 		return
 	}
 	SixelEncode(w, img)
+}
+
+// rawRGBABuf is reused across frames to avoid per-frame allocations for zlib
+// compression of raw RGBA pixel data.
+var rawRGBABuf bytes.Buffer
+
+// FlushRawRGBAWithID writes an *image.RGBA to w using the Kitty graphics
+// protocol with raw 32-bit RGBA pixel data (f=32) and zlib compression (o=z).
+// This is significantly faster than PNG encoding because it skips PNG's
+// per-scanline filter step. For non-Kitty terminals, falls back to PNG.
+func FlushRawRGBAWithID(w io.Writer, img *image.RGBA, dispCols, dispRows uint, id uint32) {
+	if !IsKitty {
+		// Fallback for iTerm2/Sixel: encode as PNG.
+		var buf bytes.Buffer
+		if err := (&png.Encoder{CompressionLevel: png.BestSpeed}).Encode(&buf, img); err != nil {
+			return
+		}
+		encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
+		FlushImageWithID(w, encoded, dispCols, dispRows, id)
+		return
+	}
+
+	bounds := img.Bounds()
+	pixW := bounds.Dx()
+	pixH := bounds.Dy()
+
+	// Zlib-compress the raw RGBA pixel data.
+	rawRGBABuf.Reset()
+	zw, err := zlib.NewWriterLevel(&rawRGBABuf, zlib.BestSpeed)
+	if err != nil {
+		return
+	}
+
+	// Write pixel rows, handling potential stride padding.
+	stride := img.Stride
+	rowBytes := pixW * 4
+	if stride == rowBytes {
+		// Common case: no padding, write entire Pix slice at once.
+		zw.Write(img.Pix[:pixH*stride])
+	} else {
+		// Stride > row width: write row by row to skip padding bytes.
+		for y := 0; y < pixH; y++ {
+			off := y * stride
+			zw.Write(img.Pix[off : off+rowBytes])
+		}
+	}
+	zw.Close()
+
+	encoded := base64.StdEncoding.EncodeToString(rawRGBABuf.Bytes())
+
+	// Kitty graphics protocol: f=32 (RGBA), o=z (zlib), s=width, v=height.
+	const chunkSize = 4096
+	total := len(encoded)
+	for i := 0; i < total; i += chunkSize {
+		end := min(i+chunkSize, total)
+		chunk := encoded[i:end]
+		isLast := end >= total
+		isFirst := i == 0
+
+		switch {
+		case isFirst && isLast:
+			fmt.Fprintf(w, "\033_Ga=T,f=32,o=z,q=2,C=1,i=%d,s=%d,v=%d,c=%d,r=%d;%s\033\\",
+				id, pixW, pixH, dispCols, dispRows, chunk)
+		case isFirst:
+			fmt.Fprintf(w, "\033_Ga=T,f=32,o=z,q=2,C=1,m=1,i=%d,s=%d,v=%d,c=%d,r=%d;%s\033\\",
+				id, pixW, pixH, dispCols, dispRows, chunk)
+		case isLast:
+			fmt.Fprintf(w, "\033_Gm=0;%s\033\\", chunk)
+		default:
+			fmt.Fprintf(w, "\033_Gm=1;%s\033\\", chunk)
+		}
+	}
 }
