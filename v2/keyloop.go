@@ -660,14 +660,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.handlePasteModeKey(c, status, undo, s)
 			}
 
-		case "\x1b[201~": // bracketed paste end (stray)
+		// bracketed paste end (stray), focus / "begin" event and focus in/out
+		case "\x1b[201~", "\x1b[E", "\x1b[I", "\x1b[O":
 			break // do nothing
 
-		case "\x1b[E": // focus / "begin" event
-			break // do nothing
-
-		case "\x1b[I", "\x1b[O": // focus in/out
-			break // do nothing
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
 			if e.blockMode {
