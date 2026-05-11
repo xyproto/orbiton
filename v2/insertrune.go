@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/xyproto/vt"
+	"github.com/xyproto/wordwrap"
 )
 
 // InsertRune will insert a rune at the current data position, with word wrap.
@@ -52,55 +53,42 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 		typingLimit = e.wrapWidth
 	}
 	if e.wrapWhenTyping && typingLimit > 0 && lenBefore <= typingLimit {
-		runes := []rune(e.Line(e.DataY()))
-		if len(runes) > typingLimit {
-			breakAt := -1
-			for i := typingLimit - 1; i >= 0; i-- {
-				if runes[i] == ' ' {
-					breakAt = i
-					break
-				}
+		line := e.Line(e.DataY())
+		result := wordwrap.WrapLine(line, typingLimit, 0)
+		if result.Wrapped {
+			y := e.DataY()
+			e.SetLine(y, result.Left)
+			e.InsertLineBelowAt(y)
+			e.SetLine(y+1, result.Right)
+			// cursorX is the position where the rune was inserted
+			// (Insert does not advance the cursor). The post-insertion
+			// cursor should be one past that.
+			cursorX := e.pos.sx + e.pos.offsetX
+			h := 80
+			if c != nil {
+				h = int(c.Height())
 			}
-			if breakAt >= 0 {
-				// skip any run of spaces at the break point
-				rightStart := breakAt + 1
-				for rightStart < len(runes) && runes[rightStart] == ' ' {
-					rightStart++
+			if cursorX >= result.BreakAt {
+				// cursor is in the wrapped portion — reposition it
+				// onto the new line, one past the inserted rune
+				newX := max(cursorX+1-result.RightStart, 0)
+				e.pos.sy++
+				e.pos.sx = newX
+				e.pos.offsetX = 0
+				if e.pos.sy >= (h - 1) {
+					e.ScrollDown(c, nil, 1, h)
 				}
-				y := e.DataY()
-				e.SetLine(y, string(runes[:breakAt]))
-				e.InsertLineBelowAt(y)
-				e.SetLine(y+1, string(runes[rightStart:]))
-				// cursorX is the position where the rune was inserted
-				// (Insert does not advance the cursor). The post-insertion
-				// cursor should be one past that.
-				cursorX := e.pos.sx + e.pos.offsetX
-				h := 80
-				if c != nil {
-					h = int(c.Height())
-				}
-				if cursorX >= breakAt {
-					// cursor is in the wrapped portion — reposition it
-					// onto the new line, one past the inserted rune
-					newX := max(cursorX+1-rightStart, 0)
-					e.pos.sy++
-					e.pos.sx = newX
-					e.pos.offsetX = 0
-					if e.pos.sy >= (h - 1) {
-						e.ScrollDown(c, nil, 1, h)
-					}
-					e.Center(c)
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-					return true
-				}
-				// cursor is before the break — the line split happened
-				// behind the cursor. Let the caller advance normally.
 				e.Center(c)
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
-				return false
+				return true
 			}
+			// cursor is before the break — the line split happened
+			// behind the cursor. Let the caller advance normally.
+			e.Center(c)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			return false
 		}
 	}
 

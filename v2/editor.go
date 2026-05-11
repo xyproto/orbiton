@@ -22,6 +22,7 @@ import (
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
+	"github.com/xyproto/wordwrap"
 )
 
 var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or not
@@ -778,84 +779,44 @@ func (e *Editor) LastWord(y int) string {
 	return ""
 }
 
-// noLineStartRune returns true for punctuation that must not begin a line.
-// These are characters that in good typography always follow the preceding word.
-func noLineStartRune(r rune) bool {
-	switch r {
-	case '.', ',', '!', '?', ':', ';', ')', ']', '}', '\'', '"', '\u2019', '\u201D', '\u00BB', '\u2014', '\u2013':
-		// ) ] } ' " ' " » — –
-		return true
-	}
-	return false
-}
-
 // SplitOvershoot will split the line into a first part that is within the
 // word wrap length and a second part that is the overshooting part.
 // y is the line index (y position, counting from 0).
 // isSpace is true if a space has just been inserted on purpose at the current position.
 // returns true if there was a space at the split point.
 func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, bool) {
-	hasSpace := false
-
 	y := int(index)
 
-	// Maximum word length to not keep as one word
-	maxDistance := e.wrapWidth / 2
 	if e.WithinLimit(index) {
 		return e.lines[y], make([]rune, 0), false
 	}
-	splitPosition := e.wrapWidth
+
 	if isSpace {
-		splitPosition, _ = e.DataX()
-	} else {
-		// Scan left from the wrap column looking for a space that produces a
-		// good split — one where the second part does not start with punctuation
-		// that typographically must not begin a line (e.g. "." "," "!" etc.).
-		spacePosition := -1
-		for i := splitPosition; i >= 0; i-- {
-			if i >= len(e.lines[y]) {
-				continue
-			}
-			if !unicode.IsSpace(e.lines[y][i]) {
-				continue
-			}
-			// Candidate space found at i. Check that the character following it
-			// (the first character of the prospective new line) is not a
-			// no-line-start character.
-			nextIdx := i + 1
-			for nextIdx < len(e.lines[y]) && unicode.IsSpace(e.lines[y][nextIdx]) {
-				nextIdx++ // skip any run of spaces
-			}
-			if nextIdx < len(e.lines[y]) && noLineStartRune(e.lines[y][nextIdx]) {
-				continue // bad split: punctuation would start the new line
-			}
-			spacePosition = i
-			break
-		}
-		// Found a better position to split, at a nearby space?
-		if spacePosition != -1 {
+		splitPosition, _ := e.DataX()
+		n := splitPosition
+		first := make([]rune, len(e.lines[y][:n]))
+		second := make([]rune, len(e.lines[y][n:]))
+		copy(first, e.lines[y][:n])
+		copy(second, e.lines[y][n:])
+		hasSpace := false
+		if len(second) > 0 && unicode.IsSpace(second[0]) {
+			second = second[1:]
 			hasSpace = true
-			if (splitPosition - spacePosition) <= maxDistance {
-				// Okay, we found a better split point.
-				splitPosition = spacePosition
-			}
 		}
+		return first, second, hasSpace
 	}
 
-	// Split the line into two parts
-	n := splitPosition
-	first := make([]rune, len(e.lines[y][:n]))
-	second := make([]rune, len(e.lines[y][n:]))
-	copy(first, e.lines[y][:n])
-	copy(second, e.lines[y][n:])
-
-	// If the second part starts with a space, remove it
-	if len(second) > 0 && unicode.IsSpace(second[0]) {
-		second = second[1:]
-		hasSpace = true
+	// Use wordwrap.WrapLine for the core algorithm
+	line := string(e.lines[y])
+	maxBacktrack := e.wrapWidth / 2
+	result := wordwrap.WrapLine(line, e.wrapWidth, maxBacktrack)
+	if !result.Wrapped {
+		return e.lines[y], make([]rune, 0), false
 	}
 
-	return first, second, hasSpace
+	first := []rune(result.Left)
+	second := []rune(result.Right)
+	return first, second, true
 }
 
 // WrapAllLines will word wrap all lines that are longer than e.wrapWidth
