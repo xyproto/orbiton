@@ -56,9 +56,9 @@ func FindSystemFonts() *SystemFonts {
 // The wantFamily guard prevents accepting an unrelated fontconfig fallback.
 func fillViaFcMatch(sf *SystemFonts) {
 	type q struct {
+		dest       *string
 		pattern    string
 		wantFamily string // when non-empty the returned family must contain this
-		dest       *string
 	}
 
 	// Georgia is preferred for serif: it was designed for screen readability
@@ -69,38 +69,38 @@ func fillViaFcMatch(sf *SystemFonts) {
 	// Source Code Pro Bold and Fira Code Bold are the top code-font choices.
 	// Generic fallbacks let fontconfig pick the distro's configured default.
 	queries := []q{
-		{"Georgia:style=Regular", "Georgia", &sf.Regular},
-		{"EB Garamond:style=Regular", "EB Garamond", &sf.Regular},
-		{"Liberation Serif:style=Regular", "Liberation Serif", &sf.Regular},
-		{"Gentium Plus:style=Regular", "Gentium", &sf.Regular},
-		{"Noto Serif:style=Regular", "Noto Serif", &sf.Regular},
-		{"serif", "", &sf.Regular},
+		{pattern: "Georgia:style=Regular", wantFamily: "Georgia", dest: &sf.Regular},
+		{pattern: "EB Garamond:style=Regular", wantFamily: "EB Garamond", dest: &sf.Regular},
+		{pattern: "Liberation Serif:style=Regular", wantFamily: "Liberation Serif", dest: &sf.Regular},
+		{pattern: "Gentium Plus:style=Regular", wantFamily: "Gentium", dest: &sf.Regular},
+		{pattern: "Noto Serif:style=Regular", wantFamily: "Noto Serif", dest: &sf.Regular},
+		{pattern: "serif", dest: &sf.Regular},
 
-		{"Georgia:style=Italic", "Georgia", &sf.Italic},
-		{"EB Garamond:style=Italic", "EB Garamond", &sf.Italic},
-		{"Liberation Serif:style=Italic", "Liberation Serif", &sf.Italic},
-		{"Gentium Plus:style=Italic", "Gentium", &sf.Italic},
-		{"Noto Serif:style=Italic", "Noto Serif", &sf.Italic},
-		{"serif:slant=italic", "", &sf.Italic},
+		{pattern: "Georgia:style=Italic", wantFamily: "Georgia", dest: &sf.Italic},
+		{pattern: "EB Garamond:style=Italic", wantFamily: "EB Garamond", dest: &sf.Italic},
+		{pattern: "Liberation Serif:style=Italic", wantFamily: "Liberation Serif", dest: &sf.Italic},
+		{pattern: "Gentium Plus:style=Italic", wantFamily: "Gentium", dest: &sf.Italic},
+		{pattern: "Noto Serif:style=Italic", wantFamily: "Noto Serif", dest: &sf.Italic},
+		{pattern: "serif:slant=italic", dest: &sf.Italic},
 
-		{"Cantarell:style=Bold", "Cantarell", &sf.Bold},
-		{"Source Sans Pro:style=Bold", "Source Sans", &sf.Bold},
-		{"Liberation Sans:style=Bold", "Liberation Sans", &sf.Bold},
-		{"sans:bold", "", &sf.Bold},
+		{pattern: "Cantarell:style=Bold", wantFamily: "Cantarell", dest: &sf.Bold},
+		{pattern: "Source Sans Pro:style=Bold", wantFamily: "Source Sans", dest: &sf.Bold},
+		{pattern: "Liberation Sans:style=Bold", wantFamily: "Liberation Sans", dest: &sf.Bold},
+		{pattern: "sans:bold", dest: &sf.Bold},
 
-		{"Cantarell:style=Light", "Cantarell", &sf.Light},
-		{"Cantarell:style=Regular", "Cantarell", &sf.Light},
-		{"Source Sans Pro:style=Light", "Source Sans", &sf.Light},
-		{"Liberation Sans:style=Regular", "Liberation Sans", &sf.Light},
-		{"sans", "", &sf.Light},
+		{pattern: "Cantarell:style=Light", wantFamily: "Cantarell", dest: &sf.Light},
+		{pattern: "Cantarell:style=Regular", wantFamily: "Cantarell", dest: &sf.Light},
+		{pattern: "Source Sans Pro:style=Light", wantFamily: "Source Sans", dest: &sf.Light},
+		{pattern: "Liberation Sans:style=Regular", wantFamily: "Liberation Sans", dest: &sf.Light},
+		{pattern: "sans", dest: &sf.Light},
 
-		{"Source Code Pro:style=Bold", "Source Code Pro", &sf.Mono},
-		{"Fira Code:style=Bold", "Fira Code", &sf.Mono},
-		{"monospace:bold", "", &sf.Mono},
-		{"monospace", "", &sf.Mono},
+		{pattern: "Source Code Pro:style=Bold", wantFamily: "Source Code Pro", dest: &sf.Mono},
+		{pattern: "Fira Code:style=Bold", wantFamily: "Fira Code", dest: &sf.Mono},
+		{pattern: "monospace:bold", dest: &sf.Mono},
+		{pattern: "monospace", dest: &sf.Mono},
 
-		{"DejaVu Sans:style=Book", "DejaVu Sans", &sf.Unicode},
-		{"sans", "", &sf.Unicode},
+		{pattern: "DejaVu Sans:style=Book", wantFamily: "DejaVu Sans", dest: &sf.Unicode},
+		{pattern: "sans", dest: &sf.Unicode},
 	}
 	for _, query := range queries {
 		if *query.dest != "" {
@@ -141,16 +141,16 @@ func fillViaWindowsPaths(sf *SystemFonts) {
 	}
 	dir := filepath.Join(winDir, "Fonts")
 	type role struct {
-		names []string
 		dest  *string
+		names []string
 	}
 	for _, r := range []role{
-		{[]string{"georgia.ttf", "times.ttf"}, &sf.Regular},
-		{[]string{"georgiai.ttf", "timesi.ttf"}, &sf.Italic},
-		{[]string{"segoeuib.ttf", "arialbd.ttf", "calibrib.ttf"}, &sf.Bold},
-		{[]string{"segoeui.ttf", "arial.ttf", "calibri.ttf"}, &sf.Light},
-		{[]string{"consolab.ttf", "consola.ttf", "courbd.ttf", "cour.ttf"}, &sf.Mono},
-		{[]string{"arialuni.ttf"}, &sf.Unicode},
+		{dest: &sf.Regular, names: []string{"georgia.ttf", "times.ttf"}},
+		{dest: &sf.Italic, names: []string{"georgiai.ttf", "timesi.ttf"}},
+		{dest: &sf.Bold, names: []string{"segoeuib.ttf", "arialbd.ttf", "calibrib.ttf"}},
+		{dest: &sf.Light, names: []string{"segoeui.ttf", "arial.ttf", "calibri.ttf"}},
+		{dest: &sf.Mono, names: []string{"consolab.ttf", "consola.ttf", "courbd.ttf", "cour.ttf"}},
+		{dest: &sf.Unicode, names: []string{"arialuni.ttf"}},
 	} {
 		if *r.dest != "" {
 			continue
@@ -168,27 +168,27 @@ func fillViaWindowsPaths(sf *SystemFonts) {
 // lower-cased base-name fragments. Used when fontconfig is unavailable.
 func fillViaDirScan(sf *SystemFonts) {
 	type rule struct {
-		frags []string // all fragments must appear in the lower-cased basename
 		dest  *string
+		frags []string // all fragments must appear in the lower-cased basename
 	}
 	rules := []rule{
-		{[]string{"georgia"}, &sf.Regular},
-		{[]string{"ebgaramond", "regular"}, &sf.Regular},
-		{[]string{"liberationserif", "regular"}, &sf.Regular},
-		{[]string{"notoserif", "regular"}, &sf.Regular},
-		{[]string{"georgiai"}, &sf.Italic},
-		{[]string{"ebgaramond", "italic"}, &sf.Italic},
-		{[]string{"liberationserif", "italic"}, &sf.Italic},
-		{[]string{"notoserif", "italic"}, &sf.Italic},
-		{[]string{"cantarell", "bold"}, &sf.Bold},
-		{[]string{"sourcesans", "bold"}, &sf.Bold},
-		{[]string{"liberationsans", "bold"}, &sf.Bold},
-		{[]string{"cantarell", "regular"}, &sf.Light},
-		{[]string{"sourcesans", "light"}, &sf.Light},
-		{[]string{"liberationsans", "regular"}, &sf.Light},
-		{[]string{"sourcecodepro", "bold"}, &sf.Mono},
-		{[]string{"sourcecodepro", "regular"}, &sf.Mono},
-		{[]string{"dejavusans.ttf"}, &sf.Unicode},
+		{dest: &sf.Regular, frags: []string{"georgia"}},
+		{dest: &sf.Regular, frags: []string{"ebgaramond", "regular"}},
+		{dest: &sf.Regular, frags: []string{"liberationserif", "regular"}},
+		{dest: &sf.Regular, frags: []string{"notoserif", "regular"}},
+		{dest: &sf.Italic, frags: []string{"georgiai"}},
+		{dest: &sf.Italic, frags: []string{"ebgaramond", "italic"}},
+		{dest: &sf.Italic, frags: []string{"liberationserif", "italic"}},
+		{dest: &sf.Italic, frags: []string{"notoserif", "italic"}},
+		{dest: &sf.Bold, frags: []string{"cantarell", "bold"}},
+		{dest: &sf.Bold, frags: []string{"sourcesans", "bold"}},
+		{dest: &sf.Bold, frags: []string{"liberationsans", "bold"}},
+		{dest: &sf.Light, frags: []string{"cantarell", "regular"}},
+		{dest: &sf.Light, frags: []string{"sourcesans", "light"}},
+		{dest: &sf.Light, frags: []string{"liberationsans", "regular"}},
+		{dest: &sf.Mono, frags: []string{"sourcecodepro", "bold"}},
+		{dest: &sf.Mono, frags: []string{"sourcecodepro", "regular"}},
+		{dest: &sf.Unicode, frags: []string{"dejavusans.ttf"}},
 	}
 	for _, dir := range systemFontDirs() {
 		_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {

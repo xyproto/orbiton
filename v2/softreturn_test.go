@@ -16,7 +16,7 @@ func TestSoftReturnInBookMode_NoExtraBlankLine(t *testing.T) {
 
 	hardEditor := NewSimpleEditor(80)
 	hardEditor.mode = mode.Markdown
-	hardEditor.bookMode.Store(true)
+	hardEditor.setBookState(BookModeText)
 	hardEditor.InsertStringAndMove(c, "first line")
 	hardEditor.End(c)
 	hardEditor.ReturnPressed(c, nil, false)
@@ -24,7 +24,7 @@ func TestSoftReturnInBookMode_NoExtraBlankLine(t *testing.T) {
 
 	softEditor := NewSimpleEditor(80)
 	softEditor.mode = mode.Markdown
-	softEditor.bookMode.Store(true)
+	softEditor.setBookState(BookModeText)
 	softEditor.InsertStringAndMove(c, "first line")
 	softEditor.End(c)
 	softEditor.ReturnPressed(c, nil, true)
@@ -49,7 +49,7 @@ func TestSoftReturnInBookMode_SkipsListPrefix(t *testing.T) {
 	c := vt.NewCanvasWithSize(80, 10)
 	e := NewSimpleEditor(80)
 	e.mode = mode.Markdown
-	e.bookMode.Store(true)
+	e.setBookState(BookModeText)
 	e.InsertStringAndMove(c, "* item")
 	e.End(c)
 	e.ReturnPressed(c, nil, true)

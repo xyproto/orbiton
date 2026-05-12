@@ -620,7 +620,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		// and must not have the regular syntax-highlighted editor lines
 		// painted beneath it — otherwise the old text ghosts through
 		// behind the status bar on the row book mode doesn't repaint.
-		if !e.bookMode.Load() {
+		if !e.InBookMode() {
 			e.HideCursorDrawLines(c, false, false, false)
 		}
 		e.redraw.Store(false)
@@ -635,7 +635,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// Redraw the TUI, if needed
 	if e.redraw.Load() && c != nil {
 		e.Center(c)
-		if !e.bookMode.Load() {
+		if !e.InBookMode() {
 			e.HideCursorDrawLines(c, true, false, false)
 		}
 		e.redraw.Store(false)
@@ -741,9 +741,10 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 		e.bookSavedWrapWidth = e.wrapWidth
 		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
 		e.bookSaved = true
-		e.bookMode.Store(true)
-		if bookModeTextFlag {
-			e.bookForceTextMode.Store(true)
+		if bookModeTextFlag || !bookGraphicsCapable() {
+			e.setBookState(BookModeText)
+		} else {
+			e.setBookState(BookModeGraphical)
 		}
 		e.syntaxHighlight = false
 		e.wrapWidth = 72

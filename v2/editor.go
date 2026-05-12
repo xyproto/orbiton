@@ -27,96 +27,119 @@ import (
 
 var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or not
 
+// BookModeState represents the current book-mode rendering state.
+type BookModeState int32
+
+const (
+	BookModeOff       BookModeState = 0 // regular editing mode
+	BookModeText      BookModeState = 1 // text-based book mode (word wrap, no syntax highlighting)
+	BookModeGraphical BookModeState = 2 // graphical book mode (pixel rendering via Kitty/iTerm2/Sixel)
+)
+
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
 type Editor struct {
-	debugger            Debugger          // connection to debugger, if debugMode is enabled
-	detectedTabs        *bool             // were tab or space indentations detected when loading the data?
-	breakpoint          *Position         // for the breakpoint/jump functionality in debug mode
-	bookmark            *Position         // for the bookmark/jump functionality
-	sameFilePortal      *Portal           // a portal that points to the same file
-	lines               map[int][]rune    // the contents of the current document
-	linesMut            *sync.Mutex       // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
-	macro               *Macro            // the contents of the current macro (will be cleared when esc is pressed)
-	debugWatches        map[string]string // watches preserved across debug sessions
-	blockCursors        map[int]int       // per-line cursor X positions for block editing (line Y -> X)
-	selection           *Selection        // active text selection, nil if none
-	filename            string            // the current filename
-	searchTerm          string            // the current search term, used when searching
-	stickySearchTerm    string            // used when going to the next match with ctrl-n, unless esc has been pressed
-	debugConsoleOutput  string            // accumulated GDB console output
-	pos                 Position          // the current cursor and scroll position
-	Theme                                 // editor theme, embedded struct
-	indentation         mode.TabsSpaces   // spaces or tabs, and how many spaces per tab character
-	wrapWidth           int               // wrap width for "word wrap now" and the column indicator
-	wrapWhenTypingWidth int               // wrap width when typing (0 means use wrapWidth)
-	mode                mode.Mode         // a filetype mode, like for git, markdown or various programming languages
-	debugShowRegisters  int               // show no register box, show changed registers, show all changed registers
-	previousY           int               // previous cursor position
-	previousX           int               // previous cursor position
-	lineBeforeSearch    LineIndex         // save the current line number before jumping between search results
-	playBackMacroCount  int               // number of times the macro should be played back, right now
-	nextAction          megafile.Action   // send SIGQUIT to the parent PID when quitting
-	debugLine           atomic.Int64      // the data line index of the current debug position (-1 means not set)
+	debugger                     Debugger          // connection to debugger, if debugMode is enabled
+	detectedTabs                 *bool             // were tab or space indentations detected when loading the data?
+	breakpoint                   *Position         // for the breakpoint/jump functionality in debug mode
+	bookmark                     *Position         // for the bookmark/jump functionality
+	sameFilePortal               *Portal           // a portal that points to the same file
+	lines                        map[int][]rune    // the contents of the current document
+	linesMut                     *sync.Mutex       // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
+	macro                        *Macro            // the contents of the current macro (will be cleared when esc is pressed)
+	debugWatches                 map[string]string // watches preserved across debug sessions
+	blockCursors                 map[int]int       // per-line cursor X positions for block editing (line Y -> X)
+	selection                    *Selection        // active text selection, nil if none
+	filename                     string            // the current filename
+	searchTerm                   string            // the current search term, used when searching
+	stickySearchTerm             string            // used when going to the next match with ctrl-n, unless esc has been pressed
+	debugConsoleOutput           string            // accumulated GDB console output
+	stickyTopBarFormat           string            // template for the top sticky bar
+	stickyBottomBarFormat        string            // template for the bottom sticky bar
+	pos                          Position          // the current cursor and scroll position
+	Theme                                          // editor theme, embedded struct
+	indentation                  mode.TabsSpaces   // spaces or tabs, and how many spaces per tab character
+	wrapWidth                    int               // wrap width for "word wrap now" and the column indicator
+	wrapWhenTypingWidth          int               // wrap width when typing (0 means use wrapWidth)
+	mode                         mode.Mode         // a filetype mode, like for git, markdown or various programming languages
+	debugShowRegisters           int               // show no register box, show changed registers, show all changed registers
+	previousY                    int               // previous cursor position
+	previousX                    int               // previous cursor position
+	lineBeforeSearch             LineIndex         // save the current line number before jumping between search results
+	playBackMacroCount           int               // number of times the macro should be played back, right now
+	nextAction                   megafile.Action   // send SIGQUIT to the parent PID when quitting
+	debugLine                    atomic.Int64      // the data line index of the current debug position (-1 means not set)
+	bookSavedLocalX              int               // sticky visual column within a sub-row for up/down movement (-1 = unset)
+	bookCursorAffinity           int               // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
+	bookSavedWrapWidth           int               // saved wrapWidth from before book mode
+	bookSavedWrapWhenTypingWidth int               // saved wrapWhenTypingWidth from before book mode
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
-	changed                      atomic.Bool // has the contents changed, since last save?
-	redraw                       atomic.Bool // if the contents should be redrawn in the next loop
-	redrawCursor                 atomic.Bool // if the cursor should be moved to the location it is supposed to be
-	drawProgress                 atomic.Bool // used for drawing the progress character on the right side
-	drawFuncName                 atomic.Bool // used when drawing the function name in the top right corner
-	nanoMode                     atomic.Bool // emulate GNU Nano
-	waitWithRedrawing            atomic.Bool // wait with redrawing until a key is pressed
-	flaskApplication             atomic.Bool // Python + Flask
-	moveLinesMode                atomic.Bool // move lines up and down with ctrl-p and ctrl-n, when enabled
-	debugComplete                atomic.Bool // set when the debugged program has finished execution
-	building                     atomic.Bool // currently building code or exporting to a file?
-	runAfterBuild                atomic.Bool // run the application after building?
-	bookMode                     atomic.Bool // book mode: word wrap, no syntax highlighting, text focus
-	bookForceTextMode            atomic.Bool // force text rendering even when graphics are available
-	bookDarkMode                 bool        // book mode: use dark mode (false = light mode)
-	bookParagraphIndent          bool        // book mode: visually indent first line of paragraphs
-	bookFocusMode                bool        // book mode: typewriter scrolling + dim non-active paragraphs
-	bookSavedLocalX              int         // sticky visual column within a sub-row for up/down movement (-1 = unset)
-	bookCursorAffinity           int         // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
-	bookSaved                    bool        // pre-book-mode editor settings have been saved, for later restore
-	bookDarkModeInitialized      bool        // the bookDarkMode auto-detect has already run
-	bookSavedSyntaxHighlight     bool        // saved syntaxHighlight from before book mode
-	bookSavedWrapWhenTyping      bool        // saved wrapWhenTyping from before book mode
-	bookSavedWrapWidth           int         // saved wrapWidth from before book mode
-	bookSavedWrapWhenTypingWidth int         // saved wrapWhenTypingWidth from before book mode
-	rainbowParenthesis           bool        // rainbow parenthesis
-	debugMode                    bool        // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
-	stickyStatusBars             bool        // show sticky status bars at the top and bottom of the screen
-	stickyTopBarFormat           string      // template for the top sticky bar
-	stickyBottomBarFormat        string      // template for the bottom sticky bar
-	showColumnLimit              bool        // show the line where the wrapWidth is (at 79 by default)
-	expandTags                   bool        // can be used for XML and HTML
-	syntaxHighlight              bool        // syntax highlighting
-	quit                         bool        // for indicating if the user wants to end the editor session
-	readOnly                     bool        // is the file read-only when initializing o?
-	debugHideOutput              bool        // hide the GDB stdout pane when in debug mode?
-	debugShowConsole             bool        // show the GDB console output pane when in debug mode?
-	debugHideKeybindings         bool        // permanently hide the debug keybindings box
-	binaryFile                   bool        // is this a binary file, or a text file?
-	wrapWhenTyping               bool        // wrap text at a certain limit when typing
-	addSpace                     bool        // add a space to the editor, once
-	debugStepInto                bool        // when stepping to the next instruction, step into instead of over
-	debugLastStepWasInstruction  bool        // was the last step an instruction-level step? (for reverse step behavior)
-	slowLoad                     bool        // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
-	monitorAndReadOnly           bool        // monitor the file for changes and open it as read-only
-	primaryClipboard             bool        // use the primary or the secondary clipboard on UNIX?
-	jumpToLetterMode             bool        // jump directly to a highlighted letter
-	spellCheckMode               bool        // spell check mode?
-	showTypoHighlights           bool        // show typo highlights in comments?
-	createDirectoriesIfMissing   bool        // when saving a file, should directories be created if they are missing?
-	displayQuickHelp             bool        // display the quick help box?
-	noDisplayQuickHelp           bool        // prevent the quick help box from being displayed?
-	blockMode                    bool        // toggle if typing should affect the current line or the current block
-	dirMode                      bool        // browse a directory and also interact with git
-	highlightCurrentLine         bool        // highlight the current line
-	highlightCurrentText         bool        // highlight the current text (not the entire line)
-	fastInputMode                bool        // reduce input latency for real-time use
-	pasteMode                    bool        // insert incoming key data as raw text
-	cycleFilenames               bool
+	changed                     atomic.Bool  // has the contents changed, since last save?
+	redraw                      atomic.Bool  // if the contents should be redrawn in the next loop
+	redrawCursor                atomic.Bool  // if the cursor should be moved to the location it is supposed to be
+	drawProgress                atomic.Bool  // used for drawing the progress character on the right side
+	drawFuncName                atomic.Bool  // used when drawing the function name in the top right corner
+	nanoMode                    atomic.Bool  // emulate GNU Nano
+	waitWithRedrawing           atomic.Bool  // wait with redrawing until a key is pressed
+	flaskApplication            atomic.Bool  // Python + Flask
+	moveLinesMode               atomic.Bool  // move lines up and down with ctrl-p and ctrl-n, when enabled
+	debugComplete               atomic.Bool  // set when the debugged program has finished execution
+	building                    atomic.Bool  // currently building code or exporting to a file?
+	runAfterBuild               atomic.Bool  // run the application after building?
+	bookModeState               atomic.Int32 // BookModeOff, BookModeText, or BookModeGraphical
+	bookDarkMode                bool         // book mode: use dark mode (false = light mode)
+	bookParagraphIndent         bool         // book mode: visually indent first line of paragraphs
+	bookFocusMode               bool         // book mode: typewriter scrolling + dim non-active paragraphs
+	bookSaved                   bool         // pre-book-mode editor settings have been saved, for later restore
+	bookDarkModeInitialized     bool         // the bookDarkMode auto-detect has already run
+	bookSavedSyntaxHighlight    bool         // saved syntaxHighlight from before book mode
+	bookSavedWrapWhenTyping     bool         // saved wrapWhenTyping from before book mode
+	rainbowParenthesis          bool         // rainbow parenthesis
+	debugMode                   bool         // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
+	stickyStatusBars            bool         // show sticky status bars at the top and bottom of the screen
+	showColumnLimit             bool         // show the line where the wrapWidth is (at 79 by default)
+	expandTags                  bool         // can be used for XML and HTML
+	syntaxHighlight             bool         // syntax highlighting
+	quit                        bool         // for indicating if the user wants to end the editor session
+	readOnly                    bool         // is the file read-only when initializing o?
+	debugHideOutput             bool         // hide the GDB stdout pane when in debug mode?
+	debugShowConsole            bool         // show the GDB console output pane when in debug mode?
+	debugHideKeybindings        bool         // permanently hide the debug keybindings box
+	binaryFile                  bool         // is this a binary file, or a text file?
+	wrapWhenTyping              bool         // wrap text at a certain limit when typing
+	addSpace                    bool         // add a space to the editor, once
+	debugStepInto               bool         // when stepping to the next instruction, step into instead of over
+	debugLastStepWasInstruction bool         // was the last step an instruction-level step? (for reverse step behavior)
+	slowLoad                    bool         // was the initial file slow to load? (might be an indication of a slow disk or USB stick)
+	monitorAndReadOnly          bool         // monitor the file for changes and open it as read-only
+	primaryClipboard            bool         // use the primary or the secondary clipboard on UNIX?
+	jumpToLetterMode            bool         // jump directly to a highlighted letter
+	spellCheckMode              bool         // spell check mode?
+	showTypoHighlights          bool         // show typo highlights in comments?
+	createDirectoriesIfMissing  bool         // when saving a file, should directories be created if they are missing?
+	displayQuickHelp            bool         // display the quick help box?
+	noDisplayQuickHelp          bool         // prevent the quick help box from being displayed?
+	blockMode                   bool         // toggle if typing should affect the current line or the current block
+	dirMode                     bool         // browse a directory and also interact with git
+	highlightCurrentLine        bool         // highlight the current line
+	highlightCurrentText        bool         // highlight the current text (not the entire line)
+	fastInputMode               bool         // reduce input latency for real-time use
+	pasteMode                   bool         // insert incoming key data as raw text
+	cycleFilenames              bool
+}
+
+// InBookMode reports whether any book mode (text or graphical) is active.
+func (e *Editor) InBookMode() bool {
+	return e.bookModeState.Load() != int32(BookModeOff)
+}
+
+// bookState returns the current BookModeState.
+func (e *Editor) bookState() BookModeState {
+	return BookModeState(e.bookModeState.Load())
+}
+
+// setBookState atomically sets the book mode to the given state.
+func (e *Editor) setBookState(s BookModeState) {
+	e.bookModeState.Store(int32(s))
 }
 
 // Copy makes a copy of an Editor struct, with most fields deep copied
@@ -198,8 +221,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.waitWithRedrawing.Store(e.waitWithRedrawing.Load())
 	e2.flaskApplication.Store(e.flaskApplication.Load())
 	e2.moveLinesMode.Store(e.moveLinesMode.Load())
-	e2.bookMode.Store(e.bookMode.Load())
-	e2.bookForceTextMode.Store(e.bookForceTextMode.Load())
+	e2.bookModeState.Store(e.bookModeState.Load())
 	e2.bookDarkMode = e.bookDarkMode
 	e2.bookParagraphIndent = e.bookParagraphIndent
 	e2.bookFocusMode = e.bookFocusMode
@@ -217,8 +239,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 // lines and position, while keeping the current book-mode rendering state.
 func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	// Save the rendering state that book mode controls
-	bookMode := e.bookMode.Load()
-	bookForceTextMode := e.bookForceTextMode.Load()
+	bookModeState := e.bookModeState.Load()
 	bookDarkMode := e.bookDarkMode
 	bookParagraphIndent := e.bookParagraphIndent
 	bookFocusMode := e.bookFocusMode
@@ -244,8 +265,7 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	e.linesMut = linesMut // restore the live mutex
 
 	// Re-apply the rendering state
-	e.bookMode.Store(bookMode)
-	e.bookForceTextMode.Store(bookForceTextMode)
+	e.bookModeState.Store(bookModeState)
 	e.bookDarkMode = bookDarkMode
 	e.bookParagraphIndent = bookParagraphIndent
 	e.bookFocusMode = bookFocusMode

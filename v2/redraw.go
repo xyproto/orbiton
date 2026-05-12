@@ -21,7 +21,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	if status != nil {
 		status.ClearAll(c, false)
-		if !e.bookMode.Load() {
+		if !e.InBookMode() {
 			e.SetSearchTerm(c, status, "", false)
 		}
 	}
@@ -39,7 +39,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	w := int(newC.Width())
 
-	if !e.bookMode.Load() {
+	if !e.InBookMode() {
 		if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
 			e.wrapWidth = w
 		}
@@ -49,7 +49,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	// text renders styled VT100 output). Skip the regular WriteLines path
 	// for both variants so that syntax-highlighted bold/colour attributes
 	// don't briefly flash on screen.
-	if drawLines && !e.bookMode.Load() {
+	if drawLines && !e.InBookMode() {
 		e.HideCursorDrawLines(c, true, false, shouldHighlightCurrentLine)
 	}
 
@@ -69,7 +69,7 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 
 	resizeMut.Unlock()
 
-	if !e.bookMode.Load() {
+	if !e.InBookMode() {
 		if w < e.wrapWidth {
 			e.wrapWidth = w
 		} else if e.wrapWidth < 80 && w >= 80 {
@@ -230,7 +230,7 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	// Display the status message
 	if e.nanoMode.Load() {
 		status.Show(c, e)
-	} else if e.bookMode.Load() {
+	} else if e.InBookMode() {
 		status.NanoInfo(c, e)
 	} else {
 		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {
@@ -359,7 +359,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	// Drawing status messages should come after redrawing, but before cursor positioning
 	if e.nanoMode.Load() {
 		status.Show(c, e)
-	} else if e.bookMode.Load() {
+	} else if e.InBookMode() {
 		status.NanoInfo(c, e)
 	} else {
 		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {

@@ -670,7 +670,7 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 // stickyTopBarHeight returns 1 when a sticky top bar is active in regular
 // (non-book, non-nano) mode, 0 otherwise.
 func (e *Editor) stickyTopBarHeight() uint {
-	if e.stickyStatusBars && !e.bookMode.Load() && !e.nanoMode.Load() {
+	if e.stickyStatusBars && !e.InBookMode() && !e.nanoMode.Load() {
 		return 1
 	}
 	return 0
@@ -679,7 +679,7 @@ func (e *Editor) stickyTopBarHeight() uint {
 // stickyBottomBarHeight returns 1 when a sticky bottom bar is active in
 // regular (non-book, non-nano) mode, 0 otherwise.
 func (e *Editor) stickyBottomBarHeight() uint {
-	if e.stickyStatusBars && !e.bookMode.Load() && !e.nanoMode.Load() {
+	if e.stickyStatusBars && !e.InBookMode() && !e.nanoMode.Load() {
 		return 1
 	}
 	return 0

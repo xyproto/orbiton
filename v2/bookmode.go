@@ -276,12 +276,12 @@ func bookGraphicsCapable() bool {
 
 // bookGraphicalMode reports whether graphical book mode is active.
 func (e *Editor) bookGraphicalMode() bool {
-	return e.bookMode.Load() && bookGraphicsCapable() && !e.bookForceTextMode.Load()
+	return e.bookState() == BookModeGraphical
 }
 
 // bookTextMode reports whether text book mode is active.
 func (e *Editor) bookTextMode() bool {
-	return e.bookMode.Load() && (!bookGraphicsCapable() || e.bookForceTextMode.Load())
+	return e.bookState() == BookModeText
 }
 
 // bookThemeIsLight reports whether the current theme appears light.
@@ -311,8 +311,7 @@ func (e *Editor) enterBookModeText() {
 		}
 		e.bookDarkModeInitialized = true
 	}
-	e.bookMode.Store(true)
-	e.bookForceTextMode.Store(true)
+	e.setBookState(BookModeText)
 	e.syntaxHighlight = false
 	e.wrapWidth = 72
 	e.wrapWhenTyping = false
@@ -321,7 +320,7 @@ func (e *Editor) enterBookModeText() {
 
 // enterBookModeGraphical enables graphical book mode, saving settings so exitBookMode can restore them.
 func (e *Editor) enterBookModeGraphical() {
-	if imagepreview.IsKitty && e.bookMode.Load() {
+	if imagepreview.IsKitty && e.InBookMode() {
 		imagepreview.DeleteInlineImages()
 	}
 	if !e.bookSaved {
@@ -337,8 +336,7 @@ func (e *Editor) enterBookModeGraphical() {
 		}
 		e.bookDarkModeInitialized = true
 	}
-	e.bookMode.Store(true)
-	e.bookForceTextMode.Store(false)
+	e.setBookState(BookModeGraphical)
 	e.syntaxHighlight = false
 	e.wrapWidth = 72
 	e.wrapWhenTyping = false
@@ -351,8 +349,7 @@ func (e *Editor) exitBookMode() {
 	if imagepreview.IsKitty {
 		imagepreview.DeleteInlineImages()
 	}
-	e.bookMode.Store(false)
-	e.bookForceTextMode.Store(false)
+	e.setBookState(BookModeOff)
 	if e.bookSaved {
 		e.syntaxHighlight = e.bookSavedSyntaxHighlight
 		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
@@ -551,12 +548,12 @@ func faceAscent(face font.Face, fontSizePx float64) int {
 // textSegment is one styled run of text within a body line.
 type textSegment struct {
 	text      string
+	linkURL   string // non-empty for inline links: the hyperlink target
 	bold      bool
 	italic    bool
 	underline bool
-	strike    bool   // rendered with a strikethrough line
-	code      bool   // rendered in the monospace code font
-	linkURL   string // non-empty for inline links: the hyperlink target
+	strike    bool // rendered with a strikethrough line
+	code      bool // rendered in the monospace code font
 }
 
 // parseLineSegments parses Markdown inline markers into styled segments.
@@ -768,11 +765,11 @@ const (
 )
 
 type parsedLine struct {
-	kind        lineKind
-	headerLevel int    // 1, 2, 3, 4, 5 for lineKindHeader
-	indent      int    // leading spaces & 2 (list nesting depth)
 	prefix      string // rendered prefix, e.g. "• ", "1. ", "☐ ", "☑ "
 	body        string // text after the prefix, may contain inline markers
+	kind        lineKind
+	headerLevel int // 1, 2, 3, 4, 5 for lineKindHeader
+	indent      int // leading spaces & 2 (list nesting depth)
 }
 
 // isFencedCodeMarker reports whether the raw line is a fenced code block
@@ -1598,31 +1595,31 @@ func bookIsRemoteURL(imgPath string) bool {
 // mapping) and already have the cumulative ancestor transforms folded in
 // (only scale/translate are honored — enough for shields.io-style badges).
 type svgTextSpan struct {
-	x, y        float64
 	text        string
-	fontSize    float64
-	fill        color.NRGBA
 	anchor      string // "start" | "middle" | "end"
+	x, y        float64
+	fontSize    float64
+	fillOpacity float64
+	fill        color.NRGBA
 	bold        bool
 	italic      bool
 	monospace   bool
-	fillOpacity float64
 }
 
 // svgAttrFrame captures the CSS/presentation attributes inherited down the
 // SVG element tree.
 type svgAttrFrame struct {
-	fontSize    float64
-	fill        color.NRGBA
-	fillSet     bool
 	anchor      string
 	family      string
-	bold        bool
-	italic      bool
+	fontSize    float64
 	scaleX      float64
 	scaleY      float64
 	tx, ty      float64
 	fillOpacity float64
+	fill        color.NRGBA
+	fillSet     bool
+	bold        bool
+	italic      bool
 }
 
 var (
@@ -1790,11 +1787,11 @@ func svgExtractTextSpans(data []byte) (viewW, viewH float64, spans []svgTextSpan
 	dec.Entity = xml.HTMLEntity
 
 	type frameLevel struct {
-		frame      svgAttrFrame
-		inText     bool
 		textBuf    strings.Builder
+		frame      svgAttrFrame
 		xOverride  float64
 		yOverride  float64
+		inText     bool
 		hasX, hasY bool
 	}
 	root := svgAttrFrame{
@@ -2604,9 +2601,9 @@ func visualXToRawX(line string, visX int) int {
 // continuation segments are indented to the same column. Each segment is a
 // rune-range [start, end) into the raw line.
 type wrapSegment struct {
+	text  string
 	start int // rune offset into the raw line (for cursor mapping)
 	end   int // exclusive rune end
-	text  string
 }
 
 // bookWrapPlainRunes wraps s into consecutive rune-chunks of at most width
@@ -2641,7 +2638,7 @@ func bookWrapBody(body string, availW int) []wrapSegment {
 	}
 	runes := []rune(body)
 	if len(runes) == 0 {
-		return []wrapSegment{{0, 0, body}}
+		return []wrapSegment{{text: body, start: 0, end: 0}}
 	}
 	// markerLen returns how many runes make up a Markdown marker at
 	// position p that should be counted as zero visible width, or 0 if
@@ -2693,7 +2690,7 @@ func bookWrapBody(body string, availW int) []wrapSegment {
 			end++
 		}
 		if end >= len(runes) {
-			segs = append(segs, wrapSegment{rowStart, len(runes), string(runes[rowStart:])})
+			segs = append(segs, wrapSegment{text: string(runes[rowStart:]), start: rowStart, end: len(runes)})
 			break
 		}
 		brk := end
@@ -2705,11 +2702,11 @@ func bookWrapBody(body string, availW int) []wrapSegment {
 			// progress to avoid an infinite loop on pathological input.
 			brk = rowStart + 1
 		}
-		segs = append(segs, wrapSegment{rowStart, brk, string(runes[rowStart:brk])})
+		segs = append(segs, wrapSegment{text: string(runes[rowStart:brk]), start: rowStart, end: brk})
 		pos = brk
 	}
 	if len(segs) == 0 {
-		segs = append(segs, wrapSegment{0, len(runes), body})
+		segs = append(segs, wrapSegment{text: body, start: 0, end: len(runes)})
 	}
 	return segs
 }
@@ -2719,10 +2716,10 @@ func bookWrapBody(body string, availW int) []wrapSegment {
 // that the caller can pass to drawSegments. Word-boundary breaking is done
 // by scanning for spaces.
 type wrappedRow struct {
+	plainText  string        // set by bookWrapPlainPixel; unused by segment renderers
 	segs       []textSegment // styled segments for this display row
 	runeOffset int           // rune offset into the original body text
 	runeCount  int           // number of visual body runes on this row
-	plainText  string        // set by bookWrapPlainPixel; unused by segment renderers
 }
 
 func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedRow {
@@ -2733,9 +2730,9 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 	// Flatten all segments into a single rune+face list so we can measure
 	// and break across segment boundaries.
 	type runeInfo struct {
-		r      rune
 		face   font.Face
 		seg    int // index into segs
+		r      rune
 		bold   bool
 		segEnd bool // true when this is the last rune in its segment
 	}
@@ -2744,7 +2741,7 @@ func bookWrapSegmentsPixel(fs *bookFontSet, body string, availPx int) []wrappedR
 		f := faceForSeg(fs, seg)
 		rs := []rune(seg.text)
 		for ri, r := range rs {
-			runes = append(runes, runeInfo{r, f, si, seg.bold, ri == len(rs)-1})
+			runes = append(runes, runeInfo{face: f, seg: si, r: r, bold: seg.bold, segEnd: ri == len(rs)-1})
 		}
 	}
 	if len(runes) == 0 {

@@ -134,7 +134,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	// Compute the menu background colour early so action closures that
 	// call UserInput can pass it to keep the background consistent.
 	menuBgColor := e.Background
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		menuBgColor = vt.TrueColor(255, 255, 255)
 	}
 
@@ -367,7 +367,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 
 	// Add the syntax highlighting toggle menu item
 	// (not applicable in book mode — book mode has its own renderer)
-	if !envNoColor && (height > menuHeightThreshold) && !e.bookMode.Load() {
+	if !envNoColor && (height > menuHeightThreshold) && !e.InBookMode() {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
 			syntaxToggleText = "Enable syntax highlighting"
@@ -393,7 +393,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
-	if (!envNoColor || changedTheme) && !e.bookMode.Load() {
+	if (!envNoColor || changedTheme) && !e.InBookMode() {
 		// Add an option for selecting a theme (not applicable in book
 		// mode — book mode uses its own fixed black-on-white theme).
 		actions.Add("Change theme", func() {
@@ -558,7 +558,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Add book mode specific options
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		// Under NO_COLOR text book mode the vt library strips every
 		// colour / attribute escape, so toggling dark mode would make
 		// no visible difference (DNBOOK16 ≡ NBOOK16, DNBOOK256 ≡
@@ -702,7 +702,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 
 	// Launch the megafile file browser
 	// (not applicable in book mode — the user is reading, not editing)
-	if !e.bookMode.Load() {
+	if !e.InBookMode() {
 		actions.Add("File browser", func() {
 			startdir := filepath.Dir(e.filename)
 			if startdir == "" || startdir == "." {
@@ -765,7 +765,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	textColor := e.MenuTextColor
 	highlightColor := e.MenuHighlightColor
 	selectedColor := e.MenuSelectedColor
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		bgColor = vt.TrueColor(255, 255, 255)
 		titleColor = vt.TrueColor(30, 90, 180)
 		arrowColor = vt.TrueColor(30, 90, 180)

@@ -111,12 +111,20 @@ const bookModeToggleDebounce = 400 * time.Millisecond
 
 // cycleBookMode toggles book mode. Single tap: regular ↔ graphical (or text if graphics unavailable).
 // Double tap (graphical available): regular ↔ text. Buffered key presses are debounced.
+// When started with -T (text book mode), only toggle between regular and text — never graphical.
 func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string, doubleTap bool) {
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 		return
 	}
 	lastBookModeToggle = time.Now()
-	if bookGraphicsCapable() {
+	if bookModeTextFlag || !bookGraphicsCapable() {
+		// Started with -T or no graphics support: toggle regular ↔ text only.
+		if e.InBookMode() {
+			e.exitBookMode()
+		} else {
+			e.enterBookModeText()
+		}
+	} else {
 		switch {
 		case doubleTap && e.bookTextMode():
 			e.exitBookMode()
@@ -124,19 +132,13 @@ func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, dra
 			if imagepreview.IsKitty {
 				imagepreview.DeleteInlineImages()
 			}
-			e.bookForceTextMode.Store(true)
+			e.setBookState(BookModeText)
 		case doubleTap:
 			e.enterBookModeText()
 		case e.bookGraphicalMode():
 			e.exitBookMode()
 		default:
 			e.enterBookModeGraphical()
-		}
-	} else {
-		if e.bookMode.Load() {
-			e.exitBookMode()
-		} else {
-			e.enterBookModeText()
 		}
 	}
 	drainKeys(tty, drainKey)
@@ -375,7 +377,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 	// Re-enable sticky status bars after the theme has been (re-)applied,
 	// since SetTheme overwrites the flag with the theme's default.
-	if e.bookMode.Load() && bookModeFlag {
+	if e.InBookMode() && bookModeFlag {
 		e.stickyStatusBars = true
 	}
 
@@ -472,7 +474,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// designed for: long sessions where losing 10 minutes of notes is
 	// annoying. Only autosave when backed by a real file — not stdin
 	// ("-") or URL-derived buffers, which have no meaningful target.
-	if e.bookMode.Load() && e.filename != "" && e.filename != "-" && !fnord.stdin {
+	if e.InBookMode() && e.filename != "" && e.filename != "-" && !fnord.stdin {
 		go func() {
 			t := time.NewTicker(10 * time.Minute)
 			defer t.Stop()
@@ -550,7 +552,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// In book mode, use a short read timeout while images are
 			// downloading so that completed downloads trigger a redraw
 			// without waiting for a keypress.
-			if e.bookMode.Load() && bookImgHasInFlight() {
+			if e.InBookMode() && bookImgHasInFlight() {
 				savedTimeout, _ := tty.SetTimeout(200 * time.Millisecond)
 				key = tty.ReadKey()
 				tty.SetTimeout(savedTimeout)
@@ -565,7 +567,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					continue
 				}
-			} else if e.bookMode.Load() && bookImgNeedRedraw.CompareAndSwap(true, false) {
+			} else if e.InBookMode() && bookImgNeedRedraw.CompareAndSwap(true, false) {
 				// No downloads in flight, but a redraw was requested
 				// just before we got here — pick it up immediately.
 				e.linesMut.Lock()
@@ -661,8 +663,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 		// bracketed paste end (stray), focus / "begin" event and focus in/out
-		case "\x1b[201~", "\x1b[E", "\x1b[I", "\x1b[O":
-			break // do nothing
+		//case "\x1b[201~", "\x1b[E", "\x1b[I", "\x1b[O":
+		//break // do nothing
 
 		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
 
@@ -760,7 +762,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// For prose files (or when already in book mode), ctrl-space toggles book mode.
 			// Markdown also checks for a checkbox on the current line first.
 			proseMode := e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
-			if proseMode || e.bookMode.Load() {
+			if proseMode || e.InBookMode() {
 				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
 					undo.Snapshot(e)
 					break
@@ -829,7 +831,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:20": // ctrl-t
 
-			if e.bookMode.Load() { // macro/debug not relevant for prose writing
+			if e.InBookMode() { // macro/debug not relevant for prose writing
 				break
 			}
 
@@ -992,7 +994,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.playBackMacroCount = 1
 			}
 		case "c:28": // ctrl-\, toggle comment for this block
-			if e.bookMode.Load() { // toggle comment not relevant for prose writing
+			if e.InBookMode() { // toggle comment not relevant for prose writing
 				break
 			}
 			undo.Snapshot(e)
@@ -1184,7 +1186,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// can't move (e.g. at the very top). Otherwise every
 			// held-down key still triggers a full PNG re-encode,
 			// which makes the editor feel stuck at boundaries.
-			if !e.bookMode.Load() || moved {
+			if !e.InBookMode() || moved {
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
 			}
@@ -1215,7 +1217,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// If the cursor is after the length of the current line, move it to the end of the current line
-			if !e.bookMode.Load() && (e.AfterLineScreenContents() || e.AfterEndOfLine()) {
+			if !e.InBookMode() && (e.AfterLineScreenContents() || e.AfterEndOfLine()) {
 				e.End(c)
 			}
 			if e.highlightCurrentLine || e.highlightCurrentText {
@@ -1225,7 +1227,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// can't move (e.g. at the very bottom). Otherwise every
 			// held-down key still triggers a full PNG re-encode,
 			// which makes the editor feel stuck at boundaries.
-			if !e.bookMode.Load() || moved {
+			if !e.InBookMode() || moved {
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
 			}
@@ -1263,7 +1265,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				e.redraw.Store(true) // cursor is embedded in the image
 			}
 
@@ -1276,7 +1278,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 				e.drawFuncName.Store(true)
 			}
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				e.redraw.Store(true) // cursor is embedded in the image
 			}
 
@@ -1323,7 +1325,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				return "", megafile.PreviousFile, nil
 			}
 			e.ClearSelection()
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				e.bookPgUp(c)
 				break
 			}
@@ -1346,7 +1348,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				return "", megafile.NextFile, nil
 			}
 			e.ClearSelection()
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				if !e.bookPgDn(c) {
 					status.Clear(c, false)
 					status.SetMessage(endOfFileMessage)
@@ -1399,7 +1401,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// cursor's wrap affinity at a soft-wrap boundary without
 			// actually retreating. For selection shrinking we need
 			// real motion, so retry once if nothing moved.
-			if e.bookMode.Load() && e.DataY() == beforeY && e.currentDisplayX() == beforeX {
+			if e.InBookMode() && e.DataY() == beforeY && e.currentDisplayX() == beforeX {
 				e.Cursor().Left(c, status)
 			}
 			e.UpdateSelection()
@@ -1413,7 +1415,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			beforeXR := e.currentDisplayX()
 			beforeYR := e.DataY()
 			e.Cursor().Right(c, status)
-			if e.bookMode.Load() && e.DataY() == beforeYR && e.currentDisplayX() == beforeXR {
+			if e.InBookMode() && e.DataY() == beforeYR && e.currentDisplayX() == beforeXR {
 				e.Cursor().Right(c, status)
 			}
 			e.UpdateSelection()
@@ -1442,7 +1444,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				// Jump straight to the end of the logical line, not the
 				// end of the current soft-wrapped sub-row.
 				e.End(c)
@@ -1461,7 +1463,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if !e.HasSelection() {
 				e.StartSelection()
 			}
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				// Jump straight to the start of the logical line, not the
 				// start of the current soft-wrapped sub-row.
 				e.Home()
@@ -1479,7 +1481,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 
 		case fwdDelKey: // forward-delete (Delete key)
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				// In book mode: delete the character to the right, standard word-processor behaviour.
 				undo.Snapshot(e)
 				if e.HasSelection() {
@@ -1908,7 +1910,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// typing (word-processor-style type-to-replace). In non-book
 			// mode, backspace falls through to single-character deletion
 			// to preserve the original behaviour.
-			if e.bookMode.Load() && e.HasSelection() {
+			if e.InBookMode() && e.HasSelection() {
 				e.DeleteSelection(c, status)
 				e.ClearSelection()
 				e.redrawCursor.Store(true)
@@ -1919,7 +1921,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// In book mode, backspace at the visual start of the body text
 			// (right after the list prefix) removes the prefix rather than
 			// deleting a single character.
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				rawLine := e.Line(e.DataY())
 				expanded := strings.ReplaceAll(rawLine, "\t", "    ")
 				pl := parseBookLine(expanded)
@@ -1945,7 +1947,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:9": // tab or ctrl-i
 
-			if e.bookMode.Load() { // book mode: toggle italic (tab not needed in prose mode)
+			if e.InBookMode() { // book mode: toggle italic (tab not needed in prose mode)
 				undo.Snapshot(e)
 				e.bookToggleParagraphIndent(c)
 				break
@@ -2088,7 +2090,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case pgUpKey: // page up
 			e.ClearSelection()
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				e.bookPgUp(c)
 				break
 			}
@@ -2120,7 +2122,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case pgDnKey: // page down
 			e.ClearSelection()
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				if !e.bookPgDn(c) {
 					status.Clear(c, false)
 					status.SetMessage(endOfFileMessage)
@@ -2198,7 +2200,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow)
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				// Word-processor behaviour: navigate to the start of the
 				// current visual sub-row, or to column 0 if already there.
 				e.bookHome(c)
@@ -2232,7 +2234,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// First check if we just moved to this line with the arrow keys, or just cut a line with ctrl-x
 			justMovedUpOrDown := kh.PrevHas(downArrow, upArrow, "c:24")
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				// Word-processor behaviour: navigate to the end of the
 				// current visual sub-row, or to end of data line if already there.
 				e.bookEnd(c)
@@ -2280,7 +2282,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			if e.bookMode.Load() { // book mode: toggle word-statistics display
+			if e.InBookMode() { // book mode: toggle word-statistics display
 				e.stickyStatusBars = !e.stickyStatusBars
 				if e.bookGraphicalMode() {
 					// Invalidate cached content so it re-renders at the new height
@@ -2391,7 +2393,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:21": // ctrl-u to undo
 
-			if e.bookMode.Load() { // book mode: toggle underline
+			if e.InBookMode() { // book mode: toggle underline
 				undo.Snapshot(e)
 				e.bookToggleFormat(c, "__")
 				break
@@ -2784,7 +2786,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// step in the per-session history. This replaces the
 			// portal/rebase behaviour (neither of which makes sense
 			// while reading a book-mode document).
-			if e.bookMode.Load() {
+			if e.InBookMode() {
 				url := e.bookLinkURLUnderCursor()
 				pushCurrent := true
 				if url == "" {
@@ -2878,7 +2880,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 			}
 		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
-			if e.bookMode.Load() { // book mode: toggle bold
+			if e.InBookMode() { // book mode: toggle bold
 				undo.Snapshot(e)
 				e.bookToggleFormat(c, "**")
 				break
@@ -2992,7 +2994,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.linesMut.Unlock()
 					continue
 				}
-				if e.bookMode.Load() && e.HasSelection() {
+				if e.InBookMode() && e.HasSelection() {
 					undo.Snapshot(e)
 					e.DeleteSelection(c, status)
 					e.ClearSelection()
@@ -3036,7 +3038,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.Snapshot(e)
 
 				// Book mode: word-processor-style type-to-replace.
-				if e.bookMode.Load() && e.HasSelection() {
+				if e.InBookMode() && e.HasSelection() {
 					e.DeleteSelection(c, status)
 					e.ClearSelection()
 				}
@@ -3059,7 +3061,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.Snapshot(e)
 
 				// Book mode: word-processor-style type-to-replace.
-				if e.bookMode.Load() && e.HasSelection() {
+				if e.InBookMode() && e.HasSelection() {
 					e.DeleteSelection(c, status)
 					e.ClearSelection()
 				}
@@ -3198,7 +3200,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// redraw — the next iteration will handle it, and e.redraw stays
 		// set. Only applies when book mode is active so other modes keep
 		// their original per-keypress redraw cadence.
-		skipRedraw := e.bookMode.Load() && tty.HasPendingInput()
+		skipRedraw := e.InBookMode() && tty.HasPendingInput()
 		if !skipRedraw {
 			e.RedrawAtEndOfKeyLoop(c, status, justMovedUpOrDown, true)
 		}
@@ -3273,7 +3275,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// Restore cursor shape to steady block when leaving book mode
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		bookModeResetCursor()
 	}
 

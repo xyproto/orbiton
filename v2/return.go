@@ -29,12 +29,12 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	}
 
 	// In book mode, never indent and ensure clean paragraphs
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		indent = false
 	}
 
 	afterParagraph := false
-	if !softReturn && e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+	if !softReturn && e.InBookMode() && e.AtOrAfterEndOfLine() {
 		afterParagraph = true
 	}
 
@@ -42,7 +42,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	// Soft-return (shift/alt-Return) skips this so the user gets a clean
 	// in-paragraph line break instead of a new bullet.
 	var listPrefix string
-	if !softReturn && e.bookMode.Load() && e.AtOrAfterEndOfLine() {
+	if !softReturn && e.InBookMode() && e.AtOrAfterEndOfLine() {
 		rawLine := e.CurrentLine()
 		pfx := rawMarkdownPrefix(strings.ReplaceAll(rawLine, "\t", "    "))
 		if pfx != "" {
@@ -126,7 +126,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	if e.bookGraphicalMode() {
 		editH--
 	}
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		// In book mode, pos.sy is a data-line offset; the canvas-row
 		// scroll math does not account for soft wrap. Advance DataY
 		// directly and let bookModeEnsureCursorVisible handle scrolling

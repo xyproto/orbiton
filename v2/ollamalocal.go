@@ -160,8 +160,8 @@ func (oc *ollamaConfig) GetSimpleResponse(prompt string) (string, error) {
 	for {
 		var ev struct {
 			Response string `json:"response"`
-			Done     bool   `json:"done"`
 			Error    string `json:"error"`
+			Done     bool   `json:"done"`
 		}
 		if err := dec.Decode(&ev); err != nil {
 			if err == io.EOF {

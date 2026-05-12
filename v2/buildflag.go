@@ -15,8 +15,8 @@ import (
 type autoBuildCandidate struct {
 	marker string   // filename that must exist (case-sensitive)
 	tool   string   // executable required on PATH
-	args   []string // arguments passed to the tool
 	label  string   // human-readable name, shown on stderr
+	args   []string // arguments passed to the tool
 }
 
 // autoBuildCandidates returns the project-type candidates, in priority order.
@@ -26,29 +26,29 @@ type autoBuildCandidate struct {
 // builds go here, because `-b` is invoked without an explicit file.
 func autoBuildCandidates() []autoBuildCandidate {
 	return []autoBuildCandidate{
-		{"go.mod", "go", []string{"build", "./..."}, "Go"},
-		{"Cargo.toml", "cargo", []string{"build"}, "Rust"},
-		{"build.zig", "zig", []string{"build"}, "Zig"},
-		{"gleam.toml", "gleam", []string{"build"}, "Gleam"},
-		{"shard.yml", "shards", []string{"build"}, "Crystal"},
-		{"mix.exs", "mix", []string{"compile"}, "Elixir"},
-		{"dune-project", "dune", []string{"build"}, "OCaml (dune)"},
-		{"stack.yaml", "stack", []string{"build"}, "Haskell (stack)"},
-		{"package.json", "npm", []string{"run", "build"}, "Node.js"},
-		{"deno.json", "deno", []string{"task", "build"}, "Deno"},
-		{"pom.xml", "mvn", []string{"compile"}, "Maven"},
-		{"build.gradle", "gradle", []string{"build"}, "Gradle"},
-		{"build.gradle.kts", "gradle", []string{"build"}, "Gradle (Kotlin)"},
-		{"BUILD.bazel", "bazel", []string{"build", "//..."}, "Bazel"},
-		{"WORKSPACE", "bazel", []string{"build", "//..."}, "Bazel"},
+		{marker: "go.mod", tool: "go", label: "Go", args: []string{"build", "./..."}},
+		{marker: "Cargo.toml", tool: "cargo", label: "Rust", args: []string{"build"}},
+		{marker: "build.zig", tool: "zig", label: "Zig", args: []string{"build"}},
+		{marker: "gleam.toml", tool: "gleam", label: "Gleam", args: []string{"build"}},
+		{marker: "shard.yml", tool: "shards", label: "Crystal", args: []string{"build"}},
+		{marker: "mix.exs", tool: "mix", label: "Elixir", args: []string{"compile"}},
+		{marker: "dune-project", tool: "dune", label: "OCaml (dune)", args: []string{"build"}},
+		{marker: "stack.yaml", tool: "stack", label: "Haskell (stack)", args: []string{"build"}},
+		{marker: "package.json", tool: "npm", label: "Node.js", args: []string{"run", "build"}},
+		{marker: "deno.json", tool: "deno", label: "Deno", args: []string{"task", "build"}},
+		{marker: "pom.xml", tool: "mvn", label: "Maven", args: []string{"compile"}},
+		{marker: "build.gradle", tool: "gradle", label: "Gradle", args: []string{"build"}},
+		{marker: "build.gradle.kts", tool: "gradle", label: "Gradle (Kotlin)", args: []string{"build"}},
+		{marker: "BUILD.bazel", tool: "bazel", label: "Bazel", args: []string{"build", "//..."}},
+		{marker: "WORKSPACE", tool: "bazel", label: "Bazel", args: []string{"build", "//..."}},
 		// Hare: has a build.ha convention but usually "hare build" works from
 		// any directory containing .ha files, so match the module.ha marker.
-		{"module.ha", "hare", []string{"build"}, "Hare"},
+		{marker: "module.ha", tool: "hare", label: "Hare", args: []string{"build"}},
 		// Makefile last: many of the above also ship a Makefile wrapper and
 		// we prefer the native tool when available.
-		{"Makefile", "make", nil, "make"},
-		{"makefile", "make", nil, "make"},
-		{"GNUmakefile", "make", nil, "GNU make"},
+		{marker: "Makefile", tool: "make", label: "make"},
+		{marker: "makefile", tool: "make", label: "make"},
+		{marker: "GNUmakefile", tool: "make", label: "GNU make"},
 	}
 }
 

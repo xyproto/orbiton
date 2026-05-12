@@ -25,10 +25,10 @@ const httpUserAgent = "Orbiton/1.0 (+https://github.com/xyproto/orbiton)"
 // httpResponse mimics a subset of http.Response. Body must be closed by the
 // caller.
 type httpResponse struct {
-	StatusCode int
-	Status     string
-	Header     map[string]string
 	Body       io.ReadCloser
+	Header     map[string]string
+	Status     string
+	StatusCode int
 }
 
 // parseSimpleURL splits http(s)://host[:port]/path into its pieces. Only the

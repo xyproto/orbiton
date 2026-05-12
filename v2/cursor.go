@@ -38,7 +38,7 @@ type Cursor interface {
 // Cursor returns the navigation implementation appropriate for the editor's
 // current mode (book vs. text).
 func (e *Editor) Cursor() Cursor {
-	if e.bookMode.Load() {
+	if e.InBookMode() {
 		return bookCursor{e: e}
 	}
 	return textCursor{e: e}
