@@ -416,15 +416,34 @@ func (sb *StatusBar) ShowNoTimeout(c *vt.Canvas, e *Editor) {
 		return
 	}
 
-	// In book mode (graphical or text), the "no timeout" semantic of the
-	// regular terminal path doesn't really hold: the full-frame renderer
-	// owns the bottom row, so a stale message like "EOF" would otherwise
-	// linger on the page until something else happens to redraw. Route
-	// these calls through the same auto-clearing code path that Show uses
-	// so transient status messages disappear after sb.show, matching the
-	// user-visible behaviour of the regular (non-book) mode.
-	if sb.editor.bookGraphicalMode() || sb.editor.bookTextMode() {
+	// In book mode (graphical), route through the auto-clearing Show path
+	if sb.editor.bookGraphicalMode() {
 		sb.Show(c, e)
+		return
+	}
+
+	// In text book mode, auto-clear after sb.show so the [[...]] bar slot
+	// reverts to its default content (e.g. line info)
+	if sb.editor.bookTextMode() {
+		mut.RLock()
+		dur := sb.show
+		mut.RUnlock()
+		myGen := statusMsgGen.Load()
+		go func() {
+			time.Sleep(dur)
+			if statusMsgGen.Load() != myGen {
+				return
+			}
+			mut.Lock()
+			sb.msg = ""
+			sb.isError = false
+			mut.Unlock()
+			// Redraw directly since ReadKey blocks until the next keypress
+			e.linesMut.Lock()
+			sb.Draw(c, e.pos.OffsetY())
+			c.Draw()
+			e.linesMut.Unlock()
+		}()
 		return
 	}
 

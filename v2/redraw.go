@@ -303,14 +303,12 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	if e.bookTextMode() {
 		e.bookModeEnsureCursorVisible(c)
 		e.bookTextModeRender(c)
-		// Skip redrawing the bottom bar when Show/ShowNoTimeout just drew
-		// both bars with a status message (e.g. "EOF") — redrawing now
-		// would overwrite it with a stale empty message.
-		if !stickyBarsJustDrawn.CompareAndSwap(true, false) {
-			status.Draw(c, e.pos.OffsetY())
-		}
+		// bookTextModeRender clears the full canvas, so redraw the bar
+		stickyBarsJustDrawn.Store(false)
+		status.Draw(c, e.pos.OffsetY())
 		c.HideCursorAndDraw()
 		e.redraw.Store(false)
+		e.redrawCursor.Store(false)
 		e.bookTextModePlaceCursor(c)
 		return
 	}
