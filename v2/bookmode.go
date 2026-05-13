@@ -5071,6 +5071,9 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 				status.msg = ""
 				status.isError = false
 				mut.Unlock()
+				if notRegularEditingRightNow.Load() {
+					return
+				}
 				redrawMutex.Lock()
 				e.bookModeFullFrame(c)
 				redrawMutex.Unlock()

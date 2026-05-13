@@ -310,6 +310,10 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 				sb.msg = ""
 				sb.isError = false
 				mut.Unlock()
+				// Skip the frame render if a menu or dialog is open
+				if notRegularEditingRightNow.Load() {
+					return
+				}
 				redrawMutex.Lock()
 				sb.editor.bookModeFullFrame(c)
 				redrawMutex.Unlock()
