@@ -1185,15 +1185,16 @@ func faceForSeg(fs *bookFontSet, seg textSegment) font.Face {
 	return fs.regular
 }
 
-// stableDigitString returns s with every ASCII digit replaced by "0". This
-// produces a string whose pixel width (in a proportional font) represents the
-// maximum width the original string can have, since "0" is typically the
-// widest digit. Used to compute fixed column positions for status bar fields.
+// stableDigitString returns s with every ASCII digit and U+2007 (figure space)
+// replaced by "0". This produces a string whose pixel width (in a proportional
+// font) represents the maximum width the original string can have, since "0"
+// is typically the widest digit and figure space has the same advance by
+// definition. Used to compute fixed column positions for status bar fields.
 func stableDigitString(s string) string {
 	var b strings.Builder
 	b.Grow(len(s))
 	for _, r := range s {
-		if r >= '1' && r <= '9' {
+		if (r >= '1' && r <= '9') || r == ' ' {
 			b.WriteByte('0')
 		} else {
 			b.WriteRune(r)
@@ -1204,10 +1205,11 @@ func stableDigitString(s string) string {
 
 // drawString renders text at (x, baselineY) using face and returns the new X.
 // Runes the primary face lacks are rendered with the registered Unicode
-// fallback face.
+// fallback face. U+2007 (figure space) is advanced as a digit width without
+// rendering, since most embedded fonts lack that glyph.
 func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, clr color.Color) int {
 	fb := faceFallback(face)
-	if fb == nil {
+	if fb == nil && !strings.ContainsRune(text, ' ') {
 		d := &font.Drawer{
 			Dst:  img,
 			Src:  image.NewUniform(clr),
@@ -1218,7 +1220,9 @@ func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, 
 		return d.Dot.X.Round()
 	}
 	// Split text into runs of same face (primary / fallback) so each run draws
-	// in a single call
+	// in a single call; U+2007 (figure space) is advanced as digit width without
+	// drawing because most embedded fonts lack that glyph
+	figAdv, _ := face.GlyphAdvance('0')
 	src := image.NewUniform(clr)
 	dot := fixed.P(x, baselineY)
 	var curFace font.Face
@@ -1233,10 +1237,18 @@ func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, 
 		buf = buf[:0]
 	}
 	for _, r := range text {
+		if r == ' ' { // U+2007 (figure space): invisible advance by digit width
+			flush()
+			dot.X += figAdv
+			curFace = face
+			continue
+		}
 		use := face
-		if _, ok := face.GlyphAdvance(r); !ok {
-			if _, ok2 := fb.GlyphAdvance(r); ok2 {
-				use = fb
+		if fb != nil {
+			if _, ok := face.GlyphAdvance(r); !ok {
+				if _, ok2 := fb.GlyphAdvance(r); ok2 {
+					use = fb
+				}
 			}
 		}
 		if use != curFace {
@@ -4550,6 +4562,8 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 		return (&font.Drawer{Face: fs.statusBar}).MeasureString(stable).Round()
 	}
 	measureActual := func(s string) int {
+		// Replace figure space with digit for accurate width measurement
+		s = strings.ReplaceAll(s, " ", "0")
 		return (&font.Drawer{Face: fs.statusBar}).MeasureString(s).Round()
 	}
 
