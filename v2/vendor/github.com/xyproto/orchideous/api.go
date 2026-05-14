@@ -77,7 +77,7 @@ func compileSourcesCaptured(srcs []string, output string, flags BuildFlags) ([]b
 	// For a single source file, compile directly
 	if len(srcs) == 1 {
 		args := buildCompileArgs(flags, srcs, output)
-		cmd := exec.Command(flags.Compiler, args...)
+		cmd := runCompiler(flags, args)
 		commandsRun = append(commandsRun, cmdToString(cmd))
 		cmdOutput, err := cmd.CombinedOutput()
 		combinedOutput.Write(cmdOutput)
@@ -108,7 +108,7 @@ func compileSourcesCaptured(srcs []string, output string, flags BuildFlags) ([]b
 		}
 		args = append(args, "-c", "-o", obj, src)
 
-		cmd := exec.Command(flags.Compiler, args...)
+		cmd := runCompiler(flags, args)
 		commandsRun = append(commandsRun, cmdToString(cmd))
 		cmdOutput, err := cmd.CombinedOutput()
 		combinedOutput.Write(cmdOutput)
@@ -130,7 +130,7 @@ func compileSourcesCaptured(srcs []string, output string, flags BuildFlags) ([]b
 	args = append(args, objFiles...)
 	args = append(args, flags.LDFlags...)
 
-	cmd := exec.Command(flags.Compiler, args...)
+	cmd := runCompiler(flags, args)
 	commandsRun = append(commandsRun, cmdToString(cmd))
 	cmdOutput, err := cmd.CombinedOutput()
 	combinedOutput.Write(cmdOutput)

@@ -174,7 +174,11 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	} else {
 		bf.CFlags = append(bf.CFlags, "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers")
 		if opts.Strict {
-			bf.CFlags = append(bf.CFlags, "-Wextra", "-Wconversion", "-Wparentheses", "-Weffc++", "-Wunused-function")
+			strictFlags := []string{"-Wextra", "-Wconversion", "-Wparentheses", "-Wunused-function"}
+			if !proj.IsC {
+				strictFlags = append(strictFlags, "-Weffc++")
+			}
+			bf.CFlags = append(bf.CFlags, strictFlags...)
 		}
 	}
 
@@ -248,10 +252,11 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Qt6
 	if proj.HasQt6 {
-		for f := range strings.FieldsSeq(qt6CxxFlags) {
+		qt6CFlags, qt6LDFlags := qt6Flags()
+		for _, f := range qt6CFlags {
 			bf.CFlags = appendUnique(bf.CFlags, f)
 		}
-		for f := range strings.FieldsSeq(qt6LinkFlags) {
+		for _, f := range qt6LDFlags {
 			bf.LDFlags = appendUnique(bf.LDFlags, f)
 		}
 	}
@@ -361,9 +366,6 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	// Platform-specific library paths (e.g. -L/usr/pkg/lib on NetBSD)
 	bf.LDFlags = append(bf.LDFlags, extraLDLibPaths()...)
 
-	// --as-needed (platform-specific: omitted on macOS, -zignore on Solaris)
-	bf.LDFlags = prependAsNeededFlag(bf.LDFlags)
-
 	// Append user compile flags from environment
 	if proj.IsC {
 		if userFlags := os.Getenv("CFLAGS"); userFlags != "" {
@@ -379,6 +381,10 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	if userLDFlags := os.Getenv("LDFLAGS"); userLDFlags != "" {
 		bf.LDFlags = append(bf.LDFlags, strings.Fields(userLDFlags)...)
 	}
+
+	// --as-needed (platform-specific: omitted on macOS, -zignore on Solaris)
+	// Must come after all flags including user LDFLAGS so it covers everything.
+	bf.LDFlags = prependAsNeededFlag(bf.LDFlags)
 
 	return bf
 }
@@ -606,7 +612,7 @@ func needsRecompile(src, obj string) bool {
 			for dep := range strings.FieldsSeq(after) {
 				depInfo, err := os.Stat(dep)
 				if err != nil {
-					continue
+					return true // dependency missing; force recompile
 				}
 				if depInfo.ModTime().After(objInfo.ModTime()) {
 					return true

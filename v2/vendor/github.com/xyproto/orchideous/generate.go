@@ -50,7 +50,7 @@ func doGenerate(opts BuildOptions) error {
 	fmt.Fprintf(f, "add_executable(%s ${SOURCES})\n", exe)
 	// set_property requires the target to exist, so these come after add_executable
 	if !proj.IsC {
-		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD 23)\n", exe)
+		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD 26)\n", exe)
 	}
 	fmt.Fprintf(f, "set_property(TARGET %s PROPERTY C_STANDARD 18)\n", exe)
 
@@ -88,11 +88,10 @@ func doGenerate(opts BuildOptions) error {
 		fmt.Fprintf(f, "set(CMAKE_CXX_FLAGS \"%s\")\n", strings.Join(filtered, " "))
 	}
 
-	// Link flags
+	// Link flags (not libraries — goes into LINK_FLAGS, not target_link_libraries)
 	linkFlags := extractLinkFlags(flags.LDFlags)
 	if len(linkFlags) > 0 {
 		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY LINK_FLAGS %s)\n", exe, strings.Join(linkFlags, " "))
-		fmt.Fprintf(f, "target_link_libraries(%s %s)\n", exe, strings.Join(linkFlags, " "))
 	}
 
 	// Defines
@@ -134,7 +133,7 @@ func doPro(opts BuildOptions) error {
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
 
 	fmt.Fprintf(f, "TEMPLATE = app\n\n")
-	fmt.Fprintln(f, "CONFIG += c++23")
+	fmt.Fprintln(f, "CONFIG += c++26")
 	fmt.Fprintln(f, "CONFIG -= console")
 	fmt.Fprintln(f, "CONFIG -= app_bundle")
 	fmt.Fprintf(f, "CONFIG -= qt\n\n")

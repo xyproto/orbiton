@@ -466,7 +466,7 @@ func dirDefines() []string {
 
 // bestStdFlag returns the best C++ standard flag the compiler supports.
 func bestStdFlag(compiler string) string {
-	for _, std := range []string{"c++23", "c++2b", "c++20", "c++2a", "c++17", "c++14", "c++11"} {
+	for _, std := range []string{"c++26", "c++2c", "c++23", "c++2b", "c++20", "c++2a", "c++17", "c++14", "c++11"} {
 		if compilerSupportsStd(compiler, std) {
 			return std
 		}
@@ -552,6 +552,30 @@ func isEffectivelyClang(compiler string) bool {
 	return strings.Contains(strings.ToLower(string(out)), "clang")
 }
 
-// Qt6 hardcoded flags (from build.py)
-const qt6CxxFlags = "-I/usr/include/qt6 -I/usr/include/qt6/Qt3DAnimation -I/usr/include/qt6/Qt3DCore -I/usr/include/qt6/Qt3DExtras -I/usr/include/qt6/Qt3DInput -I/usr/include/qt6/Qt3DLogic -I/usr/include/qt6/Qt3DQuick -I/usr/include/qt6/Qt3DQuickAnimation -I/usr/include/qt6/Qt3DQuickExtras -I/usr/include/qt6/Qt3DQuickInput -I/usr/include/qt6/Qt3DQuickRender -I/usr/include/qt6/Qt3DQuickScene2D -I/usr/include/qt6/Qt3DRender -I/usr/include/qt6/QtConcurrent -I/usr/include/qt6/QtCore -I/usr/include/qt6/QtCore5Compat -I/usr/include/qt6/QtDBus -I/usr/include/qt6/QtDesigner -I/usr/include/qt6/QtDesignerComponents -I/usr/include/qt6/QtDeviceDiscoverySupport -I/usr/include/qt6/QtEglFSDeviceIntegration -I/usr/include/qt6/QtEglFsKmsGbmSupport -I/usr/include/qt6/QtEglFsKmsSupport -I/usr/include/qt6/QtFbSupport -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtHelp -I/usr/include/qt6/QtInputSupport -I/usr/include/qt6/QtKmsSupport -I/usr/include/qt6/QtLabsAnimation -I/usr/include/qt6/QtLabsFolderListModel -I/usr/include/qt6/QtLabsQmlModels -I/usr/include/qt6/QtLabsSettings -I/usr/include/qt6/QtLabsSharedImage -I/usr/include/qt6/QtLabsWavefrontMesh -I/usr/include/qt6/QtNetwork -I/usr/include/qt6/QtNetworkAuth -I/usr/include/qt6/QtOpenGL -I/usr/include/qt6/QtOpenGLWidgets -I/usr/include/qt6/QtPacketProtocol -I/usr/include/qt6/QtPrintSupport -I/usr/include/qt6/QtQml -I/usr/include/qt6/QtQmlCompiler -I/usr/include/qt6/QtQmlDebug -I/usr/include/qt6/QtQmlDom -I/usr/include/qt6/QtQmlLocalStorage -I/usr/include/qt6/QtQmlModels -I/usr/include/qt6/QtQmlWorkerScript -I/usr/include/qt6/QtQuick -I/usr/include/qt6/QtQuick3D -I/usr/include/qt6/QtQuick3DAssetImport -I/usr/include/qt6/QtQuick3DIblBaker -I/usr/include/qt6/QtQuick3DParticles -I/usr/include/qt6/QtQuick3DRuntimeRender -I/usr/include/qt6/QtQuick3DUtils -I/usr/include/qt6/QtQuickControls2 -I/usr/include/qt6/QtQuickControls2Impl -I/usr/include/qt6/QtQuickLayouts -I/usr/include/qt6/QtQuickParticles -I/usr/include/qt6/QtQuickShapes -I/usr/include/qt6/QtQuickTemplates2 -I/usr/include/qt6/QtQuickTest -I/usr/include/qt6/QtQuickWidgets -I/usr/include/qt6/QtShaderTools -I/usr/include/qt6/QtSql -I/usr/include/qt6/QtSvg -I/usr/include/qt6/QtSvgWidgets -I/usr/include/qt6/QtTest -I/usr/include/qt6/QtTools -I/usr/include/qt6/QtUiPlugin -I/usr/include/qt6/QtUiTools -I/usr/include/qt6/QtWaylandClient -I/usr/include/qt6/QtWaylandCompositor -I/usr/include/qt6/QtWidgets -I/usr/include/qt6/QtXml"
-const qt6LinkFlags = "-lQt6Concurrent -lQt6Core -lQt6DBus -lQt6EglFSDeviceIntegration -lQt6EglFsKmsGbmSupport -lQt6EglFsKmsSupport -lQt6Gui -lQt6Network -lQt6OpenGL -lQt6OpenGLWidgets -lQt6PrintSupport -lQt6Sql -lQt6Test -lQt6Widgets -lQt6XcbQpa -lQt6Xml"
+// qt6Flags returns cflags and ldflags for Qt6 by querying pkg-config for each
+// module individually so that missing modules are silently skipped. Falls back
+// to hardcoded /usr/include/qt6 paths when pkg-config yields nothing (e.g. on
+// systems where Qt6 was installed without .pc files).
+func qt6Flags() (cflags, ldflags []string) {
+	for _, mod := range []string{
+		"Qt6Concurrent", "Qt6Core", "Qt6DBus", "Qt6Gui", "Qt6Network",
+		"Qt6OpenGL", "Qt6OpenGLWidgets", "Qt6PrintSupport", "Qt6Sql",
+		"Qt6Svg", "Qt6SvgWidgets", "Qt6Test", "Qt6Widgets", "Qt6Xml",
+	} {
+		if flags := pkgConfigFlags(mod); flags != "" {
+			cflags, ldflags = mergeFlags(cflags, ldflags, flags)
+		}
+	}
+	if len(cflags) == 0 && len(ldflags) == 0 {
+		for f := range strings.FieldsSeq(qt6FallbackCxxFlags) {
+			cflags = appendUnique(cflags, f)
+		}
+		for f := range strings.FieldsSeq(qt6FallbackLinkFlags) {
+			ldflags = appendUnique(ldflags, f)
+		}
+	}
+	return cflags, ldflags
+}
+
+const qt6FallbackCxxFlags = "-I/usr/include/qt6 -I/usr/include/qt6/Qt3DAnimation -I/usr/include/qt6/Qt3DCore -I/usr/include/qt6/Qt3DExtras -I/usr/include/qt6/Qt3DInput -I/usr/include/qt6/Qt3DLogic -I/usr/include/qt6/Qt3DQuick -I/usr/include/qt6/Qt3DQuickAnimation -I/usr/include/qt6/Qt3DQuickExtras -I/usr/include/qt6/Qt3DQuickInput -I/usr/include/qt6/Qt3DQuickRender -I/usr/include/qt6/Qt3DQuickScene2D -I/usr/include/qt6/Qt3DRender -I/usr/include/qt6/QtConcurrent -I/usr/include/qt6/QtCore -I/usr/include/qt6/QtCore5Compat -I/usr/include/qt6/QtDBus -I/usr/include/qt6/QtDesigner -I/usr/include/qt6/QtDesignerComponents -I/usr/include/qt6/QtDeviceDiscoverySupport -I/usr/include/qt6/QtEglFSDeviceIntegration -I/usr/include/qt6/QtEglFsKmsGbmSupport -I/usr/include/qt6/QtEglFsKmsSupport -I/usr/include/qt6/QtFbSupport -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtHelp -I/usr/include/qt6/QtInputSupport -I/usr/include/qt6/QtKmsSupport -I/usr/include/qt6/QtLabsAnimation -I/usr/include/qt6/QtLabsFolderListModel -I/usr/include/qt6/QtLabsQmlModels -I/usr/include/qt6/QtLabsSettings -I/usr/include/qt6/QtLabsSharedImage -I/usr/include/qt6/QtLabsWavefrontMesh -I/usr/include/qt6/QtNetwork -I/usr/include/qt6/QtNetworkAuth -I/usr/include/qt6/QtOpenGL -I/usr/include/qt6/QtOpenGLWidgets -I/usr/include/qt6/QtPacketProtocol -I/usr/include/qt6/QtPrintSupport -I/usr/include/qt6/QtQml -I/usr/include/qt6/QtQmlCompiler -I/usr/include/qt6/QtQmlDebug -I/usr/include/qt6/QtQmlDom -I/usr/include/qt6/QtQmlLocalStorage -I/usr/include/qt6/QtQmlModels -I/usr/include/qt6/QtQmlWorkerScript -I/usr/include/qt6/QtQuick -I/usr/include/qt6/QtQuick3D -I/usr/include/qt6/QtQuick3DAssetImport -I/usr/include/qt6/QtQuick3DIblBaker -I/usr/include/qt6/QtQuick3DParticles -I/usr/include/qt6/QtQuick3DRuntimeRender -I/usr/include/qt6/QtQuick3DUtils -I/usr/include/qt6/QtQuickControls2 -I/usr/include/qt6/QtQuickControls2Impl -I/usr/include/qt6/QtQuickLayouts -I/usr/include/qt6/QtQuickParticles -I/usr/include/qt6/QtQuickShapes -I/usr/include/qt6/QtQuickTemplates2 -I/usr/include/qt6/QtQuickTest -I/usr/include/qt6/QtQuickWidgets -I/usr/include/qt6/QtShaderTools -I/usr/include/qt6/QtSql -I/usr/include/qt6/QtSvg -I/usr/include/qt6/QtSvgWidgets -I/usr/include/qt6/QtTest -I/usr/include/qt6/QtTools -I/usr/include/qt6/QtUiPlugin -I/usr/include/qt6/QtUiTools -I/usr/include/qt6/QtWaylandClient -I/usr/include/qt6/QtWaylandCompositor -I/usr/include/qt6/QtWidgets -I/usr/include/qt6/QtXml"
+const qt6FallbackLinkFlags = "-lQt6Concurrent -lQt6Core -lQt6DBus -lQt6EglFSDeviceIntegration -lQt6EglFsKmsGbmSupport -lQt6EglFsKmsSupport -lQt6Gui -lQt6Network -lQt6OpenGL -lQt6OpenGLWidgets -lQt6PrintSupport -lQt6Sql -lQt6Test -lQt6Widgets -lQt6XcbQpa -lQt6Xml"

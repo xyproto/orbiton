@@ -101,11 +101,14 @@ func (c *Config) withDir(fn func() error) error {
 // withDirNoErr is like withDir but for functions that don't return errors.
 func (c *Config) withDirNoErr(fn func()) {
 	if c.SourceDir != "" {
-		if orig, err := os.Getwd(); err == nil {
-			if err := os.Chdir(c.SourceDir); err == nil {
-				defer os.Chdir(orig)
-			}
+		orig, err := os.Getwd()
+		if err != nil {
+			return
 		}
+		if err := os.Chdir(c.SourceDir); err != nil {
+			return
+		}
+		defer os.Chdir(orig)
 	}
 	fn()
 }
