@@ -1,8 +1,8 @@
 .PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install
 
 PROJECT ?= orbiton
-GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 GOBUILD := go build
+GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
 
 UNAME_S := $(shell uname -s)
@@ -36,8 +36,8 @@ else
 endif
 
 MANDIR ?= $(PREFIX)/share/man/man1
-
 UNAME_R ?= $(shell uname -r)
+
 ifneq (,$(findstring arch,$(UNAME_R)))
 # Arch Linux
 LDFLAGS ?= -Wl,-O2,--as-needed,-z,relro,-z,now
@@ -46,7 +46,6 @@ BUILDFLAGS ?= -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
 endif
 
 CXX ?= g++
-
 CXXFLAGS ?= -O2 -pipe -fPIC -fno-plt -fstack-protector-strong -Wall -Wshadow -Wpedantic -Wno-parentheses -Wfatal-errors -Wvla -Wignored-qualifiers -pthread $(LDFLAGS)
 CXXFLAGS += -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
 
