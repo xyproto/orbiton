@@ -205,13 +205,8 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		return
 	}
 
-	// Book mode with text (VT100/xterm): render Markdown via ANSI escape codes.
-	// Hold redrawMutex across the whole sequence so a SIGWINCH-triggered
-	// FullResetRedraw cannot replace *c (via *c = newC.Copy()) or re-issue
-	// bookTextModeRender concurrently: that race leaves stale oldchars and
-	// repaints the previous frame's regular-mode line under the book header.
+	// Book mode with text (VT100/xterm): render Markdown via ANSI escape codes
 	if e.bookTextMode() {
-		redrawMutex.Lock()
 		e.bookModeEnsureCursorVisible(c)
 		e.bookTextModeRender(c)
 		// status.Draw owns the bottom row in text book mode and paints
@@ -223,7 +218,6 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 		// Without this, the terminal cursor stays at row 0 (the top
 		// filename bar) until the first key is pressed.
 		e.bookTextModePlaceCursor(c)
-		redrawMutex.Unlock()
 		return
 	}
 

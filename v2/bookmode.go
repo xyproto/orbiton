@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"html"
 	"image"
@@ -916,6 +917,10 @@ func bookReadingPercent(lineNumber, lastLineNumber LineNumber) int {
 	return p
 }
 
+// errNoHeading is returned by bookCurrentHeadingAt when no ATX heading is
+// found in the bounded backwards walk from the given line.
+var errNoHeading = errors.New("no heading found")
+
 // bookCurrentHeading walks backwards from the given document line to find
 // the nearest preceding ATX heading and returns its body (without the
 // leading hashes). Returns the empty string when no heading is found.
@@ -923,6 +928,13 @@ func bookReadingPercent(lineNumber, lastLineNumber LineNumber) int {
 // section they are currently in. The walk is bounded so that a long file
 // without headings does not slow down the per-keystroke redraw.
 func (e *Editor) bookCurrentHeading(line LineIndex) string {
+	heading, _, _ := e.bookCurrentHeadingAt(line)
+	return heading
+}
+
+// bookCurrentHeadingAt is like bookCurrentHeading but also returns the
+// document line index of the heading, or errNoHeading when none is found.
+func (e *Editor) bookCurrentHeadingAt(line LineIndex) (string, LineIndex, error) {
 	const lookback = 5000
 	from := int(line)
 	to := max(from-lookback, 0)
@@ -934,11 +946,68 @@ func (e *Editor) bookCurrentHeading(line LineIndex) string {
 		}
 		for _, prefix := range []string{"# ", "## ", "### ", "#### ", "##### ", "###### "} {
 			if strings.HasPrefix(raw, prefix) {
-				return strings.TrimSpace(raw[len(prefix):])
+				return bookHeadingPlainText(raw[len(prefix):]), LineIndex(i), nil
 			}
 		}
 	}
-	return ""
+	return "", 0, errNoHeading
+}
+
+// bookHeadingPlainText strips inline HTML tags and Markdown image codes
+// from a heading body so the top-right heading slot shows readable text
+// instead of markup. An H2 like "Title <img src=...>" becomes "Title";
+// "Title ![alt](img.png)" becomes "Title".
+func bookHeadingPlainText(s string) string {
+	if !strings.ContainsAny(s, "<!") {
+		return strings.TrimSpace(html.UnescapeString(s))
+	}
+	var b strings.Builder
+	b.Grow(len(s))
+	runes := []rune(s)
+	for i := 0; i < len(runes); {
+		// HTML tag: drop everything from '<' through the matching '>'.
+		// An unmatched '<' is kept as literal text.
+		if runes[i] == '<' {
+			j := i + 1
+			for j < len(runes) && runes[j] != '>' {
+				j++
+			}
+			if j < len(runes) {
+				i = j + 1
+				continue
+			}
+		}
+		// ![alt](url): Markdown image. Drop the whole expression — alt
+		// text is rarely meaningful as a heading on its own.
+		if runes[i] == '!' && i+1 < len(runes) && runes[i+1] == '[' {
+			j := i + 2
+			for j < len(runes) && runes[j] != ']' {
+				j++
+			}
+			if j+1 < len(runes) && runes[j+1] == '(' {
+				k, depth := j+2, 1
+				for k < len(runes) && depth > 0 {
+					switch runes[k] {
+					case '(':
+						depth++
+					case ')':
+						depth--
+					}
+					if depth == 0 {
+						break
+					}
+					k++
+				}
+				if k < len(runes) {
+					i = k + 1
+					continue
+				}
+			}
+		}
+		b.WriteRune(runes[i])
+		i++
+	}
+	return strings.TrimSpace(html.UnescapeString(b.String()))
 }
 
 // bookBarStyle returns the barStyle used by text book-mode bars.

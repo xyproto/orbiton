@@ -364,10 +364,33 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		// function names use. Skip configuration formats where "#" is a
 		// comment character.
 		if hasMarkdownHeadings(e.mode) {
-			heading := e.bookCurrentHeading(e.DataY())
-			if heading != "" {
-				heading = " " + heading + " "
+			heading, headingY, err := e.bookCurrentHeadingAt(e.DataY())
+			// Skip the slot when the heading line is already on screen,
+			// otherwise it overlays the same heading the user can read
+			// in place.
+			offsetY := LineIndex(e.pos.OffsetY())
+			visibleRows := LineIndex(int(c.Height()) - e.stickyBarRows())
+			headingVisible := headingY >= offsetY && headingY < offsetY+visibleRows
+			if err == nil && !headingVisible {
 				canvasWidth := c.Width()
+				// Cap the heading at a quarter of the canvas width so it
+				// does not crowd the top-right slot. Truncate rune-wise
+				// and append an ellipsis when over the limit. Use the
+				// single-rune ellipsis only in graphical book mode, where
+				// the image renderer draws "…" cleanly; everywhere else
+				// fall back to plain "..." for terminals and fonts where
+				// the Unicode glyph renders poorly or not at all.
+				ellipsis := "..."
+				if e.bookGraphicalMode() {
+					ellipsis = string(ellipsisRune)
+				}
+				if maxLen := canvasWidth / 4; maxLen > 0 {
+					runes := []rune(heading)
+					if ellW := uint(len([]rune(ellipsis))); uint(len(runes)) > maxLen && maxLen > ellW {
+						heading = string(runes[:maxLen-ellW]) + ellipsis
+					}
+				}
+				heading = " " + heading + " "
 				hx := (canvasWidth - ulen(heading)) - 2
 				c.Write(hx, 0, e.TopRightForeground, e.TopRightBackground, heading)
 			}
