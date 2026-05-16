@@ -364,14 +364,8 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		// function names use. Skip configuration formats where "#" is a
 		// comment character.
 		if hasMarkdownHeadings(e.mode) {
-			heading, headingY, err := e.bookCurrentHeadingAt(e.DataY())
-			// Skip the slot when the heading line is already on screen,
-			// otherwise it overlays the same heading the user can read
-			// in place.
-			offsetY := LineIndex(e.pos.OffsetY())
-			visibleRows := LineIndex(int(c.Height()) - e.stickyBarRows())
-			headingVisible := headingY >= offsetY && headingY < offsetY+visibleRows
-			if err == nil && !headingVisible {
+			heading := e.bookCurrentHeading(e.DataY())
+			if heading != "" {
 				canvasWidth := c.Width()
 				// Cap the heading at a quarter of the canvas width so it
 				// does not crowd the top-right slot. Truncate rune-wise
