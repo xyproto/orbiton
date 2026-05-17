@@ -142,6 +142,12 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 				configMarkers++
 			}
 		}
+		// If non-comment lines look like shell commands, prefer Shell over Config.
+		// Handles the common case of typing "# comment" + "ls -al" into a buffer
+		// without a shebang or filename extension.
+		if (m == Blank || m == Config) && looksLikeShell(byteLines) {
+			return Shell, true
+		}
 		if hashComment > slashComment {
 			return Config, true
 		}
@@ -183,4 +189,41 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 func DetectFromContents(initial Mode, firstLine string, allTextFunc func() string) (Mode, bool) {
 	allBytesFunc := func() []byte { return []byte(allTextFunc()) }
 	return DetectFromContentBytes(initial, []byte(firstLine), allBytesFunc)
+}
+
+// looksLikeShell returns true if the content has the typical shape of a shell
+// script even without a shebang: at least one '#' comment line followed (after
+// any blank lines) by a line whose first word is made up of [a-zA-Z0-9./] and
+// is separated from the rest by a space — the "command arg ..." pattern.
+// Lines that look like "key = value" assignments are rejected as config-like.
+func looksLikeShell(byteLines [][]byte) bool {
+	sawHashComment := false
+	for _, line := range byteLines {
+		trimmed := bytes.TrimSpace(line)
+		if len(trimmed) == 0 {
+			continue
+		}
+		if trimmed[0] == '#' {
+			sawHashComment = true
+			continue
+		}
+		if !sawHashComment {
+			return false
+		}
+		spaceIdx := bytes.IndexByte(trimmed, ' ')
+		if spaceIdx <= 0 {
+			return false
+		}
+		for _, c := range trimmed[:spaceIdx] {
+			if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '.' || c == '/') {
+				return false
+			}
+		}
+		rest := bytes.TrimLeft(trimmed[spaceIdx+1:], " \t")
+		if len(rest) == 0 || rest[0] == '=' {
+			return false
+		}
+		return true
+	}
+	return false
 }
