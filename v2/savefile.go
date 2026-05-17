@@ -91,6 +91,16 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 			s = strings.Join(lines, "\n")
 		}
 
+		// Re-detect the mode from the buffer, in case the user typed shell
+		// commands (or similar) into a fresh buffer with no extension or shebang.
+		if e.mode == mode.Blank || e.mode == mode.Config {
+			if newMode := mode.SimpleDetect(s); newMode != mode.Blank && newMode != e.mode {
+				e.mode = newMode
+				adjustSyntaxHighlightingKeywords(e.mode)
+				e.syntaxHighlight = true
+			}
+		}
+
 		// Should the file be saved with the executable bit enabled?
 		// (Does it either start with a shebang or reside in a common bin directory like /usr/bin?)
 		shebang = files.BinDirectory(filename) || strings.HasPrefix(s, "#!")
