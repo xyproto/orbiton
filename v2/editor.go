@@ -89,6 +89,7 @@ type Editor struct {
 	bookDarkMode                bool         // book mode: use dark mode (false = light mode)
 	bookParagraphIndent         bool         // book mode: visually indent first line of paragraphs
 	bookFocusMode               bool         // book mode: typewriter scrolling + dim non-active paragraphs
+	bookNoMargin                bool         // book mode: suppress left/right margins
 	bookSaved                   bool         // pre-book-mode editor settings have been saved, for later restore
 	bookDarkModeInitialized     bool         // the bookDarkMode auto-detect has already run
 	bookSavedSyntaxHighlight    bool         // saved syntaxHighlight from before book mode

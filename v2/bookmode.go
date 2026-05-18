@@ -3781,8 +3781,14 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		return
 	}
 
-	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
-	marginRight := w - max(int(float64(w)*bookTextMarginRight), 1)
+	var marginLeft, marginRight int
+	if e.bookNoMargin {
+		marginLeft = 0
+		marginRight = w
+	} else {
+		marginLeft = max(int(float64(w)*bookMarginLeft), 2)
+		marginRight = w - max(int(float64(w)*bookTextMarginRight), 1)
+	}
 	textW := marginRight - marginLeft
 	// topMargin already shifts content below the top status bar: it includes
 	// both the decorative top padding and the one-row filename bar.
@@ -5268,8 +5274,14 @@ func bookModeResetCursor() {
 // any Markdown prefix that is hidden from the editing position.
 func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	w := int(c.Width())
-	marginLeft := max(int(float64(w)*bookMarginLeft), 2)
-	marginRight := w - max(int(float64(w)*bookTextMarginRight), 1)
+	var marginLeft, marginRight int
+	if e.bookNoMargin {
+		marginLeft = 0
+		marginRight = w
+	} else {
+		marginLeft = max(int(float64(w)*bookMarginLeft), 2)
+		marginRight = w - max(int(float64(w)*bookTextMarginRight), 1)
+	}
 	textW := marginRight - marginLeft
 
 	rawLine := e.Line(e.DataY())
