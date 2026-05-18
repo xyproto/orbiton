@@ -21,7 +21,7 @@
 - [ ] Check vt100.
 - [ ] Find a better solution for offering help at first start. Always print ie. "ctrl-k for help" in the lower right corner,
       and then in the help box, have an easy way to disable help so that ctrl-k is used for deleting to the end of the line instead?
-- [ ] Visual soft word wrap (no clipping at the right margin, when in book mode).
+- [ ] Visual soft wrap (no clipping at the right margin, when in book mode).
 - [ ] Optional first-line indent for body paragraphs for book mode.
 - [ ] Strikethrough rendering for graphical book mode.
 - [ ] Table rendering for graphical book mode.
@@ -293,7 +293,7 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Introduce a type for screen coordinates, a type for screen coordinates + scroll offset, and another type for data coordinates.
 - [ ] Or go for a server/client type of model, where the server deals with moving around in very large files, for instance.
 - [ ] Refactor the code to handle a line as a Line struct/object that has these markers: start of line, start of text, start of scroll view, end of scroll view, end of text, one after end of text, end of line including whitespace.
-- [ ] Rewrite `insertRune`. Improve word-wrap related functionality.
+- [ ] Rewrite `insertRune`. Improve wrap-while-typing and reflow functionality.
 
 ## Built-in game
 

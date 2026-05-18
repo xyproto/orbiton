@@ -340,7 +340,7 @@ There are pretty few hotkeys to remember:
 `/etc/fstab`, JSON and HTML files are also supported, and can be formatted with `ctrl-w`.
 
 * `o` will try to jump to the location where the error is and otherwise display `Success`.
-* For regular text files, `ctrl-w` will word wrap the lines to a length of 99.
+* For regular text files, `ctrl-w` will reflow the text to a length of 99.
 * If `kotlinc-native` is not available, this build command will be used instead: `kotlinc $filename -include-runtime -d $name.jar`
 
 | File type | File extensions  | Build or export command                                           |
@@ -701,7 +701,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
   -m, --monitor FILENAME         Monitor the given file for changes, and open it as read-only.
   -o, --ollama                   Use Ollama to explain the function under the cursor.
   -B, --book                     Open in best available book mode (graphical if supported, text otherwise).
-  -T, --book-mode-text           Open in text book mode: word wrap, plain text, word count.
+  -T, --book-mode-text           Open in text book mode: soft wrap, plain text, word count.
   -G, --book-mode-graphical      Open in graphical book mode (requires Kitty, iTerm2 or Sixel support).
   -r, --release                  Build with release instead of debug mode whenever applicable.
   -x, --noapprox                 Disable approximate filename matching.
