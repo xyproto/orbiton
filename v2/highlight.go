@@ -828,9 +828,9 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is
-		columnLimit := e.wrapWidth
-		if e.wrapWhenTyping && e.wrapWhenTypingWidth > 0 {
-			columnLimit = e.wrapWhenTypingWidth
+		columnLimit := e.softWrapLimit
+		if e.wrapWhenTyping && e.wrapLimitWhenTyping > 0 {
+			columnLimit = e.wrapLimitWhenTyping
 		}
 		if (e.showColumnLimit || e.mode == mode.Git) && lineRuneCount <= uint(columnLimit) {
 			c.WriteRune(uint(columnLimit), yp, dottedLineColor, bg, wrapMarkerRune)

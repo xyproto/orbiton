@@ -302,8 +302,8 @@ func (e *Editor) enterBookModeText() {
 	if !e.bookSaved {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
-		e.bookSavedWrapWidth = e.wrapWidth
-		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
+		e.bookSavedSoftWrapLimit = e.softWrapLimit
+		e.bookSavedWrapLimitWhenTyping = e.wrapLimitWhenTyping
 		e.bookSaved = true
 	}
 	if !e.bookDarkModeInitialized {
@@ -314,7 +314,7 @@ func (e *Editor) enterBookModeText() {
 	}
 	e.setBookState(BookModeText)
 	e.syntaxHighlight = false
-	e.wrapWidth = 72
+	e.softWrapLimit = 72
 	e.wrapWhenTyping = false
 	e.bookSavedLocalX = -1
 }
@@ -327,8 +327,8 @@ func (e *Editor) enterBookModeGraphical() {
 	if !e.bookSaved {
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
-		e.bookSavedWrapWidth = e.wrapWidth
-		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
+		e.bookSavedSoftWrapLimit = e.softWrapLimit
+		e.bookSavedWrapLimitWhenTyping = e.wrapLimitWhenTyping
 		e.bookSaved = true
 	}
 	if !e.bookDarkModeInitialized {
@@ -339,7 +339,7 @@ func (e *Editor) enterBookModeGraphical() {
 	}
 	e.setBookState(BookModeGraphical)
 	e.syntaxHighlight = false
-	e.wrapWidth = 72
+	e.softWrapLimit = 72
 	e.wrapWhenTyping = false
 	e.stickyStatusBars = true
 	e.bookSavedLocalX = -1
@@ -354,8 +354,8 @@ func (e *Editor) exitBookMode() {
 	if e.bookSaved {
 		e.syntaxHighlight = e.bookSavedSyntaxHighlight
 		e.wrapWhenTyping = e.bookSavedWrapWhenTyping
-		e.wrapWidth = e.bookSavedWrapWidth
-		e.wrapWhenTypingWidth = e.bookSavedWrapWhenTypingWidth
+		e.softWrapLimit = e.bookSavedSoftWrapLimit
+		e.wrapLimitWhenTyping = e.bookSavedWrapLimitWhenTyping
 		e.bookSaved = false
 	}
 	bookModeResetCursor()

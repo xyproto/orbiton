@@ -5,7 +5,7 @@ import (
 	"github.com/xyproto/wordwrap"
 )
 
-// InsertRune will insert a rune at the current data position, with word wrap.
+// InsertRune will insert a rune at the current data position, with wrap when typing.
 // Returns true if the cursor was repositioned to a new (wrapped) line.
 // When true the caller must NOT advance the cursor; when false the caller
 // should call Next as usual.
@@ -48,9 +48,9 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	// Emacs auto-fill style: if this insertion caused the line to exceed
 	// the typing wrap limit, break at the last space before the limit and
 	// move the tail to a new line below.
-	typingLimit := e.wrapWhenTypingWidth
+	typingLimit := e.wrapLimitWhenTyping
 	if typingLimit <= 0 {
-		typingLimit = e.wrapWidth
+		typingLimit = e.softWrapLimit
 	}
 	if e.wrapWhenTyping && typingLimit > 0 && lenBefore <= typingLimit {
 		line := e.Line(e.DataY())

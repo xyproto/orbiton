@@ -101,7 +101,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		readOnly = true
 	}
 
-	// New editor struct. Scroll 10 lines at a time, no word wrap.
+	// New editor struct. Scroll 10 lines at a time, no soft wrap.
 	e := NewCustomEditor(indentation,
 		scrollSpeed,
 		m,
@@ -121,12 +121,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.readOnly = true
 	}
 
-	// For non-highlighted files, adjust the word wrap
-	if !e.syntaxHighlight && c != nil {
-		// Adjust the word wrap if the terminal is too narrow
+	// For non-highlighted files (or Blank/Text files that may retain highlighting), adjust the soft wrap limit
+	if (!e.syntaxHighlight || e.mode == mode.Blank || e.mode == mode.Text) && c != nil {
+		// Adjust the soft wrap limit if the terminal is too narrow
 		w := int(c.Width())
-		if w < e.wrapWidth {
-			e.wrapWidth = w
+		if w < e.softWrapLimit {
+			e.softWrapLimit = w
 		}
 	}
 
@@ -384,7 +384,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.rainbowParenthesis = false
 	}
 
-	// If we're editing a git commit message, add a newline and enable word-wrap at 72
+	// If we're editing a git commit message, add a newline and enable wrap when typing at 72
 	if e.mode == mode.Git {
 		e.Git = vt.LightGreen
 		if filepath.Base(e.filename) == "MERGE_MSG" {
@@ -393,14 +393,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.InsertLineBelow()
 		}
 		// TODO: Are these two needed, or covered by NewCustomEditor?
-		e.wrapWidth = 72
+		e.softWrapLimit = 72
 		e.wrapWhenTyping = true
-		e.wrapWhenTypingWidth = 72
+		e.wrapLimitWhenTyping = 72
 	} else if e.mode == mode.Email {
 		// TODO: Are these two needed, or covered by NewCustomEditor?
-		e.wrapWidth = 72
+		e.softWrapLimit = 72
 		e.wrapWhenTyping = true
-		e.wrapWhenTypingWidth = 72
+		e.wrapLimitWhenTyping = 72
 		e.GoToEnd(c, nil)
 	}
 
@@ -410,14 +410,14 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		switch e.mode {
 		case mode.Text:
 			e.wrapWhenTyping = true
-			e.wrapWhenTypingWidth = 79
+			e.wrapLimitWhenTyping = 79
 		case mode.Blank:
 			wrapW := 79
 			if c != nil {
 				wrapW = int(c.Width())
 			}
 			e.wrapWhenTyping = true
-			e.wrapWhenTypingWidth = wrapW
+			e.wrapLimitWhenTyping = wrapW
 		}
 	}
 
@@ -736,27 +736,27 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 
 	p := NewPosition(scrollSpeed)
 	e.pos = *p
-	// If the file is not to be highlighted, set word wrap to 79 (0 to disable)
+	// If the file is to be highlighted, set soft wrap limit to 79 (0 to disable)
 	if e.syntaxHighlight {
-		e.wrapWidth = 79
+		e.softWrapLimit = 79
 		e.wrapWhenTyping = false
 	}
 	switch m {
 	case mode.Email, mode.Git:
 		// The subject should ideally be maximum 50 characters long, then the body of the
 		// git commit message can be 72 characters long. Because e-mail standards.
-		e.wrapWidth = 72
+		e.softWrapLimit = 72
 		e.wrapWhenTyping = true
-		e.wrapWhenTypingWidth = 72
+		e.wrapLimitWhenTyping = 72
 	case mode.ASCIIDoc, mode.Blank, mode.Markdown, mode.ReStructured, mode.SCDoc, mode.Text:
-		e.wrapWidth = 79
+		e.softWrapLimit = 79
 	}
 	if bookModeFlag {
 		// Save the pre-book values, so they can be restored if the user cycles back to regular mode with ctrl-space
 		e.bookSavedSyntaxHighlight = e.syntaxHighlight
 		e.bookSavedWrapWhenTyping = e.wrapWhenTyping
-		e.bookSavedWrapWidth = e.wrapWidth
-		e.bookSavedWrapWhenTypingWidth = e.wrapWhenTypingWidth
+		e.bookSavedSoftWrapLimit = e.softWrapLimit
+		e.bookSavedWrapLimitWhenTyping = e.wrapLimitWhenTyping
 		e.bookSaved = true
 		if bookModeTextFlag || !bookGraphicsCapable() {
 			e.setBookState(BookModeText)
@@ -764,7 +764,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 			e.setBookState(BookModeGraphical)
 		}
 		e.syntaxHighlight = false
-		e.wrapWidth = 72
+		e.softWrapLimit = 72
 		e.wrapWhenTyping = false // soft wrapping is handled visually by the book mode renderer
 		e.stickyStatusBars = true
 		e.bookSavedLocalX = -1
@@ -780,13 +780,13 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 // NewSimpleEditor return a new simple editor, where the settings are 4 spaces per tab, white text on black background,
 // no syntax highlighting, text edit mode (as opposed to ASCII draw mode), scroll 1 line at a time, color
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
-// then set the word wrap limit at the given column width.
-func NewSimpleEditor(wordWrapLimit int) *Editor {
+// then set the soft wrap limit at the given column width.
+func NewSimpleEditor(softWrapLimit int) *Editor {
 	t := NewDefaultTheme()
 	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false, false, false)
-	e.wrapWidth = wordWrapLimit
+	e.softWrapLimit = softWrapLimit
 	e.wrapWhenTyping = true
-	e.wrapWhenTypingWidth = wordWrapLimit
+	e.wrapLimitWhenTyping = softWrapLimit
 	return e
 }
 

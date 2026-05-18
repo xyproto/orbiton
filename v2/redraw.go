@@ -40,8 +40,8 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	w := int(newC.Width())
 
 	if !e.InBookMode() {
-		if (w < e.wrapWidth) || (e.wrapWidth < 80 && w >= 80) {
-			e.wrapWidth = w
+		if (w < e.softWrapLimit) || (e.softWrapLimit < 80 && w >= 80) {
+			e.softWrapLimit = w
 		}
 	}
 
@@ -70,10 +70,10 @@ func (e *Editor) FullResetRedraw(c *vt.Canvas, status *StatusBar, drawLines, sho
 	resizeMut.Unlock()
 
 	if !e.InBookMode() {
-		if w < e.wrapWidth {
-			e.wrapWidth = w
-		} else if e.wrapWidth < 80 && w >= 80 {
-			e.wrapWidth = w
+		if w < e.softWrapLimit {
+			e.softWrapLimit = w
+		} else if e.softWrapLimit < 80 && w >= 80 {
+			e.softWrapLimit = w
 		}
 	}
 

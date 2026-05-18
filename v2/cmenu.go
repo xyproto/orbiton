@@ -111,16 +111,16 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		menuTitle = "Editing " + filepath.Base(e.filename)
 	}
 
-	wrapWidth := e.wrapWidth
-	if wrapWidth == 0 {
-		wrapWidth = 80
+	softWrapLimit := e.softWrapLimit
+	if softWrapLimit == 0 {
+		softWrapLimit = 80
 	}
 
-	// Let the menu item for wrapping words suggest the minimum of e.wrapWidth and the terminal width
+	// Let the menu item for reflowing text suggest the minimum of e.softWrapLimit and the terminal width
 	if c != nil {
 		w := int(c.Width())
-		if w < wrapWidth {
-			wrapWidth = w - int(0.05*float64(w))
+		if w < softWrapLimit {
+			softWrapLimit = w - int(0.05*float64(w))
 		}
 	}
 
@@ -196,25 +196,25 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			})
 		}
 
-		// Word wrap at a custom width + enable word wrap when typing
-		actions.Add("Word wrap at...", func() {
+		// Reflow text at a custom width + enable wrap when typing
+		actions.Add("Reflow text at...", func() {
 			const tabInputText = "79"
-			if wordWrapString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Word wrap at [%d]", wrapWidth), "", []string{}, false, tabInputText, menuBgColor); ok {
-				if strings.TrimSpace(wordWrapString) == "" {
+			if reflowString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Reflow text at [%d]", softWrapLimit), "", []string{}, false, tabInputText, menuBgColor); ok {
+				if strings.TrimSpace(reflowString) == "" {
 					undo.Snapshot(e)
-					e.WrapNow(wrapWidth)
+					e.ReflowText(softWrapLimit)
 					e.wrapWhenTyping = true
-					status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", wrapWidth))
+					status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", softWrapLimit))
 				} else {
-					if ww, err := strconv.Atoi(wordWrapString); err != nil {
+					if ww, err := strconv.Atoi(reflowString); err != nil {
 						status.Clear(c, false)
 						status.SetError(err)
 						status.Show(c, e)
 					} else {
 						undo.Snapshot(e)
-						e.WrapNow(ww)
+						e.ReflowText(ww)
 						e.wrapWhenTyping = true
-						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap at %d", ww))
+						status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", ww))
 					}
 				}
 			}
@@ -236,41 +236,41 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		}
 	}
 
-	// Disable or enable word wrap when typing
+	// Disable or enable wrap when typing
 	if height > menuHeightThreshold {
 		if e.wrapWhenTyping {
-			actions.Add("Disable word wrap when typing", func() {
+			actions.Add("Disable wrap when typing", func() {
 				e.wrapWhenTyping = false
-				if e.wrapWidth == 0 {
-					e.wrapWidth = wrapWidth
+				if e.softWrapLimit == 0 {
+					e.softWrapLimit = softWrapLimit
 				}
 			})
 		} else {
-			actions.Add("Word wrap when typing at...", func() {
-				defaultWidth := wrapWidth
-				if e.wrapWidth > 0 {
-					defaultWidth = e.wrapWidth
+			actions.Add("Wrap when typing at...", func() {
+				defaultWidth := softWrapLimit
+				if e.softWrapLimit > 0 {
+					defaultWidth = e.softWrapLimit
 				}
 				const tabInputText = "79"
 				if widthStr, ok := e.UserInput(c, tty, status, fmt.Sprintf("Wrap when typing at [%d]", defaultWidth), "", []string{}, false, tabInputText, menuBgColor); ok {
 					if strings.TrimSpace(widthStr) == "" {
 						e.wrapWhenTyping = true
-						e.wrapWhenTypingWidth = defaultWidth
-						if e.wrapWidth == 0 {
-							e.wrapWidth = defaultWidth
+						e.wrapLimitWhenTyping = defaultWidth
+						if e.softWrapLimit == 0 {
+							e.softWrapLimit = defaultWidth
 						}
-						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap when typing at %d", defaultWidth))
+						status.SetMessageAfterRedraw(fmt.Sprintf("Wrap when typing at %d", defaultWidth))
 					} else if ww, err := strconv.Atoi(widthStr); err != nil {
 						status.Clear(c, false)
 						status.SetError(err)
 						status.Show(c, e)
 					} else {
 						e.wrapWhenTyping = true
-						e.wrapWhenTypingWidth = ww
-						if e.wrapWidth == 0 {
-							e.wrapWidth = wrapWidth
+						e.wrapLimitWhenTyping = ww
+						if e.softWrapLimit == 0 {
+							e.softWrapLimit = softWrapLimit
 						}
-						status.SetMessageAfterRedraw(fmt.Sprintf("Word wrap when typing at %d", ww))
+						status.SetMessageAfterRedraw(fmt.Sprintf("Wrap when typing at %d", ww))
 					}
 				}
 			})

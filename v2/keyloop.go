@@ -312,7 +312,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		theme.StatusErrorBackground = theme.DebugInstructionsBackground
 	}
 
-	// New editor struct. Scroll 10 lines at a time, no word wrap.
+	// New editor struct. Scroll 10 lines at a time, no soft wrap.
 	e, messageAfterRedraw, displayedImage, imageAction, err := NewEditor(tty, c, fnord, lineNumber, colNumber, theme, syntaxHighlight, true, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames)
 	if err != nil {
 		if e != nil {

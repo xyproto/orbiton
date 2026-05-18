@@ -32,7 +32,7 @@ type BookModeState int32
 
 const (
 	BookModeOff       BookModeState = 0 // regular editing mode
-	BookModeText      BookModeState = 1 // text-based book mode (word wrap, no syntax highlighting)
+	BookModeText      BookModeState = 1 // text-based book mode (soft wrap, no syntax highlighting)
 	BookModeGraphical BookModeState = 2 // graphical book mode (pixel rendering via Kitty/iTerm2/Sixel)
 )
 
@@ -58,8 +58,8 @@ type Editor struct {
 	pos                          Position          // the current cursor and scroll position
 	Theme                                          // editor theme, embedded struct
 	indentation                  mode.TabsSpaces   // spaces or tabs, and how many spaces per tab character
-	wrapWidth                    int               // wrap width for "word wrap now" and the column indicator
-	wrapWhenTypingWidth          int               // wrap width when typing (0 means use wrapWidth)
+	softWrapLimit                int               // soft wrap limit for "reflow text" and the column indicator
+	wrapLimitWhenTyping          int               // wrap limit when typing (0 means use softWrapLimit)
 	mode                         mode.Mode         // a filetype mode, like for git, markdown or various programming languages
 	debugShowRegisters           int               // show no register box, show changed registers, show all changed registers
 	previousY                    int               // previous cursor position
@@ -70,8 +70,8 @@ type Editor struct {
 	debugLine                    atomic.Int64      // the data line index of the current debug position (-1 means not set)
 	bookSavedLocalX              int               // sticky visual column within a sub-row for up/down movement (-1 = unset)
 	bookCursorAffinity           int               // 0=forward (start of next sub-row), 1=backward (end of prev sub-row); only matters at a wrap boundary
-	bookSavedWrapWidth           int               // saved wrapWidth from before book mode
-	bookSavedWrapWhenTypingWidth int               // saved wrapWhenTypingWidth from before book mode
+	bookSavedSoftWrapLimit       int               // saved soft wrap limit from before book mode
+	bookSavedWrapLimitWhenTyping int               // saved wrap limit when typing from before book mode
 	// atomic.Bool are used for values that might be read when redrawing text asynchronously
 	changed                     atomic.Bool  // has the contents changed, since last save?
 	redraw                      atomic.Bool  // if the contents should be redrawn in the next loop
@@ -93,11 +93,11 @@ type Editor struct {
 	bookSaved                   bool         // pre-book-mode editor settings have been saved, for later restore
 	bookDarkModeInitialized     bool         // the bookDarkMode auto-detect has already run
 	bookSavedSyntaxHighlight    bool         // saved syntaxHighlight from before book mode
-	bookSavedWrapWhenTyping     bool         // saved wrapWhenTyping from before book mode
+	bookSavedWrapWhenTyping     bool         // saved wrap when typing from before book mode
 	rainbowParenthesis          bool         // rainbow parenthesis
 	debugMode                   bool         // in a mode where ctrl-b toggles breakpoints, ctrl-n steps to the next line and ctrl-space runs the application
 	stickyStatusBars            bool         // show sticky status bars at the top and bottom of the screen
-	showColumnLimit             bool         // show the line where the wrapWidth is (at 79 by default)
+	showColumnLimit             bool         // show the line where the soft wrap limit is (at 79 by default)
 	expandTags                  bool         // can be used for XML and HTML
 	syntaxHighlight             bool         // syntax highlighting
 	quit                        bool         // for indicating if the user wants to end the editor session
@@ -106,7 +106,7 @@ type Editor struct {
 	debugShowConsole            bool         // show the GDB console output pane when in debug mode?
 	debugHideKeybindings        bool         // permanently hide the debug keybindings box
 	binaryFile                  bool         // is this a binary file, or a text file?
-	wrapWhenTyping              bool         // wrap text at a certain limit when typing
+	wrapWhenTyping              bool         // wrap when typing at the wrap limit
 	addSpace                    bool         // add a space to the editor, once
 	debugStepInto               bool         // when stepping to the next instruction, step into instead of over
 	debugLastStepWasInstruction bool         // was the last step an instruction-level step? (for reverse step behavior)
@@ -165,8 +165,8 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.Theme = e.Theme
 	e2.pos = e.pos
 	e2.indentation = e.indentation
-	e2.wrapWidth = e.wrapWidth
-	e2.wrapWhenTypingWidth = e.wrapWhenTypingWidth
+	e2.softWrapLimit = e.softWrapLimit
+	e2.wrapLimitWhenTyping = e.wrapLimitWhenTyping
 	e2.mode = e.mode
 	e2.debugShowRegisters = e.debugShowRegisters
 	e2.previousY = e.previousY
@@ -232,7 +232,7 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.bookDarkModeInitialized = e.bookDarkModeInitialized
 	e2.bookSavedSyntaxHighlight = e.bookSavedSyntaxHighlight
 	e2.bookSavedWrapWhenTyping = e.bookSavedWrapWhenTyping
-	e2.bookSavedWrapWidth = e.bookSavedWrapWidth
+	e2.bookSavedSoftWrapLimit = e.bookSavedSoftWrapLimit
 	return &e2
 }
 
@@ -250,13 +250,13 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	bookDarkModeInitialized := e.bookDarkModeInitialized
 	bookSavedSyntaxHighlight := e.bookSavedSyntaxHighlight
 	bookSavedWrapWhenTyping := e.bookSavedWrapWhenTyping
-	bookSavedWrapWidth := e.bookSavedWrapWidth
-	bookSavedWrapWhenTypingWidth := e.bookSavedWrapWhenTypingWidth
+	bookSavedSoftWrapLimit := e.bookSavedSoftWrapLimit
+	bookSavedWrapLimitWhenTyping := e.bookSavedWrapLimitWhenTyping
 	syntaxHighlight := e.syntaxHighlight
 	stickyStatusBars := e.stickyStatusBars
 	wrapWhenTyping := e.wrapWhenTyping
-	wrapWidth := e.wrapWidth
-	wrapWhenTypingWidth := e.wrapWhenTypingWidth
+	softWrapLimit := e.softWrapLimit
+	wrapLimitWhenTyping := e.wrapLimitWhenTyping
 	linesMut := e.linesMut // preserve the live mutex
 
 	const withLines = true
@@ -276,13 +276,13 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	e.bookDarkModeInitialized = bookDarkModeInitialized
 	e.bookSavedSyntaxHighlight = bookSavedSyntaxHighlight
 	e.bookSavedWrapWhenTyping = bookSavedWrapWhenTyping
-	e.bookSavedWrapWidth = bookSavedWrapWidth
-	e.bookSavedWrapWhenTypingWidth = bookSavedWrapWhenTypingWidth
+	e.bookSavedSoftWrapLimit = bookSavedSoftWrapLimit
+	e.bookSavedWrapLimitWhenTyping = bookSavedWrapLimitWhenTyping
 	e.syntaxHighlight = syntaxHighlight
 	e.stickyStatusBars = stickyStatusBars
 	e.wrapWhenTyping = wrapWhenTyping
-	e.wrapWidth = wrapWidth
-	e.wrapWhenTypingWidth = wrapWhenTypingWidth
+	e.softWrapLimit = softWrapLimit
+	e.wrapLimitWhenTyping = wrapLimitWhenTyping
 }
 
 // CopyLines will create a new map[int][]rune struct that is the copy of all the lines in the editor
@@ -783,10 +783,10 @@ func (e *Editor) MakeConsistent() {
 	}
 }
 
-// WithinLimit will check if a line is within the word wrap limit,
+// WithinLimit will check if a line is within the soft wrap limit,
 // given a Y position.
 func (e *Editor) WithinLimit(y LineIndex) bool {
-	return len(e.lines[int(y)]) < e.wrapWidth
+	return len(e.lines[int(y)]) < e.softWrapLimit
 }
 
 // LastWord will return the last word of a line,
@@ -801,7 +801,7 @@ func (e *Editor) LastWord(y int) string {
 }
 
 // SplitOvershoot will split the line into a first part that is within the
-// word wrap length and a second part that is the overshooting part.
+// soft wrap limit and a second part that is the overshooting part.
 // y is the line index (y position, counting from 0).
 // isSpace is true if a space has just been inserted on purpose at the current position.
 // returns true if there was a space at the split point.
@@ -827,10 +827,10 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 		return first, second, hasSpace
 	}
 
-	// Use wordwrap.WrapLine for the core algorithm
+	// Use the wordwrap package for the core algorithm
 	line := string(e.lines[y])
-	maxBacktrack := e.wrapWidth / 2
-	result := wordwrap.WrapLine(line, e.wrapWidth, maxBacktrack)
+	maxBacktrack := e.softWrapLimit / 2
+	result := wordwrap.WrapLine(line, e.softWrapLimit, maxBacktrack)
 	if !result.Wrapped {
 		return e.lines[y], make([]rune, 0), false
 	}
@@ -840,8 +840,8 @@ func (e *Editor) SplitOvershoot(index LineIndex, isSpace bool) ([]rune, []rune, 
 	return first, second, true
 }
 
-// WrapAllLines will word wrap all lines that are longer than e.wrapWidth
-func (e *Editor) WrapAllLines() bool {
+// ReflowAllLines will reflow all lines that are longer than e.softWrapLimit
+func (e *Editor) ReflowAllLines() bool {
 	wrapped := false
 	insertedLines := 0
 
@@ -865,7 +865,7 @@ func (e *Editor) WrapAllLines() bool {
 			e.InsertLineBelowAt(LineIndex(i + 1))
 
 			// This isn't perfect, but it helps move the cursor somewhere in
-			// the vicinity of where the line was before word wrapping.
+			// the vicinity of where the line was before reflowing.
 			// TODO: Make the cursor placement exact.
 			if LineIndex(i) < y {
 				insertedLines++
@@ -893,11 +893,11 @@ func (e *Editor) WrapAllLines() bool {
 	return wrapped
 }
 
-// WrapNow is a helper function for changing the word wrap width,
+// ReflowText is a helper function for changing the soft wrap limit,
 // while also wrapping all lines
-func (e *Editor) WrapNow(wrapWith int) {
-	e.wrapWidth = wrapWith
-	if e.WrapAllLines() {
+func (e *Editor) ReflowText(wrapWith int) {
+	e.softWrapLimit = wrapWith
+	if e.ReflowAllLines() {
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 	}
@@ -976,7 +976,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	e.MarkChanged()
 }
 
-// Insert will insert a rune at the given position, with no word wrap.
+// Insert will insert a rune at the given position, with no wrapping.
 func (e *Editor) Insert(c *vt.Canvas, r rune) {
 
 	doInsert := func() bool {

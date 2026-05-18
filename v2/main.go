@@ -63,7 +63,7 @@ var (
 	// Best available book mode: graphical if supported, text otherwise
 	bookModeFlag bool
 
-	// Text book mode: word wrap, no graphics, word count
+	// Text book mode: soft wrap, no graphics, word count
 	bookModeTextFlag bool
 
 	// Graphical book mode: Kitty/iTerm2/Sixel rendering
@@ -153,7 +153,7 @@ func main() {
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
 	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
 	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in best available book mode (graphical if the terminal supports it, text otherwise)")
-	pflag.BoolVarP(&bookModeTextFlag, "book-mode-text", "T", false, "open in text book mode: word wrap, plain text, word count")
+	pflag.BoolVarP(&bookModeTextFlag, "book-mode-text", "T", false, "open in text book mode: soft wrap, plain text, word count")
 	pflag.BoolVarP(&bookModeGraphicalFlag, "book-mode-graphical", "G", false, "open in graphical book mode (requires Kitty, iTerm2 or Sixel support)")
 	pflag.StringVar(&bookScreenshotFlag, "bookscreenshot", "", "render graphical book mode and save a PNG screenshot to the given path")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")

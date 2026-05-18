@@ -409,7 +409,7 @@ func (step TutorialStep) Draw(c *vt.Canvas, e *Editor, progress string, minWidth
 	bt.Foreground = &e.BoxTextColor
 	bt.Background = &e.DebugInstructionsBackground
 
-	// First figure out how many lines of text this will be after word wrap
+	// First figure out how many lines of text this will be after soft wrapping
 	const dryRun = true
 	addedLines := e.DrawText(bt, c, listBox, step.description, dryRun)
 
