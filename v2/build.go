@@ -1549,6 +1549,11 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 						break
 					}
 				}
+				// Expand the box to show more output if there is room on the canvas
+				maxAllowed := int(h * 0.6)
+				if outputLineCount := strings.Count(output, "\n"); outputLineCount > n && outputLineCount <= maxAllowed {
+					n = outputLineCount
+				}
 				if strings.Count(output, "\n") >= n {
 					title = fmt.Sprintf("Last %d lines of output", n)
 				}
@@ -1607,7 +1612,12 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 			return // return from goroutine
 		}
 
-		status.SetMessage("Success")
+		switch e.mode {
+		case mode.Perl, mode.Python, mode.Ruby, mode.Shell:
+			status.SetMessage("Syntax OK")
+		default:
+			status.SetMessage("Success")
+		}
 		status.Show(c, e)
 
 	}()
