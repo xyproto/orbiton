@@ -404,6 +404,23 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		e.GoToEnd(c, nil)
 	}
 
+	// Enable wrap-as-you-type for plain text and extensionless files.
+	// Use regular editing mode (not book mode) so the theme and cursor stay normal.
+	if !e.InBookMode() {
+		switch e.mode {
+		case mode.Text:
+			e.wrapWhenTyping = true
+			e.wrapWhenTypingWidth = 79
+		case mode.Blank:
+			wrapW := 79
+			if c != nil {
+				wrapW = int(c.Width())
+			}
+			e.wrapWhenTyping = true
+			e.wrapWhenTypingWidth = wrapW
+		}
+	}
+
 	// If the file starts with a hash bang, enable syntax highlighting
 	if strings.HasPrefix(strings.TrimSpace(e.Line(0)), "#!") && !e.readOnly {
 		// Enable syntax highlighting and redraw
