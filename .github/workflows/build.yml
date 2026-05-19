@@ -96,7 +96,6 @@ jobs:
       - name: Build and test on OpenBSD
         uses: vmactions/openbsd-vm@v1
         with:
-          release: "7.9"
           usesh: true
           prepare: pkg_add go
           run: |
