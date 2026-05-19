@@ -387,7 +387,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 	// If we're editing a git commit message, add a newline and enable wrap when typing at 72
 	if e.mode == mode.Git {
-		e.Git = vt.LightGreen
+		e.Git = vt.LightCyan
 		if filepath.Base(e.filename) == "MERGE_MSG" {
 			e.InsertLineBelow()
 		} else if e.EmptyLine() {
