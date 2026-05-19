@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
 
@@ -35,7 +36,7 @@ var (
 
 // NewEditor takes a filename and a line number to jump to (may be 0)
 // Returns an Editor, a status message for the user, a bool that is true if an image was displayed instead, an action for the next file and finally an error type.
-func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames bool) (*Editor, string, bool, megafile.Action, error) {
+func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, theme themes.Theme, origSyntaxHighlight, discoverBGColor, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames bool) (*Editor, string, bool, megafile.Action, error) {
 	if inVTEGUI {
 		noDrawUntilResize.Store(true)
 	}
@@ -434,7 +435,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	// If O_THEME points to a base16 scheme file, load it directly
 	if strings.HasSuffix(themeOverride, ".yaml") || strings.HasSuffix(themeOverride, ".yml") {
 		if termHas256Colors() {
-			if theme, err := NewThemeFromBase16File(themeOverride); err == nil {
+			if theme, err := themes.NewThemeFromBase16File(themeOverride); err == nil {
 				e.SetTheme(theme, assumeLightBackground)
 				themeWasSet = true
 			}
@@ -442,31 +443,31 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	}
 	switch themeOverride {
 	case "redblack":
-		e.SetTheme(NewRedBlackTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewRedBlackTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "synthwave":
-		e.SetTheme(NewSynthwaveTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewSynthwaveTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "orb":
-		e.SetTheme(NewOrbTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewOrbTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "teal":
-		e.SetTheme(NewTealTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewTealTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "vs":
 		e.setVSTheme(assumeLightBackground)
 		themeWasSet = true
 	case "litmus":
-		e.SetTheme(NewLitmusTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewLitmusTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "blueedit":
 		e.setBlueEditTheme(assumeLightBackground)
 		themeWasSet = true
 	case "pinetree":
-		e.SetTheme(NewPinetreeTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewPinetreeTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "zulu":
-		e.SetTheme(NewZuluTheme(), assumeLightBackground)
+		e.SetTheme(themes.NewZuluTheme(), assumeLightBackground)
 		themeWasSet = true
 	case "graymono":
 		envNoColor = false
@@ -491,25 +492,25 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	case "xoria":
 		if termHas256Colors() {
 			registerXoria256Colors()
-			e.SetTheme(NewXoria256Theme(), assumeLightBackground)
+			e.SetTheme(themes.NewXoria256Theme(), assumeLightBackground)
 		} else if !envNoColor {
-			e.SetTheme(NewXoria16Theme(), assumeLightBackground)
+			e.SetTheme(themes.NewXoria16Theme(), assumeLightBackground)
 		}
 		themeWasSet = true
 	case "gruvbox":
 		if termHas256Colors() {
 			registerGruvboxColors()
-			e.SetTheme(NewGruvboxTheme(), assumeLightBackground)
+			e.SetTheme(themes.NewGruvboxTheme(), assumeLightBackground)
 		} else if !envNoColor {
-			e.SetTheme(NewGruvbox16Theme(), assumeLightBackground)
+			e.SetTheme(themes.NewGruvbox16Theme(), assumeLightBackground)
 		}
 		themeWasSet = true
 	case "monokai":
 		if termHas256Colors() {
 			registerMonokaiColors()
-			e.SetTheme(NewMonokaiTheme(), assumeLightBackground)
+			e.SetTheme(themes.NewMonokaiTheme(), assumeLightBackground)
 		} else if !envNoColor {
-			e.SetTheme(NewMonokai16Theme(), assumeLightBackground)
+			e.SetTheme(themes.NewMonokai16Theme(), assumeLightBackground)
 		}
 		themeWasSet = true
 	case "default":
@@ -517,7 +518,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	}
 	// Apply BSD platform default if no explicit theme was chosen
 	if !themeWasSet && isBSD {
-		e.SetTheme(NewRedBlackTheme())
+		e.SetTheme(themes.NewRedBlackTheme())
 		DisableQuickHelpScreen(nil)
 		clearOnQuit.Store(true)
 		themeWasSet = true
@@ -528,7 +529,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		// because $COLORFGBG is "15;0" even though the background is white.
 		if (env.Has("XTERM_VERSION") && !inVTEGUI && env.Str("ALACRITTY_LOG") == "") || env.Str("TERMINAL_EMULATOR") == "JetBrains-JediTerm" {
 			b := true
-			initialLightBackground = &b
+			setInitialLightBackground(b)
 			if editTheme {
 				e.setBlueEditTheme(*initialLightBackground)
 			} else {
@@ -536,7 +537,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			}
 		} else if shell := env.Str("SHELL"); shell != "/usr/local/bin/fish" && (shell == "/bin/csh" || shell == "/bin/ksh" || strings.HasPrefix(shell, "/usr/local/bin")) && !inVTEGUI && filepath.Base(os.Args[0]) != "default" {
 			// This is likely to be FreeBSD or OpenBSD (and the executable/link name is not "default")
-			e.SetTheme(NewRedBlackTheme())
+			e.SetTheme(themes.NewRedBlackTheme())
 			DisableQuickHelpScreen(nil)
 			clearOnQuit.Store(true)
 		} else if colorString := env.Str("COLORFGBG"); strings.Contains(colorString, ";") {
@@ -545,7 +546,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			// 10 (light green), 11 (yellow), 12 (light blue), 13 (light purple), 14 (light cyan) or white
 			if backgroundColorNumber, err := strconv.Atoi(backgroundColor); err == nil && backgroundColorNumber >= 10 {
 				b := true
-				initialLightBackground = &b
+				setInitialLightBackground(b)
 				if editTheme {
 					e.setBlueEditTheme(*initialLightBackground)
 				} else {
@@ -558,7 +559,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			// (a bit arbitrary, but should work for most cases)
 			if r, g, b, err := vt.GetBackgroundColor(tty); err == nil && r+g+b > 2 { // success and the background is not dark
 				b := true
-				initialLightBackground = &b
+				setInitialLightBackground(b)
 				if editTheme {
 					e.setBlueEditTheme(*initialLightBackground)
 				} else {
@@ -715,7 +716,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 // * a syntax highlighting scheme
 // * a file mode
 // * if directories should be created when saving a file if they are missing
-func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames bool) *Editor {
+func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, theme themes.Theme, syntaxHighlight, rainbowParenthesis, monitorAndReadOnly, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, cycleFilenames bool) *Editor {
 	e := &Editor{}
 	e.debugLine.Store(-1)
 	e.SetTheme(theme)
@@ -778,7 +779,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 // search results magenta, use the default syntax highlighting scheme, don't use git mode and don't use markdown mode,
 // then set the soft wrap limit at the given column width.
 func NewSimpleEditor(softWrapLimit int) *Editor {
-	t := NewDefaultTheme()
+	t := themes.NewDefaultTheme()
 	e := NewCustomEditor(mode.DefaultTabsSpaces, 1, mode.Blank, t, false, false, false, false, false, false, false)
 	e.softWrapLimit = softWrapLimit
 	e.wrapWhenTyping = true

@@ -19,6 +19,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/orchideous"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
 
@@ -536,10 +537,10 @@ func main() {
 	go fnord.SetTitle()
 
 	// If the editor executable has been named "red", use the red/gray theme by default
-	theme := NewDefaultTheme()
+	theme := themes.NewDefaultTheme()
 	syntaxHighlight := true
 	if envNoColor {
-		theme = NewNoColorDarkBackgroundTheme()
+		theme = themes.NewNoColorDarkBackgroundTheme()
 		syntaxHighlight = false
 	} else if firstLetterOfExecutable != rune(0) && !osudoMode {
 		// Check if the executable starts with a specific letter ('f', 'g', 'p' and 'c' are already checked for)
@@ -553,23 +554,23 @@ func main() {
 			// not book mode, but perhaps "borland"
 			fallthrough
 		case 'e': // borland, ed, edit etc.
-			theme = NewDarkBlueEditTheme()
+			theme = themes.NewDarkBlueEditTheme()
 			// TODO: Later, when specificLetter is examined, use either NewEditLightTheme or NewEditDarkTheme
 			editTheme = true
 		case 'l': // lo, light etc
-			theme = NewLitmusTheme()
+			theme = themes.NewLitmusTheme()
 		case 'r': // rb, ro, rt, red etc.
-			theme = NewRedBlackTheme()
+			theme = themes.NewRedBlackTheme()
 		case 's': // s, sw, synthwave etc.
-			theme = NewSynthwaveTheme()
+			theme = themes.NewSynthwaveTheme()
 		case 't': // t, teal
-			theme = NewTealTheme()
+			theme = themes.NewTealTheme()
 		case 'n': // nan, nano
 			// Check if "Nano mode" should be set
 			nanoMode = strings.HasPrefix(editorExecutable, "na")
 		case 'v': // vs, vscode etc
 			if !strings.HasPrefix(editorExecutable, "vi") { // vi, vim, visudo etc.
-				theme = NewDarkVSTheme()
+				theme = themes.NewDarkVSTheme()
 			}
 		default:
 			specificLetter = false

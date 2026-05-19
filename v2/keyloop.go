@@ -21,6 +21,7 @@ import (
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
 
@@ -257,7 +258,7 @@ func readPasteBurst(tty *vt.TTY) string {
 // a forceFlag for if the file should be force opened
 // If an error and "true" is returned, it is a quit message to the user, and not an error.
 // If an error and "false" is returned, it is an error.
-func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, escToExit, cycleFilenames, debugMode bool) (userMessage string, nextAction megafile.Action, err error) {
+func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber ColNumber, forceFlag bool, theme themes.Theme, syntaxHighlight, monitorAndReadOnly, nanoMode, createDirectoriesIfMissing, displayQuickHelp, noDisplayQuickHelp, escToExit, cycleFilenames, debugMode bool) (userMessage string, nextAction megafile.Action, err error) {
 
 	// Create a Canvas for drawing onto the terminal
 	vt.Init()

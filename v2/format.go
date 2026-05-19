@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/lookslikegoasm"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 	"gopkg.in/yaml.v3"
 )
@@ -429,7 +430,7 @@ func runFmt(fnord FilenameOrData) error {
 		}
 	}
 
-	theme := NewDefaultTheme()
+	theme := themes.NewDefaultTheme()
 	e := NewCustomEditor(m.TabsSpaces(), 1, m, theme, false, false, false, false, false, false, false)
 	e.filename = filename
 	e.LoadBytes(data)

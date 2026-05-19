@@ -21,6 +21,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 	"github.com/xyproto/wordwrap"
 )
@@ -56,7 +57,7 @@ type Editor struct {
 	stickyTopBarFormat           string            // template for the top sticky bar
 	stickyBottomBarFormat        string            // template for the bottom sticky bar
 	pos                          Position          // the current cursor and scroll position
-	Theme                                          // editor theme, embedded struct
+	themes.Theme                                   // editor theme, embedded struct
 	indentation                  mode.TabsSpaces   // spaces or tabs, and how many spaces per tab character
 	softWrapLimit                int               // soft wrap limit for "reflow text" and the column indicator
 	wrapLimitWhenTyping          int               // wrap limit when typing (0 means use softWrapLimit)

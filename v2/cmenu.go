@@ -11,6 +11,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
 
@@ -452,11 +453,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				e.syntaxHighlight = true
 			case "synthwave":
 				envNoColor = false
-				e.SetTheme(NewSynthwaveTheme())
+				e.SetTheme(themes.NewSynthwaveTheme())
 				e.syntaxHighlight = true
 			case "redblack":
 				envNoColor = false
-				e.SetTheme(NewRedBlackTheme())
+				e.SetTheme(themes.NewRedBlackTheme())
 				e.syntaxHighlight = true
 			case "vs":
 				envNoColor = false
@@ -464,15 +465,15 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				e.syntaxHighlight = true
 			case "orb":
 				envNoColor = false
-				e.SetTheme(NewOrbTheme())
+				e.SetTheme(themes.NewOrbTheme())
 				e.syntaxHighlight = true
 			case "litmus":
 				envNoColor = false
-				e.SetTheme(NewLitmusTheme())
+				e.SetTheme(themes.NewLitmusTheme())
 				e.syntaxHighlight = true
 			case "teal":
 				envNoColor = false
-				e.SetTheme(NewTealTheme())
+				e.SetTheme(themes.NewTealTheme())
 				e.syntaxHighlight = true
 			case "blueedit":
 				envNoColor = false
@@ -480,11 +481,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				e.syntaxHighlight = true
 			case "pinetree":
 				envNoColor = false
-				e.SetTheme(NewPinetreeTheme())
+				e.SetTheme(themes.NewPinetreeTheme())
 				e.syntaxHighlight = true
 			case "zulu":
 				envNoColor = false
-				e.SetTheme(NewZuluTheme())
+				e.SetTheme(themes.NewZuluTheme())
 				e.syntaxHighlight = true
 			case "graymono":
 				envNoColor = false
@@ -506,42 +507,42 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 				if termHas256Colors() {
 					envNoColor = false
 					registerXoria256Colors()
-					e.SetTheme(NewXoria256Theme())
+					e.SetTheme(themes.NewXoria256Theme())
 					e.syntaxHighlight = true
 				} else if envNoColor {
 					e.setNoColorTheme()
 					e.syntaxHighlight = false
 				} else {
 					envNoColor = false
-					e.SetTheme(NewXoria16Theme())
+					e.SetTheme(themes.NewXoria16Theme())
 					e.syntaxHighlight = true
 				}
 			case "gruvbox":
 				if termHas256Colors() {
 					envNoColor = false
 					registerGruvboxColors()
-					e.SetTheme(NewGruvboxTheme())
+					e.SetTheme(themes.NewGruvboxTheme())
 					e.syntaxHighlight = true
 				} else if envNoColor {
 					e.setNoColorTheme()
 					e.syntaxHighlight = false
 				} else {
 					envNoColor = false
-					e.SetTheme(NewGruvbox16Theme())
+					e.SetTheme(themes.NewGruvbox16Theme())
 					e.syntaxHighlight = true
 				}
 			case "monokai":
 				if termHas256Colors() {
 					envNoColor = false
 					registerMonokaiColors()
-					e.SetTheme(NewMonokaiTheme())
+					e.SetTheme(themes.NewMonokaiTheme())
 					e.syntaxHighlight = true
 				} else if envNoColor {
 					e.setNoColorTheme()
 					e.syntaxHighlight = false
 				} else {
 					envNoColor = false
-					e.SetTheme(NewMonokai16Theme())
+					e.SetTheme(themes.NewMonokai16Theme())
 					e.syntaxHighlight = true
 				}
 			case "nocolor":
@@ -717,6 +718,8 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			megaFileState.EdgeBackground = e.Background
 			megaFileState.HighlightBackground = e.NanoHelpBackground
 			megaFileState.EmptyFileColor = e.MultiLineComment
+			megaFileState.SyntaxTextConfig = e.Theme.TextConfig()
+			megaFileState.Light = e.Light
 			c.HideCursor()
 			if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
 				c.ShowCursor()

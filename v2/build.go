@@ -15,6 +15,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/orchideous"
+	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
 
@@ -1675,7 +1676,7 @@ func OnlyBuild(fnord FilenameOrData) (string, error) {
 		fnord.filename = sourceFile
 	}
 	// Prepare an editor, without tty and canvas
-	e, _, _, _, err := NewEditor(nil, nil, fnord, 0, 0, NewDefaultTheme(), false, true, false, false, false, false, false, false)
+	e, _, _, _, err := NewEditor(nil, nil, fnord, 0, 0, themes.NewDefaultTheme(), false, true, false, false, false, false, false, false)
 	if err != nil {
 		return "", err
 	}
