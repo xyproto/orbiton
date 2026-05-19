@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.25.10
+go 1.25.1
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
