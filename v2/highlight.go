@@ -97,6 +97,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		arrowBeforeCommentMarker           bool
 		inListItem                         bool
 		inCodeBlock                        bool // used when highlighting Doc, Markdown, Python, Nim, Mojo or Starlark
+		inShaderString                     bool // used when highlighting shader code in Go backtick strings
 		ok                                 bool
 		codeBlockFound                     bool
 		foundDocstringMarker               bool
@@ -158,6 +159,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		rw                                 int // rune width
 		yesNoReplacer                      = strings.NewReplacer("<lightgreen>yes<", "<lightyellow>yes<", "<lightred>no<", "<lightyellow>no<")
 		commentReplacer                    = strings.NewReplacer("<"+e.Comment+">", "<"+e.Plaintext+">", "</"+e.Comment+">", "</"+e.Plaintext+">")
+		shaderLines                        map[LineIndex]bool // lines in shader string blocks (C/C++)
 	)
 
 	// If the terminal emulator is being resized, then wait a bit
@@ -213,6 +215,31 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			line = e.Line(li)
 			trimmedLine = strings.TrimSpace(line)
 			inCodeBlock, _ = checkMultiLineString(trimmedLine, inCodeBlock)
+		}
+	}
+
+	// Figure out if "fromline" is within a shader string block (C/C++/Go)
+	if canHaveShaderStrings(e.mode) {
+		if e.mode == mode.Go {
+			// For Go, track backtick state and detect GLSL within backtick strings
+			inBacktick := false
+			for li = range fromline {
+				trimmedLine = strings.TrimSpace(e.Line(li))
+				btCount := strings.Count(trimmedLine, "`")
+				if btCount%2 != 0 {
+					inBacktick = !inBacktick
+					if !inBacktick {
+						inShaderString = false
+					}
+				}
+				if inBacktick && hasGLSLContent(trimmedLine) {
+					inShaderString = true
+				}
+			}
+		} else {
+			// For C/C++/ObjC/Arduino, pre-compute which lines are in shader string blocks.
+			// This scans from 0 to toline to handle blocks that start before the visible area.
+			shaderLines = e.shaderStringLines(0, toline)
 		}
 	}
 
@@ -498,6 +525,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)
 
+					// For Go, reset shader state when not inside a backtick string
+					if e.mode == mode.Go && q.backtick == 0 {
+						inShaderString = false
+					}
+
 					// logf("%s -[ %d ]-->\n\t%s\n", trimmedLine, addedPar, q.String())
 
 					switch {
@@ -537,8 +569,30 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
-						// A multi-line string
-						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
+						// A multi-line string (check for embedded shader code in Go)
+						if e.mode == mode.Go {
+							if hasGLSLContent(trimmedLine) {
+								inShaderString = true
+							}
+							if inShaderString {
+								if cs := e.highlightShaderInBacktickString(line); cs != "" {
+									coloredString = cs
+								} else {
+									coloredString = unEscapeFunction(e.MultiLineString.Get(line))
+								}
+							} else {
+								coloredString = unEscapeFunction(e.MultiLineString.Get(line))
+							}
+						} else {
+							coloredString = unEscapeFunction(e.MultiLineString.Get(line))
+						}
+					case shaderLines[y+offsetY] && !q.multiLineComment && !q.hasSingleLineComment && isCStringLiteral(trimmedLine):
+						// Shader code embedded in a C/C++ string literal
+						if cs := e.highlightShaderInCString(line, trimmedLine); cs != "" {
+							coloredString = cs
+						} else {
+							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						}
 					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.Vibe67) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))

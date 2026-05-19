@@ -3,7 +3,51 @@ package main
 import (
 	"errors"
 	"regexp"
+	"strings"
+
+	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
 )
+
+// glslIndicators are patterns that strongly suggest GLSL source inside a C string.
+var glslIndicators = []string{
+	"#version ", "vec2", "vec3", "vec4",
+	"mat3", "mat4", "uniform ", "layout(",
+	"gl_", "sampler2D",
+}
+
+// isGLSLStringLine reports whether a trimmed C string literal line contains GLSL-specific code.
+func isGLSLStringLine(trimmedLine string) bool {
+	if len(trimmedLine) < 2 || trimmedLine[0] != '"' {
+		return false
+	}
+	// Strip trailing comma or semicolon for the purpose of finding the closing quote
+	check := trimmedLine
+	if last := check[len(check)-1]; last == ',' || last == ';' {
+		check = check[:len(check)-1]
+	}
+	if len(check) < 2 || check[len(check)-1] != '"' {
+		return false
+	}
+	inner := check[1 : len(check)-1]
+	for _, ind := range glslIndicators {
+		if strings.Contains(inner, ind) {
+			return true
+		}
+	}
+	return false
+}
+
+// isCStringLiteral reports whether the trimmed line is a C string literal (starts and ends with ",
+// possibly followed by a trailing comma or semicolon).
+func isCStringLiteral(trimmedLine string) bool {
+	if len(trimmedLine) < 2 || trimmedLine[0] != '"' {
+		return false
+	}
+	last := trimmedLine[len(trimmedLine)-1]
+	return last == '"' ||
+		((last == ',' || last == ';') && len(trimmedLine) >= 3 && trimmedLine[len(trimmedLine)-2] == '"')
+}
 
 // detectShaderType tries to detect which type of shader the given source code could be
 func detectShaderType(shaderCode string) (string, error) {
@@ -52,4 +96,98 @@ func detectShaderType(shaderCode string) (string, error) {
 	}
 
 	return maxType, nil
+}
+
+// hasGLSLContent reports whether a line (without surrounding quotes) contains GLSL-specific code.
+func hasGLSLContent(inner string) bool {
+	for _, ind := range glslIndicators {
+		if strings.Contains(inner, ind) {
+			return true
+		}
+	}
+	return false
+}
+
+// canHaveShaderStrings reports whether the given mode is one where shader code may be embedded in strings.
+func canHaveShaderStrings(m mode.Mode) bool {
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Go
+}
+
+// shaderStringLines returns a set of line indices (within the given range) that belong
+// to shader string blocks. A shader string block is a consecutive run of C string
+// literal lines where at least one line contains GLSL indicators.
+func (e *Editor) shaderStringLines(from, to LineIndex) map[LineIndex]bool {
+	result := make(map[LineIndex]bool)
+	i := from
+	for i < to {
+		trimmedLine := strings.TrimSpace(e.Line(i))
+		if !isCStringLiteral(trimmedLine) {
+			i++
+			continue
+		}
+		// Found the start of a consecutive block of C string literals
+		blockStart := i
+		hasGLSL := false
+		for i < to {
+			trimmedLine = strings.TrimSpace(e.Line(i))
+			if !isCStringLiteral(trimmedLine) {
+				break
+			}
+			if isGLSLStringLine(trimmedLine) {
+				hasGLSL = true
+			}
+			i++
+		}
+		// If any line in the block had GLSL, mark the entire block
+		if hasGLSL {
+			for li := blockStart; li < i; li++ {
+				result[li] = true
+			}
+		}
+	}
+	return result
+}
+
+// highlightShaderInCString takes a line that is a C string literal (e.g. `"vec4 color;\n"`)
+// and returns a syntax-highlighted version where the string content is highlighted as shader code.
+func (e *Editor) highlightShaderInCString(line, trimmedLine string) string {
+	// Find the first and last quote in the original line to preserve indentation
+	firstQ := strings.IndexByte(line, '"')
+	lastQ := strings.LastIndexByte(line, '"')
+	if firstQ < 0 || lastQ <= firstQ {
+		return ""
+	}
+	prefix := line[:firstQ]         // leading whitespace before the opening quote
+	inner := line[firstQ+1 : lastQ] // string content between quotes
+	suffix := line[lastQ+1:]        // anything after the closing quote (e.g. comma, semicolon)
+
+	// Separate trailing escape sequences (like \n) from the shader code
+	shaderCode := inner
+	trailingEscape := ""
+	if before, ok := strings.CutSuffix(shaderCode, `\n`); ok {
+		shaderCode = before
+		trailingEscape = `\n`
+	}
+
+	// Highlight the inner shader code
+	highlighted, err := syntax.AsText([]byte(Escape(shaderCode)), mode.Shader)
+	if err != nil {
+		return ""
+	}
+	coloredInner := UnEscape(tout.DarkTags(string(highlighted)))
+
+	// Reconstruct the line with quotes and escape sequences shown in the string color
+	stringColor := syntax.DefaultTextConfig.String
+	return prefix + tout.DarkTags("<"+stringColor+">"+"\"<off>") +
+		coloredInner + tout.DarkTags("<"+stringColor+">"+trailingEscape+"\"<off>") + suffix
+}
+
+// highlightShaderInBacktickString takes a line that is inside a Go backtick string
+// and returns a syntax-highlighted version as shader code.
+func (e *Editor) highlightShaderInBacktickString(line string) string {
+	highlighted, err := syntax.AsText([]byte(Escape(line)), mode.Shader)
+	if err != nil {
+		return ""
+	}
+	return UnEscape(tout.DarkTags(string(highlighted)))
 }
