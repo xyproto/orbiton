@@ -13,6 +13,7 @@ type MenuWidget struct {
 	choices            []string                    // a slice of menu items
 	marginLeft         int                         // margin, may be negative?
 	marginTop          int                         // margin, may be negative?
+	titleHeight        int                         // rows reserved for title block (1 title + 1 blank); 0 when skipped due to overflow
 	selected           int                         // the index of the currently selected item
 	w                  uint                        // width
 	h                  uint                        // height (number of menu items)
@@ -39,10 +40,14 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 		marginLeft = 0
 	}
 	marginTop := 8
-	if int(canvasHeight)-(len(choices)+marginTop) <= 8 {
-		marginTop = 2
-	} else if int(canvasHeight)-(len(choices)+marginTop) <= 0 {
+	titleHeight := 2 // 1 row for the title + 1 blank row below it
+	// If the full layout overflows the canvas, drop the top margin first;
+	// if it still overflows, drop the title block (title + blank row) as well.
+	if len(choices)+titleHeight+marginTop > int(canvasHeight) {
 		marginTop = 0
+		if len(choices)+titleHeight > int(canvasHeight) {
+			titleHeight = 0
+		}
 	}
 	return &MenuWidget{
 		title:              title,
@@ -52,6 +57,7 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 		oldy:               0,
 		marginLeft:         marginLeft,
 		marginTop:          marginTop,
+		titleHeight:        titleHeight,
 		choices:            choices,
 		selected:           -1,
 		extraDashes:        extraDashes,
@@ -64,6 +70,32 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 	}
 }
 
+// Resize recalculates the layout margins for a new canvas size, preserving the current selection.
+func (m *MenuWidget) Resize(canvasWidth, canvasHeight uint) {
+	maxlen := uint(0)
+	for _, choice := range m.choices {
+		if ulen(choice) > maxlen {
+			maxlen = ulen(choice)
+		}
+	}
+	marginLeft := 10
+	if int(canvasWidth)-(int(maxlen)+marginLeft) <= 0 {
+		marginLeft = 0
+	}
+	marginTop := 8
+	titleHeight := 2
+	if len(m.choices)+titleHeight+marginTop > int(canvasHeight) {
+		marginTop = 0
+		if len(m.choices)+titleHeight > int(canvasHeight) {
+			titleHeight = 0
+		}
+	}
+	m.marginLeft = marginLeft
+	m.w = uint(marginLeft + int(maxlen))
+	m.marginTop = marginTop
+	m.titleHeight = titleHeight
+}
+
 // Selected returns the currently selected item
 func (m *MenuWidget) Selected() int {
 	return m.selected
@@ -71,10 +103,11 @@ func (m *MenuWidget) Selected() int {
 
 // Draw will draw this menu widget on the given canvas
 func (m *MenuWidget) Draw(c *vt.Canvas) {
-	// Draw the title
-	titleHeight := 2
-	for x, r := range m.title {
-		c.PlotColor(uint(m.marginLeft+x), uint(m.marginTop), m.titleColor, r)
+	titleHeight := m.titleHeight
+	if titleHeight > 0 {
+		for x, r := range m.title {
+			c.PlotColor(uint(m.marginLeft+x), uint(m.marginTop), m.titleColor, r)
+		}
 	}
 	// Draw the menu entries, with various colors
 	ulenChoices := ulen(m.choices)

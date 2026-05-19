@@ -168,9 +168,11 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 				resizeMut.Lock()
 				nc := c.Resized()
 				if nc != nil {
-					c.Clear()
 					vt.Clear()
 					c = nc
+					c.Clear()
+					c.FillBackground(bgColor)
+					menu.Resize(c.W(), c.H())
 					menu.Draw(c)
 					c.HideCursorAndRedraw()
 					changed = true
@@ -182,8 +184,8 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 		}
 	}()
 
+	fmt.Print("\033[?1049h") // enter alternate screen buffer
 	vt.Clear()
-	vt.Reset()
 	c.FillBackground(bgColor)
 	c.HideCursorAndRedraw()
 
@@ -228,10 +230,11 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 			menu.SelectLast()
 			changed = true
 			resizeMut.Unlock()
-		case "c:27", "q", "c:17", "c:15": // ESC, q, ctrl-q or ctrl-o
+		case "c:27", "q", "c:17", "c:15", "c:8", "c:127": // ESC, q, ctrl-q, ctrl-o or backspace
 			running = false
 			changed = true
 		case " ", "c:0": // space or ctrl-space
+			fmt.Print("\033[?1049l") // leave alternate screen buffer
 			return -1, true
 		case "c:13": // return
 			resizeMut.Lock()
@@ -313,5 +316,6 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 	// Restore the resize handler
 	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
+	fmt.Print("\033[?1049l") // leave alternate screen buffer
 	return menu.Selected(), false
 }
