@@ -3,9 +3,8 @@
 ## General
 
 - [ ] Add linting/formatting for Teal (possibly by using something like `tl check`).
-- [ ] The cursor can move down into the lower status bar when in "book mode (text)".
-- [ ] If a "- [ ] Checkbox" is ticked, in graphical book mode, then also gray out lines and bullet points/checkboxes
-      below it that "belongs" to this checkbox.
+- [ ] If a `- [ ] Checkbox` is ticked in graphical book mode, then also gray out lines
+      and bullet points/checkboxes below it that "belongs" to this checkbox.
 - [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
 - [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
 - [ ] Page layout: margins, alignment, line spacing, page breaks.
@@ -14,11 +13,7 @@
 - [ ] Move/copy files.
 - [ ] Open files with their default application (xdg-open etc.).
 - [ ] Show size, type, and date as inline columns in the listing.
-- [ ] Support the WordGrinder file formats.
-- [ ] Check that Orbiton still works well under the Linux Console.
-- [ ] Check the vhs gif recordings.
-- [ ] Check og.
-- [ ] Check vt100.
+- [ ] Support the WordGrinder file formats?
 - [ ] Find a better solution for offering help at first start. Always print ie. "ctrl-k for help" in the lower right corner,
       and then in the help box, have an easy way to disable help so that ctrl-k is used for deleting to the end of the line instead?
 - [ ] Visual soft wrap (no clipping at the right margin, when in book mode).
