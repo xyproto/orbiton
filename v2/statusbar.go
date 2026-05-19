@@ -858,8 +858,8 @@ func (e *Editor) stickyBarStyle() barStyle {
 	return barStyle{
 		fg:      e.TopRightForeground,
 		bg:      e.TopRightBackground,
-		clearFg: e.Foreground,
-		clearBg: e.Background,
+		clearFg: e.TopRightForeground,
+		clearBg: e.TopRightBackground,
 		pad:     1,
 	}
 }
