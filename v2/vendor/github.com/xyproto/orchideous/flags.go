@@ -165,10 +165,14 @@ func resolveExtraFlags(includes []string, win64 bool) (cflags, ldflags []string)
 
 		// Thread support
 		if inc == "thread" || inc == "mutex" || inc == "future" ||
-			inc == "condition_variable" || inc == "pthread.h" || inc == "new" || inc == "dlfcn.h" {
-			ldflags = appendUnique(ldflags, "-ldl")
+			inc == "condition_variable" || inc == "pthread.h" {
 			ldflags = appendUnique(ldflags, "-pthread")
 			ldflags = appendUnique(ldflags, "-lpthread")
+		}
+
+		// dlopen support
+		if inc == "dlfcn.h" {
+			ldflags = appendUnique(ldflags, "-ldl")
 		}
 
 		// SFML on macOS: add OpenGL framework + -stdlib=libc++ for clang
@@ -474,11 +478,83 @@ func bestStdFlag(compiler string) string {
 	return "c++17"
 }
 
+// bestCStdFlag returns the best C standard flag the compiler supports.
+func bestCStdFlag(compiler string) string {
+	for _, std := range []string{"c23", "c2x", "c17", "c11"} {
+		if compilerSupportsCStd(compiler, std) {
+			return std
+		}
+	}
+	return "c11"
+}
+
+// cStdToCMakeStd converts a -std=cXX flag value to the CMake C_STANDARD number.
+// CMake only recognizes 90, 99, 11, 17, 23 for C.
+func cStdToCMakeStd(std string) string {
+	switch std {
+	case "c23", "c2x":
+		return "23"
+	case "c17", "c18":
+		return "17"
+	case "c11":
+		return "11"
+	case "c99":
+		return "99"
+	case "c90", "c89":
+		return "90"
+	default:
+		return "11"
+	}
+}
+
+// cxxStdToCMakeStd converts a -std=c++XX flag value to the CMake CXX_STANDARD number.
+// CMake recognizes 98, 11, 14, 17, 20, 23, 26 for C++.
+func cxxStdToCMakeStd(std string) string {
+	switch std {
+	case "c++26", "c++2c":
+		return "26"
+	case "c++23", "c++2b":
+		return "23"
+	case "c++20", "c++2a":
+		return "20"
+	case "c++17":
+		return "17"
+	case "c++14":
+		return "14"
+	case "c++11":
+		return "11"
+	case "c++98", "c++03":
+		return "98"
+	default:
+		return "17"
+	}
+}
+
 func appendUnique(slice []string, val string) []string {
 	if slices.Contains(slice, val) {
 		return slice
 	}
 	return append(slice, val)
+}
+
+// gccMajorVersion returns the GCC major version number, or 0 if the compiler
+// is not GCC or the version cannot be determined.
+func gccMajorVersion(compiler string) int {
+	if !isCompilerGCC(compiler) {
+		return 0
+	}
+	out, err := exec.Command(compiler, "-dumpversion").Output()
+	if err != nil {
+		return 0
+	}
+	ver := strings.TrimSpace(string(out))
+	parts := strings.SplitN(ver, ".", 2)
+	if len(parts) == 0 {
+		return 0
+	}
+	major := 0
+	fmt.Sscanf(parts[0], "%d", &major)
+	return major
 }
 
 func prependUnique(slice []string, val string) []string {

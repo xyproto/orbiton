@@ -95,7 +95,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		if win64 {
 			bf.Std = "c11"
 		} else {
-			bf.Std = "c18"
+			bf.Std = bestCStdFlag(compiler)
 		}
 	} else if opts.Zap {
 		bf.Std = "c++14"
@@ -124,7 +124,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 			// macOS linker uses -dead_strip for dead code elimination; -gc-sections and -s are not supported
 			bf.LDFlags = append(bf.LDFlags, "-Wl,-dead_strip")
 		} else {
-			bf.LDFlags = append(bf.LDFlags, "-ffunction-sections", "-fdata-sections", "-Wl,-s", "-Wl,-gc-sections")
+			bf.LDFlags = append(bf.LDFlags, "-Wl,-s", "-Wl,-gc-sections")
 		}
 		if opts.Tiny {
 			// -fno-ident and -fomit-frame-pointer are safe on all platforms
@@ -165,20 +165,26 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Linux hardening
 	if isLinux() && !win64 && !opts.Sloppy && !opts.Zap && !opts.Small && !opts.Debug {
-		bf.CFlags = append(bf.CFlags, "-fno-plt", "-fstack-protector-strong")
+		bf.CFlags = append(bf.CFlags, "-fno-plt", "-fstack-protector-strong", "-fstack-clash-protection", "-fcf-protection")
+		bf.Defines = append(bf.Defines, "-D_FORTIFY_SOURCE=2")
 	}
 
 	// Warning flags
 	if opts.Sloppy {
-		bf.CFlags = append(bf.CFlags, "-fpermissive", "-fms-extensions", "-w")
+		if !proj.IsC {
+			bf.CFlags = append(bf.CFlags, "-fpermissive")
+		}
+		bf.CFlags = append(bf.CFlags, "-fms-extensions", "-w")
 	} else {
-		bf.CFlags = append(bf.CFlags, "-Wall", "-Wshadow", "-Wpedantic", "-Wno-parentheses", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers")
+		bf.CFlags = append(bf.CFlags, "-Wall", "-Wshadow", "-Wpedantic", "-Wfatal-errors", "-Wvla", "-Wignored-qualifiers")
 		if opts.Strict {
-			strictFlags := []string{"-Wextra", "-Wconversion", "-Wparentheses", "-Wunused-function"}
+			strictFlags := []string{"-Wextra", "-Wconversion", "-Wunused-function"}
 			if !proj.IsC {
 				strictFlags = append(strictFlags, "-Weffc++")
 			}
 			bf.CFlags = append(bf.CFlags, strictFlags...)
+		} else {
+			bf.CFlags = append(bf.CFlags, "-Wno-parentheses", "-Wno-overlength-strings")
 		}
 	}
 
@@ -200,7 +206,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	// OpenMP
 	if proj.HasOpenMP {
 		bf.CFlags = append(bf.CFlags, "-fopenmp")
-		bf.LDFlags = append(bf.LDFlags, "-fopenmp", "-pthread", "-lpthread")
+		bf.LDFlags = append(bf.LDFlags, "-fopenmp")
 	}
 
 	// Boost
@@ -245,9 +251,11 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		bf.LDFlags = appendUnique(bf.LDFlags, "-lm")
 	}
 
-	// Filesystem
+	// Filesystem (only needed for GCC < 9; newer GCC and all Clang include it in libstdc++)
 	if proj.HasFS && isLinux() {
-		bf.LDFlags = appendUnique(bf.LDFlags, "-lstdc++fs")
+		if isCompilerGCC(compiler) && gccMajorVersion(compiler) < 9 {
+			bf.LDFlags = appendUnique(bf.LDFlags, "-lstdc++fs")
+		}
 	}
 
 	// Qt6
@@ -314,7 +322,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		bf.Defines = append(bf.Defines, winAPI.FallbackDefines...)
 		bf.CFlags = append(bf.CFlags, "-Wno-unused-variable")
 		if !proj.IsC {
-			bf.CFlags = append(bf.CFlags, "-mwindows", "-fms-extensions")
+			bf.CFlags = append(bf.CFlags, "-fms-extensions")
 			bf.LDFlags = append(bf.LDFlags, "-mwindows", "-fms-extensions")
 		}
 		bf.LDFlags = appendUnique(bf.LDFlags, "-lm")

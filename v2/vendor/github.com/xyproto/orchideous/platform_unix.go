@@ -33,10 +33,17 @@ func systemIncludeDirs() []string {
 	return dirs
 }
 
-// compilerSupportsStd checks if the compiler supports a given -std= flag.
+// compilerSupportsStd checks if the compiler supports a given -std= flag for C++.
 func compilerSupportsStd(compiler, std string) bool {
 	cmd := exec.Command("sh", "-c",
 		"echo 'int main(){}' | "+compiler+" -std="+std+" -x c++ -fsyntax-only - 2>/dev/null")
+	return cmd.Run() == nil
+}
+
+// compilerSupportsCStd checks if the compiler supports a given -std= flag for C.
+func compilerSupportsCStd(compiler, std string) bool {
+	cmd := exec.Command("sh", "-c",
+		"echo 'int main(){}' | "+compiler+" -std="+std+" -x c -fsyntax-only - 2>/dev/null")
 	return cmd.Run() == nil
 }
 

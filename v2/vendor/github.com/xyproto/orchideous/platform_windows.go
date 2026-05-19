@@ -171,6 +171,17 @@ func compilerSupportsStd(compiler, std string) bool {
 	return cmd.Run() == nil
 }
 
+// compilerSupportsCStd checks if the compiler supports a given -std= flag for C.
+func compilerSupportsCStd(compiler, std string) bool {
+	tmpFile := filepath.Join(os.TempDir(), "oh_stdcheck.c")
+	os.WriteFile(tmpFile, []byte("int main(){}"), 0o644)
+	defer os.Remove(tmpFile)
+	cmd := exec.Command(compiler, "-std="+std, "-fsyntax-only", tmpFile)
+	cmd.Stderr = nil
+	cmd.Stdout = nil
+	return cmd.Run() == nil
+}
+
 // msys2IncludePathToFlags resolves an include path to compiler/linker flags
 // using MSYS2's pacman package manager.
 func msys2IncludePathToFlags(includePath string) string {

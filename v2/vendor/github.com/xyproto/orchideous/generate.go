@@ -50,9 +50,11 @@ func doGenerate(opts BuildOptions) error {
 	fmt.Fprintf(f, "add_executable(%s ${SOURCES})\n", exe)
 	// set_property requires the target to exist, so these come after add_executable
 	if !proj.IsC {
-		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD 26)\n", exe)
+		cxxStd := cxxStdToCMakeStd(flags.Std)
+		fmt.Fprintf(f, "set_property(TARGET %s PROPERTY CXX_STANDARD %s)\n", exe, cxxStd)
 	}
-	fmt.Fprintf(f, "set_property(TARGET %s PROPERTY C_STANDARD 18)\n", exe)
+	cStd := cStdToCMakeStd(bestCStdFlag(flags.Compiler))
+	fmt.Fprintf(f, "set_property(TARGET %s PROPERTY C_STANDARD %s)\n", exe, cStd)
 
 	// Libraries
 	libs := extractLibs(flags.LDFlags)
