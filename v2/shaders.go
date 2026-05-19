@@ -4,10 +4,48 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"sync"
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 )
+
+// shaderRegexpCache caches compiled regexps on first use.
+var shaderRegexpCache struct {
+	once     sync.Once
+	patterns map[string]*regexp.Regexp
+}
+
+// getShaderRegexp returns a compiled regexp for the given pattern, using a cache.
+func getShaderRegexp(pattern string) *regexp.Regexp {
+	shaderRegexpCache.once.Do(func() {
+		shaderRegexpCache.patterns = make(map[string]*regexp.Regexp)
+		for _, keywords := range shaderKeywordPatterns {
+			for _, p := range keywords {
+				shaderRegexpCache.patterns[p] = regexp.MustCompile(p)
+			}
+		}
+	})
+	return shaderRegexpCache.patterns[pattern]
+}
+
+// shaderKeywordPatterns maps shader types to regexp patterns for detection.
+var shaderKeywordPatterns = map[string][]string{
+	"vert":  {`gl_Position`, `gl_VertexID`},
+	"frag":  {`gl_FragColor`, `gl_FragCoord`, `gl_FragDepth`, `sampler2D`, `texture`},
+	"geom":  {`layout\s*\(\s*points\s*\|`, `layout\s*\(\s*lines\s*\|`, `layout\s*\(\s*triangles\s*\|`},
+	"tesc":  {`layout\s*\(\s*vertices\s*=\s*\d+\s*\)`},
+	"tese":  {`gl_TessCoord`, `gl_TessLevelInner`, `gl_TessLevelOuter`},
+	"comp":  {`layout\s*\(\s*local_size_[xyz]`},
+	"mesh":  {`mesh`, `gl_MeshVerticesEXT`},
+	"task":  {`task`, `gl_TaskCountNV`},
+	"rgen":  {`raygeneration`},
+	"rint":  {`intersection`},
+	"rahit": {`anyhit`},
+	"rchit": {`closesthit`},
+	"rmiss": {`miss`},
+	"rcall": {`callable`},
+}
 
 // glslIndicators are patterns that strongly suggest GLSL source inside a C string.
 var glslIndicators = []string{
@@ -51,31 +89,12 @@ func isCStringLiteral(trimmedLine string) bool {
 
 // detectShaderType tries to detect which type of shader the given source code could be
 func detectShaderType(shaderCode string) (string, error) {
-
-	shaderKeywords := map[string][]string{
-		"vert":  {`gl_Position`, `gl_VertexID`},
-		"frag":  {`gl_FragColor`, `gl_FragCoord`, `gl_FragDepth`, `sampler2D`, `texture`},
-		"geom":  {`layout\s*\(\s*points\s*\|`, `layout\s*\(\s*lines\s*\|`, `layout\s*\(\s*triangles\s*\|`},
-		"tesc":  {`layout\s*\(\s*vertices\s*=\s*\d+\s*\)`},
-		"tese":  {`gl_TessCoord`, `gl_TessLevelInner`, `gl_TessLevelOuter`},
-		"comp":  {`layout\s*\(\s*local_size_[xyz]`},
-		"mesh":  {`mesh`, `gl_MeshVerticesEXT`},
-		"task":  {`task`, `gl_TaskCountNV`},
-		"rgen":  {`raygeneration`},
-		"rint":  {`intersection`},
-		"rahit": {`anyhit`},
-		"rchit": {`closesthit`},
-		"rmiss": {`miss`},
-		"rcall": {`callable`},
-	}
-
 	detectedTypes := make(map[string]int)
 
-	// Check for shader type keywords
-	for shaderType, keywords := range shaderKeywords {
-		for _, keyword := range keywords {
-			matched, _ := regexp.MatchString(keyword, shaderCode)
-			if matched {
+	// Check for shader type keywords using cached compiled regexps
+	for shaderType, keywords := range shaderKeywordPatterns {
+		for _, pattern := range keywords {
+			if re := getShaderRegexp(pattern); re != nil && re.MatchString(shaderCode) {
 				detectedTypes[shaderType]++
 			}
 		}
