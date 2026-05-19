@@ -8,6 +8,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/xyproto/env/v2"
 )
 
 func isLinux() bool  { return false }
@@ -26,7 +28,7 @@ func prependAsNeededFlag(ldflags []string) []string { return ldflags }
 // available, or "generic" as a fallback.
 func detectPlatformType() string {
 	// MSYS2 sets MSYSTEM (MINGW64, UCRT64, CLANG64, etc.)
-	if msystem := os.Getenv("MSYSTEM"); msystem != "" {
+	if env.Bool("MSYSTEM") {
 		if _, err := exec.LookPath("pacman"); err == nil {
 			return "msys2"
 		}
@@ -39,7 +41,7 @@ func detectPlatformType() string {
 
 // vcpkgRoot returns the vcpkg root directory, or "" if not found.
 func vcpkgRoot() string {
-	if root := os.Getenv("VCPKG_ROOT"); root != "" && fileExists(root) {
+	if root := env.Str("VCPKG_ROOT"); root != "" && fileExists(root) {
 		return root
 	}
 	if p, err := exec.LookPath("vcpkg"); err == nil {
@@ -50,10 +52,7 @@ func vcpkgRoot() string {
 
 // vcpkgTriplet returns the active vcpkg triplet for the current platform.
 func vcpkgTriplet() string {
-	if t := os.Getenv("VCPKG_DEFAULT_TRIPLET"); t != "" {
-		return t
-	}
-	return "x64-windows"
+	return env.Str("VCPKG_DEFAULT_TRIPLET", "x64-windows")
 }
 
 // vcpkgInstalledDir returns the vcpkg installed directory for the active triplet.
@@ -73,9 +72,9 @@ func vcpkgInstalledDir() string {
 // msys2Prefix returns the MSYS2 environment prefix (e.g. C:\msys64\mingw64).
 func msys2Prefix() string {
 	// MINGW_PREFIX is set by MSYS2 shells (e.g. /mingw64)
-	if prefix := os.Getenv("MINGW_PREFIX"); prefix != "" {
+	if prefix := env.Str("MINGW_PREFIX"); prefix != "" {
 		// Convert MSYS2 path to Windows path if needed
-		if msysRoot := os.Getenv("MSYSTEM_PREFIX"); msysRoot != "" && fileExists(msysRoot) {
+		if msysRoot := env.Str("MSYSTEM_PREFIX"); msysRoot != "" && fileExists(msysRoot) {
 			return msysRoot
 		}
 		// Try common MSYS2 install locations
@@ -90,7 +89,7 @@ func msys2Prefix() string {
 	if p, err := exec.LookPath("pacman"); err == nil {
 		// pacman is in <root>/usr/bin/pacman, and the mingw prefix is <root>/mingw64 etc.
 		root := filepath.Dir(filepath.Dir(filepath.Dir(p)))
-		msystem := strings.ToLower(os.Getenv("MSYSTEM"))
+		msystem := strings.ToLower(env.Str("MSYSTEM"))
 		switch {
 		case strings.Contains(msystem, "clang64"):
 			return filepath.Join(root, "clang64")
@@ -398,7 +397,7 @@ func msys2ToWindowsPath(msysPath string) string {
 		}
 	}
 	// If MSYSTEM_PREFIX is set, use that as the base
-	if prefix := os.Getenv("MSYSTEM_PREFIX"); prefix != "" {
+	if prefix := env.Str("MSYSTEM_PREFIX"); prefix != "" {
 		candidate := filepath.Join(filepath.Dir(filepath.Dir(prefix)), filepath.FromSlash(msysPath))
 		if fileExists(candidate) {
 			return candidate

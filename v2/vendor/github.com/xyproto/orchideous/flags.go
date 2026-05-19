@@ -2,11 +2,12 @@ package orchideous
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/xyproto/env/v2"
 )
 
 // systemIncludeDirs and compilerSupportsStd are in sysinclude_*.go files.
@@ -388,13 +389,13 @@ func findCompiler(useClang bool, isC bool) string {
 
 	// Check CXX/CC environment variable
 	if isC {
-		if cc := os.Getenv("CC"); cc != "" {
+		if cc := env.Str("CC"); cc != "" {
 			if p, err := exec.LookPath(cc); err == nil {
 				return p
 			}
 		}
 	} else {
-		if cxx := os.Getenv("CXX"); cxx != "" {
+		if cxx := env.Str("CXX"); cxx != "" {
 			if p, err := exec.LookPath(cxx); err == nil {
 				return p
 			}
