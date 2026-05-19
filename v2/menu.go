@@ -184,7 +184,6 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 		}
 	}()
 
-	fmt.Print("\033[?1049h") // enter alternate screen buffer
 	vt.Clear()
 	c.FillBackground(bgColor)
 	c.HideCursorAndRedraw()
@@ -234,7 +233,6 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 			running = false
 			changed = true
 		case " ", "c:0": // space or ctrl-space
-			fmt.Print("\033[?1049l") // leave alternate screen buffer
 			return -1, true
 		case "c:13": // return
 			resizeMut.Lock()
@@ -316,6 +314,5 @@ func (e *Editor) Menu(status *StatusBar, tty *vt.TTY, title string, choices []st
 	// Restore the resize handler
 	e.SetUpSignalHandlers(c, tty, status, false) // do not only clear the signals
 
-	fmt.Print("\033[?1049l") // leave alternate screen buffer
 	return menu.Selected(), false
 }
