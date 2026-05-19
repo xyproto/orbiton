@@ -412,12 +412,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.wrapWhenTyping = true
 			e.wrapLimitWhenTyping = 79
 		case mode.Blank:
-			wrapW := 79
-			if c != nil {
-				wrapW = int(c.Width())
-			}
 			e.wrapWhenTyping = true
-			e.wrapLimitWhenTyping = wrapW
+			e.wrapLimitWhenTyping = 79
 		}
 	}
 

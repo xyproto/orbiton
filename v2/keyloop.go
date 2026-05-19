@@ -761,7 +761,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			// For prose files (or when already in book mode), ctrl-space toggles book mode.
 			// Markdown also checks for a checkbox on the current line first.
-			proseMode := e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
+			proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
 			if proseMode || e.InBookMode() {
 				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
 					undo.Snapshot(e)
