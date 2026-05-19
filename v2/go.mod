@@ -1,6 +1,6 @@
 module github.com/xyproto/orbiton/v2
 
-go 1.25.1
+go 1.26.3
 
 require (
 	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
@@ -29,7 +29,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.6.41
+	github.com/xyproto/megafile v1.7.0
 	github.com/xyproto/mode v0.12.10
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/orchideous v1.0.10
@@ -41,6 +41,8 @@ require (
 	golang.org/x/image v0.40.0
 	gopkg.in/yaml.v3 v3.0.1
 )
+
+require github.com/xyproto/themes v0.0.1 // indirect
 
 require (
 	github.com/BurntSushi/toml v1.6.0

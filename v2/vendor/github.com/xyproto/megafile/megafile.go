@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/files"
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/mode"
+	synhi "github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
@@ -114,6 +115,8 @@ type State struct {
 	FileColor                 vt.AttributeColor
 	BinaryConfirmForeground   vt.AttributeColor
 	BinaryConfirmBackground   vt.AttributeColor
+	SyntaxTextConfig          *synhi.TextConfig // theme colors for syntax highlighting in previews
+	Light                     bool              // true if the theme has a light background
 	quit                      bool
 	selectionMoved            bool
 	binaryConfirmPending      bool
@@ -259,6 +262,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		keyChan:                   make(chan string, 1),
 	}
 	state.loadUndoHistory()
+	state.applyThemeFromEnv()
 	return state
 }
 

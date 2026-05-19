@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/files"
@@ -187,6 +188,17 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 	syntax.AdjustKeywords(m)
 	tout := vt.New()
 
+	// Skip syntax highlighting for plain text / extensionless files (like LICENSE, README)
+	ext := filepath.Ext(path)
+	highlight := m != mode.Text && (m != mode.Blank || ext != "") && !(m == mode.Markdown && ext == "")
+
+	// Build options from the configured theme TextConfig, if set.
+	var options []syntax.Option
+	if highlight && s.SyntaxTextConfig != nil {
+		tc := *s.SyntaxTextConfig
+		options = append(options, func(c *syntax.TextConfig) { *c = tc })
+	}
+
 	sc := bufio.NewScanner(f)
 	for r := uint(0); r < rows && sc.Scan(); r++ {
 		line := sc.Text()
@@ -196,11 +208,21 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 			runes = runes[:cols-1]
 		}
 		truncated := string(runes)
-		tagged, err := syntax.AsText([]byte(truncated), m)
+		if !highlight {
+			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, truncated)
+			continue
+		}
+		tagged, err := syntax.AsText([]byte(truncated), m, options...)
 		if err != nil {
 			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, truncated)
 		} else {
-			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s\033[0m", row+r, col, tout.DarkTags(string(tagged)))
+			var colored string
+			if s.Light {
+				colored = tout.LightTags(string(tagged))
+			} else {
+				colored = tout.DarkTags(string(tagged))
+			}
+			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s\033[0m", row+r, col, colored)
 		}
 	}
 }
