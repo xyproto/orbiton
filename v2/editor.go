@@ -2580,8 +2580,9 @@ func (e *Editor) AnyTextBeforeCursor() bool {
 
 // LastLineNumber returns the last line number (not line index) of the current file
 func (e *Editor) LastLineNumber() LineNumber {
-	// The last line (by line number, not by index, e.Len() returns an index which is why there is no -1)
-	return LineNumber(e.Len())
+	// Include the blank line at the end, since Orbiton always
+	// ensures a trailing newline and that line is navigatable.
+	return LineNumber(e.Len()) + 1
 }
 
 // UserInput asks the user to enter text, then collects the letters. No history.
