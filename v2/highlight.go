@@ -218,10 +218,11 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		}
 	}
 
-	// Figure out if "fromline" is within a shader string block (C/C++/Go)
+	// Figure out if "fromline" is within a shader string block
 	if canHaveShaderStrings(e.mode) {
-		if e.mode == mode.Go {
-			// For Go, track backtick state and detect GLSL within backtick strings
+		switch e.mode {
+		case mode.Go, mode.Odin:
+			// For Go and Odin, track backtick state and detect GLSL within backtick strings
 			inBacktick := false
 			for li = range fromline {
 				trimmedLine = strings.TrimSpace(e.Line(li))
@@ -236,7 +237,13 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					inShaderString = true
 				}
 			}
-		} else {
+		case mode.ObjectPascal:
+			shaderLines = e.pascalShaderStringLines(0, toline)
+		case mode.Zig:
+			shaderLines = e.zigShaderStringLines(0, toline)
+		case mode.Rust:
+			shaderLines = e.rustShaderStringLines(0, toline)
+		default:
 			// For C/C++/ObjC/Arduino, pre-compute which lines are in shader string blocks.
 			// This scans from 0 to toline to handle blocks that start before the visible area.
 			shaderLines = e.shaderStringLines(0, toline)
@@ -390,8 +397,19 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					trimmedLine = strings.TrimSpace(line)
 					// Handle doc comments (starting with ///)
 					// and multi-line strings (starting with \\)
-					if strings.HasPrefix(trimmedLine, "///") || strings.HasPrefix(trimmedLine, `\\`) {
+					if strings.HasPrefix(trimmedLine, "///") {
 						coloredString = unEscapeFunction(e.MultiLineString.Start(line))
+					} else if strings.HasPrefix(trimmedLine, `\\`) {
+						// Check if this is a shader string line
+						if shaderLines[y+offsetY] {
+							if cs := e.highlightShaderInZigString(line); cs != "" {
+								coloredString = cs
+							} else {
+								coloredString = unEscapeFunction(e.MultiLineString.Start(line))
+							}
+						} else {
+							coloredString = unEscapeFunction(e.MultiLineString.Start(line))
+						}
 					} else {
 						// Regular highlight
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
@@ -525,8 +543,8 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					trimmedLine = strings.TrimSpace(line)
 					q.Process(trimmedLine)
 
-					// For Go, reset shader state when not inside a backtick string
-					if e.mode == mode.Go && q.backtick == 0 {
+					// For Go/Odin, reset shader state when not inside a backtick string
+					if (e.mode == mode.Go || e.mode == mode.Odin) && q.backtick == 0 {
 						inShaderString = false
 					}
 
@@ -569,8 +587,8 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						// A single line comment (the syntax module did the highlighting)
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case !q.startedMultiLineString && q.backtick > 0:
-						// A multi-line string (check for embedded shader code in Go)
-						if e.mode == mode.Go {
+						// A multi-line string (check for embedded shader code in Go/Odin)
+						if e.mode == mode.Go || e.mode == mode.Odin {
 							if hasGLSLContent(trimmedLine) {
 								inShaderString = true
 							}
@@ -587,8 +605,15 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 							coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 						}
 					case shaderLines[y+offsetY] && !q.multiLineComment && !q.hasSingleLineComment && isCStringLiteral(trimmedLine):
-						// Shader code embedded in a C/C++ string literal
+						// Shader code embedded in a C/C++/Rust string literal
 						if cs := e.highlightShaderInCString(line, trimmedLine); cs != "" {
+							coloredString = cs
+						} else {
+							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+						}
+					case e.mode == mode.ObjectPascal && shaderLines[y+offsetY] && !q.multiLineComment && !q.hasSingleLineComment && isPascalShaderStringLine(trimmedLine):
+						// Shader code embedded in an Object Pascal string literal
+						if cs := e.highlightShaderInPascalString(line); cs != "" {
 							coloredString = cs
 						} else {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))

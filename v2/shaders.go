@@ -129,7 +129,8 @@ func hasGLSLContent(inner string) bool {
 
 // canHaveShaderStrings reports whether the given mode is one where shader code may be embedded in strings.
 func canHaveShaderStrings(m mode.Mode) bool {
-	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Go
+	return m == mode.Arduino || m == mode.C || m == mode.Cpp || m == mode.ObjC || m == mode.Go ||
+		m == mode.ObjectPascal || m == mode.Zig || m == mode.Rust || m == mode.Odin
 }
 
 // shaderStringLines returns a set of line indices (within the given range) that belong
@@ -209,4 +210,175 @@ func (e *Editor) highlightShaderInBacktickString(line string) string {
 		return ""
 	}
 	return UnEscape(tout.DarkTags(string(highlighted)))
+}
+
+// isPascalShaderStringLine reports whether a trimmed line is an Object Pascal string literal
+// that forms part of a shader string block. Pascal shader strings look like:
+// '#version 330'#10 +
+// 'in vec3 vertexPosition;'#10 +
+// #10 +
+func isPascalShaderStringLine(trimmedLine string) bool {
+	if len(trimmedLine) < 2 {
+		return false
+	}
+	// Lines that are just #10 + or #10; (representing bare newlines in the shader)
+	if strings.HasPrefix(trimmedLine, "#10") {
+		rest := strings.TrimSpace(trimmedLine[3:])
+		return rest == "" || rest == "+" || rest == ";" || rest == "+ " || strings.HasPrefix(rest, "+")
+	}
+	// Lines that start with a single quote (regular shader string content)
+	if trimmedLine[0] != '\'' {
+		return false
+	}
+	return strings.Contains(trimmedLine, "'#10") || strings.Contains(trimmedLine, "' +")
+}
+
+// isPascalGLSLStringLine reports whether a Pascal string literal line contains GLSL-specific code.
+func isPascalGLSLStringLine(trimmedLine string) bool {
+	if !isPascalShaderStringLine(trimmedLine) {
+		return false
+	}
+	for _, ind := range glslIndicators {
+		if strings.Contains(trimmedLine, ind) {
+			return true
+		}
+	}
+	return false
+}
+
+// pascalShaderStringLines returns a set of line indices (within the given range) that belong
+// to Pascal shader string blocks. A shader string block is a consecutive run of Pascal string
+// literal lines where at least one line contains GLSL indicators.
+func (e *Editor) pascalShaderStringLines(from, to LineIndex) map[LineIndex]bool {
+	result := make(map[LineIndex]bool)
+	i := from
+	for i < to {
+		trimmedLine := strings.TrimSpace(e.Line(i))
+		if !isPascalShaderStringLine(trimmedLine) {
+			i++
+			continue
+		}
+		blockStart := i
+		hasGLSL := false
+		for i < to {
+			trimmedLine = strings.TrimSpace(e.Line(i))
+			if !isPascalShaderStringLine(trimmedLine) {
+				break
+			}
+			if isPascalGLSLStringLine(trimmedLine) {
+				hasGLSL = true
+			}
+			i++
+		}
+		if hasGLSL {
+			for li := blockStart; li < i; li++ {
+				result[li] = true
+			}
+		}
+	}
+	return result
+}
+
+// highlightShaderInPascalString takes a line that is a Pascal string literal with shader code
+// and returns a syntax-highlighted version.
+func (e *Editor) highlightShaderInPascalString(line string) string {
+	trimmed := strings.TrimSpace(line)
+
+	// Handle bare #10 lines (blank lines in the shader)
+	if strings.HasPrefix(trimmed, "#10") {
+		stringColor := syntax.DefaultTextConfig.String
+		return tout.DarkTags("<" + stringColor + ">" + line + "<off>")
+	}
+
+	// Extract shader code from between single quotes
+	firstQ := strings.IndexByte(line, '\'')
+	if firstQ < 0 {
+		return ""
+	}
+	lastQ := strings.LastIndexByte(line, '\'')
+	if lastQ <= firstQ {
+		return ""
+	}
+	prefix := line[:firstQ]
+	inner := line[firstQ+1 : lastQ]
+	suffix := line[lastQ+1:]
+
+	// Highlight the inner shader code
+	highlighted, err := syntax.AsText([]byte(Escape(inner)), mode.Shader)
+	if err != nil {
+		return ""
+	}
+	coloredInner := UnEscape(tout.DarkTags(string(highlighted)))
+
+	// Reconstruct the line with quotes shown in the string color
+	stringColor := syntax.DefaultTextConfig.String
+	return prefix + tout.DarkTags("<"+stringColor+">"+"'<off>") +
+		coloredInner + tout.DarkTags("<"+stringColor+">"+"'<off>") + suffix
+}
+
+// isZigMultilineStringLine reports whether a trimmed line is a Zig multiline string (starts with \\).
+func isZigMultilineStringLine(trimmedLine string) bool {
+	return strings.HasPrefix(trimmedLine, `\\`)
+}
+
+// highlightShaderInZigString takes a line that is a Zig multiline string (starting with \\)
+// and returns a syntax-highlighted version as shader code.
+func (e *Editor) highlightShaderInZigString(line string) string {
+	trimmed := strings.TrimSpace(line)
+	if !strings.HasPrefix(trimmed, `\\`) {
+		return ""
+	}
+	// Find the \\ prefix in the original line
+	before, after, _ := strings.Cut(line, `\\`)
+	prefix := before
+	shaderCode := after // skip the \\
+
+	highlighted, err := syntax.AsText([]byte(Escape(shaderCode)), mode.Shader)
+	if err != nil {
+		return ""
+	}
+	coloredInner := UnEscape(tout.DarkTags(string(highlighted)))
+
+	stringColor := syntax.DefaultTextConfig.String
+	return prefix + tout.DarkTags("<"+stringColor+">"+`\\`+"<off>") + coloredInner
+}
+
+// zigShaderStringLines returns a set of line indices that belong to Zig shader multiline
+// string blocks (consecutive lines starting with \\, where at least one contains GLSL).
+func (e *Editor) zigShaderStringLines(from, to LineIndex) map[LineIndex]bool {
+	result := make(map[LineIndex]bool)
+	i := from
+	for i < to {
+		trimmedLine := strings.TrimSpace(e.Line(i))
+		if !isZigMultilineStringLine(trimmedLine) {
+			i++
+			continue
+		}
+		blockStart := i
+		hasGLSL := false
+		for i < to {
+			trimmedLine = strings.TrimSpace(e.Line(i))
+			if !isZigMultilineStringLine(trimmedLine) {
+				break
+			}
+			// Check inner content (after \\)
+			inner := trimmedLine[2:]
+			if hasGLSLContent(inner) {
+				hasGLSL = true
+			}
+			i++
+		}
+		if hasGLSL {
+			for li := blockStart; li < i; li++ {
+				result[li] = true
+			}
+		}
+	}
+	return result
+}
+
+// rustShaderStringLines returns a set of line indices that belong to Rust shader string blocks.
+// Rust uses the same "..." string literal syntax as C for shader embedding.
+func (e *Editor) rustShaderStringLines(from, to LineIndex) map[LineIndex]bool {
+	return e.shaderStringLines(from, to)
 }
