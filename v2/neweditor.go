@@ -81,7 +81,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		} else {
 			m = mode.Detect(stripGZ(fnord.filename)) // Note that mode.Detect can check for the full path, like /etc/fstab
 		}
-		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
+		syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "") && !(m == mode.Markdown && ext == "")
 	}
 	if envVT100 {
 		syntaxHighlight = false
@@ -220,7 +220,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 				// Re-detect the file extension and mode for the single file
 				ext = strings.ToLower(filepath.Ext(fnord.filename))
 				m = mode.Detect(stripGZ(fnord.filename))
-				syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "")
+				syntaxHighlight = origSyntaxHighlight && m != mode.Text && (m != mode.Blank || ext != "") && !(m == mode.Markdown && ext == "")
 				if envVT100 {
 					syntaxHighlight = false
 				}
