@@ -138,8 +138,8 @@ func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
 	y := uint(e.pos.ScreenY()) + e.stickyTopBarHeight()
 	e.pos.mut.RUnlock()
 
-	c.ShowCursor()
 	vt.SetXY(x, y)
+	c.ShowCursor()
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -154,8 +154,8 @@ func (e *Editor) RepositionCursorIfNeeded(c *vt.Canvas) {
 	e.pos.mut.RUnlock()
 
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
-		c.ShowCursor()
 		e.RepositionCursor(uint(x), uint(y))
+		c.ShowCursor()
 		e.redrawCursor.Store(false)
 	}
 }

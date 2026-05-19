@@ -3164,8 +3164,8 @@ func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 	x := uint(e.pos.ScreenX())
 	y := uint(e.pos.ScreenY()) + e.stickyTopBarHeight()
 	//e.pos.mut.Unlock()
-	c.ShowCursor()
 	vt.SetXY(x, y)
+	c.ShowCursor()
 }
 
 // OnIncludeLine checks if it looks like the current line is a C or C++ #include
