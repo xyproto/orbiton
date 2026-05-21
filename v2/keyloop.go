@@ -1005,14 +1005,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Play back the macro, once
 				e.playBackMacroCount = 1
 			}
-		case "c:28": // ctrl-\, toggle comment for this block
-			if e.InBookMode() { // toggle comment not relevant for prose writing
+		case "c:28": // ctrl-\, toggle comment (code) or fill paragraph (prose)
+			if e.InBookMode() {
 				break
 			}
 			undo.Snapshot(e)
-			e.ToggleCommentBlock(c)
-			if e.blockMode {
-				e.InitBlockCursors(c)
+			if !ProgrammingLanguage(e.mode) {
+				e.FillParagraph()
+			} else {
+				e.ToggleCommentBlock(c)
+				if e.blockMode {
+					e.InitBlockCursors(c)
+				}
 			}
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)

@@ -7,28 +7,61 @@ import (
 	"github.com/xyproto/wordwrap"
 )
 
-// reFlowForward merges overspill text into line lineIdx and cascades re-wrapping
-// downward through the paragraph. A blank line or end-of-document acts as a
-// paragraph boundary: a new line is inserted for the overspill rather than
-// merging with the existing next line.
+// FillParagraph joins and re-wraps the current paragraph to the configured wrap limit.
+func (e *Editor) FillParagraph() {
+	wrapLimit := e.wrapLimitWhenTyping
+	if wrapLimit <= 0 {
+		wrapLimit = e.softWrapLimit
+	}
+	if wrapLimit <= 0 {
+		wrapLimit = 79
+	}
+	startY := e.DataY()
+	for startY > 0 && strings.TrimSpace(e.Line(startY-1)) != "" {
+		startY--
+	}
+	endY := e.DataY()
+	for int(endY+1) < e.Len() && strings.TrimSpace(e.Line(endY+1)) != "" {
+		endY++
+	}
+	parts := make([]string, 0, int(endY-startY)+1)
+	for y := startY; y <= endY; y++ {
+		if s := strings.TrimSpace(e.Line(y)); s != "" {
+			parts = append(parts, s)
+		}
+	}
+	if len(parts) == 0 {
+		return
+	}
+	wrapped, err := wordwrap.WordWrap(strings.Join(parts, " "), wrapLimit)
+	if err != nil || len(wrapped) == 0 {
+		return
+	}
+	paragraphLen := int(endY-startY) + 1
+	newLen := len(wrapped)
+	for i := range min(newLen, paragraphLen) {
+		e.SetLine(startY+LineIndex(i), wrapped[i])
+	}
+	for i := paragraphLen; i < newLen; i++ {
+		e.InsertLineBelowAt(startY + LineIndex(i-1))
+		e.SetLine(startY+LineIndex(i), wrapped[i])
+	}
+	for i := newLen; i < paragraphLen; i++ {
+		e.DeleteLine(startY + LineIndex(newLen))
+	}
+}
+
+// reFlowForward merges overspill into line lineIdx and re-wraps downward through the paragraph.
 func (e *Editor) reFlowForward(overspill string, lineIdx LineIndex, wrapLimit int) {
 	if strings.TrimSpace(overspill) == "" {
 		return
 	}
-	if int(lineIdx) >= e.Len() {
+	if int(lineIdx) >= e.Len() || strings.TrimSpace(e.Line(lineIdx)) == "" {
 		e.InsertLineBelowAt(lineIdx - 1)
 		e.SetLine(lineIdx, overspill)
 		return
 	}
-	existing := e.Line(lineIdx)
-	if strings.TrimSpace(existing) == "" {
-		// Paragraph boundary -- insert before the blank line.
-		e.InsertLineBelowAt(lineIdx - 1)
-		e.SetLine(lineIdx, overspill)
-		return
-	}
-	// Same paragraph: prepend overspill to existing line and re-wrap downward.
-	merged := overspill + " " + existing
+	merged := overspill + " " + e.Line(lineIdx)
 	result := wordwrap.WrapLine(merged, wrapLimit, 0)
 	if result.Wrapped {
 		e.SetLine(lineIdx, result.Left)
