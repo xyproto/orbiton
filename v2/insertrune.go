@@ -1,9 +1,42 @@
 package main
 
 import (
+	"strings"
+
 	"github.com/xyproto/vt"
 	"github.com/xyproto/wordwrap"
 )
+
+// reFlowForward merges overspill text into line lineIdx and cascades re-wrapping
+// downward through the paragraph. A blank line or end-of-document acts as a
+// paragraph boundary: a new line is inserted for the overspill rather than
+// merging with the existing next line.
+func (e *Editor) reFlowForward(overspill string, lineIdx LineIndex, wrapLimit int) {
+	if strings.TrimSpace(overspill) == "" {
+		return
+	}
+	if int(lineIdx) >= e.Len() {
+		e.InsertLineBelowAt(lineIdx - 1)
+		e.SetLine(lineIdx, overspill)
+		return
+	}
+	existing := e.Line(lineIdx)
+	if strings.TrimSpace(existing) == "" {
+		// Paragraph boundary -- insert before the blank line.
+		e.InsertLineBelowAt(lineIdx - 1)
+		e.SetLine(lineIdx, overspill)
+		return
+	}
+	// Same paragraph: prepend overspill to existing line and re-wrap downward.
+	merged := overspill + " " + existing
+	result := wordwrap.WrapLine(merged, wrapLimit, 0)
+	if result.Wrapped {
+		e.SetLine(lineIdx, result.Left)
+		e.reFlowForward(result.Right, lineIdx+1, wrapLimit)
+	} else {
+		e.SetLine(lineIdx, merged)
+	}
+}
 
 // InsertRune will insert a rune at the current data position, with wrap when typing.
 // Returns true if the cursor was repositioned to a new (wrapped) line.
@@ -58,8 +91,7 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 		if result.Wrapped {
 			y := e.DataY()
 			e.SetLine(y, result.Left)
-			e.InsertLineBelowAt(y)
-			e.SetLine(y+1, result.Right)
+			e.reFlowForward(result.Right, y+1, typingLimit)
 			// cursorX is the position where the rune was inserted
 			// (Insert does not advance the cursor). The post-insertion
 			// cursor should be one past that.
