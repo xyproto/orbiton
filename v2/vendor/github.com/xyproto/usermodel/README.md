@@ -58,6 +58,6 @@ func Get(task Task) string
 
 ### General info
 
-* Version: 1.2.3
+* Version: 1.3.0
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

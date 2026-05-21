@@ -159,7 +159,7 @@ github.com/xyproto/termtitle
 # github.com/xyproto/themes v0.0.3
 ## explicit; go 1.25.1
 github.com/xyproto/themes
-# github.com/xyproto/usermodel v1.2.3
+# github.com/xyproto/usermodel v1.3.0
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
 # github.com/xyproto/vt v1.9.11

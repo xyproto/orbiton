@@ -36,7 +36,7 @@ var (
 		"text-generation": "gemma3:4b",
 		"tool-use":        "llama3.2:3b",
 		"translation":     "mixtral:8x7b",
-		"vision":          "llava:7b",
+		"vision":          "qwen2.5vl:3b",
 	}
 )
 
