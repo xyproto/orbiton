@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mattn/go-runewidth"
 	"github.com/xyproto/vt"
 )
 
@@ -178,7 +179,7 @@ func (tw *TableWidget) Draw(c *vt.Canvas) {
 			color := tw.textColor
 			if y == int(tw.cy) && x == int(tw.cx) {
 				color = tw.highlightColor
-				cursorX := uint(xpos + len(field))
+				cursorX := uint(xpos + runewidth.StringWidth(field))
 				cursorY := uint(tw.marginTop + y + titleHeight)
 				// Draw the "cursor"
 				c.Write(cursorX, cursorY, tw.cursorColor, tw.bgColor, "_")

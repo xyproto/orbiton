@@ -694,7 +694,9 @@ func (e *Editor) TableEditor(tty *vt.TTY, status *StatusBar, tableContents *[][]
 			resizeMut.Lock()
 			s := tableWidget.Get()
 			if len(s) > 0 {
-				tableWidget.Set(s[:len(s)-1])
+				// Remove last rune, not last byte
+				runes := []rune(s)
+				tableWidget.Set(string(runes[:len(runes)-1]))
 				changed = true
 				userChangedTheContents = true
 			} else if tableWidget.CurrentRowIsEmpty() {
