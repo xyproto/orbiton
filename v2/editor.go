@@ -33,9 +33,9 @@ type BookModeState int32
 
 const (
 	// BookModeOff is for the regular editing mode
-	BookModeOff       BookModeState = 0
+	BookModeOff BookModeState = 0
 	// BookModeText specifies "book mode" (soft wrap, no syntax highlighting), using only text
-	BookModeText      BookModeState = 1
+	BookModeText BookModeState = 1
 	// BookModeGraphical specifies "book mod" with pixel rendering via Kitty/iTerm2/Sixel
 	BookModeGraphical BookModeState = 2
 )
