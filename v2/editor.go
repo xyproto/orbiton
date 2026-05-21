@@ -32,9 +32,12 @@ var clearOnQuit atomic.Bool // clear the terminal when quitting the editor, or n
 type BookModeState int32
 
 const (
-	BookModeOff       BookModeState = 0 // regular editing mode
-	BookModeText      BookModeState = 1 // text-based book mode (soft wrap, no syntax highlighting)
-	BookModeGraphical BookModeState = 2 // graphical book mode (pixel rendering via Kitty/iTerm2/Sixel)
+	// BookModeOff is for the regular editing mode
+	BookModeOff       BookModeState = 0
+	// BookModeText specifies "book mode" (soft wrap, no syntax highlighting), using only text
+	BookModeText      BookModeState = 1
+	// BookModeGraphical specifies "book mod" with pixel rendering via Kitty/iTerm2/Sixel
+	BookModeGraphical BookModeState = 2
 )
 
 // Editor represents the contents and editor settings, but not settings related to the viewport or scrolling
