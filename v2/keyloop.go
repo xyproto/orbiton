@@ -110,16 +110,27 @@ var (
 // the shortest interval between successive ctrl-space book-mode cycle steps
 const bookModeToggleDebounce = 400 * time.Millisecond
 
-// cycleBookMode toggles book mode. Single tap: regular ↔ graphical (or text if graphics unavailable).
+// cycleBookMode toggles book mode. Single tap: regular <--> graphical (or text if graphics unavailable).
 // Double tap (graphical available): regular ↔ text. Buffered key presses are debounced.
-// When started with -T (text book mode), only toggle between regular and text — never graphical.
+// When started with -T and graphics are available, toggles between text and graphical book mode only.
+// When started with -T without graphics support, toggles between regular and text book mode only.
 func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string, doubleTap bool) {
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 		return
 	}
 	lastBookModeToggle = time.Now()
-	if bookModeTextFlag || !bookGraphicsCapable() {
-		// Started with -T or no graphics support: toggle regular ↔ text only.
+	if bookModeTextFlag && bookGraphicsCapable() {
+		// Started with -T and graphics available: toggle text <--> graphical, never drop to regular editing.
+		if e.bookGraphicalMode() {
+			if imagepreview.IsKitty {
+				imagepreview.DeleteInlineImages()
+			}
+			e.setBookState(BookModeText)
+		} else {
+			e.enterBookModeGraphical()
+		}
+	} else if bookModeTextFlag || !bookGraphicsCapable() {
+		// Started with -T (no graphics) or no graphics support: toggle regular <--> text only.
 		if e.InBookMode() {
 			e.exitBookMode()
 		} else {
@@ -3159,7 +3170,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Display the ctrl-o menu if esc was pressed 4 times. Do not react if space is pressed.
-		// Skip this when in debug mode, where esc×3 toggles the keybinding overview.
+		// Skip this when in debug mode, where esc x3 toggles the keybinding overview.
 		if !debugMode && !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
 			backFunctions = make([]func(), 0)
 			status.ClearAll(c, false)
