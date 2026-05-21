@@ -262,7 +262,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			} else if hasAlpha && r == '>' {
 				rs = append(rs, []rune(off+e.CommentColor.String())...)
 			} else if inAngles || r == '>' {
-				// Uppercase letters inside <...> are control/escape codes like <LF>, <CR>, <NULL> — highlight them
+				// Uppercase letters inside <...> are control/escape codes like <LF>, <CR>, <NULL> -- highlight them
 				if inAngles && unicode.IsUpper(r) {
 					rs = append(rs, []rune(off+e.ImageColor.String())...)
 				} else {
@@ -279,7 +279,7 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 				// Don't highlight a word-start capital unless the word contains more uppercase later.
 				// "A tags file" and "The option" should not be highlighted, but "NiST" and "MS-DOS" still should.
 				// Use byte-correct UTF-8 scanning to avoid rune/byte index mismatches in lines with
-				// multi-byte characters (e.g. box-drawing │ before the word in a table).
+				// multi-byte characters (e.g. box-drawing | before the word in a table).
 				wordStart := !unicode.IsLetter(prevRune) && !unicode.IsDigit(prevRune) && prevRune != '_'
 				useNormalColor := false
 				if wordStart {

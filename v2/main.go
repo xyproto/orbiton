@@ -458,7 +458,7 @@ func main() {
 		}()
 	} else {
 		// URLs (http:// or https://) are treated as a special form of
-		// "book mode": fetch the page, convert HTML → Markdown on the
+		// "book mode": fetch the page, convert HTML -> Markdown on the
 		// fly, and render the result. Doing the URL detection here
 		// bypasses FilenameLineColNumber's ":" splitting, which would
 		// otherwise mangle the URL on the "https:" prefix.

@@ -12,10 +12,10 @@ import (
 // editPriority returns a sort weight for a filename when choosing which file to open.
 // Lower values are preferred. Tiers:
 //
-//	0 – regular text file
-//	1 – low-priority extension (.lock, .bak, …)
-//	2 – Windows-only script on a non-Windows platform (.bat, .cmd)
-//	3 – binary file
+//	0 - regular text file
+//	1 - low-priority extension (.lock, .bak, ...)
+//	2 - Windows-only script on a non-Windows platform (.bat, .cmd)
+//	3 - binary file
 func editPriority(filename string) int {
 	if files.IsBinaryAccurate(filename) {
 		return 3

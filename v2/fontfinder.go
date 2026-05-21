@@ -18,12 +18,12 @@ import (
 // SystemFonts holds file paths for each font role used in graphical book mode.
 // A field is empty when no suitable font was found for that role.
 type SystemFonts struct {
-	Regular string // serif, regular — body text
-	Italic  string // serif, italic — body emphasis
-	Bold    string // sans-serif, bold — headings
-	Light   string // sans-serif, light/regular — status bar
-	Mono    string // monospace, bold — inline code and code blocks
-	Unicode string // wide-coverage sans — unicode glyph fallback (optional)
+	Regular string // serif, regular -- body text
+	Italic  string // serif, italic -- body emphasis
+	Bold    string // sans-serif, bold -- headings
+	Light   string // sans-serif, light/regular -- status bar
+	Mono    string // monospace, bold -- inline code and code blocks
+	Unicode string // wide-coverage sans -- unicode glyph fallback (optional)
 }
 
 // Any reports whether at least one font path was resolved.
@@ -127,7 +127,7 @@ func fcMatchFile(pattern, wantFamily string) string {
 	}
 	gotFamily, path := parts[0], parts[1]
 	if wantFamily != "" && !strings.Contains(strings.ToLower(gotFamily), strings.ToLower(wantFamily)) {
-		return "" // fontconfig substituted an unrelated family — reject
+		return "" // fontconfig substituted an unrelated family -- reject
 	}
 	return validFontPath(path)
 }
@@ -305,7 +305,7 @@ func newFaceOrBurn(f *opentype.Font, size float64) font.Face {
 }
 
 // burnFace wraps burnfont as a font.Face. It is the last-resort fallback when
-// no OTF/TTF fonts are found on the host. Glyphs are always 8×8 pixels.
+// no OTF/TTF fonts are found on the host. Glyphs are always 8x8 pixels.
 type burnFace struct{}
 
 const (

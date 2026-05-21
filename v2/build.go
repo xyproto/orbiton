@@ -49,7 +49,7 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 			}
 		}
 		if shouldExist {
-			// Check the directory name first — that is what go build and cargo build create by default
+			// Check the directory name first -- that is what go build and cargo build create by default
 			if files.IsFile(filepath.Join(sourceDir, sourceDirectoryName)) {
 				return sourceDirectoryName
 			}

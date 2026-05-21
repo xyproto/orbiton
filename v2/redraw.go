@@ -116,13 +116,13 @@ func (e *Editor) RepositionCursor(x, y uint) {
 
 // PlaceAndEnableCursor will enable the cursor and then place it
 func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
-	// Book mode has its own cursor semantics — the graphical renderer
+	// Book mode has its own cursor semantics -- the graphical renderer
 	// paints the cursor inside the rendered image, and the text-mode
 	// renderer maps document coordinates to canvas rows via
 	// bookTextModePlaceCursor (accounting for the top bar row and
 	// Markdown prefixes). Calling vt.SetXY with the raw ScreenX/ScreenY
-	// here would snap the caret to (0,0) on startup — inside the top
-	// bar — before the first keystroke moves it back. Defer to the
+	// here would snap the caret to (0,0) on startup -- inside the top
+	// bar -- before the first keystroke moves it back. Defer to the
 	// book-mode path instead.
 	if e.bookGraphicalMode() {
 		return
@@ -336,7 +336,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 
 		// Draw the function name if drawFuncName is set and Nano mode is not enabled.
 		// Also redraw while Ollama is thinking, so the upper-right indicator is not lost on redraw.
-		// Skip when the sticky top bar is active — the function name is shown there instead.
+		// Skip when the sticky top bar is active -- the function name is shown there instead.
 		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() && e.stickyTopBarHeight() == 0 {
 			e.WriteCurrentFunctionName(c) // not drawing immediately
 			e.drawFuncName.Store(false)

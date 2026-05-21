@@ -286,7 +286,7 @@ func (d *gdbDebugger) waitForStop() bool {
 		}
 		return false
 	case <-time.After(2 * time.Second):
-		// Step is taking too long — likely hung on a recorded syscall
+		// Step is taking too long -- likely hung on a recorded syscall
 	}
 
 	// Interrupt GDB to regain control

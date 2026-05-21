@@ -410,7 +410,7 @@ func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[s
 				lsp.mutex.Unlock()
 				return nil, errors.New("LSP connection closed")
 			}
-			// server-to-client request — acknowledge it
+			// server-to-client request -- acknowledge it
 			if _, hasMethod := result["method"]; hasMethod {
 				if reqID, hasID := result["id"]; hasID {
 					lsp.mutex.Lock()
@@ -816,7 +816,7 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 
 // TriggerLSPInitialization starts LSP initialization in the background if not already running
 func TriggerLSPInitialization(m mode.Mode, workspaceRoot string, linkedProjects ...any) {
-	// quick check — if already exists, return
+	// quick check -- if already exists, return
 	lspMutex.Lock()
 	key := lspClientKey(m, workspaceRoot)
 	if client, exists := lspClients[key]; exists && client != nil {

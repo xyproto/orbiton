@@ -21,7 +21,7 @@ var (
 		if useASCII {
 			return '?'
 		}
-		return '¿' // for displaying control sequence characters. Could also use: �
+		return '¿' // for displaying control sequence characters. Could also use: ?
 	}()
 	wrapMarkerRune = func() rune {
 		if useASCII {

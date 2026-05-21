@@ -44,7 +44,7 @@ const (
 	altRightKey  = "alt→"  // alt-right (xterm-class terminals only)
 	altLeftKey   = "alt←"  // alt-left (xterm-class terminals only)
 	altDownKey   = "alt↓"  // alt-down (xterm-class terminals only)
-	ctrlUpKey    = "ctrl↑" // ctrl-up
+	ctrlUpKey    = "ctrl-up" // ctrl-up
 	ctrlDownKey  = "ctrl↓" // ctrl-down
 	ctrlLeftKey  = "ctrl←" // ctrl-left
 	ctrlRightKey = "ctrl→" // ctrl-right
@@ -60,7 +60,7 @@ const (
 	shiftHomeKey  = "shift⇱" // shift-home
 	shiftEndKey   = "shift⇲" // shift-end
 	shiftPgUpKey  = "shift⇞" // shift-pgup
-	shiftPgDnKey  = "shift⇟" // shift-pgdn
+	shiftPgDnKey  = "shift-pgdn" // shift-pgdn
 	shiftDelKey   = "shift⌦" // shift-delete
 	fwdDelKey     = "⌦"      // forward-delete (Delete key)
 
@@ -111,7 +111,7 @@ var (
 const bookModeToggleDebounce = 400 * time.Millisecond
 
 // cycleBookMode toggles book mode. Single tap: regular <--> graphical (or text if graphics unavailable).
-// Double tap (graphical available): regular ↔ text. Buffered key presses are debounced.
+// Double tap (graphical available): regular <-> text. Buffered key presses are debounced.
 // When started with -T and graphics are available, toggles between text and graphical book mode only.
 // When started with -T without graphics support, toggles between regular and text book mode only.
 func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, drainKey string, doubleTap bool) {
@@ -160,7 +160,7 @@ func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, dra
 // drainKeys discards any pending key presses, up to a small cap. Used after
 // slow actions (e.g. toggling graphical book mode) so buffered repeats do
 // not immediately fire again. The `keys` argument is accepted for
-// self-documentation — all pending input is dropped regardless.
+// self-documentation -- all pending input is dropped regardless.
 func drainKeys(tty *vt.TTY, keys ...string) {
 	_ = keys
 	const maxDrain = 64
@@ -484,7 +484,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// In book mode, periodically auto-save the file if it has unsaved
 	// changes. This matches the "reading/writing" use case book mode was
 	// designed for: long sessions where losing 10 minutes of notes is
-	// annoying. Only autosave when backed by a real file — not stdin
+	// annoying. Only autosave when backed by a real file -- not stdin
 	// ("-") or URL-derived buffers, which have no meaningful target.
 	if e.InBookMode() && e.filename != "" && e.filename != "-" && !fnord.stdin {
 		go func() {
@@ -569,7 +569,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				key = tty.ReadKey()
 				tty.SetTimeout(savedTimeout)
 				if key == "" {
-					// Timeout — no keypress, but check for image redraws
+					// Timeout -- no keypress, but check for image redraws
 					if bookImgNeedRedraw.CompareAndSwap(true, false) {
 						e.linesMut.Lock()
 						e.redraw.Store(true)
@@ -581,7 +581,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 			} else if e.InBookMode() && bookImgNeedRedraw.CompareAndSwap(true, false) {
 				// No downloads in flight, but a redraw was requested
-				// just before we got here — pick it up immediately.
+				// just before we got here -- pick it up immediately.
 				e.linesMut.Lock()
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
@@ -644,7 +644,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case upArrow, downArrow, leftArrow, rightArrow, homeKey, endKey,
 			pgUpKey, pgDnKey, ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey,
 			ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey, "c:1", "c:5":
-			// movement — leave affinity alone
+			// movement -- leave affinity alone
 		default:
 			e.bookCursorAffinity = bookAffinityForward
 		}
@@ -2461,7 +2461,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			// No selection: block method — leave single-line/block paste mode
+			// No selection: block method -- leave single-line/block paste mode
 			pasteAllAtOnce = false
 
 			if e.blockMode { // cut the entire block
@@ -2530,7 +2530,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				s = strings.Join(copyLines, "\n")
 
 				// Place the block of text in the clipboard (async to keep
-				// ctrl-x snappy — forking xclip/wl-copy/pbcopy is slow).
+				// ctrl-x snappy -- forking xclip/wl-copy/pbcopy is slow).
 				writeClipboardAsync(s, e.primaryClipboard)
 
 				// Delete the corresponding number of lines
@@ -2610,7 +2610,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			// No selection: block method — leave selection-paste mode
+			// No selection: block method -- leave selection-paste mode
 			pasteAllAtOnce = false
 
 			// Stop background processes (like playing music with timidity), if any
@@ -2987,7 +2987,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// Multi-character printable input is likely a middle-click paste
 			// (X11 primary selection without bracketed-paste framing).
-			// Exclude modifier key names like "ctrl↑", "alt⇱", "shift⇟".
+			// Exclude modifier key names like "ctrl-up", "alt-home", "shift-pgdn".
 			looksLikePaste := len(keyRunes) > 1 &&
 				(unicode.IsLetter(keyRunes[0]) || unicode.IsGraphic(keyRunes[0])) &&
 				!strings.HasPrefix(key, "ctrl") &&
@@ -3209,7 +3209,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// redraw can cost tens of milliseconds, which lets buffered key
 		// presses pile up while the user holds arrow keys. If more input
 		// is already pending when we reach the end of the loop, skip this
-		// redraw — the next iteration will handle it, and e.redraw stays
+		// redraw -- the next iteration will handle it, and e.redraw stays
 		// set. Only applies when book mode is active so other modes keep
 		// their original per-keypress redraw cadence.
 		skipRedraw := e.InBookMode() && tty.HasPendingInput()

@@ -50,7 +50,7 @@ func (s *Selection) ContainsPos(dataY LineIndex, displayX int) bool {
 	if dataY == endY {
 		return displayX < endX
 	}
-	return true // middle line — fully selected
+	return true // middle line -- fully selected
 }
 
 // IsEmpty returns true if the selection has no extent

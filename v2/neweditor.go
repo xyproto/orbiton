@@ -248,7 +248,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 					}
 				}
 
-				//const title = "·-––—==[ Orbiton File Browser ]==—––-·"
+				//const title = ".-----==[ Orbiton File Browser ]==-----."
 				const title = ""
 				megaFileState := megafile.New(c, tty, startdirs, title, getEditorCommand(), fileBrowserUndoHistoryFilename)
 
@@ -632,7 +632,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		// Draw editor lines from line 0 to h onto the canvas at 0,0.
 		// Book mode (graphical or text) has its own rendering pipeline
 		// and must not have the regular syntax-highlighted editor lines
-		// painted beneath it — otherwise the old text ghosts through
+		// painted beneath it -- otherwise the old text ghosts through
 		// behind the status bar on the row book mode doesn't repaint.
 		if !e.InBookMode() {
 			e.HideCursorDrawLines(c, false, false, false)

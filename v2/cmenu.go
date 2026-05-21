@@ -367,7 +367,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Add the syntax highlighting toggle menu item
-	// (not applicable in book mode — book mode has its own renderer)
+	// (not applicable in book mode -- book mode has its own renderer)
 	if !envNoColor && (height > menuHeightThreshold) && !e.InBookMode() {
 		syntaxToggleText := "Disable syntax highlighting"
 		if !e.syntaxHighlight {
@@ -396,7 +396,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 
 	if (!envNoColor || changedTheme) && !e.InBookMode() {
 		// Add an option for selecting a theme (not applicable in book
-		// mode — book mode uses its own fixed black-on-white theme).
+		// mode -- book mode uses its own fixed black-on-white theme).
 		actions.Add("Change theme", func() {
 			menuChoices := []string{
 				"Default",
@@ -562,7 +562,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	if e.InBookMode() {
 		// Under NO_COLOR text book mode the vt library strips every
 		// colour / attribute escape, so toggling dark mode would make
-		// no visible difference (DNBOOK16 ≡ NBOOK16, DNBOOK256 ≡
+		// no visible difference (DNBOOK16 == NBOOK16, DNBOOK256 ==
 		// NBOOK256). Omit the toggle there so users don't think it's
 		// broken. Graphical modes transport pixels out-of-band and
 		// remain toggleable under NO_COLOR.
@@ -702,7 +702,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	// Launch the megafile file browser
-	// (not applicable in book mode — the user is reading, not editing)
+	// (not applicable in book mode -- the user is reading, not editing)
 	if !e.InBookMode() {
 		actions.Add("File browser", func() {
 			startdir := filepath.Dir(e.filename)

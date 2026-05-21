@@ -137,13 +137,13 @@ func (e *Editor) bookTextModeFGDim() vt.AttributeColor {
 type bookFontSet struct {
 	regular       font.Face
 	italic        font.Face
-	code          font.Face // monospace bold — used for inline code, fenced blocks, indented code
+	code          font.Face // monospace bold -- used for inline code, fenced blocks, indented code
 	h1            font.Face
 	h2            font.Face
 	h3            font.Face
 	h4            font.Face
 	h5            font.Face
-	h1Code        font.Face // monospace bold sized to h1 — for inline `code` in H1 headers
+	h1Code        font.Face // monospace bold sized to h1 -- for inline `code` in H1 headers
 	h2Code        font.Face
 	h3Code        font.Face
 	h4Code        font.Face
@@ -561,10 +561,10 @@ type textSegment struct {
 func parseLineSegments(line string) []textSegment {
 	flush := func(segs []textSegment, cur *strings.Builder, bold, italic, underline, strike bool) []textSegment {
 		if cur.Len() > 0 {
-			// Decode named/numeric HTML entities ("&lt;" → "<", "&amp;" → "&",
-			// "&#124;" → "|", etc.) so markdown sources authored as HTML
+			// Decode named/numeric HTML entities ("&lt;" -> "<", "&amp;" -> "&",
+			// "&#124;" -> "|", etc.) so markdown sources authored as HTML
 			// render with the intended glyphs in book mode. Inline `code`
-			// segments are flushed separately and keep their literal text —
+			// segments are flushed separately and keep their literal text --
 			// code blocks should preserve entities as-is.
 			segs = append(segs, textSegment{text: html.UnescapeString(cur.String()), bold: bold, italic: italic, underline: underline, strike: strike})
 			cur.Reset()
@@ -596,7 +596,7 @@ func parseLineSegments(line string) []textSegment {
 		return -1
 	}
 	for i := 0; i < len(runes); {
-		// [![alt](img)](url) — link-wrapped image. Emit a single link
+		// [![alt](img)](url) -- link-wrapped image. Emit a single link
 		// segment so the whole thing is clickable and coloured. When the
 		// alt text is empty we fall back to a short placeholder rather
 		// than an invisible segment.
@@ -634,7 +634,7 @@ func parseLineSegments(line string) []textSegment {
 			}
 			// fall through to standalone `[` handling below
 		}
-		// ![alt](url) — render the literal source in code style.
+		// ![alt](url) -- render the literal source in code style.
 		if runes[i] == '!' && i+1 < len(runes) && runes[i+1] == '[' {
 			j := i + 2
 			for j < len(runes) && runes[j] != ']' {
@@ -654,7 +654,7 @@ func parseLineSegments(line string) []textSegment {
 			i++
 			continue
 		}
-		// [text](url) — render as a styled link (display text only).
+		// [text](url) -- render as a styled link (display text only).
 		// The text scan tracks bracket nesting so "[foo[bar]](url)" is
 		// recognised correctly.
 		if runes[i] == '[' {
@@ -766,7 +766,7 @@ const (
 )
 
 type parsedLine struct {
-	prefix      string // rendered prefix, e.g. "• ", "1. ", "☐ ", "☑ "
+	prefix      string // rendered prefix, e.g. "* ", "1. ", "[ ] ", "[x] "
 	body        string // text after the prefix, may contain inline markers
 	kind        lineKind
 	headerLevel int // 1, 2, 3, 4, 5 for lineKindHeader
@@ -856,16 +856,16 @@ func isHorizontalRule(line string) bool {
 // top bar and the bottom status bar must use the same background/foreground
 // pair so they frame the reading area as a matched set.
 //
-// Palette rationale — evokes WordGrinder / AbiWord / classic word-processor
+// Palette rationale -- evokes WordGrinder / AbiWord / classic word-processor
 // aesthetics rather than the WordPerfect-5.1 blue. Warm parchment tones in
 // light mode, sepia ink in dark mode: think paper and a fountain pen.
 //
 // Tiers (per the xyproto/vt capability model):
 //
-//   - NO_COLOR environment variable set → no colour escapes (always defaults)
-//   - TERM=vt100, TERM=vt*, TERM=xterm → one of the 16 ANSI colours (or defaults if NO_COLOR)
-//   - TERM=xterm-256color → a 256-colour palette index (or ANSI if NO_COLOR)
-//   - TERM=xterm-kitty → a true (24-bit) RGB colour (or ANSI if NO_COLOR)
+//   - NO_COLOR environment variable set -> no colour escapes (always defaults)
+//   - TERM=vt100, TERM=vt*, TERM=xterm -> one of the 16 ANSI colours (or defaults if NO_COLOR)
+//   - TERM=xterm-256color -> a 256-colour palette index (or ANSI if NO_COLOR)
+//   - TERM=xterm-kitty -> a true (24-bit) RGB colour (or ANSI if NO_COLOR)
 func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
 	if envNoColor {
 		return vt.Default, vt.Default, vt.DefaultBackground
@@ -873,7 +873,7 @@ func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
 	term := env.Str("TERM")
 	switch term {
 	case "xterm-kitty":
-		// 24-bit true colour. Neutral gray — consistent with the ANSI-16
+		// 24-bit true colour. Neutral gray -- consistent with the ANSI-16
 		// palette used by vt220/linux/screen so the bar looks the same
 		// regardless of $TERM.
 		if dark {
@@ -881,16 +881,16 @@ func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
 		}
 		return vt.TrueColor(0, 0, 0), vt.TrueColor(110, 110, 110), vt.TrueBackground(192, 192, 192)
 	case "xterm-256color":
-		// 256-colour palette. Neutral gray — matches the ANSI-16
+		// 256-colour palette. Neutral gray -- matches the ANSI-16
 		// default below at higher fidelity.
 		if dark {
 			return vt.Color256(255), vt.Color256(250), vt.Background256(239)
 		}
 		return vt.Color256(16), vt.Color256(242), vt.Background256(250)
 	}
-	// All other TERMs (xterm, vt220, linux, screen, tmux, …): 16 ANSI
+	// All other TERMs (xterm, vt220, linux, screen, tmux, ...): 16 ANSI
 	// colours. Use LightGray/Black (neutral, AbiWord-like) for light
-	// mode, and DarkGray/White for dark mode. No blue — distinct from
+	// mode, and DarkGray/White for dark mode. No blue -- distinct from
 	// the WordPerfect 5.1 look the user asked to avoid.
 	if dark {
 		return vt.White, vt.LightGray, vt.BackgroundBrightBlack
@@ -902,7 +902,7 @@ func bookBarPalette(dark bool) (fg, dimFg, bg vt.AttributeColor) {
 // progress percentage that is 0 at the very top and 100 at the very bottom.
 // Using line-number / lastLine (as the generic editor does) makes line 1 of
 // a 6-line document show 16%, which is confusing for a "how far have I read"
-// indicator in book mode — the reader has not progressed at all yet.
+// indicator in book mode -- the reader has not progressed at all yet.
 func bookReadingPercent(lineNumber, lastLineNumber LineNumber) int {
 	if lastLineNumber <= 1 {
 		return 0
@@ -977,7 +977,7 @@ func bookHeadingPlainText(s string) string {
 				continue
 			}
 		}
-		// ![alt](url): Markdown image. Drop the whole expression — alt
+		// ![alt](url): Markdown image. Drop the whole expression -- alt
 		// text is rarely meaningful as a heading on its own.
 		if runes[i] == '!' && i+1 < len(runes) && runes[i+1] == '[' {
 			j := i + 2
@@ -1111,7 +1111,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 	if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
 		return parsedLine{kind: lineKindBlank}
 	}
-	// For blockquoted text, render with a "│ " prefix
+	// For blockquoted text, render with a "| " prefix
 	if strings.HasPrefix(trimmed, "> ") || trimmed == ">" {
 		inner := ""
 		if strings.HasPrefix(trimmed, "> ") {
@@ -1120,7 +1120,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 		return parsedLine{
 			kind:   lineKindBullet,
 			indent: indentDepth,
-			prefix: strings.Repeat("  ", indentDepth) + "│ ",
+			prefix: strings.Repeat("  ", indentDepth) + "| ",
 			body:   inner,
 		}
 	}
@@ -1193,7 +1193,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 		return parsedLine{
 			kind:   lineKindUnchecked,
 			indent: indentDepth,
-			prefix: strings.Repeat("  ", indentDepth) + "☐ ",
+			prefix: strings.Repeat("  ", indentDepth) + "[ ] ",
 			body:   strings.TrimSpace(trimmed[6:]),
 		}
 	}
@@ -1202,7 +1202,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 		return parsedLine{
 			kind:   lineKindChecked,
 			indent: indentDepth,
-			prefix: strings.Repeat("  ", indentDepth) + "☑ ",
+			prefix: strings.Repeat("  ", indentDepth) + "[x] ",
 			body:   strings.TrimSpace(trimmed[6:]),
 		}
 	}
@@ -1211,7 +1211,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 		return parsedLine{
 			kind:   lineKindBullet,
 			indent: indentDepth,
-			prefix: strings.Repeat("  ", indentDepth) + "• ",
+			prefix: strings.Repeat("  ", indentDepth) + "* ",
 			body:   trimmed[2:],
 		}
 	}
@@ -1233,7 +1233,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 	}
 	// A leading indent of 4+ spaces is a CommonMark indented code block.
 	// Note: the Tab key in book mode inserts 4 leading spaces on the first
-	// line of a paragraph — that first line then renders as code, as
+	// line of a paragraph -- that first line then renders as code, as
 	// requested.
 	if indent >= 4 {
 		return parsedLine{kind: lineKindCode, body: trimmed}
@@ -1636,7 +1636,7 @@ func measureSegmentsToRune(fs *bookFontSet, segs []textSegment, targetRune int) 
 
 // drawCursorBar draws a 2-pixel-wide vertical I-beam cursor between top and
 // bottom (exclusive). Callers should pass the pixel bounds of the actual text
-// region (baseline – ascent … baseline + descent) rather than the full cell.
+// region (baseline - ascent ... baseline + descent) rather than the full cell.
 func drawCursorBar(img *image.RGBA, x, top, bottom int) {
 	clr := color.NRGBA{0x00, 0x55, 0xCC, 0xFF} // blue cursor, always visible on white
 	for py := top; py < bottom; py++ {
@@ -1672,9 +1672,9 @@ func bookIsRemoteURL(imgPath string) bool {
 }
 
 // svgTextSpan describes a single piece of text extracted from an SVG.
-// All coordinates are in the SVG's user-space (before the viewBox→pixel
+// All coordinates are in the SVG's user-space (before the viewBox->pixel
 // mapping) and already have the cumulative ancestor transforms folded in
-// (only scale/translate are honored — enough for shields.io-style badges).
+// (only scale/translate are honored -- enough for shields.io-style badges).
 type svgTextSpan struct {
 	text        string
 	anchor      string // "start" | "middle" | "end"
@@ -1755,7 +1755,7 @@ func svgParseColor(s string) (color.NRGBA, bool) {
 	return color.NRGBA{}, false
 }
 
-// svgParseStyle returns a map of name→value from a CSS-like style string
+// svgParseStyle returns a map of name->value from a CSS-like style string
 // ("font-size:11px;fill:#fff").
 func svgParseStyle(s string) map[string]string {
 	m := map[string]string{}
@@ -1825,14 +1825,14 @@ func svgApplyAttrs(parent svgAttrFrame, attrs []xml.Attr) svgAttrFrame {
 		case "text-anchor":
 			f.anchor = strings.TrimSpace(value)
 		case "transform":
-			// Compose translate/scale (ignore rotate/skew — uncommon in badges).
+			// Compose translate/scale (ignore rotate/skew -- uncommon in badges).
 			if m := svgTranslateRe.FindStringSubmatch(value); m != nil {
 				tx, _ := strconv.ParseFloat(m[1], 64)
 				ty := 0.0
 				if m[2] != "" {
 					ty, _ = strconv.ParseFloat(m[2], 64)
 				}
-				// The new translate maps child (0,0) → (parent+scale*tx, ...)
+				// The new translate maps child (0,0) -> (parent+scale*tx, ...)
 				f.tx += f.scaleX * tx
 				f.ty += f.scaleY * ty
 			}
@@ -1898,10 +1898,10 @@ func svgExtractTextSpans(data []byte) (viewW, viewH float64, spans []svgTextSpan
 			lvl.xOverride = parent.tx
 			lvl.yOverride = parent.ty
 			// Snapshot the x/y on <text>/<tspan> before the element's own
-			// transform is applied — SVG applies attributes first, then
+			// transform is applied -- SVG applies attributes first, then
 			// transforms. But shields.io uses only transform="scale(...)"
 			// and absolute x/y on <text>. We fold as: final = parentTrans +
-			// parentScale*(x,y)*ownScaleFactor — for the common case of a
+			// parentScale*(x,y)*ownScaleFactor -- for the common case of a
 			// single scale on the element, parentScale is 1.
 			for _, a := range t.Attr {
 				switch a.Name.Local {
@@ -1992,7 +1992,7 @@ func svgExtractTextSpans(data []byte) (viewW, viewH float64, spans []svgTextSpan
 // bookRenderSVGTextOverlay draws <text>/<tspan> content onto img after oksvg
 // has rasterized the shapes. oksvg itself doesn't render SVG text, so this
 // recovers legibility for shields.io-style badges and similar SVGs that rely
-// on <text>. Text is rendered with Orbiton's bundled fonts — the Unicode
+// on <text>. Text is rendered with Orbiton's bundled fonts -- the Unicode
 // fallback font is used for "sans-serif" / "Verdana" / "Arial"
 // requests, the monospace bold font for monospace, and the body serif font for serif.
 func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64) {
@@ -2320,7 +2320,7 @@ func (e *Editor) bookLayoutImageGroup(urls []string, availW, lineH int) ([]bookI
 	const gapX = 6
 	const gapY = 2
 	maxH := bookMaxImageRows * lineH
-	// Placeholder size for images that aren't loaded yet — roughly matches a
+	// Placeholder size for images that aren't loaded yet -- roughly matches a
 	// typical shields.io badge so the layout doesn't snap when downloads land.
 	phW := min(120, availW)
 	phH := max(lineH*9/10, 14)
@@ -2351,7 +2351,7 @@ func (e *Editor) bookLayoutImageGroup(urls []string, availW, lineH int) ([]bookI
 			h = max(int(float64(sh)*scale), 1)
 		}
 		// Wrap when the image wouldn't fit on the current row (but never on
-		// an empty row — if it's too wide it goes alone and gets clipped).
+		// an empty row -- if it's too wide it goes alone and gets clipped).
 		if curX > 0 && curX+w > availW {
 			rowTop += rowH + gapY
 			curX = 0
@@ -2446,7 +2446,7 @@ func (e *Editor) bookImageRows(imgPath string, lineH, maxW int) int {
 	if srcW == 0 || srcH == 0 {
 		return 1
 	}
-	maxH := bookMaxImageRows * lineH // fixed ceiling — no available-height dependency
+	maxH := bookMaxImageRows * lineH // fixed ceiling -- no available-height dependency
 	scaleX := float64(maxW) / float64(srcW)
 	scaleY := float64(maxH) / float64(srcH)
 	scale := scaleX
@@ -2552,13 +2552,13 @@ func (e *Editor) bookDrawCheckbox(img *image.RGBA, x, cellTop, lineH int, checke
 	}
 
 	if checked {
-		// Draw a ✓ checkmark with two thick Bresenham strokes.
+		// Draw a checkmark with two thick Bresenham strokes.
 		checkClr := color.NRGBA{0x10, 0x80, 0x10, 0xff}
 		pad := max(size/5, 1)
-		// Short left arm: inner-left → mid-bottom
+		// Short left arm: inner-left -> mid-bottom
 		lx, ly := x+pad, topY+size*2/3
 		midX, midY := x+size*2/5, topY+size-1-pad
-		// Long right arm: mid-bottom → upper-right
+		// Long right arm: mid-bottom -> upper-right
 		rx, ry := x+size-1-pad, topY+pad
 		bookBresenhamLine(img, lx, ly, midX, midY, checkClr)
 		bookBresenhamLine(img, lx+1, ly, midX+1, midY, checkClr)
@@ -2969,7 +2969,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	// with the document. Top corners are applied per-frame in bookPageToImage
 	// so they stay fixed at the top of the window. The outside-fill colour
 	// for the bottom corners must match whatever sits directly below the
-	// page — the status bar in the usual case — otherwise the corners
+	// page -- the status bar in the usual case -- otherwise the corners
 	// produce a visible seam. bookBottomCornerBG handles both the bar-
 	// visible and status-hidden cases (see its doc).
 	// Rounded corners look great against a bright page on a dark terminal
@@ -3608,7 +3608,7 @@ func nextListPrefix(pfx string) string {
 	trimmed := strings.TrimLeft(pfx, " \t")
 	indent := pfx[:len(pfx)-len(trimmed)]
 
-	// Checked checkbox → unchecked
+	// Checked checkbox -> unchecked
 	if strings.HasPrefix(trimmed, "- [x] ") || strings.HasPrefix(trimmed, "- [X] ") {
 		return indent + "- [ ] "
 	}
@@ -3627,7 +3627,7 @@ func nextListPrefix(pfx string) string {
 		break
 	}
 
-	// Bullet, unchecked checkbox — same prefix
+	// Bullet, unchecked checkbox -- same prefix
 	return pfx
 }
 
@@ -3696,7 +3696,7 @@ func (e *Editor) writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []tex
 		}
 		// Links (Markdown [text](url)) use the same palette as the
 		// graphical renderer: #46a3bf unvisited, #7e46bf visited. The
-		// colour alone differentiates links — we intentionally do NOT
+		// colour alone differentiates links -- we intentionally do NOT
 		// combine vt.Underscore into the true-colour foreground or
 		// background here, because vt.AttributeColor.Combine masks the
 		// operand to the lower 16 bits and destroys the extended /
@@ -3720,7 +3720,7 @@ func (e *Editor) writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []tex
 		// cleanly with the attribute codes. We lose a touch of colour
 		// fidelity on bold/italic runs but the alternative is broken
 		// output. Underline / strikethrough are dropped altogether in
-		// text mode — they can't be expressed safely on top of a
+		// text mode -- they can't be expressed safely on top of a
 		// true-colour bg, and link colour already signals the link.
 		if seg.bold || seg.italic {
 			paletteFG := vt.Black
@@ -3738,7 +3738,7 @@ func (e *Editor) writeBookTextSegs(c *vt.Canvas, startX uint, y uint, segs []tex
 			}
 			if isLink {
 				// Preserve link colour even on bold/italic by using a
-				// 256-colour nearest palette index — Combine on a
+				// 256-colour nearest palette index -- Combine on a
 				// non-extended 256-colour value still drops the
 				// extended flag, so keep it simple and skip the bold
 				// here; colour wins over weight for link emphasis.
@@ -3802,7 +3802,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 	// Clear every row (including the status row) with the book theme's
 	// background. Clearing the status row too is important on startup:
 	// before Loop() calls InitialRedraw, neweditor.go had a chance to
-	// paint regular editor text onto the canvas — if we left the status
+	// paint regular editor text onto the canvas -- if we left the status
 	// row untouched, the old syntax-highlighted text would ghost through
 	// behind the status bar. The status bar will repaint its own row on
 	// top of this blank line anyway.
@@ -3813,9 +3813,9 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		c.Write(0, uint(row), clearFG, clearBG, blank)
 	}
 
-	// Top book-title bar — palette blends with the book-mode theme and
+	// Top book-title bar -- palette blends with the book-mode theme and
 	// surfaces genuinely useful information at a glance:
-	//   [📖] <book title>                       words · ~N min · NN%
+	//   [o] <book title>                       words . ~N min . NN%
 	// The title is the first H1 found in the document (up to the first 80
 	// runes), falling back to the base filename. Word count, estimated
 	// reading time, and scroll progress are right-aligned. A small book
@@ -3865,7 +3865,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			row++
 
 		case lineKindHeader:
-			// H1 black, H2 dark gray, H3+ dark gray — all bold. The
+			// H1 black, H2 dark gray, H3+ dark gray -- all bold. The
 			// graphical renderer similarly decreases emphasis as the
 			// header level increases.
 			fg := vt.Black
@@ -3883,7 +3883,7 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 
 		case lineKindCode:
-			// Dark gray on bright white for code lines — the same
+			// Dark gray on bright white for code lines -- the same
 			// muted contrast used by the graphical renderer's code
 			// background.
 			cfg, cbg := e.bookTextTheme(vt.DarkGray, false)
@@ -4369,7 +4369,7 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		case lineKindTable:
 			// Selection inside a rendered table cell is approximated by a
 			// solid highlight across the visible row (across all its
-			// wrapped sub-rows) — accurate cell-level selection math
+			// wrapped sub-rows) -- accurate cell-level selection math
 			// would require per-column layout info here.
 			if lineIdx >= selStartY && lineIdx <= selEndY {
 				rowH := rowsConsumed * lineH
@@ -4512,7 +4512,7 @@ func (e *Editor) bookOverlayFocusDim(dst *image.RGBA, pixW, pixH, editRows int, 
 	// ensureCursorVisible has already scrolled it in), just dim everything.
 	bgR, bgG, bgB, _ := e.bookBG().RGBA()
 	bgr8, bgg8, bgb8 := uint8(bgR>>8), uint8(bgG>>8), uint8(bgB>>8)
-	// Alpha of 140/255 ≈ 55% toward bg keeps the dim text legible as context
+	// Alpha of 140/255 ~ 55% toward bg keeps the dim text legible as context
 	// but clearly secondary. In dark mode, bump to ~75% for stronger dimming,
 	// since the text is already naturally dim and needs more contrast.
 	dimAlpha := 140
@@ -5000,7 +5000,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 	// Focus (typewriter) mode: anchor the cursor row near the vertical
 	// centre of the edit area. Scroll offsetY so that the number of
 	// display rows from offsetY to cursorDataY equals roughly
-	// maxDisplayRows/2 — the page slides under a stationary cursor.
+	// maxDisplayRows/2 -- the page slides under a stationary cursor.
 	if e.bookFocusMode {
 		targetRow := max(maxDisplayRows/2, 1)
 		// Walk offsetY down until the rows-from-offset matches target,
@@ -5036,7 +5036,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 		if !graphical {
 			subRow, _ := e.bookCursorSubRow(textW, nil)
 			if rowsToTarget+subRow >= maxDisplayRows {
-				// Cursor sub-row overflows — fall through to scroll.
+				// Cursor sub-row overflows -- fall through to scroll.
 				goto scroll
 			}
 		}
@@ -5045,7 +5045,7 @@ func (e *Editor) bookModeEnsureCursorVisible(c *vt.Canvas) {
 
 scroll:
 
-	// Cursor is below the visible area — advance offsetY one document line at
+	// Cursor is below the visible area -- advance offsetY one document line at
 	// a time until the cursor fits inside maxDisplayRows.
 	// In text mode, also account for the cursor's sub-row within a wrapped line.
 	var scrollSubRow int
@@ -5156,7 +5156,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 		}
 	}
 
-	// Fast path: cache valid and no pending message — skip PNG re-encoding.
+	// Fast path: cache valid and no pending message -- skip PNG re-encoding.
 	gen := bookCurrentContentGen()
 	contentCacheValid := bookContentCache != nil &&
 		bookContentCacheW == pixW &&
@@ -5169,7 +5169,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 		return
 	}
 
-	// Full path: content changed or scrolled — re-encode and send the page image.
+	// Full path: content changed or scrolled -- re-encode and send the page image.
 	vt.BeginSyncUpdate()
 	if imagepreview.IsSixel {
 		fmt.Fprintf(os.Stdout, "\033[1;%dr", rows)
@@ -5260,7 +5260,7 @@ func (e *Editor) bookModeShowCursor(c *vt.Canvas) {
 		y = int(editRows) - 1
 	}
 
-	// Hide the terminal cursor — the image cursor is the visible one.
+	// Hide the terminal cursor -- the image cursor is the visible one.
 	fmt.Fprintf(os.Stdout, "\033[%d;%dH\033[?25l", y+1, x+1)
 }
 
@@ -5347,7 +5347,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 		// These now soft-wrap via bookWrapPlainRunes in bookTextModeRender.
 		adjX := cursorRawX
 		if pl.kind == lineKindImage {
-			// The rendered line is "[image: " + body + "]" — shift the
+			// The rendered line is "[image: " + body + "]" -- shift the
 			// cursor by the prefix length so it stays aligned with what
 			// the user sees.
 			adjX += len("[image: ")
@@ -5400,7 +5400,7 @@ func (e *Editor) bookTextModePlaceCursor(c *vt.Canvas) {
 	// caret would briefly appear at the position left behind by the
 	// preceding HideCursorAndDraw (typically the end of the last row
 	// drawn, which can be inside the top bar), then jump to the final
-	// position — a visible flash. Reversing the order keeps the caret
+	// position -- a visible flash. Reversing the order keeps the caret
 	// invisible until it is already where it belongs.
 	vt.SetXY(uint(x), uint(y))
 	c.ShowCursor()
@@ -5740,7 +5740,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 		// Position didn't change: savedX lands exactly at the wrap
 		// boundary between sub and targetSub. Fall through to the next data line.
 	}
-	// At the last sub-row — move to the next data line. Not using
+	// At the last sub-row -- move to the next data line. Not using
 	// e.CursorDownward because it thinks in canvas cells and triggers a
 	// scroll at the wrong time for soft-wrapped book-mode layout.
 	if int(e.DataY()) >= e.Len()-1 {
@@ -5767,7 +5767,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 		curLine := strings.ReplaceAll(e.Line(e.DataY()), "\t", "    ")
 		prevLine := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())-1)), "\t", "    ")
 		if parseBookLine(curLine).kind == lineKindImage && parseBookLine(prevLine).kind == lineKindImage {
-			// Already inside an image group — skip to the end of it.
+			// Already inside an image group -- skip to the end of it.
 			for int(e.DataY()) < e.Len()-1 {
 				nextRaw := strings.ReplaceAll(e.Line(LineIndex(int(e.DataY())+1)), "\t", "    ")
 				if parseBookLine(nextRaw).kind != lineKindImage {
@@ -5962,7 +5962,7 @@ func bookSubRowX(rawLine string, textW, targetSub, savedX int, pw *bookPixelWrap
 			targetSub = len(wrows) - 1
 		}
 
-		// savedX is a raw rune position — convert to visual body rune offset.
+		// savedX is a raw rune position -- convert to visual body rune offset.
 		bodyRawX := savedX
 		if pl.kind != lineKindBody {
 			bodyRawX -= rawPfxLen
@@ -6194,7 +6194,7 @@ func (e *Editor) bookEnd(c *vt.Canvas) {
 
 	curX := e.pos.sx + e.pos.offsetX
 	if curX == newX && e.bookCursorAffinity == bookAffinityBackward {
-		// Already at the wrap boundary rendered as end-of-sub — go to line end.
+		// Already at the wrap boundary rendered as end-of-sub -- go to line end.
 		e.End(c)
 		e.bookCursorAffinity = bookAffinityForward
 		return
@@ -6277,7 +6277,7 @@ func bookSkipMarkersBackward(runes []rune, rawX int) int {
 
 // bookCursorForward moves one visible column to the right, skipping over any
 // Markdown inline markers (*, **, ***, __, ~~, `) so that each key-press
-// actually advances the visible cursor position — matching the behaviour of
+// actually advances the visible cursor position -- matching the behaviour of
 // WYSIWYG word processors.
 func (e *Editor) bookCursorForward(c *vt.Canvas, status *StatusBar) bool {
 	// Image lines render as "[image: path]" which shares no positions
@@ -6666,7 +6666,7 @@ func bookDrawTableRow(img *image.RGBA, fs *bookFontSet, rawRow string, block []s
 	isSep := bookIsTableSeparator(rawRow)
 	isHeader := rowInBlock == headerRow && headerRow >= 0
 
-	// Data-row index (skips separators and the header) — used for the
+	// Data-row index (skips separators and the header) -- used for the
 	// alternating background band
 	dataIdx := -1
 	if !isSep && !isHeader {
@@ -6940,7 +6940,7 @@ func (e *Editor) bookGraphicalUserInput(c *vt.Canvas, tty *vt.TTY, title string)
 			return "", false
 		case "c:13": // return
 			return entered, true
-		case "c:9": // tab — no action
+		case "c:9": // tab -- no action
 		case leftArrow, rightArrow, upArrow, downArrow:
 			// Ignore arrow keys.
 		default:

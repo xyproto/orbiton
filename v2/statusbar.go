@@ -297,7 +297,7 @@ func (sb *StatusBar) Show(c *vt.Canvas, e *Editor) {
 			// Schedule a single auto-clear after dur. The generation
 			// counter ensures that rapid repeated Show() calls don't
 			// pile up stale goroutines all re-acquiring redrawMutex and
-			// issuing full-frame re-renders — only the freshest one
+			// issuing full-frame re-renders -- only the freshest one
 			// actually fires and clears.
 			myGen := bookStatusClearGen.Add(1)
 			go func() {
@@ -615,7 +615,7 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 		// Plain {{field}} replacement (most common path).
 		format = strings.ReplaceAll(format, "{{"+name+"}}", value)
 
-		// {{field:width}} replacement — scan for the prefix and parse the
+		// {{field:width}} replacement -- scan for the prefix and parse the
 		// width from the characters between ":" and "}}".
 		prefix := "{{" + name + ":"
 		for {

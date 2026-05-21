@@ -12,7 +12,7 @@ import (
 // data line), so its movement and scrolling operate on display rows instead.
 //
 // Keyloop handlers should call e.Cursor().Up/Down/... rather than selecting
-// between CursorUpward and bookCursorUp themselves — this keeps mode-specific
+// between CursorUpward and bookCursorUp themselves -- this keeps mode-specific
 // details out of the hot path.
 type Cursor interface {
 	// Up/Down/Left/Right move one display position in the named direction.
@@ -77,7 +77,7 @@ func (t textCursor) EnsureVisible(c *vt.Canvas) {}
 // bookCursor navigates in display-row space used by book mode, accounting
 // for soft-wrapped body/list lines and multi-row headers/images. After every
 // movement it calls bookModeEnsureCursorVisible so offsetY stays consistent
-// with the actual pixel layout — the regular canvas-cell scrolling inside
+// with the actual pixel layout -- the regular canvas-cell scrolling inside
 // CursorDownward/Upward doesn't know about display rows and would otherwise
 // misplace the cursor when the viewport is about to scroll.
 type bookCursor struct{ e *Editor }

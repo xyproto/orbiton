@@ -120,7 +120,7 @@ func (e *Editor) FunctionName(line string) string {
 		// Extract name from "TEXT memeqbody<>(SB),NOSPLIT,$0-0"
 		after, found := strings.CutPrefix(trimmedLine, "TEXT ")
 		if found {
-			// Strip middot prefix (·) if present
+			// Strip middot prefix (U+00B7) if present
 			after = strings.TrimPrefix(after, "·")
 			after = strings.TrimPrefix(after, "\u00b7")
 			// Name ends at <, (, or whitespace
@@ -371,7 +371,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 				// does not crowd the top-right slot. Truncate rune-wise
 				// and append an ellipsis when over the limit. Use the
 				// single-rune ellipsis only in graphical book mode, where
-				// the image renderer draws "…" cleanly; everywhere else
+				// the image renderer draws "..." cleanly; everywhere else
 				// fall back to plain "..." for terminals and fonts where
 				// the Unicode glyph renders poorly or not at all.
 				ellipsis := "..."

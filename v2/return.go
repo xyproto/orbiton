@@ -11,7 +11,7 @@ import (
 // When softReturn is true (e.g. shift-Return or alt-Return) and book mode is
 // active, the extra paragraph-trailing blank line and Markdown list prefix
 // auto-continuation are skipped, giving a soft line break inside the same
-// paragraph — like shift-Return in a word processor.
+// paragraph -- like shift-Return in a word processor.
 func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool) {
 	var (
 		trimmedLine              = e.TrimmedLine()
@@ -48,7 +48,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 		if pfx != "" {
 			body := strings.TrimRight(rawLine, " \t")
 			if len(body) <= len(pfx) {
-				// The line is just a prefix with no body text — end the list.
+				// The line is just a prefix with no body text -- end the list.
 				// Clear the prefix and fall through to normal Return handling
 				// so a new line is inserted and the cursor moves down.
 				e.SetCurrentLine("")
@@ -84,7 +84,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 
 	switch {
 	case e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrBeforeStartOfTextScreenLine()):
-		// An empty last line needs InsertLineBelow — InsertLineAbove would
+		// An empty last line needs InsertLineBelow -- InsertLineAbove would
 		// trim the trailing empty line back off, resulting in a net no-op
 		if e.AtLastLineOfDocument() && e.EmptyLine() {
 			e.InsertLineBelow()
@@ -175,7 +175,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	}
 
 	// Book-mode: insert an extra blank line below so the cursor ends up in
-	// a clean paragraph. Skip when continuing a list — the list prefix
+	// a clean paragraph. Skip when continuing a list -- the list prefix
 	// already placed the cursor on the right line.
 	if afterParagraph && listPrefix == "" {
 		e.InsertLineBelow()

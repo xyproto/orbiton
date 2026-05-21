@@ -22,15 +22,15 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 	// decoded to rune 0x00A0 = 160, not 0xC2A0) so the substitutions
 	// silently stopped working.
 	switch r {
-	case '\u00A0': // non-breaking space → regular space
+	case '\u00A0': // non-breaking space -> regular space
 		r = ' '
 	case '\u0308': // combining diaeresis (sticky dead key)
 		r = '~'
 	case '\u037E': // Greek question mark (looks like ';')
 		r = ';'
-	case '\u0387': // Greek ano teleia (looks like ';' / '·')
+	case '\u0387': // Greek ano teleia (looks like ';' / '.')
 		r = ';'
-	case '\u00B7': // middle dot (looks like '·')
+	case '\u00B7': // middle dot (looks like '.')
 		r = '.'
 	}
 
@@ -69,7 +69,7 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 				h = int(c.Height())
 			}
 			if cursorX >= result.BreakAt {
-				// cursor is in the wrapped portion — reposition it
+				// cursor is in the wrapped portion -- reposition it
 				// onto the new line, one past the inserted rune
 				newX := max(cursorX+1-result.RightStart, 0)
 				e.pos.sy++
@@ -83,7 +83,7 @@ func (e *Editor) InsertRune(c *vt.Canvas, r rune) bool {
 				e.redrawCursor.Store(true)
 				return true
 			}
-			// cursor is before the break — the line split happened
+			// cursor is before the break -- the line split happened
 			// behind the cursor. Let the caller advance normally.
 			e.Center(c)
 			e.redraw.Store(true)
