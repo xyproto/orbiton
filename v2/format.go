@@ -131,7 +131,7 @@ func (e *Editor) formatWithUtility(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 			if err != nil && !ignoreErrors {
 				// Only grab the first error message
 				errorMessage := strings.TrimSpace(string(output))
-				if errorMessage == "" && err != nil {
+				if errorMessage == "" {
 					errorMessage = err.Error()
 				}
 				if strings.Count(errorMessage, "\n") > 0 {
