@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"sync/atomic"
 
 	"github.com/sajari/fuzzy"
 	"github.com/xyproto/vt"
@@ -18,7 +19,7 @@ var (
 	//go:embed dictionary/words_en.txt.gz
 	gzwords []byte
 
-	spellChecker *SpellChecker
+	spellChecker atomic.Pointer[SpellChecker]
 
 	errFoundNoTypos = errors.New("found no typos")
 	wordRegexp      = regexp.MustCompile(`(?:%2[A-Z])?([a-zA-Z0-9]+)`) // avoid capturing "%2F" and "%2B", other than that, capture English words
@@ -94,20 +95,23 @@ func (sc *SpellChecker) Train(reTrain bool) {
 
 // CurrentSpellCheckWord returns the currently marked spell check word
 func (e *Editor) CurrentSpellCheckWord() string {
-	if spellChecker == nil {
+	sc := spellChecker.Load()
+	if sc == nil {
 		return ""
 	}
-	return spellChecker.markedWord
+	return sc.markedWord
 }
 
 // AddCurrentWordToWordList will attempt to add the word at the cursor to the spellcheck word list
 func (e *Editor) AddCurrentWordToWordList() string {
-	if spellChecker == nil {
-		newSpellChecker, err := NewSpellChecker()
+	sc := spellChecker.Load()
+	if sc == nil {
+		newSC, err := NewSpellChecker()
 		if err != nil {
 			return ""
 		}
-		spellChecker = newSpellChecker
+		spellChecker.Store(newSC)
+		sc = newSC
 	}
 
 	var word string
@@ -116,26 +120,28 @@ func (e *Editor) AddCurrentWordToWordList() string {
 		word = matches[1] // The captured word is in the second item of the slice
 	}
 
-	if slices.Contains(spellChecker.customWords, word) || slices.Contains(spellChecker.correctWords, word) { // already has this word
+	if slices.Contains(sc.customWords, word) || slices.Contains(sc.correctWords, word) { // already has this word
 		return word
 	}
 
-	spellChecker.customWords = append(spellChecker.customWords, word)
+	sc.customWords = append(sc.customWords, word)
 
 	// Add the word
-	spellChecker.fuzzyModel.TrainWord(word)
+	sc.fuzzyModel.TrainWord(word)
 
 	return word
 }
 
 // RemoveCurrentWordFromWordList will attempt to add the word at the cursor to the spellcheck word list
 func (e *Editor) RemoveCurrentWordFromWordList() string {
-	if spellChecker == nil {
-		newSpellChecker, err := NewSpellChecker()
+	sc := spellChecker.Load()
+	if sc == nil {
+		newSC, err := NewSpellChecker()
 		if err != nil {
 			return ""
 		}
-		spellChecker = newSpellChecker
+		spellChecker.Store(newSC)
+		sc = newSC
 	}
 
 	var word string
@@ -144,12 +150,12 @@ func (e *Editor) RemoveCurrentWordFromWordList() string {
 		word = matches[1] // The captured word is in the second item of the slice
 	}
 
-	if slices.Contains(spellChecker.ignoredWords, word) { // already has this word
+	if slices.Contains(sc.ignoredWords, word) { // already has this word
 		return word
 	}
-	spellChecker.ignoredWords = append(spellChecker.ignoredWords, word)
+	sc.ignoredWords = append(sc.ignoredWords, word)
 
-	spellChecker.Train(true) // re-train
+	sc.Train(true) // re-train
 
 	return word
 }
@@ -167,15 +173,17 @@ func isInEmailPattern(text string, startPos, endPos int) bool {
 // SearchForTypo returns the first misspelled word in the document (as defined by the dictionary),
 // or an empty string. The second returned string is what the word could be if it was corrected.
 func (e *Editor) SearchForTypo() (string, string, error) {
-	if spellChecker == nil {
-		newSpellChecker, err := NewSpellChecker()
+	sc := spellChecker.Load()
+	if sc == nil {
+		newSC, err := NewSpellChecker()
 		if err != nil {
 			return "", "", err
 		}
-		spellChecker = newSpellChecker
+		spellChecker.Store(newSC)
+		sc = newSC
 	}
 	e.spellCheckMode = true
-	spellChecker.markedWord = ""
+	sc.markedWord = ""
 
 	// Use the regular expression to find all the words with positions
 	content := e.String()
@@ -191,19 +199,19 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 		if isInEmailPattern(content, loc[0], loc[1]) {
 			continue
 		}
-		if slices.Contains(spellChecker.ignoredWords, justTheWord) || slices.Contains(spellChecker.customWords, justTheWord) { // || slices.Contains(spellChecker.correctWords, justTheWord) {
+		if slices.Contains(sc.ignoredWords, justTheWord) || slices.Contains(sc.customWords, justTheWord) { // || slices.Contains(sc.correctWords, justTheWord) {
 			continue
 		}
 
 		lower := strings.ToLower(justTheWord)
 
-		if slices.Contains(spellChecker.ignoredWords, lower) || slices.Contains(spellChecker.customWords, lower) { // || slices.Contains(spellChecker.correctWords, lower) {
+		if slices.Contains(sc.ignoredWords, lower) || slices.Contains(sc.customWords, lower) { // || slices.Contains(sc.correctWords, lower) {
 			continue
 		}
 
-		corrected := spellChecker.fuzzyModel.SpellCheck(justTheWord)
+		corrected := sc.fuzzyModel.SpellCheck(justTheWord)
 		if !strings.EqualFold(justTheWord, corrected) && corrected != "" && !slices.Contains(dontSuggest, corrected) { // case insensitive comparison of the original and spell-check-suggested word
-			spellChecker.markedWord = justTheWord
+			sc.markedWord = justTheWord
 			return justTheWord, corrected, nil
 		}
 	}
@@ -213,7 +221,8 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 // applyTypoHighlights colors words in single-line comments that appear to be typos.
 // It modifies runesAndAttributes in-place, following the same pattern as applyAccentHighlights.
 func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttributes []vt.CharAttribute) {
-	if spellChecker == nil || !ProgrammingLanguage(e.mode) || commentMarker == "" || len(runesAndAttributes) == 0 {
+	sc := spellChecker.Load()
+	if sc == nil || !ProgrammingLanguage(e.mode) || commentMarker == "" || len(runesAndAttributes) == 0 {
 		return
 	}
 	// Find where the comment text begins in the (tab-expanded) line
@@ -236,11 +245,11 @@ func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttribu
 			continue
 		}
 		lower := strings.ToLower(word)
-		if slices.Contains(spellChecker.ignoredWords, word) || slices.Contains(spellChecker.customWords, word) ||
-			slices.Contains(spellChecker.ignoredWords, lower) || slices.Contains(spellChecker.customWords, lower) {
+		if slices.Contains(sc.ignoredWords, word) || slices.Contains(sc.customWords, word) ||
+			slices.Contains(sc.ignoredWords, lower) || slices.Contains(sc.customWords, lower) {
 			continue
 		}
-		corrected := spellChecker.fuzzyModel.SpellCheck(word)
+		corrected := sc.fuzzyModel.SpellCheck(word)
 		if strings.EqualFold(word, corrected) || corrected == "" || slices.Contains(dontSuggest, corrected) {
 			continue
 		}

@@ -33,10 +33,11 @@ func TestSpellCheckerTraining(t *testing.T) {
 }
 
 func TestDefaultSpellCheckerInitialization(t *testing.T) {
-	if spellChecker == nil {
+	sc := spellChecker.Load()
+	if sc == nil {
 		t.Fatal("Default spell checker is not initialized.")
 	}
-	if len(spellChecker.correctWords) == 0 {
+	if len(sc.correctWords) == 0 {
 		t.Fatal("Default spell checker has no correct words loaded.")
 	}
 }

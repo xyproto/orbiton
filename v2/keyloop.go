@@ -511,10 +511,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// Initialize the spell checker in the background, but only if the document has single-line comments
-	if spellChecker == nil && ProgrammingLanguage(e.mode) {
+	if spellChecker.Load() == nil && ProgrammingLanguage(e.mode) {
 		go func() {
 			if sc, err := NewSpellChecker(); err == nil {
-				spellChecker = sc
+				spellChecker.Store(sc)
 			}
 		}()
 	}
@@ -1970,7 +1970,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if ignoredWord := e.RemoveCurrentWordFromWordList(); ignoredWord != "" {
 					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Ignored " + ignoredWord
-					if spellChecker != nil && typo != "" {
+					if spellChecker.Load() != nil && typo != "" {
 						msg += ". Found " + typo
 						if corrected != "" {
 							msg += " which could be " + corrected + "."
@@ -2195,7 +2195,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if addedWord := e.AddCurrentWordToWordList(); addedWord != "" {
 					typo, corrected := e.NanoNextTypo(c, status)
 					msg := "Added " + addedWord
-					if spellChecker != nil && typo != "" {
+					if spellChecker.Load() != nil && typo != "" {
 						msg += ". Found " + typo
 						if corrected != "" {
 							msg += " which could be " + corrected + "."
