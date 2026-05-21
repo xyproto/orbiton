@@ -553,35 +553,11 @@ type IndexByteLine struct {
 	index    int
 }
 
-// PrepareEmpty prepares an empty textual representation of a given filename.
-// If it's an image, there will be text placeholders for pixels.
-// If it's anything else, it will just be blank.
-// Returns an editor mode and an error type.
+// PrepareEmpty clears the editor buffer and marks the content as unchanged.
 func (e *Editor) PrepareEmpty() (mode.Mode, error) {
-	var (
-		m    mode.Mode = mode.Blank
-		data []byte
-		err  error
-	)
-
-	// Check if the data could be prepared
-	if err != nil {
-		return m, err
-	}
-
-	lines := strings.Split(string(data), "\n")
 	e.Clear()
-	for y, line := range lines {
-		counter := 0
-		for _, letter := range line {
-			e.Set(counter, LineIndex(y), letter)
-			counter++
-		}
-	}
-	// Mark the data as "not changed"
 	e.changed.Store(false)
-
-	return m, nil
+	return mode.Blank, nil
 }
 
 // TrimRight will remove whitespace from the end of the given line number
@@ -927,7 +903,7 @@ func (e *Editor) InsertLineAbove() {
 	}
 
 	// Skip trailing newlines after this line
-	for i := len(e.lines); i > y; i-- {
+	for i := len(e.lines) - 1; i > y; i-- {
 		if len(e.lines[i]) == 0 {
 			delete(e.lines, i)
 		} else {
@@ -966,7 +942,7 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	e.lines[y+1] = make([]rune, 0)
 
 	// Skip trailing newlines after this line
-	for i := len(e.lines); i > y; i-- {
+	for i := len(e.lines) - 1; i > y; i-- {
 		if len(e.lines[i]) == 0 {
 			delete(e.lines, i)
 		} else {
