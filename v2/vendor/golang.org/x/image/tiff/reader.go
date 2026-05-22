@@ -756,7 +756,7 @@ func Decode(r io.Reader) (img image.Image, err error) {
 				d.buf, err = readBuf(r, d.buf, blockMaxDataSize)
 				r.Close()
 			case cPackBits:
-				d.buf, err = unpackBits(io.NewSectionReader(d.r, offset, n))
+				d.buf, err = unpackBits(io.NewSectionReader(d.r, offset, n), blockMaxDataSize)
 			default:
 				err = UnsupportedError(fmt.Sprintf("compression value %d", d.firstVal(tCompression)))
 			}
