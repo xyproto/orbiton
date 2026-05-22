@@ -24,7 +24,7 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	)
 
 	// TODO: add and use something like "e.shouldAutoIndent" for these file types
-	if e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.Blank {
+	if e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.Text || e.mode == mode.Blank {
 		indent = false
 	}
 

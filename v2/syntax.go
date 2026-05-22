@@ -260,7 +260,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 	case mode.ObjectPascal:
 		return "{"
 	case mode.ReStructured:
-		return "["
+		return ".."
 	case mode.Vim:
 		return "\""
 	default:

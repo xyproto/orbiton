@@ -42,7 +42,7 @@ func hasMarkdownHeadings(m mode.Mode) bool {
 // NoSmartIndentation returns true if the current mode should probably not have smart tab indentation
 func (e *Editor) NoSmartIndentation() bool {
 	switch e.mode {
-	case mode.Assembly, mode.Blank, mode.CSV, mode.Email, mode.GoAssembly, mode.Ini, mode.Log, mode.ManPage, mode.Markdown, mode.Nroff, mode.OCaml, mode.Perl, mode.SQL, mode.Spec, mode.StandardML, mode.Text:
+	case mode.Assembly, mode.Blank, mode.CSV, mode.Email, mode.GoAssembly, mode.Ini, mode.Log, mode.ManPage, mode.Markdown, mode.Nroff, mode.OCaml, mode.Perl, mode.ReStructured, mode.SQL, mode.Spec, mode.StandardML, mode.Text:
 		return true
 	}
 	return false

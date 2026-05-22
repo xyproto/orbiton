@@ -646,7 +646,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			status.ShowNoTimeout(c, e)
 		})
 		// Render to PDF using pandoc
-		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
+		if (e.mode == mode.Markdown || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc) && files.WhichCached("pandoc") != "" {
 			actions.Add("Render to PDF using pandoc", func() {
 				pandocPath := files.WhichCached("pandoc")
 				if pandocPath == "" {

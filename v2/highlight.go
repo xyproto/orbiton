@@ -349,7 +349,25 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					coloredString = e.gitHighlight(line)
 				case mode.ManPage:
 					coloredString = e.manPageHighlight(line, y == 0, int(y+1) == numLinesToDraw)
-				case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
+				case mode.ReStructured:
+					prevLine := ""
+					nextLine := ""
+					if li := LineIndex(y + offsetY - 1); li >= 0 {
+						prevLine = e.Line(li)
+					}
+					if li := LineIndex(y + offsetY + 1); int(li) < e.Len() {
+						nextLine = e.Line(li)
+					}
+					if highlighted, ok, codeBlockFound = e.rstHighlight(line, inCodeBlock, prevLine, nextLine); ok {
+						coloredString = highlighted
+						if codeBlockFound {
+							inCodeBlock = !inCodeBlock
+						}
+					} else {
+						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
+					}
+					listItemRecord = append(listItemRecord, rstListItem(line))
+				case mode.ASCIIDoc, mode.Markdown, mode.SCDoc:
 					if highlighted, ok, codeBlockFound = e.markdownHighlight(line, inCodeBlock, listItemRecord, &inListItem); ok {
 						coloredString = highlighted
 						if codeBlockFound {
@@ -618,7 +636,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						} else {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						}
-					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.Vibe67) && strings.Contains(line, "->"):
+					case (e.mode != mode.HTML && e.mode != mode.XML && e.mode != mode.Markdown && e.mode != mode.ReStructured && e.mode != mode.Make && e.mode != mode.Just && e.mode != mode.Blank && e.mode != mode.Vibe67) && strings.Contains(line, "->"):
 						// NOTE that if two color tags are placed after each other, they may cause blinking. Remember to turn <off> each color.
 						coloredString = unEscapeFunction(tout.DarkTags(e.ArrowReplace(string(textWithTags))))
 					default:
@@ -646,7 +664,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.HCL || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just || e.mode == mode.TOML || e.mode == mode.YAML) && strings.Contains(line, "->") {
+					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.HCL || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just || e.mode == mode.TOML || e.mode == mode.YAML) && strings.Contains(line, "->") {
 						arrowIndex = strings.Index(line, "->")
 						arrowBeforeCommentMarker = true
 

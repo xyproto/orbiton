@@ -222,6 +222,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				1,
 				4,
 			},
+			mode.ReStructured: {
+				"=====\nTitle\n=====\n\nSubtitle\n--------\n\ntext\n",
+				2,
+				5,
+			},
 			mode.Mojo: {
 				"print(\"Hello, World!\")\n",
 				1,

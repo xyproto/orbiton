@@ -733,6 +733,12 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 			_ = e.exportMarkdownHTML(c, status, htmlFilename)
 		}()
 		return htmlFilename, nil
+	case mode.ReStructured:
+		htmlFilename := strings.ReplaceAll(filepath.Base(sourceFilename), ".", "_") + ".html"
+		go func() {
+			_ = e.exportRSTHTML(c, status, htmlFilename)
+		}()
+		return htmlFilename, nil
 	case mode.Lua:
 		if e.LuaLoveOrLovr() {
 			return "", nil
@@ -1466,8 +1472,8 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 	e.ClearSearch()
 	e.redraw.Store(false)
 
-	// Require a double ctrl-space when exporting Markdown to HTML, because it is so easy to press by accident
-	if e.mode == mode.Markdown && !e.runAfterBuild.Load() {
+	// Require a double ctrl-space when exporting Markdown or RST to HTML, because it is so easy to press by accident
+	if (e.mode == mode.Markdown || e.mode == mode.ReStructured) && !e.runAfterBuild.Load() {
 		return
 	}
 

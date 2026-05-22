@@ -8,6 +8,7 @@ import (
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
 )
 
@@ -40,13 +41,21 @@ const (
 `
 )
 
-// exportPandocPDF will render PDF from Markdown using pandoc.
+// exportPandocPDF will render PDF from Markdown or reStructuredText using pandoc.
 // The caller should set a "Rendering..." messageAfterRedraw first.
 // Success and error results are reported via SetMessageAfterRedraw.
 func (e *Editor) exportPandocPDF(c *vt.Canvas, tty *vt.TTY, status *StatusBar, pandocPath, pdfFilename string) error {
 	// Write to a temporary file so unsaved changes are rendered
 
-	f, err := os.CreateTemp(tempDir, "_o*.md")
+	// Choose the temp file extension and pandoc input format based on mode
+	tempPattern := "_o*.md"
+	inputFormat := "markdown-implicit_figures"
+	if e.mode == mode.ReStructured {
+		tempPattern = "_o*.rst"
+		inputFormat = "rst"
+	}
+
+	f, err := os.CreateTemp(tempDir, tempPattern)
 	if err != nil {
 		status.SetErrorMessageAfterRedraw("pandoc tempfile: " + err.Error())
 		e.redraw.Store(true)
@@ -90,16 +99,21 @@ func (e *Editor) exportPandocPDF(c *vt.Canvas, tty *vt.TTY, status *StatusBar, p
 	// Build the pandoc argument list once, so saveCommand and the
 	// executed command stay in sync
 	pandocArgs := []string{
-		"-fmarkdown-implicit_figures",
+		"-f" + inputFormat,
 		"--toc",
 		"-Vgeometry:left=1cm,top=1cm,right=1cm,bottom=2cm",
 		"-Vpapersize:" + papersize,
 		"-Vfontsize=12pt",
 		"--pdf-engine=xelatex",
-		"--listings",
-		"-H" + expandedTexFilename,
-		"-o", pdfFilename,
 	}
+
+	// The listings package is incompatible with RST roles (:role:`text`)
+	// which pandoc translates to \lstinline[role=X]!text! — an invalid key.
+	if e.mode != mode.ReStructured {
+		pandocArgs = append(pandocArgs, "--listings", "-H"+expandedTexFilename)
+	}
+
+	pandocArgs = append(pandocArgs, "-o", pdfFilename)
 
 	// Save the runnable command with the real filename, for last_command.sh
 	savedArgs := append(append([]string(nil), pandocArgs...), oldFilename)
