@@ -188,14 +188,17 @@ func (e *Editor) rstHighlightNormal(line, leadingSpace, rest string, dataPos int
 		if len(parts) == 2 {
 			argPart = parts[1]
 		}
-		// Directives introduce indented content blocks
-		return leadingSpace + e.QuoteColor.Get(directivePart) + e.ListTextColor.Get(argPart), true, true
+		// Directives introduce indented content blocks.
+		// If we are already exiting a code block (toggleCodeBlock=true), the exit
+		// and re-enter cancel each other out, so return false (no net toggle).
+		return leadingSpace + e.QuoteColor.Get(directivePart) + e.ListTextColor.Get(argPart), true, !toggleCodeBlock
 	}
 
 	// Comment line (starts with ".." but not a directive)
 	if rstComment(line) {
-		// Comments also introduce indented continuation blocks
-		return e.CommentColor.Get(line), true, true
+		// Comments also introduce indented continuation blocks.
+		// Same cancel-out logic as directives.
+		return e.CommentColor.Get(line), true, !toggleCodeBlock
 	}
 
 	// Section title adornment (underline/overline)
@@ -261,10 +264,11 @@ func (e *Editor) rstHighlightNormal(line, leadingSpace, rest string, dataPos int
 		return e.CodeColor.Get(line), true, toggleCodeBlock
 	}
 
-	// A line ending with "::" introduces a literal block (code block)
+	// A line ending with "::" introduces a literal block (code block).
+	// Same cancel-out logic: if already exiting, exit+enter = no net toggle.
 	if strings.HasSuffix(rest, "::") {
 		colored := rstInlineMarkup(quotedWordReplace(line, '`', e.MarkdownTextColor, e.CodeColor), e.MarkdownTextColor, e.ItalicsColor, e.BoldColor, e.CodeColor)
-		return colored, true, true
+		return colored, true, !toggleCodeBlock
 	}
 
 	// Indented content (at least 3 spaces): block quote when not in code block mode
