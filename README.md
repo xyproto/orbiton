@@ -193,6 +193,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-q` - Quit.
 * `ctrl-r` - Open or close a portal. Text can be pasted from the portal into another (or the same) file with `ctrl-v`.
              For "git interactive rebase" mode (`git rebase -i`), this will cycle the rebase keywords instead.
+             In book mode: follow the Markdown link under the cursor, or navigate back.
 * `ctrl-a` - Go to start of text, then start of line and then to the previous line.
 * `ctrl-e` - Go to end of line and then to the next line
 * `ctrl-n` - Scroll down 10 lines, or go to the next match if a search is active.
@@ -206,6 +207,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-d` - Delete a single character.
 * `ctrl-t` - For C and C++: jump between the current header and source file. For Agda and Ivy, insert a symbol.
              For Markdown: toggle checkboxes, or launch the table editor if the cursor is over a table.
+             In book mode: toggle the Markdown checkbox on the current line.
              For the rest: record and play back keypresses/"macros". Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
@@ -213,6 +215,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
 * `ctrl-space` - Build program, render to PDF or export to man page (see table below).
                  For Markdown: toggle checkboxes, or double press to export to HTML.
+                 In book mode: toggle a checkbox if any, otherwise cycle book mode.
 * `ctrl-j` - Join the current line with the next one.
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-y` - Redo.
@@ -220,11 +223,13 @@ There are pretty few hotkeys to remember:
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
              To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
-* `ctrl-b` - Jump back after jumping to a definition or include with `ctrl-g`.
-             Toggle a bookmark for the current line, or if set: jump to a bookmark on a different line.
+* `ctrl-b` - Jump back after jumping to a definition or include with `ctrl-g`, or toggle block editing mode.
+             In book mode: toggle bold (`**`).
+* `ctrl-i` - In book mode: toggle italic (`*`).
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
+             In book mode: toggle paragraph indent.
 * `ctrl-g` - Jump to definition, for some programming languages (experimental feature), jump to an include, jump back or toggle the status bar.
-* `ctrl-\` - Comment in or out a block of code.
+* `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.
 
