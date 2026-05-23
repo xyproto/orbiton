@@ -698,6 +698,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Clear the search term
 			e.ClearSearch()
 
+			// In book mode: toggle a 4-space indent on the first line of the current paragraph
+			if e.InBookMode() {
+				e.bookToggleParagraphIndent(c)
+				break
+			}
+
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
 				e.GoToStartOfTextLine(c)
@@ -772,10 +778,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break // do nothing
 			}
 			// For prose files (or when already in book mode), ctrl-space toggles book mode.
-			// Markdown also checks for a checkbox on the current line first.
+			// In Markdown or book mode, a checkbox on the current line is toggled instead, if any.
 			proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
 			if proseMode || e.InBookMode() {
-				if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
+				if (e.mode == mode.Markdown || e.InBookMode()) && e.ToggleCheckboxCurrentLine() {
 					undo.Snapshot(e)
 					break
 				}
@@ -843,7 +849,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:20": // ctrl-t
 
-			if e.InBookMode() { // macro/debug not relevant for prose writing
+			if e.InBookMode() { // book mode: toggle the Markdown checkbox on the current line, if any
+				if e.ToggleCheckboxCurrentLine() {
+					undo.Snapshot(e)
+				}
 				break
 			}
 
@@ -1006,11 +1015,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.playBackMacroCount = 1
 			}
 		case "c:28": // ctrl-\, toggle comment (code) or fill paragraph (prose)
-			if e.InBookMode() {
-				break
-			}
 			undo.Snapshot(e)
-			if !ProgrammingLanguage(e.mode) {
+			if e.InBookMode() || !ProgrammingLanguage(e.mode) {
 				e.FillParagraph()
 			} else {
 				e.ToggleCommentBlock(c)
@@ -1965,7 +1971,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			if e.InBookMode() { // book mode: toggle italic (tab not needed in prose mode)
 				undo.Snapshot(e)
-				e.bookToggleParagraphIndent(c)
+				e.bookToggleFormat(c, "*")
 				break
 			}
 
@@ -2408,12 +2414,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 
 		case "c:21": // ctrl-u to undo
-
-			if e.InBookMode() { // book mode: toggle underline
-				undo.Snapshot(e)
-				e.bookToggleFormat(c, "__")
-				break
-			}
 
 			if e.nanoMode.Load() { // nano: paste after cutting
 				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
