@@ -795,18 +795,18 @@ func (e *Editor) fenceStateAtLine(lineIdx int) bool {
 
 // inHTMLCommentAtLine reports whether line lineIdx is inside an HTML comment block.
 func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
-	const open = "<!--"
-	const close = "-->"
+	const openTag = "<!--"
+	const closeTag = "-->"
 	inComment := false
 	for i := range lineIdx {
 		raw := e.Line(LineIndex(i))
 		for j := 0; j < len(raw); {
-			if strings.HasPrefix(raw[j:], open) {
+			if strings.HasPrefix(raw[j:], openTag) {
 				inComment = true
-				j += len(open)
-			} else if strings.HasPrefix(raw[j:], close) {
+				j += len(openTag)
+			} else if strings.HasPrefix(raw[j:], closeTag) {
 				inComment = false
-				j += len(close)
+				j += len(closeTag)
 			} else {
 				j++
 			}
@@ -819,12 +819,12 @@ func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
 // book mode. A line is hidden when it starts inside an HTML comment block, or
 // contains an opening <!-- or closing --> marker (matching bookContentImage).
 func (e *Editor) isBookHiddenLine(lineIdx int) bool {
-	const open = "<!--"
-	const close = "-->"
+	const openTag = "<!--"
+	const closeTag = "-->"
 	wasInComment := e.inHTMLCommentAtLine(lineIdx)
 	raw := e.Line(LineIndex(lineIdx))
-	commentStarted := strings.Contains(raw, open)
-	commentEnded := strings.Contains(raw, close)
+	commentStarted := strings.Contains(raw, openTag)
+	commentEnded := strings.Contains(raw, closeTag)
 	return wasInComment || commentStarted || commentEnded
 }
 
@@ -5177,7 +5177,7 @@ func (e *Editor) bookModeRenderAll(c *vt.Canvas, status *StatusBar) {
 	// Stable image ID (see flushImageToTerminal) makes Kitty replace the image
 	// in place, so no DeleteInlineImages() call is needed here. Calling delete
 	// every frame was the main source of the "image jumps / flashes" flicker.
-	e.bookModeRenderImageAt(cols, rows, editRows, renderH, pixW, pixH)
+	e.bookModeRenderImageAt(cols, rows, editRows, renderH, pixW)
 	e.bookModeShowCursor(c)
 	if imagepreview.IsSixel {
 		fmt.Fprintf(os.Stdout, "\033[r")
@@ -5221,7 +5221,7 @@ func (e *Editor) bookModeFullFrame(c *vt.Canvas) {
 
 // bookModeRenderImageAt renders the unified page image and flushes it to the
 // terminal, caching the encoded PNG for reuse.
-func (e *Editor) bookModeRenderImageAt(cols, rowsTotal, editRows, renderH uint, pixW, pixH int) {
+func (e *Editor) bookModeRenderImageAt(cols, rowsTotal, editRows, renderH uint, pixW int) {
 	img := e.bookComposeFullPage(pixW, int(rowsTotal), int(editRows), renderH)
 	flushImageToTerminal(img, cols, rowsTotal)
 }
@@ -5804,7 +5804,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 // bookCursorUp moves the cursor up one display row. If the current line
 // is soft-wrapped and the cursor is not on the first sub-row, it moves within
 // the same data line. Otherwise it moves to the previous data line.
-func (e *Editor) bookCursorUp(c *vt.Canvas, status *StatusBar) bool {
+func (e *Editor) bookCursorUp(c *vt.Canvas, _ *StatusBar) bool {
 	textW := e.bookWrapWidth(c)
 	pw := e.bookGetPixelWrapInfo(c)
 	sub, total := e.bookCursorSubRow(textW, pw)

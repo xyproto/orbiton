@@ -70,9 +70,9 @@ func (t textCursor) Right(c *vt.Canvas, status *StatusBar) bool {
 	t.e.CursorForward(c, status)
 	return t.e.DataY() != beforeY || t.e.pos.sx != beforeX
 }
-func (t textCursor) Home(c *vt.Canvas)          { t.e.Home() }
+func (t textCursor) Home(_ *vt.Canvas)          { t.e.Home() }
 func (t textCursor) End(c *vt.Canvas)           { t.e.End(c) }
-func (t textCursor) EnsureVisible(c *vt.Canvas) {}
+func (t textCursor) EnsureVisible(_ *vt.Canvas) {}
 
 // bookCursor navigates in display-row space used by book mode, accounting
 // for soft-wrapped body/list lines and multi-row headers/images. After every
