@@ -113,8 +113,8 @@ github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
 github.com/xyproto/megafile v1.7.2 h1:32UmAmylTvPE178Nha2p1AJuS4i2YS+NSpegcaG1C2I=
 github.com/xyproto/megafile v1.7.2/go.mod h1:YBdjweymDifQZyRE3amo7JHzBuz2goLLQvkqMj+dWGw=
-github.com/xyproto/mode v0.12.10 h1:r/h6W6D8Ju1Kg/jRfKoTs11rqoAueHuXMMx47RDUWzo=
-github.com/xyproto/mode v0.12.10/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
+github.com/xyproto/mode v0.12.11 h1:II49k2KufrYXIT4FcXDKyC2BD4fx4bL2Dku3cAVSioE=
+github.com/xyproto/mode v0.12.11/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/oksvg v1.0.1 h1:73aS/Preun72DfKyudJYIWb1wPiJRkpYHASwOBbDQBo=
 github.com/xyproto/oksvg v1.0.1/go.mod h1:UPvMnS9w/QMxOqU7SNlmZuB+48tc2c7Kz1B3rf7JtxQ=
 github.com/xyproto/orchideous v1.1.0 h1:3DN1ZGCyHBodII3Npv0cPFWv8pdeMKyZ2JnZig+fRnA=

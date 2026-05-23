@@ -116,6 +116,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		reStructuredTextMarkers := 0
 		byteLines := bytes.Split(allBytesFunc(), []byte("\n"))
 		configMarkers := 0
+		prevLineWasText := false
 		for _, line := range byteLines {
 			if bytes.HasPrefix(line, []byte("# ")) {
 				hashComment++
@@ -123,9 +124,18 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 				slashComment++
 			}
 			trimmedLine := bytes.TrimSpace(line)
-			if len(trimmedLine) > 1 && (trimmedLine[0] == byte(':') && trimmedLine[1] == byte(':')) || bytes.HasPrefix(trimmedLine, []byte(".. ")) || bytes.HasPrefix(trimmedLine, []byte("[source,")) {
+			if len(trimmedLine) > 1 && ((trimmedLine[0] == byte(':') && trimmedLine[1] == byte(':')) || bytes.HasPrefix(trimmedLine, []byte(".. ")) || bytes.HasPrefix(trimmedLine, []byte("[source,"))) {
 				reStructuredTextMarkers++
 				if reStructuredTextMarkers == 2 {
+					return ReStructured, true
+				}
+			} else if rstAdornment(trimmedLine) {
+				reStructuredTextMarkers++
+				// An adornment line following a text line is a strong RST title indicator
+				if prevLineWasText {
+					reStructuredTextMarkers++
+				}
+				if reStructuredTextMarkers >= 2 {
 					return ReStructured, true
 				}
 			} else if !foundFirstContent && !bytes.HasPrefix(trimmedLine, []byte("//")) && len(trimmedLine) > 0 {
@@ -141,6 +151,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 				// Might be a configuration file if most of the lines have (, ) or =
 				configMarkers++
 			}
+			prevLineWasText = len(trimmedLine) > 0 && !rstAdornment(trimmedLine)
 		}
 		// If non-comment lines look like shell commands, prefer Shell over Config.
 		// Handles the common case of typing "# comment" + "ls -al" into a buffer
@@ -226,4 +237,23 @@ func looksLikeShell(byteLines [][]byte) bool {
 		return true
 	}
 	return false
+}
+
+// rstAdornment checks if a line consists entirely of one repeated RST
+// adornment character and is at least 3 characters long. This helps detect
+// reStructuredText section title underlines/overlines.
+func rstAdornment(trimmedLine []byte) bool {
+	if len(trimmedLine) < 3 {
+		return false
+	}
+	ch := trimmedLine[0]
+	if !strings.ContainsRune("=-~^\"'`#*+._", rune(ch)) {
+		return false
+	}
+	for i := 1; i < len(trimmedLine); i++ {
+		if trimmedLine[i] != ch {
+			return false
+		}
+	}
+	return true
 }
