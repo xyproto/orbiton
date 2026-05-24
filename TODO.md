@@ -2,6 +2,9 @@
 
 ## General
 
+- [ ] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
+      When over a link in a Markdown document, then follow the link. And if toggling mode from book to regular,
+      then make sure it can *also toggle back*.
 - [ ] Add linting/formatting for Teal (possibly by using something like `tl check`).
 - [ ] If a `- [ ] Checkbox` is ticked in graphical book mode, then also gray out lines
       and bullet points/checkboxes below it that "belongs" to this checkbox.
