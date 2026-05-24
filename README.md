@@ -776,29 +776,22 @@ When using `pandoc` to export from Markdown to PDF:
 ## Recommended symlinks
 
 ```sh
-# For starting o with the Light theme
-ln -sf /usr/bin/o /usr/bin/li
-# For starting o with the Red/Black theme
-ln -sf /usr/bin/o /usr/bin/redblack
-# For starting o with the Synthwave theme
-ln -sf /usr/bin/o /usr/bin/sw
-# For starting o with the Blue Edit theme
-ln -sf /usr/bin/o /usr/bin/edi
 # For starting o with the Light VS theme
 ln -sf /usr/bin/o /usr/bin/vs
 ```
 
 ```sh
+# For behaving exactly like "visudo" but using Orbiton instead
+ln -sf /usr/bin/o /usr/bin/osudo
+# For building C, C++, Go etc. projects, by trying to auto-detect everything
+ln -sf /usr/bin/o /usr/bin/obuild
+# For being a pico/nano replacement (or use just `nan` to avoid conflict with `nano`)
+ln -sf /usr/bin/o /usr/bin/nano
+```
+
+```sh
 # For starting the GUI version of o with the Light theme
 ln -sf /usr/bin/og /usr/bin/lig
-# For starting the GUI version of o with the Red/Black theme
-ln -sf /usr/bin/og /usr/bin/redblackg
-# For starting the GUI version of o with the Synthwave theme
-ln -sf /usr/bin/og /usr/bin/swg
-# For starting the GUI version of o with the Blue Edit theme
-ln -sf /usr/bin/og /usr/bin/edg
-# For starting the GUI version of o with the Light VS theme
-ln -sf /usr/bin/og /usr/bin/vg
 ```
 
 ## The GUI/VTE frontend `og`
