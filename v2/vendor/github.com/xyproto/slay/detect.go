@@ -634,6 +634,31 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
+// libExists checks whether a shared library with the given name is available
+// in standard system library directories. Checks both .so (Linux/BSD) and
+// .dylib (macOS) extensions across common paths for Arch, Fedora, Debian,
+// Homebrew, and BSD systems.
+func libExists(name string) bool {
+	dirs := []string{
+		"/usr/lib",                   // Arch, generic
+		"/usr/lib64",                 // Fedora, RHEL
+		"/usr/lib/x86_64-linux-gnu",  // Debian/Ubuntu amd64
+		"/usr/lib/aarch64-linux-gnu", // Debian/Ubuntu arm64
+		"/usr/local/lib",             // FreeBSD, Homebrew (Intel Mac)
+		"/opt/homebrew/lib",          // Homebrew (Apple Silicon)
+		"/usr/pkg/lib",               // NetBSD pkgsrc
+	}
+	for _, dir := range dirs {
+		if fileExists(filepath.Join(dir, "lib"+name+".so")) {
+			return true
+		}
+		if fileExists(filepath.Join(dir, "lib"+name+".dylib")) {
+			return true
+		}
+	}
+	return false
+}
+
 func toSet(strs []string) map[string]bool {
 	m := make(map[string]bool)
 	for _, s := range strs {

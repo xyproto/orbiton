@@ -344,6 +344,8 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 			flags := pkgConfigFlags(pkgName)
 			if flags != "" {
 				bf.CFlags, bf.LDFlags = mergeFlags(bf.CFlags, bf.LDFlags, flags)
+			} else if libExists(pkgName) {
+				bf.LDFlags = appendUnique(bf.LDFlags, "-l"+pkgName)
 			}
 		}
 	}
