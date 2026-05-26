@@ -30,6 +30,7 @@ ctrl-s      to save
 ctrl-q      to quit
 ctrl-o      to open the command menu
 ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
+            jump to matching parenthesis or bracket if the cursor is on one
 ctrl-space  to compile programs or export adoc/sdoc as a man page
             toggle checkboxes in Markdown, or double press to render the file as HTML
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
@@ -45,10 +46,8 @@ ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
             insert a column when in the Markdown table editor
             go to next match when searching, or next typo when spellchecking
-            jump to a matching parenthesis or bracket if the arrow keys were just used
 ctrl-p      to scroll up 10 lines or go to the previous match
             remove an empty column when in the Markdown table editor
-            jump to a matching parenthesis or bracket if the arrow keys were just used
 ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character

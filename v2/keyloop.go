@@ -310,8 +310,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		highlightTimerCounter atomic.Uint64
 		highlightTimerMut     sync.Mutex
 
-		justJumpedToMatchingP bool
-
 		// Keys where one wishes to speed up the actions when they are held down for a while
 		heldDownLeftArrowTime  time.Time // used to speed up cursor movement after the left arrow key has been held down for a while
 		heldDownRightArrowTime time.Time // used to speed up cursor movement after the right arrow key has been held down for a while
@@ -1574,16 +1572,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				} else {
 
-					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matchin parenthesis
-					justUsedArrowKeys := kh.PrevHas(downArrow, upArrow, leftArrow, rightArrow)
-					if (justUsedArrowKeys || justJumpedToMatchingP) && e.JumpToMatching(c) {
-						justJumpedToMatchingP = true
-						e.redraw.Store(true)
-						e.redrawCursor.Store(true)
-						break
-					}
-					justJumpedToMatchingP = false
-
 					if e.moveLinesMode.Load() && e.AtSecondLineOfDocumentOrLater() {
 						// Move the current line up
 						line := e.CurrentLine()
@@ -1667,16 +1655,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						e.ClearSearch()
 					}
 				} else {
-
-					// Jump to a matching parenthesis if either an arrow key was last pressed or we just jumped to a matching parenthesis
-					justUsedArrowKeys := kh.PrevHas(downArrow, upArrow, leftArrow, rightArrow)
-					if (justUsedArrowKeys || justJumpedToMatchingP) && e.JumpToMatching(c) {
-						justJumpedToMatchingP = true
-						e.redraw.Store(true)
-						e.redrawCursor.Store(true)
-						break
-					}
-					justJumpedToMatchingP = false
 
 					if e.moveLinesMode.Load() && !e.AtOrAfterLastLineOfDocument() {
 						// Move the current line down
@@ -2881,6 +2859,27 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.SetCurrentLine(newLine)
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
+				break
+			}
+
+			// Jump to matching bracket if the cursor is on one
+			if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
+				if e.JumpToMatching(c) {
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				} else {
+					name := "bracket"
+					switch r {
+					case '(', ')':
+						name = "parenthesis"
+					case '{', '}':
+						name = "curly bracket"
+					case '[', ']':
+						name = "square bracket"
+					}
+					status.ClearAll(c, false)
+					status.SetMessageAfterRedraw("Can't find a matching " + name)
+				}
 				break
 			}
 
