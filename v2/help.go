@@ -60,6 +60,7 @@ ctrl-c      to copy the current line, press twice to copy the current block
             press thrice to copy the current function
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
+            press thrice to cut the current function
 ctrl-b      to jump back after having jumped to a definition or include
             to toggle block edit mode
             to toggle a breakpoint if in debug mode
@@ -68,7 +69,7 @@ ctrl-y      to redo
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
-ctrl-\      to toggle single-line comments for a block of code
+ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
 esc         to redraw the screen, clear the last search and clear the current macro
 

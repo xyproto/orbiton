@@ -2307,6 +2307,77 @@ func (e *Editor) ToggleCommentBlock(c *vt.Canvas) {
 	}
 }
 
+// ToggleCommentFunction will comment out the entire function if the cursor is on a function signature
+// For brace-based languages, the function body is determined by matching braces.
+// For indentation-based languages, the function body ends when indentation decreases.
+// Returns true if a function was found and commented out, false otherwise.
+func (e *Editor) ToggleCommentFunction(c *vt.Canvas) bool {
+	var (
+		currentLine    = e.CurrentLine()
+		funcPrefix     = e.FuncPrefix()
+		commentMarker  = e.SingleLineCommentMarker()
+		startLineIndex = e.LineIndex()
+		endLineIndex   LineIndex
+	)
+
+	if !e.LooksLikeFunctionDef(currentLine, funcPrefix) {
+		return false
+	}
+
+	if e.isBraceBasedLanguage() {
+		// Find the opening brace
+		openBraceLineIndex := LineIndex(-1)
+		totalLines := LineIndex(e.Len())
+		searchLimit := min(startLineIndex+20, totalLines)
+		for i := startLineIndex; i < searchLimit; i++ {
+			if strings.Contains(e.Line(i), "{") {
+				openBraceLineIndex = i
+				break
+			}
+		}
+		if openBraceLineIndex == -1 {
+			return false
+		}
+		endLineIndex = e.findMatchingCloseBrace(openBraceLineIndex)
+		if endLineIndex == -1 {
+			return false
+		}
+	} else {
+		// Function body is everything more indented than the definition line
+		defIndent := len(currentLine) - len(strings.TrimLeft(currentLine, " \t"))
+		totalLines := LineIndex(e.Len())
+		endLineIndex = startLineIndex
+		for i := startLineIndex + 1; i < totalLines; i++ {
+			line := e.Line(i)
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			lineIndent := len(line) - len(strings.TrimLeft(line, " \t"))
+			if lineIndent <= defIndent {
+				break
+			}
+			endLineIndex = i
+		}
+	}
+
+	// Comment out all lines in the function
+	downCounter := 0
+	for i := startLineIndex; i <= endLineIndex; i++ {
+		e.CommentOn(commentMarker)
+		if i < endLineIndex {
+			e.Down(c, nil)
+			downCounter++
+		}
+	}
+
+	// Go up again
+	for i := downCounter; i > 0; i-- {
+		e.Up(c, nil)
+	}
+
+	return true
+}
+
 // NewLine inserts a new line below and moves down one step
 func (e *Editor) NewLine(c *vt.Canvas, status *StatusBar) {
 	e.InsertLineBelow()

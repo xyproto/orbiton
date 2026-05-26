@@ -1019,7 +1019,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.InBookMode() || !ProgrammingLanguage(e.mode) {
 				e.FillParagraph()
 			} else {
-				e.ToggleCommentBlock(c)
+				if !e.ToggleCommentFunction(c) {
+					e.ToggleCommentBlock(c)
+				}
 				if e.blockMode {
 					e.InitBlockCursors(c)
 				}
@@ -2524,7 +2526,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Also close the portal, if any
 				e.ClosePortal()
 
-				s := e.Block(y)
+				var s string
+				if kh.Repeated("c:24", 3) {
+					// Third press: cut the entire function
+					var err error
+					s, err = e.FunctionBlock(y)
+					if err != nil {
+						s = e.Block(y)
+					}
+				} else {
+					s = e.Block(y)
+				}
 				lines := strings.Split(s, "\n")
 				if len(lines) == 0 {
 					// Need at least 1 line to be able to cut "the rest" after the first line has been cut

@@ -212,9 +212,51 @@ func (e *Editor) isBraceBasedLanguage() bool {
 	return false
 }
 
-// findMatchingCloseBrace finds the closing brace that matches an opening brace at the given line
-// Returns the line index of the matching closing brace, or -1 if not found
+// findMatchingCloseBrace finds the closing brace that matches an opening brace at the given line.
+// It skips braces inside string literals, single-line comments and multi-line comments.
+// Returns the line index of the matching closing brace, or -1 if not found.
 func (e *Editor) findMatchingCloseBrace(openBraceLineIndex LineIndex) LineIndex {
+	singleLineCommentMarker := e.SingleLineCommentMarker()
+	ignoreSingleQuotes := e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
+	q, err := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	if err != nil {
+		// Fall back to naive counting if QuoteState cannot be created
+		return e.findMatchingCloseBraceNaive(openBraceLineIndex)
+	}
+
+	braceCount := 0
+	totalLines := LineIndex(e.Len())
+
+	for i := openBraceLineIndex; i < totalLines; i++ {
+		line := e.Line(i)
+		q.hasSingleLineComment = false
+		q.startedMultiLineString = false
+		q.stoppedMultiLineComment = false
+		q.containsMultiLineComments = false
+		prevRune := '\n'
+		prevPrevRune := '\n'
+		for _, r := range line {
+			q.ProcessRune(r, prevRune, prevPrevRune)
+			if q.None() {
+				switch r {
+				case '{':
+					braceCount++
+				case '}':
+					braceCount--
+					if braceCount == 0 {
+						return i
+					}
+				}
+			}
+			prevPrevRune = prevRune
+			prevRune = r
+		}
+	}
+	return -1 // No matching closing brace found
+}
+
+// findMatchingCloseBraceNaive is a fallback that counts braces without skipping strings or comments
+func (e *Editor) findMatchingCloseBraceNaive(openBraceLineIndex LineIndex) LineIndex {
 	braceCount := 0
 	totalLines := LineIndex(e.Len())
 
