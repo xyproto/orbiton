@@ -108,7 +108,7 @@ func (e *Editor) exportPandocPDF(c *vt.Canvas, tty *vt.TTY, status *StatusBar, p
 	}
 
 	// The listings package is incompatible with RST roles (:role:`text`)
-	// which pandoc translates to \lstinline[role=X]!text! — an invalid key.
+	// which pandoc translates to \lstinline[role=X]!text!, which is an invalid key.
 	if e.mode != mode.ReStructured {
 		pandocArgs = append(pandocArgs, "--listings", "-H"+expandedTexFilename)
 	}

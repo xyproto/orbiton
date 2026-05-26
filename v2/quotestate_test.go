@@ -99,7 +99,7 @@ func TestQuoteStateSingleLineComment(t *testing.T) {
 	if q.None() {
 		t.Error("expected NOT None() on the line with a single-line comment")
 	}
-	// Process a new line — single-line comment state resets
+	// Process a new line, single-line comment state resets
 	q.Process(`y := 2`)
 	if !q.None() {
 		t.Error("expected None() on the next line after a single-line comment")
@@ -144,7 +144,7 @@ func TestQuoteStatePythonComment(t *testing.T) {
 
 func TestQuoteStateBraceInString(t *testing.T) {
 	q := newGoQuoteState(t)
-	// Process a line with braces inside a string — should not affect brace counting
+	// Process a line with braces inside a string, which should not affect brace counting
 	q.Process(`fmt.Println("{}")`)
 	if !q.None() {
 		t.Error("expected None() after a line with braces inside a string")
@@ -190,7 +190,7 @@ func TestQuoteStateCommentInsideString(t *testing.T) {
 	q := newGoQuoteState(t)
 	q.Process(`s := "// not a comment"`)
 	if !q.None() {
-		t.Error("expected None() — // inside a string is not a comment")
+		t.Error("expected None(): // inside a string is not a comment")
 	}
 	if q.hasSingleLineComment {
 		t.Error("expected hasSingleLineComment to be false for // inside a string")
@@ -201,7 +201,7 @@ func TestQuoteStateMultiLineCommentInsideString(t *testing.T) {
 	q := newGoQuoteState(t)
 	q.Process(`s := "/* not a comment */"`)
 	if !q.None() {
-		t.Error("expected None() — /* inside a string is not a comment")
+		t.Error("expected None(): /* inside a string is not a comment")
 	}
 	if q.multiLineComment {
 		t.Error("expected multiLineComment to be false for /* inside a string")
