@@ -606,8 +606,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if key == "" || key == "c:20" { // ctrl-t
 					e.macro.Home()
 					e.playBackMacroCount--
-					// No more macro keys. Read the next key.
-					key = tty.ReadKey()
+					// Reset copy/paste/cut state between macro iterations
+					lastCopyY = -1
+					lastPasteY = -1
+					lastCutY = -1
+					if e.playBackMacroCount > 0 {
+						// More iterations remain, get the first key of the next pass
+						key = e.macro.Next()
+					} else {
+						// No more macro keys. Read the next key.
+						key = tty.ReadKey()
+					}
 				}
 			}
 		}
@@ -988,6 +997,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.macro.Recording = false
 				undo.IgnoreSnapshots(true)
 				e.playBackMacroCount = 0
+				// Reset copy/paste/cut state so playback starts fresh
+				lastCopyY = -1
+				lastPasteY = -1
+				lastCutY = -1
 				status.Clear(c, false)
 				if macroLen := e.macro.Len(); macroLen == 0 {
 					status.SetMessage("Stopped recording")
@@ -1009,6 +1022,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.IgnoreSnapshots(false)
 				undo.Snapshot(e)
 				status.ClearAll(c, false)
+				// Reset copy/paste/cut state so playback doesn't inherit stale line tracking
+				lastCopyY = -1
+				lastPasteY = -1
+				lastCutY = -1
 				// Play back the macro, once
 				e.playBackMacroCount = 1
 			}
@@ -2621,10 +2638,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// ctrl-c might interrupt the program, but saving at the wrong time might be just as destructive.
 			// e.Save(c, tty)
 
-			go func() {
-				e.linesMut.Lock()
-				defer e.linesMut.Unlock()
-
+			copyFunc := func() {
 				y := e.DataY()
 
 				// Forget the cut and paste line state
@@ -2745,7 +2759,18 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
-			}()
+			}
+
+			if e.macro != nil && (e.macro.Recording || e.playBackMacroCount > 0) {
+				// Run synchronously during macro recording/playback to avoid race conditions
+				copyFunc()
+			} else {
+				go func() {
+					e.linesMut.Lock()
+					defer e.linesMut.Unlock()
+					copyFunc()
+				}()
+			}
 
 		case "c:22": // ctrl-v, paste
 
