@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 import (
 	"fmt"
@@ -75,34 +75,37 @@ func pkgNameFromInclude(inc string) string {
 
 	// Well-known mappings
 	mappings := map[string]string{
-		"sdl2/sdl.h":          "sdl2",
-		"sdl2/sdl_image.h":    "SDL2_image",
-		"sdl2/sdl_mixer.h":    "SDL2_mixer",
-		"sdl2/sdl_ttf.h":      "SDL2_ttf",
-		"sdl2/sdl_net.h":      "SDL2_net",
-		"sdl3/sdl.h":          "sdl3",
-		"sdl3/sdl_image.h":    "SDL3_image",
-		"sdl3/sdl_mixer.h":    "SDL3_mixer",
-		"sdl3/sdl_ttf.h":      "SDL3_ttf",
-		"sdl3/sdl_net.h":      "SDL3_net",
-		"gtk/gtk.h":           bestGtkPkg(),
-		"vte/vte.h":           bestVtePkg(),
-		"gl/gl.h":             "gl",
-		"gl/glew.h":           "glew",
-		"gl/glut.h":           "glu",
-		"gl/freeglut.h":       "freeglut",
-		"glfw/glfw3.h":        "glfw3",
-		"al/al.h":             "openal",
-		"al/alc.h":            "openal",
-		"vulkan/vulkan.h":     "vulkan",
-		"x11/xlib.h":          "x11",
-		"x11/xutil.h":         "x11",
-		"libconfig.h++":       "libconfig++",
-		"libconfig.h":         "libconfig",
-		"fcgiapp.h":           "fcgi",
-		"pipewire/pipewire.h": "libpipewire-0.3",
-		"rtaudio/rtaudio.h":   "rtaudio",
-		"raylib.h":            "raylib",
+		"sdl2/sdl.h":                      "sdl2",
+		"sdl2/sdl_image.h":                "SDL2_image",
+		"sdl2/sdl_mixer.h":                "SDL2_mixer",
+		"sdl2/sdl_ttf.h":                  "SDL2_ttf",
+		"sdl2/sdl_net.h":                  "SDL2_net",
+		"sdl3/sdl.h":                      "sdl3",
+		"sdl3/sdl_image.h":                "SDL3_image",
+		"sdl3/sdl_mixer.h":                "SDL3_mixer",
+		"sdl3/sdl_ttf.h":                  "SDL3_ttf",
+		"sdl3/sdl_net.h":                  "SDL3_net",
+		"gtk/gtk.h":                       bestGtkPkg(),
+		"vte/vte.h":                       bestVtePkg(),
+		"gl/gl.h":                         "gl",
+		"gl/glew.h":                       "glew",
+		"gl/glut.h":                       "glu",
+		"gl/freeglut.h":                   "freeglut",
+		"glfw/glfw3.h":                    "glfw3",
+		"al/al.h":                         "openal",
+		"al/alc.h":                        "openal",
+		"vulkan/vulkan.h":                 "vulkan",
+		"x11/xlib.h":                      "x11",
+		"x11/xutil.h":                     "x11",
+		"libconfig.h++":                   "libconfig++",
+		"libconfig.h":                     "libconfig",
+		"fcgiapp.h":                       "fcgi",
+		"pipewire/pipewire.h":             "libpipewire-0.3",
+		"rtaudio/rtaudio.h":               "rtaudio",
+		"raylib.h":                        "raylib",
+		"mathematics/mathematics.h":       "reactphysics3d",
+		"reactphysics3d.h":                "reactphysics3d",
+		"reactphysics3d/reactphysics3d.h": "reactphysics3d",
 	}
 
 	for pattern, pkg := range mappings {
@@ -617,7 +620,7 @@ func isCompilerClang(compiler string) bool {
 
 // isEffectivelyClang returns true if the compiler is clang or acts as clang.
 // On macOS, /usr/bin/g++ and /usr/bin/gcc are Apple clang wrappers, so
-// name-based detection is unreliable — this function checks the version string.
+// name-based detection is unreliable. This function checks the version string.
 func isEffectivelyClang(compiler string) bool {
 	if isCompilerClang(compiler) {
 		return true

@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 // Exported wrappers for the internal functions.
 
@@ -17,6 +17,8 @@ func DoMake() error                        { return doMake() }
 func DoCMakeBuild(opts BuildOptions) error { return doCMakeBuild(opts) }
 func DoNinjaInstall() error                { return doNinjaInstall() }
 func DoNinjaClean()                        { doNinjaClean() }
+func DoMakeInstall() error                 { return doMakeInstall() }
+func DoMakeClean()                         { doMakeClean() }
 func DoInstall() error                     { return doInstall() }
 func DoPkg() error                         { return doPkg() }
 func DoExport() error                      { return doExport() }

@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 import (
 	"fmt"
@@ -10,10 +10,10 @@ import (
 	"github.com/xyproto/files"
 )
 
-// Config holds the full configuration for an orchideous operation.
+// Config holds the full configuration for an slay operation.
 type Config struct {
-	BuildOptions
 	SourceDir string // if set, operate in this directory instead of the current one
+	BuildOptions
 }
 
 // NewConfig returns a Config with default settings (standard build).
@@ -131,30 +131,41 @@ func (c *Config) Run(args ...string) error {
 		if err := doBuild(c.BuildOptions); err != nil {
 			return err
 		}
-		exe := executableName()
-		if exe == "" {
-			return fmt.Errorf("no main source file found")
-		}
-		// Handle both explicit win64 and auto-detected win64 (proj.HasWin64)
-		if c.Win64 || !fileExists(exe) && fileExists(exe+".exe") {
-			exe += ".exe"
-		}
-		exePath := dotSlash(exe)
-		if strings.HasSuffix(exePath, ".exe") {
-			if winePath := files.WhichCached("wine"); winePath != "" {
-				cmd := exec.Command(winePath, append([]string{exePath}, args...)...)
-				cmd.Stdin = os.Stdin
-				cmd.Stdout = os.Stdout
-				cmd.Stderr = os.Stderr
-				return cmd.Run()
-			}
-		}
-		cmd := exec.Command(exePath, args...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
+		return runExecutable(c.Win64, args...)
 	})
+}
+
+// RunBuilt runs an already-built executable without rebuilding.
+func (c *Config) RunBuilt(args ...string) error {
+	return c.withDir(func() error {
+		return runExecutable(c.Win64, args...)
+	})
+}
+
+// runExecutable finds and runs the project executable.
+func runExecutable(win64 bool, args ...string) error {
+	exe := executableName()
+	if exe == "" {
+		return fmt.Errorf("no main source file found")
+	}
+	if win64 || !fileExists(exe) && fileExists(exe+".exe") {
+		exe += ".exe"
+	}
+	exePath := dotSlash(exe)
+	if strings.HasSuffix(exePath, ".exe") {
+		if winePath := files.WhichCached("wine"); winePath != "" {
+			cmd := exec.Command(winePath, append([]string{exePath}, args...)...)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			return cmd.Run()
+		}
+	}
+	cmd := exec.Command(exePath, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 // cleanFiles removes build artifacts from the current directory.
@@ -523,16 +534,16 @@ func (c *Config) NinjaClean() {
 	c.withDirNoErr(doNinjaClean)
 }
 
-// CMakeMakeInstall installs from a cmake+make build.
+// CMakeMakeInstall installs from a make or cmake+make build.
 func (c *Config) CMakeMakeInstall() error {
 	return c.withDir(func() error {
-		return doCMakeMakeInstall()
+		return doMakeInstall()
 	})
 }
 
-// CMakeMakeClean removes the cmake+make build directory.
+// CMakeMakeClean cleans a make or cmake+make build.
 func (c *Config) CMakeMakeClean() {
-	c.withDirNoErr(doCMakeMakeClean)
+	c.withDirNoErr(doMakeClean)
 }
 
 // Pro generates a QtCreator .pro project file.

@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 import (
 	"bytes"

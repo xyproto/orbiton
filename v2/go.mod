@@ -32,7 +32,6 @@ require (
 	github.com/xyproto/megafile v1.7.2
 	github.com/xyproto/mode v0.12.11
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/orchideous v1.1.0
 	github.com/xyproto/syntax v1.14.2
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
@@ -43,6 +42,8 @@ require (
 )
 
 require github.com/xyproto/themes v0.0.3
+
+require github.com/xyproto/slay v1.3.1
 
 require (
 	github.com/BurntSushi/toml v1.6.0

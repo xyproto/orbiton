@@ -1,6 +1,6 @@
-//go:build !linux && !darwin && !freebsd && !openbsd && !netbsd && !solaris && !illumos && !windows
+//go:build solaris || illumos
 
-package orchideous
+package slay
 
 func isLinux() bool  { return false }
 func isDarwin() bool { return false }
@@ -10,8 +10,8 @@ const platformCDefine = "-D_XOPEN_SOURCE=700"
 func extraLDLibPaths() []string { return nil }
 
 func prependAsNeededFlag(ldflags []string) []string {
-	return prependUnique(ldflags, "-Wl,--as-needed")
+	return prependUnique(ldflags, "-Wl,-zignore")
 }
 
-// detectPlatformType returns "generic" on platforms without a known package manager.
+// detectPlatformType returns "generic" on Solaris/illumos.
 func detectPlatformType() string { return "generic" }

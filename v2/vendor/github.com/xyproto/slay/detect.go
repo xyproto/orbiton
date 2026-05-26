@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 import (
 	"bufio"
@@ -61,54 +61,54 @@ var stdHeaders = map[string]bool{
 // and Value (if non-empty) is the constant's actual value, used as a
 // fallback -D define for toolchains that lack the definition entirely.
 type winAPIConst struct {
-	Version int
 	Value   string // e.g. "0x0004"; empty for function identifiers (no fallback needed)
+	Version int
 }
 
 // winAPIConstants maps Windows API identifiers to their version requirement
 // and fallback values for cross-compilation with older mingw-w64.
 var winAPIConstants = map[string]winAPIConst{
-	// 0x0600 — Windows Vista / Server 2008
-	"ENABLE_VIRTUAL_TERMINAL_PROCESSING": {0x0600, "0x0004"},
-	"DISABLE_NEWLINE_AUTO_RETURN":        {0x0600, "0x0008"},
-	"ENABLE_VIRTUAL_TERMINAL_INPUT":      {0x0600, "0x0200"},
-	"GetTickCount64":                     {0x0600, ""},
-	"InitializeCriticalSectionEx":        {0x0600, ""},
-	"INIT_ONCE":                          {0x0600, ""},
-	"InitOnceExecuteOnce":                {0x0600, ""},
-	"CreateSymbolicLink":                 {0x0600, ""},
-	"CONDITION_VARIABLE":                 {0x0600, ""},
-	"InitializeConditionVariable":        {0x0600, ""},
-	"SleepConditionVariableCS":           {0x0600, ""},
-	"WakeConditionVariable":              {0x0600, ""},
-	"WakeAllConditionVariable":           {0x0600, ""},
-	"SRWLOCK":                            {0x0600, ""},
-	"InitializeSRWLock":                  {0x0600, ""},
-	"AcquireSRWLockExclusive":            {0x0600, ""},
-	"ReleaseSRWLockExclusive":            {0x0600, ""},
-	"AcquireSRWLockShared":               {0x0600, ""},
-	"ReleaseSRWLockShared":               {0x0600, ""},
-	// 0x0601 — Windows 7
-	"SetProcessDPIAware":          {0x0601, ""},
-	"GetCurrentProcessorNumberEx": {0x0601, ""},
-	"QueryUnbiasedInterruptTime":  {0x0601, ""},
-	"TryAcquireSRWLockExclusive":  {0x0601, ""},
-	"TryAcquireSRWLockShared":     {0x0601, ""},
-	// 0x0602 — Windows 8
-	"GetSystemTimePreciseAsFileTime": {0x0602, ""},
-	// 0x0A00 — Windows 10
-	"CreatePseudoConsole":           {0x0A00, ""},
-	"ClosePseudoConsole":            {0x0A00, ""},
-	"GetDpiForWindow":               {0x0A00, ""},
-	"GetDpiForSystem":               {0x0A00, ""},
-	"SetProcessDpiAwarenessContext": {0x0A00, ""},
-	"DPI_AWARENESS_CONTEXT":         {0x0A00, ""},
+	// 0x0600 - Windows Vista / Server 2008
+	"ENABLE_VIRTUAL_TERMINAL_PROCESSING": {Version: 0x0600, Value: "0x0004"},
+	"DISABLE_NEWLINE_AUTO_RETURN":        {Version: 0x0600, Value: "0x0008"},
+	"ENABLE_VIRTUAL_TERMINAL_INPUT":      {Version: 0x0600, Value: "0x0200"},
+	"GetTickCount64":                     {Version: 0x0600},
+	"InitializeCriticalSectionEx":        {Version: 0x0600},
+	"INIT_ONCE":                          {Version: 0x0600},
+	"InitOnceExecuteOnce":                {Version: 0x0600},
+	"CreateSymbolicLink":                 {Version: 0x0600},
+	"CONDITION_VARIABLE":                 {Version: 0x0600},
+	"InitializeConditionVariable":        {Version: 0x0600},
+	"SleepConditionVariableCS":           {Version: 0x0600},
+	"WakeConditionVariable":              {Version: 0x0600},
+	"WakeAllConditionVariable":           {Version: 0x0600},
+	"SRWLOCK":                            {Version: 0x0600},
+	"InitializeSRWLock":                  {Version: 0x0600},
+	"AcquireSRWLockExclusive":            {Version: 0x0600},
+	"ReleaseSRWLockExclusive":            {Version: 0x0600},
+	"AcquireSRWLockShared":               {Version: 0x0600},
+	"ReleaseSRWLockShared":               {Version: 0x0600},
+	// 0x0601 - Windows 7
+	"SetProcessDPIAware":          {Version: 0x0601},
+	"GetCurrentProcessorNumberEx": {Version: 0x0601},
+	"QueryUnbiasedInterruptTime":  {Version: 0x0601},
+	"TryAcquireSRWLockExclusive":  {Version: 0x0601},
+	"TryAcquireSRWLockShared":     {Version: 0x0601},
+	// 0x0602 - Windows 8
+	"GetSystemTimePreciseAsFileTime": {Version: 0x0602},
+	// 0x0A00 - Windows 10
+	"CreatePseudoConsole":           {Version: 0x0A00},
+	"ClosePseudoConsole":            {Version: 0x0A00},
+	"GetDpiForWindow":               {Version: 0x0A00},
+	"GetDpiForSystem":               {Version: 0x0A00},
+	"SetProcessDpiAwarenessContext": {Version: 0x0A00},
+	"DPI_AWARENESS_CONTEXT":         {Version: 0x0A00},
 }
 
 // winAPIResult holds the results of scanning source files for Windows API usage.
 type winAPIResult struct {
-	MinVersion      int      // highest _WIN32_WINNT value needed (0 if none)
 	FallbackDefines []string // -D flags for constants that may be missing from older mingw
+	MinVersion      int      // highest _WIN32_WINNT value needed (0 if none)
 }
 
 // detectWinAPI scans source files for Windows API identifiers and returns the

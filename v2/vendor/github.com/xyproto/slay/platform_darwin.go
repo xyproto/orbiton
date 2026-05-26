@@ -1,6 +1,6 @@
 //go:build darwin
 
-package orchideous
+package slay
 
 import "github.com/xyproto/files"
 

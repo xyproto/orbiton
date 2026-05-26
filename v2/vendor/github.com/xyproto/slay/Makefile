@@ -1,9 +1,9 @@
 .PHONY: clean examples examples-clean install test
 
-PROJECT ?= orchideous
+PROJECT ?= slay
 GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
 GOBUILD := go build
-SRCFILES := $(wildcard go.* *.go cmd/oh/*.go)
+SRCFILES := $(wildcard go.* *.go cmd/slay/*.go)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -44,14 +44,14 @@ endif
 
 EXAMPLE_DIRS := $(sort $(dir $(wildcard examples/*/main.c examples/*/main.cpp examples/*/main.cc examples/*/*.cpp examples/*/*.cc examples/*/*.c)))
 
-oh: $(SRCFILES)
-	cd cmd/oh && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../../oh$(EXE_EXT) || $(GOBUILD) -o ../../oh$(EXE_EXT)
+slay: $(SRCFILES)
+	cd cmd/slay && $(GOBUILD) $(GOFLAGS) $(BUILDFLAGS) -o ../../slay$(EXE_EXT) || $(GOBUILD) -o ../../slay$(EXE_EXT)
 
-examples: oh
+examples: slay
 	@failed=""; \
 	for d in $(EXAMPLE_DIRS); do \
 		printf "=== %-30s" "$$d"; \
-		cd "$$d" && ../../oh$(EXE_EXT) > /dev/null 2>&1 && echo "OK" || { echo "FAIL"; failed="$$failed $$d"; }; \
+		cd "$$d" && ../../slay$(EXE_EXT) > /dev/null 2>&1 && echo "OK" || { echo "FAIL"; failed="$$failed $$d"; }; \
 		cd "$(CURDIR)"; \
 	done; \
 	if [ -n "$$failed" ]; then \
@@ -61,9 +61,9 @@ examples: oh
 test:
 	go test $(GOFLAGS) ./...
 
-install: oh
-	install -Dm755 oh$(EXE_EXT) "$(DESTDIR)$(PREFIX)/bin/oh$(EXE_EXT)"
-	install -Dm644 oh.1.gz "$(DESTDIR)$(MANDIR)/oh.1.gz"
+install: slay
+	install -Dm755 slay$(EXE_EXT) "$(DESTDIR)$(PREFIX)/bin/slay$(EXE_EXT)"
+	install -Dm644 slay.1.gz "$(DESTDIR)$(MANDIR)/slay.1.gz"
 
 examples-clean:
 	@for d in $(EXAMPLE_DIRS); do \
@@ -72,4 +72,4 @@ examples-clean:
 	done
 
 clean: examples-clean
-	-rm -f oh$(EXE_EXT)
+	-rm -f slay$(EXE_EXT)

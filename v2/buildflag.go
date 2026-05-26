@@ -21,7 +21,7 @@ type autoBuildCandidate struct {
 
 // autoBuildCandidates returns the project-type candidates, in priority order.
 // The first candidate whose marker file exists *and* whose build tool is on
-// PATH is used. The list intentionally excludes C/C++ (handled by orchideous)
+// PATH is used. The list intentionally excludes C/C++ (handled by slay)
 // and skips anything that requires a source filename -- only project-level
 // builds go here, because `-b` is invoked without an explicit file.
 func autoBuildCandidates() []autoBuildCandidate {
@@ -55,7 +55,7 @@ func autoBuildCandidates() []autoBuildCandidate {
 // tryAutoBuild runs the first matching language-specific build in the current
 // working directory. Returns (true, err) if a build was attempted. Returns
 // (false, nil) when no candidate matched, meaning the caller should fall back
-// to orchideous (C/C++) dispatch.
+// to slay (C/C++) dispatch.
 func tryAutoBuild() (bool, error) {
 	cwd, err := os.Getwd()
 	if err != nil {

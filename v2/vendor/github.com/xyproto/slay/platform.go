@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 import (
 	"fmt"
@@ -90,7 +90,7 @@ func findIncludeFile(sysDir, inc string) string {
 	if fileExists(direct) {
 		return direct
 	}
-	// Try recursive walk (up to 3 levels deep) — portable alternative to Unix find
+	// Try recursive walk (up to 3 levels deep) - portable alternative to Unix find
 	maxDepth := 3
 	target := filepath.ToSlash(inc)
 	var found string

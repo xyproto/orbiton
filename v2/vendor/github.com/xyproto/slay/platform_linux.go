@@ -1,6 +1,6 @@
 //go:build linux
 
-package orchideous
+package slay
 
 func isLinux() bool  { return true }
 func isDarwin() bool { return false }

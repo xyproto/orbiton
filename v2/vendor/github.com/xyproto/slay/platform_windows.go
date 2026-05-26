@@ -1,6 +1,6 @@
 //go:build windows
 
-package orchideous
+package slay
 
 import (
 	"fmt"

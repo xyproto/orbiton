@@ -1,4 +1,4 @@
-package orchideous
+package slay
 
 // win64SkipHeaders are Windows headers that should not trigger pkg-config lookups
 // when cross-compiling for win64. Ported from build.py.

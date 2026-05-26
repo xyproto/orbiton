@@ -1,15 +1,14 @@
-package orchideous
+package slay
 
 import (
 	"fmt"
-	"runtime"
-	"sync"
-
 	"github.com/xyproto/files"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 )
 
 // BuildOptions holds the configuration for a build.
@@ -33,11 +32,11 @@ type BuildOptions struct {
 type BuildFlags struct {
 	Compiler       string
 	Std            string
+	ContainerImage string // if set, compile via "docker run" or "podman run" with this image
 	CFlags         []string
 	LDFlags        []string
 	Defines        []string
 	IncPaths       []string
-	ContainerImage string // if set, compile via "docker run" or "podman run" with this image
 }
 
 // assembleFlags creates the full set of build flags for a project.

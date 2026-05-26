@@ -7,7 +7,7 @@ import (
 	"slices"
 
 	"github.com/xyproto/files"
-	"github.com/xyproto/orchideous"
+	"github.com/xyproto/slay"
 )
 
 var errNoMainFile = errors.New("no main file found")
@@ -15,7 +15,7 @@ var errNoMainFile = errors.New("no main file found")
 // guessMainFileOfDirectory tries to detect the project type in the given directory
 // and returns the path to the most likely "main" file to open for editing.
 // It checks, in order:
-//  1. C/C++ main source files (via orchideous)
+//  1. C/C++ main source files (via slay)
 //  2. Project-specific main files based on detected project markers
 //  3. Common main source filenames (main.*, index.*, Program.*, app.*)
 //  4. Build system files (Makefile, CMakeLists.txt, etc.)
@@ -30,8 +30,8 @@ func guessMainFileOfDirectory(dir string) (string, error) {
 		defer os.Chdir(prevDir)
 	}
 
-	// Try C/C++ detection via orchideous
-	if mainSrc := orchideous.GetMainSourceFile(nil); mainSrc != "" {
+	// Try C/C++ detection via slay
+	if mainSrc := slay.GetMainSourceFile(nil); mainSrc != "" {
 		return filepath.Join(dir, mainSrc), nil
 	}
 

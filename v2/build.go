@@ -14,7 +14,7 @@ import (
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
-	"github.com/xyproto/orchideous"
+	"github.com/xyproto/slay"
 	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
@@ -381,7 +381,7 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects
 			return exec.Command("bazel", "build"), everythingIsFine, nil
 		}
-		// C and C++ are handled by orchideous in BuildOrExport
+		// C and C++ are handled by slay in BuildOrExport
 		return nil, nothingIsFine, errNoSuitableBuildCommand
 	case mode.Zig:
 		if files.WhichCached("zig") != "" {
@@ -753,7 +753,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		compilationProducedSomething func() (bool, string)
 	)
 
-	// Use orchideous for C and C++ builds
+	// Use slay for C and C++ builds
 	if e.mode == mode.C || e.mode == mode.Cpp {
 		if e.mode == mode.Cpp && files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" {
 			goto cmdBuild // Bazel projects use the command-based flow
@@ -765,7 +765,7 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 			status.ShowNoTimeout(c, e)
 		}
 
-		result, buildError := orchideous.Build(sourceDir, orchideous.BuildOptions{
+		result, buildError := slay.Build(sourceDir, slay.BuildOptions{
 			Debug:        e.debugMode,
 			NoSanitizers: e.debugMode,
 		})
@@ -1636,8 +1636,8 @@ func findSourceFileInDir(dir string) (string, error) {
 	_ = os.Chdir(dir)
 	defer os.Chdir(prevDir)
 
-	// Use orchideous detection for C/C++ source files
-	if mainSrc := orchideous.GetMainSourceFile(nil); mainSrc != "" {
+	// Use slay detection for C/C++ source files
+	if mainSrc := slay.GetMainSourceFile(nil); mainSrc != "" {
 		return filepath.Join(dir, mainSrc), nil
 	}
 	// Check for non-C/C++ main source files

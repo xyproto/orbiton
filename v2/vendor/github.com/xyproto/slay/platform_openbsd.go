@@ -1,6 +1,6 @@
 //go:build openbsd
 
-package orchideous
+package slay
 
 func isLinux() bool  { return false }
 func isDarwin() bool { return false }

@@ -7,21 +7,21 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xyproto/orchideous"
+	"github.com/xyproto/slay"
 )
 
-func ohDoRun(opts orchideous.BuildOptions, runArgs []string) error {
-	if err := orchideous.DoBuild(opts); err != nil {
+func slayDoRun(opts slay.BuildOptions, runArgs []string) error {
+	if err := slay.DoBuild(opts); err != nil {
 		return err
 	}
-	exe := orchideous.ExecutableName()
+	exe := slay.ExecutableName()
 	if exe == "" {
 		return fmt.Errorf("no main source file found")
 	}
 	if opts.Win64 {
 		exe += ".exe"
 	}
-	exePath := orchideous.DotSlash(exe)
+	exePath := slay.DotSlash(exe)
 	if strings.HasSuffix(exePath, ".exe") {
 		if has("wine") {
 			c := exec.Command("wine", append([]string{exePath}, runArgs...)...)
@@ -38,8 +38,8 @@ func ohDoRun(opts orchideous.BuildOptions, runArgs []string) error {
 	return c.Run()
 }
 
-func ohDoClean() {
-	exe := orchideous.ExecutableName()
+func slayDoClean() {
+	exe := slay.ExecutableName()
 	patterns := []string{"*.o", "*.d", "common/*.o", "common/*.d", "include/*.o", "include/*.d", "*.profraw", "*.gcda", "*.gcno", ".sconsign.dblite", "callgrind.out.*"}
 	for _, pat := range patterns {
 		matches, _ := filepath.Glob(pat)
@@ -56,7 +56,7 @@ func ohDoClean() {
 			fmt.Println("Removed", exe+".exe")
 		}
 	}
-	for _, ts := range orchideous.GetTestSources() {
+	for _, ts := range slay.GetTestSources() {
 		testExe := strings.TrimSuffix(ts, filepath.Ext(ts))
 		if err := os.Remove(testExe); err == nil {
 			fmt.Println("Removed", testExe)
@@ -64,8 +64,8 @@ func ohDoClean() {
 	}
 }
 
-func ohDoFastClean() {
-	exe := orchideous.ExecutableName()
+func slayDoFastClean() {
+	exe := slay.ExecutableName()
 	matches, _ := filepath.Glob("*.o")
 	for _, f := range matches {
 		os.Remove(f)
@@ -81,25 +81,25 @@ func ohDoFastClean() {
 	}
 }
 
-func ohDoTest(opts orchideous.BuildOptions) error {
-	testSrcs := orchideous.GetTestSources()
+func slayDoTest(opts slay.BuildOptions) error {
+	testSrcs := slay.GetTestSources()
 	if len(testSrcs) == 0 {
 		fmt.Println("Nothing to test")
 		return nil
 	}
-	proj := orchideous.DetectProject()
-	flags := orchideous.AssembleFlags(proj, opts)
+	proj := slay.DetectProject()
+	flags := slay.AssembleFlags(proj, opts)
 	for _, ts := range testSrcs {
 		testExe := strings.TrimSuffix(ts, filepath.Ext(ts))
 		if opts.Win64 || proj.HasWin64 {
 			testExe += ".exe"
 		}
 		srcs := append([]string{ts}, proj.DepSources...)
-		if err := orchideous.CompileSources(srcs, testExe, flags); err != nil {
+		if err := slay.CompileSources(srcs, testExe, flags); err != nil {
 			return fmt.Errorf("building test %s: %w", testExe, err)
 		}
 		fmt.Printf("Running %s...\n", testExe)
-		c := exec.Command(orchideous.DotSlash(testExe))
+		c := exec.Command(slay.DotSlash(testExe))
 		c.Stdout = os.Stdout
 		c.Stderr = os.Stderr
 		if err := c.Run(); err != nil {
@@ -109,16 +109,16 @@ func ohDoTest(opts orchideous.BuildOptions) error {
 	return nil
 }
 
-func ohDoTestBuild(opts orchideous.BuildOptions) error {
-	proj := orchideous.DetectProject()
-	flags := orchideous.AssembleFlags(proj, opts)
+func slayDoTestBuild(opts slay.BuildOptions) error {
+	proj := slay.DetectProject()
+	flags := slay.AssembleFlags(proj, opts)
 	if proj.MainSource != "" {
-		exe := orchideous.ExecutableName()
+		exe := slay.ExecutableName()
 		if opts.Win64 || proj.HasWin64 {
 			exe += ".exe"
 		}
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
-		if err := orchideous.CompileSources(srcs, exe, flags); err != nil {
+		if err := slay.CompileSources(srcs, exe, flags); err != nil {
 			return err
 		}
 	}
@@ -128,7 +128,7 @@ func ohDoTestBuild(opts orchideous.BuildOptions) error {
 			testExe += ".exe"
 		}
 		srcs := append([]string{ts}, proj.DepSources...)
-		if err := orchideous.CompileSources(srcs, testExe, flags); err != nil {
+		if err := slay.CompileSources(srcs, testExe, flags); err != nil {
 			return fmt.Errorf("building test %s: %w", testExe, err)
 		}
 	}
@@ -138,24 +138,24 @@ func ohDoTestBuild(opts orchideous.BuildOptions) error {
 	return nil
 }
 
-func ohDoRec(runArgs []string) error {
-	ohDoClean()
-	if err := orchideous.DoBuild(orchideous.BuildOptions{Opt: true, ProfileGenerate: true}); err != nil {
+func slayDoRec(runArgs []string) error {
+	slayDoClean()
+	if err := slay.DoBuild(slay.BuildOptions{Opt: true, ProfileGenerate: true}); err != nil {
 		return fmt.Errorf("profile generation build: %w", err)
 	}
-	exe := orchideous.ExecutableName()
+	exe := slay.ExecutableName()
 	if exe == "" {
 		return fmt.Errorf("no executable to run for profiling")
 	}
-	c := exec.Command(orchideous.DotSlash(exe), runArgs...)
+	c := exec.Command(slay.DotSlash(exe), runArgs...)
 	c.Stdin = os.Stdin
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	_ = c.Run()
-	return orchideous.DoBuild(orchideous.BuildOptions{Opt: true, ProfileUse: true})
+	return slay.DoBuild(slay.BuildOptions{Opt: true, ProfileUse: true})
 }
 
-func ohDoFmt() error {
+func slayDoFmt() error {
 	if !has("clang-format") {
 		return fmt.Errorf("clang-format not found in PATH")
 	}
@@ -173,18 +173,18 @@ func ohDoFmt() error {
 	return nil
 }
 
-func ohDoValgrind(opts orchideous.BuildOptions) error {
-	if err := orchideous.DoBuild(opts); err != nil {
+func slayDoValgrind(opts slay.BuildOptions) error {
+	if err := slay.DoBuild(opts); err != nil {
 		return err
 	}
-	exe := orchideous.ExecutableName()
+	exe := slay.ExecutableName()
 	if exe == "" {
 		return fmt.Errorf("no executable to profile")
 	}
 	if !has("valgrind") {
 		return fmt.Errorf("valgrind not found in PATH")
 	}
-	exePath := orchideous.DotSlash(exe)
+	exePath := slay.DotSlash(exe)
 	c := exec.Command("valgrind", "--tool=callgrind", exePath)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
@@ -207,15 +207,15 @@ func ohDoValgrind(opts orchideous.BuildOptions) error {
 	return nil
 }
 
-func ohDoDebug(opts orchideous.BuildOptions, useClang bool) error {
-	if err := orchideous.DoBuild(opts); err != nil {
+func slayDoDebug(opts slay.BuildOptions, useClang bool) error {
+	if err := slay.DoBuild(opts); err != nil {
 		return err
 	}
-	exe := orchideous.ExecutableName()
+	exe := slay.ExecutableName()
 	if exe == "" {
 		return fmt.Errorf("no executable to debug")
 	}
-	exePath := orchideous.DotSlash(exe)
+	exePath := slay.DotSlash(exe)
 	var debugger string
 	if useClang {
 		for _, d := range []string{"lldb", "gdb", "cgdb"} {
@@ -243,18 +243,18 @@ func ohDoDebug(opts orchideous.BuildOptions, useClang bool) error {
 	return c.Run()
 }
 
-func ohDoTiny(opts orchideous.BuildOptions) error {
-	if err := orchideous.DoBuild(opts); err != nil {
+func slayDoTiny(opts slay.BuildOptions) error {
+	if err := slay.DoBuild(opts); err != nil {
 		return err
 	}
-	exe := orchideous.ExecutableName()
+	exe := slay.ExecutableName()
 	if exe == "" {
 		return nil
 	}
 	if opts.Win64 {
 		exe += ".exe"
 	}
-	exePath := orchideous.DotSlash(exe)
+	exePath := slay.DotSlash(exe)
 	if has("sstrip") {
 		c := exec.Command("sstrip", exePath)
 		c.Stdout = os.Stdout
@@ -274,8 +274,59 @@ func ohDoTiny(opts orchideous.BuildOptions) error {
 	return nil
 }
 
-// runObuild dispatches to orchideous (oh) subcommands.
-// args mirrors the argument style of the "oh" command.
+// obuildIsModifier returns true if the word is a recognized modifier.
+func obuildIsModifier(word string) bool {
+	switch word {
+	case "clang", "zap", "opt", "strict", "sloppy", "small", "tiny",
+		"win64", "win", "debug", "nosan", "nosanitizers":
+		return true
+	}
+	return false
+}
+
+// obuildIsAction returns true if the word is a recognized action.
+func obuildIsAction(word string) bool {
+	switch word {
+	case "build", "run", "rebuild", "clean", "fastclean",
+		"test", "testbuild", "pgo", "rec", "fmt", "generate",
+		"cmakelists", "cmakelist", "cmakelists.txt", "CMakeLists.txt",
+		"cmake", "make", "ninja", "install", "pkg", "export", "script",
+		"valgrind", "pro", "makefile", "Makefile",
+		"ninjainstall", "ninja_install", "ninjaclean", "ninja_clean",
+		"makeinstall", "make_install", "makeclean", "make_clean",
+		"debug", "version":
+		return true
+	}
+	return false
+}
+
+// obuildExpandLegacy expands legacy compound commands into modifier+action pairs.
+func obuildExpandLegacy(word string) []string {
+	switch word {
+	case "debugbuild":
+		return []string{"debug", "build"}
+	case "debugnosan":
+		return []string{"debug", "nosan", "build"}
+	case "clangdebug":
+		return []string{"clang", "debug"}
+	case "clangstrict":
+		return []string{"clang", "strict", "build"}
+	case "clangsloppy":
+		return []string{"clang", "sloppy", "build"}
+	case "clangrebuild":
+		return []string{"clang", "rebuild"}
+	case "clangtest":
+		return []string{"clang", "test"}
+	case "smallwin64", "smallwin":
+		return []string{"small", "win64", "build"}
+	case "tinywin64", "tinywin":
+		return []string{"tiny", "win64", "build"}
+	}
+	return nil
+}
+
+// runObuild dispatches to slay subcommands using composable modifiers and actions.
+// args mirrors the argument style of the "slay" command.
 func runObuild(args []string, commandName string) error {
 	// Support "-C <dir>" to run in a different directory
 	if len(args) >= 2 && args[0] == "-C" {
@@ -285,142 +336,218 @@ func runObuild(args []string, commandName string) error {
 		args = args[2:]
 	}
 
-	cmd := "build"
+	// Help
 	if len(args) > 0 {
-		cmd = args[0]
-	}
+		switch args[0] {
+		case "-h", "--help", "help":
+			helpTemplate := `Usage: CMD [modifiers...] [action] [args...]
 
-	subArgs := args
-	if len(subArgs) > 0 {
-		subArgs = subArgs[1:]
-	}
+Modifiers (combinable):
+  clang       use clang/clang++ compiler
+  zap         use zapcc++ compiler
+  debug       enable debug flags and sanitizers
+  nosan       disable sanitizers (use with debug)
+  opt         enable optimizations (-Ofast/-O3, -flto)
+  strict      enable strict warning flags
+  sloppy      enable permissive flags
+  small       optimize for size (-Os)
+  tiny        minimize size (-Os + sstrip/upx)
+  win64       cross-compile for 64-bit Windows
 
-	switch cmd {
-	case "-h", "--help", "help":
-		helpString := `oh              - build the project
-oh run          - build and run
-oh debug        - debug build and launch debugger (gdb/cgdb)
-oh debugbuild   - debug build (without launching debugger)
-oh debugnosan   - debug build (without sanitizers)
-oh opt          - optimized build
-oh strict       - build with strict warning flags
-oh sloppy       - build with sloppy flags
-oh small        - build a smaller executable
-oh tiny         - build a tiny executable (+ sstrip/upx)
-oh clang        - build using clang++
-oh clangdebug   - debug build using clang++ (launches lldb)
-oh clangstrict  - use clang++ and strict flags
-oh clangsloppy  - use clang++ and sloppy flags
-oh clangrebuild - clean and build with clang++
-oh clangtest    - build and run tests with clang++
-oh clean        - remove built files
-oh fastclean    - only remove executable and *.o
-oh rebuild      - clean and build
-oh test         - build and run tests
-oh testbuild    - build tests (without running)
-oh rec          - profile-guided optimization (build, run, rebuild)
-oh fmt          - format source code with clang-format
-oh cmake        - generate CMakeLists.txt
-oh cmake ninja  - generate CMakeLists.txt and build with ninja
-oh ninja        - build using existing CMakeLists.txt and ninja
-oh ninja_install- install from ninja build
-oh ninja_clean  - clean ninja build
-oh pro          - generate QtCreator project file
-oh install      - install the project (PREFIX, DESTDIR)
-oh pkg          - package the project into pkg/
-oh export       - export a standalone Makefile and build.sh
-oh make         - generate a standalone Makefile
-oh script       - generate build.sh and clean.sh
-oh valgrind     - build and profile with valgrind
-oh win64        - cross-compile for 64-bit Windows
-oh smallwin64   - small win64 build
-oh tinywin64    - tiny win64 build
-oh zap          - build using zapcc++
-oh -C <dir> ... - run in the given directory
+Actions:
+  build       compile the project (default)
+  run         build and run
+  debug       debug build and launch debugger
+  rebuild     clean and build
+  clean       remove built files
+  fastclean   only remove executable and *.o
+  test        build and run tests
+  testbuild   build tests (without running)
+  pgo         profile-guided optimization (build, run, rebuild)
+  fmt         format source code with clang-format
+  generate    generate CMakeLists.txt
+  makefile    generate a standalone Makefile
+  cmake       build with cmake (prefers ninja, falls back to make)
+  make        build with make (falls back to cmake+make)
+  ninja       build with ninja (falls back to cmake+ninja)
+  install     install the project (PREFIX, DESTDIR)
+  pkg         package the project into pkg/
+  export      export a standalone Makefile and build.sh
+  script      generate build.sh and clean.sh
+  valgrind    build and profile with valgrind
+  pro         generate QtCreator project file
+
+Compound actions:
+  ninjainstall  install from ninja build
+  ninjaclean    clean ninja build
+  makeinstall   install from make/cmake+make build
+  makeclean     clean make/cmake+make build
+
+Examples:
+  CMD                   standard build
+  CMD clang strict      build with clang and strict warnings
+  CMD debug             debug build and launch debugger
+  CMD debug build       debug build (without launching debugger)
+  CMD opt run           optimized build and run
+  CMD -C <dir> ...     run in the given directory
 `
-		fmt.Print(strings.ReplaceAll(helpString, "oh ", commandName+" "))
+			fmt.Print(strings.ReplaceAll(helpTemplate, "CMD", commandName))
+			return nil
+		}
+	}
+
+	// No args = default build
+	if len(args) == 0 {
+		return slay.DoBuild(slay.BuildOptions{})
+	}
+
+	// Expand legacy compound commands into modifier+action tokens
+	var tokens []string
+	for _, arg := range args {
+		if expanded := obuildExpandLegacy(arg); expanded != nil {
+			tokens = append(tokens, expanded...)
+		} else {
+			tokens = append(tokens, arg)
+		}
+	}
+
+	// Parse tokens into modifiers, action, and trailing args
+	var opts slay.BuildOptions
+	action := ""
+	var actionArgs []string
+
+	for i, tok := range tokens {
+		// Once we find an action that takes trailing args, capture the rest
+		if action == "run" || action == "pgo" {
+			actionArgs = tokens[i:]
+			break
+		}
+
+		// Apply modifiers
+		switch tok {
+		case "clang":
+			opts.Clang = true
+			continue
+		case "zap":
+			opts.Zap = true
+			continue
+		case "opt":
+			opts.Opt = true
+			continue
+		case "strict":
+			opts.Strict = true
+			continue
+		case "sloppy":
+			opts.Sloppy = true
+			continue
+		case "small":
+			opts.Small = true
+			continue
+		case "tiny":
+			opts.Small = true
+			opts.Tiny = true
+			continue
+		case "win64", "win":
+			opts.Win64 = true
+			continue
+		case "nosan", "nosanitizers":
+			opts.NoSanitizers = true
+			continue
+		}
+
+		// "debug" is both a modifier and an action
+		if tok == "debug" {
+			opts.Debug = true
+			if action == "" {
+				action = "debug"
+			}
+			continue
+		}
+
+		// Recognized actions
+		if obuildIsAction(tok) {
+			action = tok
+			if tok == "run" || tok == "pgo" || tok == "rec" {
+				action = tok
+				actionArgs = tokens[i+1:]
+				break
+			}
+			continue
+		}
+
+		return fmt.Errorf("unknown build command: %s", tok)
+	}
+
+	// Default action
+	if action == "" {
+		action = "build"
+	}
+
+	// Dispatch
+	switch action {
 	case "build":
-		return orchideous.DoBuild(orchideous.BuildOptions{})
-	case "rebuild":
-		ohDoClean()
-		return orchideous.DoBuild(orchideous.BuildOptions{})
-	case "clean":
-		ohDoClean()
-	case "fastclean":
-		ohDoFastClean()
+		if opts.Tiny {
+			return slayDoTiny(opts)
+		}
+		return slay.DoBuild(opts)
 	case "run":
-		return ohDoRun(orchideous.BuildOptions{}, subArgs)
+		if opts.Tiny {
+			if err := slayDoTiny(opts); err != nil {
+				return err
+			}
+			return slayDoRun(slay.BuildOptions{Win64: opts.Win64}, actionArgs)
+		}
+		return slayDoRun(opts, actionArgs)
 	case "debug":
-		return ohDoDebug(orchideous.BuildOptions{Debug: true}, false)
-	case "debugbuild":
-		return orchideous.DoBuild(orchideous.BuildOptions{Debug: true})
-	case "debugnosan":
-		return orchideous.DoBuild(orchideous.BuildOptions{Debug: true, NoSanitizers: true})
-	case "opt":
-		return orchideous.DoBuild(orchideous.BuildOptions{Opt: true})
-	case "strict":
-		return orchideous.DoBuild(orchideous.BuildOptions{Strict: true})
-	case "sloppy":
-		return orchideous.DoBuild(orchideous.BuildOptions{Sloppy: true})
-	case "small":
-		return orchideous.DoBuild(orchideous.BuildOptions{Small: true})
-	case "tiny":
-		return ohDoTiny(orchideous.BuildOptions{Small: true, Tiny: true})
-	case "clang":
-		return orchideous.DoBuild(orchideous.BuildOptions{Clang: true})
-	case "clangdebug":
-		return ohDoDebug(orchideous.BuildOptions{Clang: true, Debug: true}, true)
-	case "clangstrict":
-		return orchideous.DoBuild(orchideous.BuildOptions{Clang: true, Strict: true})
-	case "clangsloppy":
-		return orchideous.DoBuild(orchideous.BuildOptions{Clang: true, Sloppy: true})
-	case "clangrebuild":
-		ohDoClean()
-		return orchideous.DoBuild(orchideous.BuildOptions{Clang: true})
-	case "clangtest":
-		return ohDoTest(orchideous.BuildOptions{Clang: true})
+		return slayDoDebug(opts, opts.Clang)
+	case "rebuild":
+		slayDoClean()
+		if opts.Tiny {
+			return slayDoTiny(opts)
+		}
+		return slay.DoBuild(opts)
+	case "clean":
+		slayDoClean()
+	case "fastclean":
+		slayDoFastClean()
 	case "test":
-		return ohDoTest(orchideous.BuildOptions{})
+		return slayDoTest(opts)
 	case "testbuild":
-		return ohDoTestBuild(orchideous.BuildOptions{})
-	case "rec":
-		return ohDoRec(subArgs)
+		return slayDoTestBuild(opts)
+	case "pgo", "rec":
+		return slayDoRec(actionArgs)
 	case "fmt":
-		return ohDoFmt()
+		return slayDoFmt()
+	case "generate", "cmakelists", "cmakelist", "cmakelists.txt", "CMakeLists.txt":
+		return slay.DoGenerate(opts)
+	case "makefile", "Makefile":
+		return slay.DoGenerateMakefile()
 	case "cmake":
-		return orchideous.DoCMakeBuild(orchideous.BuildOptions{})
-	case "generate":
-		return orchideous.DoGenerate(orchideous.BuildOptions{})
-	case "pro":
-		return orchideous.DoPro(orchideous.BuildOptions{})
-	case "ninja":
-		return orchideous.DoNinja()
-	case "ninja_install":
-		return orchideous.DoNinjaInstall()
-	case "ninja_clean":
-		orchideous.DoNinjaClean()
-	case "install":
-		return orchideous.DoInstall()
-	case "pkg":
-		return orchideous.DoPkg()
-	case "export":
-		return orchideous.DoExport()
+		return slay.DoCMakeBuild(opts)
 	case "make":
-		return orchideous.DoMake()
+		return slay.DoMake()
+	case "ninja":
+		return slay.DoNinja()
+	case "ninjainstall", "ninja_install":
+		return slay.DoNinjaInstall()
+	case "ninjaclean", "ninja_clean":
+		slay.DoNinjaClean()
+	case "makeinstall", "make_install":
+		return slay.DoMakeInstall()
+	case "makeclean", "make_clean":
+		slay.DoMakeClean()
+	case "install":
+		return slay.DoInstall()
+	case "pkg":
+		return slay.DoPkg()
+	case "export":
+		return slay.DoExport()
 	case "script":
-		return orchideous.DoScript()
+		return slay.DoScript()
 	case "valgrind":
-		return ohDoValgrind(orchideous.BuildOptions{})
-	case "win", "win64":
-		return orchideous.DoBuild(orchideous.BuildOptions{Win64: true})
-	case "smallwin", "smallwin64":
-		return orchideous.DoBuild(orchideous.BuildOptions{Win64: true, Small: true})
-	case "tinywin", "tinywin64":
-		return ohDoTiny(orchideous.BuildOptions{Win64: true, Small: true, Tiny: true})
-	case "zap":
-		return orchideous.DoBuild(orchideous.BuildOptions{Zap: true})
-	default:
-		return fmt.Errorf("unknown build command: %s", cmd)
+		return slayDoValgrind(opts)
+	case "pro":
+		return slay.DoPro(opts)
 	}
 	return nil
 }

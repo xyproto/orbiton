@@ -18,7 +18,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/megafile"
-	"github.com/xyproto/orchideous"
+	"github.com/xyproto/slay"
 	"github.com/xyproto/themes"
 	"github.com/xyproto/vt"
 )
@@ -103,8 +103,8 @@ func getEditorCommand() string {
 }
 
 func main() {
-	orchideous.ProgName = "o -b"
-	orchideous.ProgURL = "https://github.com/xyproto/orbiton"
+	slay.ProgName = "o -b"
+	slay.ProgURL = "https://github.com/xyproto/orbiton"
 
 	var (
 		buildFlag              bool
@@ -379,12 +379,12 @@ func main() {
 	// Behave like if the "-b" flag was given if the executable name was "obuild"
 	if buildMode {
 		buildFlag = true
-		orchideous.ProgName = editorExecutable
+		slay.ProgName = editorExecutable
 	}
 
 	// If -b was given (or obuild), try language-specific builds first (Go,
 	// Rust, Zig, etc. based on marker files in the cwd), then fall back to
-	// orchideous for C/C++ projects.
+	// slay for C/C++ projects.
 	if buildFlag {
 		obuildArgs := args
 		if helpFlag {
@@ -396,7 +396,7 @@ func main() {
 		}
 		// Only attempt auto-detected non-C/C++ builds when no explicit
 		// subcommand was passed (i.e. plain `o -b` / `obuild`). When the
-		// user typed something like `o -b clean` they want orchideous.
+		// user typed something like `o -b clean` they want slay.
 		if !helpFlag && (len(obuildArgs) == 0 || obuildArgs[0] == "build") {
 			if attempted, err := tryAutoBuild(); attempted {
 				if err != nil {

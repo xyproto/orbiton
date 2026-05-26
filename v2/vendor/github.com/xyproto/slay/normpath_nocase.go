@@ -1,6 +1,6 @@
 //go:build darwin || windows
 
-package orchideous
+package slay
 
 import (
 	"path/filepath"
