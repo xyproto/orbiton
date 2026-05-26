@@ -299,6 +299,15 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		}
 
 	} else { // Multi line paste (the rest of the lines)
+
+		// If there is only one line to paste (a word or partial line), just insert it again
+		if len(*copyLines) == 1 {
+			e.InsertStringAndMove(c, strings.TrimSpace((*copyLines)[0]))
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+			return
+		}
+
 		// Pressed the second time for this line number, paste multiple lines without trimming
 		var (
 			firstLine     = (*copyLines)[0]
