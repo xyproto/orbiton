@@ -1,9 +1,11 @@
 package main
 
 import (
+	"errors"
 	"math"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/xyproto/vt"
@@ -400,10 +402,42 @@ func (e *Editor) JumpMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY) int {
 	return postAction
 }
 
+// nextAndScroll advances the cursor forward by one character.  When the cursor
+// is at the bottom edge of the screen it scrolls the document view down instead
+// of stopping.  An error is returned only when the end of the document is reached.
+func (e *Editor) nextAndScroll(c *vt.Canvas) error {
+	if err := e.Next(c); err == nil {
+		return nil
+	}
+	if int(e.DataY()) >= e.Len()-1 {
+		return errors.New("end of document")
+	}
+	e.pos.offsetY++
+	e.pos.sx = 0
+	e.redraw.Store(true)
+	return nil
+}
+
+// prevAndScroll moves the cursor backward by one character.  When the cursor
+// is at the top edge of the screen it scrolls the document view up instead of
+// stopping.  An error is returned only when the beginning of the document is reached.
+func (e *Editor) prevAndScroll(c *vt.Canvas) error {
+	if err := e.Prev(c); err == nil {
+		return nil
+	}
+	if e.pos.offsetY <= 0 {
+		return errors.New("start of document")
+	}
+	e.pos.offsetY--
+	e.End(c)
+	e.redraw.Store(true)
+	return nil
+}
+
 // JumpToMatching can jump to a to matching parenthesis or bracket ([{.
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
-	const maxSearchLength = 256000
+	const searchTimeout = 2 * time.Second
 	var r = e.Rune()
 	// Find which opening and closing parenthesis/curly brackets to look for
 	opening, closing := rune(0), rune(0)
@@ -422,14 +456,13 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 		onparen = false
 	}
 	if onparen {
+		deadline := time.Now().Add(searchTimeout)
 		// Search either forwards or backwards to find a matching rune
 		switch r {
 		case '(', '{', '[':
 			parcount := 0
-			counter := 0
 			found := false
-			for counter < maxSearchLength {
-				counter++
+			for !time.Now().After(deadline) {
 				if r := e.Rune(); r == closing {
 					if parcount == 1 {
 						found = true
@@ -440,7 +473,7 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 				} else if r == opening {
 					parcount++
 				}
-				if err := e.Next(c); err != nil {
+				if err := e.nextAndScroll(c); err != nil {
 					break
 				}
 			}
@@ -449,10 +482,8 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 			}
 		case ')', '}', ']':
 			parcount := 0
-			counter := 0
 			found := false
-			for counter < maxSearchLength {
-				counter++
+			for !time.Now().After(deadline) {
 				if r := e.Rune(); r == opening {
 					if parcount == 1 {
 						found = true
@@ -463,7 +494,7 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 				} else if r == closing {
 					parcount++
 				}
-				if err := e.Prev(c); err != nil {
+				if err := e.prevAndScroll(c); err != nil {
 					break
 				}
 			}

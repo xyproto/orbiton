@@ -2401,19 +2401,10 @@ func (e *Editor) HorizontalScrollIfNeeded(c *vt.Canvas) {
 	e.redrawCursor.Store(true)
 }
 
-// VerticalScrollIfNeeded will scroll along the X axis, if needed
+// VerticalScrollIfNeeded will scroll along the Y axis, if needed
 func (e *Editor) VerticalScrollIfNeeded(c *vt.Canvas) {
-	y := e.pos.sy
-	h := 25
-	if c != nil {
-		h = int(c.H())
-	}
-	if y < h {
-		e.pos.offsetY = 0
-	} else {
-		e.pos.offsetY = (y - h) + 1
-		e.pos.sy -= e.pos.offsetY
-	}
+	// pos.Down() and pos.Up() already keep sy within [0, h-1] and update
+	// offsetY correctly as the cursor moves, so nothing to recompute here.
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 }
