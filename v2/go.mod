@@ -61,7 +61,7 @@ require (
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/gfx v1.0.0 // indirect
-	github.com/xyproto/palgen v1.7.0 // indirect
+	github.com/xyproto/palgen v1.7.2 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0 // indirect
