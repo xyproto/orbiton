@@ -274,16 +274,6 @@ func slayDoTiny(opts slay.BuildOptions) error {
 	return nil
 }
 
-// obuildIsModifier returns true if the word is a recognized modifier.
-func obuildIsModifier(word string) bool {
-	switch word {
-	case "clang", "zap", "opt", "strict", "sloppy", "small", "tiny",
-		"win64", "win", "debug", "nosan", "nosanitizers":
-		return true
-	}
-	return false
-}
-
 // obuildIsAction returns true if the word is a recognized action.
 func obuildIsAction(word string) bool {
 	switch word {
