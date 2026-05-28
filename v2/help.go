@@ -52,6 +52,7 @@ ctrl-k      to delete characters to the end of the line, then delete the line
 ctrl-j      to join lines
 ctrl-d      to delete a single character
 ctrl-t      for C and C++, toggle between the header and implementation,
+            for Clojure, evaluate the top-level form via nREPL,
             for Markdown, toggle checkboxes or launch the table editor
             for Agda, insert a symbol,
             for the rest, record and then play back a macro

@@ -982,6 +982,47 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
+			} else if e.mode == mode.Clojure { // eval the enclosing top-level form via nREPL
+				form := e.clojureTopLevelForm()
+				if form == "" {
+					status.ClearAll(c, false)
+					status.SetErrorMessage("no top-level Clojure form found")
+					status.Show(c, e)
+					break
+				}
+				absFilename, err := e.AbsFilename()
+				if err != nil {
+					status.ClearAll(c, false)
+					status.SetError(err)
+					status.Show(c, e)
+					break
+				}
+				port, err := findNREPLPort(filepath.Dir(absFilename))
+				if err != nil {
+					status.ClearAll(c, false)
+					status.SetErrorMessage("no nREPL running (start with: lein repl)")
+					status.Show(c, e)
+					break
+				}
+				addr := fmt.Sprintf("127.0.0.1:%d", port)
+				nc, err := nreplClientFor(addr)
+				if err != nil {
+					status.ClearAll(c, false)
+					status.SetErrorMessage("could not connect to nREPL: " + err.Error())
+					status.Show(c, e)
+					break
+				}
+				result, err := nc.Eval(form)
+				if err != nil {
+					nreplDrop(addr) // connection may be stale; reconnect next time
+					status.ClearAll(c, false)
+					status.SetErrorMessage(err.Error())
+					status.Show(c, e)
+					break
+				}
+				status.ClearAll(c, false)
+				status.SetMessage("=> " + result)
+				status.Show(c, e)
 			} else if e.macro == nil {
 				// Start recording a macro, then stop the recording when ctrl-t is pressed again,
 				// then ask for the number of repetitions to play it back when it's pressed after that,
