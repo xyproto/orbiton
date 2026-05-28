@@ -25,11 +25,11 @@ require (
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0
-	github.com/xyproto/imagepreview v1.2.2
+	github.com/xyproto/imagepreview v1.2.3
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.7.2
+	github.com/xyproto/megafile v1.7.3
 	github.com/xyproto/mode v0.12.11
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/syntax v1.14.2

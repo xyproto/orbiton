@@ -160,7 +160,7 @@ func FlushRawRGBAWithID(w io.Writer, img *image.RGBA, dispCols, dispRows uint, i
 		zw.Write(img.Pix[:pixH*stride])
 	} else {
 		// Stride > row width: write row by row to skip padding bytes.
-		for y := 0; y < pixH; y++ {
+		for y := range pixH {
 			off := y * stride
 			zw.Write(img.Pix[off : off+rowBytes])
 		}

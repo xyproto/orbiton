@@ -55,13 +55,13 @@ func SixelEncode(w io.Writer, img image.Image) {
 		}
 		bandMap := make(map[int]*bandEntry)
 
-		for dy := 0; dy < 6; dy++ {
+		for dy := range 6 {
 			py := bandY + dy
 			if py >= height {
 				break
 			}
 			bit := byte(1 << dy)
-			for x := 0; x < width; x++ {
+			for x := range width {
 				ci := indexed[py*width+x]
 				be, ok := bandMap[ci]
 				if !ok {
