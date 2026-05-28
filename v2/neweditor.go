@@ -722,6 +722,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	e.SetTheme(theme)
 	e.lines = make(map[int][]rune)
 	e.linesMut = &sync.Mutex{}
+	e.hlCache = newHighlightCache()
 	e.indentation = indentation
 	e.syntaxHighlight = syntaxHighlight
 	e.rainbowParenthesis = rainbowParenthesis

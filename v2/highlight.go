@@ -185,11 +185,27 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		dottedLineColor = e.Theme.StatusForeground
 	}
 
+	// Invalidate the highlight cache if the editor mode has changed
+	if e.hlCache != nil {
+		e.hlCache.CheckMode(e.mode)
+	}
+
 	switch e.mode {
 	// If in Markdown mode, figure out the current state of block quotes
 	case mode.ASCIIDoc, mode.Markdown, mode.ReStructured, mode.SCDoc:
-		// Figure out if "fromline" is within a markdown code block or not
-		for li = range fromline {
+		// Figure out if "fromline" is within a markdown code block or not.
+		// Use the highlight cache to avoid scanning from line 0 every time.
+		startLine := LineIndex(0)
+		if e.hlCache != nil {
+			if cached, cachedLine, ok := e.hlCache.GetCodeBlock(fromline); ok {
+				inCodeBlock = cached
+				startLine = cachedLine
+			}
+		}
+		for li = startLine; li < fromline; li++ {
+			if e.hlCache != nil && li > 0 && li%highlightCacheInterval == 0 && li > startLine {
+				e.hlCache.PutCodeBlock(li, inCodeBlock)
+			}
 			trimmedLine = strings.TrimSpace(e.Line(li))
 			// Check if the trimmed line starts with ~~~ or ```
 			if strings.HasPrefix(trimmedLine, "~~~") || strings.HasPrefix(trimmedLine, "```") {
@@ -210,8 +226,19 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 			}
 		}
 	case mode.Mojo, mode.Nim, mode.Python, mode.Starlark:
-		// Figure out if "fromline" is within a markdown code block or not
-		for li = range fromline {
+		// Figure out if "fromline" is within a Python/Nim docstring or not.
+		// Use the highlight cache to avoid scanning from line 0 every time.
+		startLine := LineIndex(0)
+		if e.hlCache != nil {
+			if cached, cachedLine, ok := e.hlCache.GetCodeBlock(fromline); ok {
+				inCodeBlock = cached
+				startLine = cachedLine
+			}
+		}
+		for li = startLine; li < fromline; li++ {
+			if e.hlCache != nil && li > 0 && li%highlightCacheInterval == 0 && li > startLine {
+				e.hlCache.PutCodeBlock(li, inCodeBlock)
+			}
 			line = e.Line(li)
 			trimmedLine = strings.TrimSpace(line)
 			inCodeBlock, _ = checkMultiLineString(trimmedLine, inCodeBlock)
@@ -222,9 +249,20 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	if canHaveShaderStrings(e.mode) {
 		switch e.mode {
 		case mode.Go, mode.Odin:
-			// For Go and Odin, track backtick state and detect GLSL within backtick strings
+			// For Go and Odin, track backtick state and detect GLSL within backtick strings.
+			// Use the highlight cache to avoid scanning from line 0 every time.
 			inBacktick := false
-			for li = range fromline {
+			startLine := LineIndex(0)
+			if e.hlCache != nil {
+				if cached, cachedLine, ok := e.hlCache.GetBacktick(fromline); ok {
+					inBacktick = cached
+					startLine = cachedLine
+				}
+			}
+			for li = startLine; li < fromline; li++ {
+				if e.hlCache != nil && li > 0 && li%highlightCacheInterval == 0 && li > startLine {
+					e.hlCache.PutBacktick(li, inBacktick)
+				}
 				trimmedLine = strings.TrimSpace(e.Line(li))
 				btCount := strings.Count(trimmedLine, "`")
 				if btCount%2 != 0 {
@@ -255,17 +293,29 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		return // err
 	}
 
+	// Determine the starting line for the QuoteState scan using the cache
+	qStartLine := LineIndex(0)
+	if e.hlCache != nil {
+		if cached, cachedLine, ok := e.hlCache.GetQuote(offsetY); ok {
+			*q = cached
+			qStartLine = cachedLine
+		}
+	}
+
 	if e.mode != mode.Vim {
-		// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
-		for li = LineIndex(0); li < offsetY; li++ {
+		// Loop from the nearest cache checkpoint up to the offset to determine the current multi-line state
+		for li = qStartLine; li < offsetY; li++ {
+			if e.hlCache != nil && li > 0 && li%highlightCacheInterval == 0 && li > qStartLine {
+				e.hlCache.PutQuote(li, *q)
+			}
 			trimmedLine = strings.TrimSpace(e.Line(li))
-			// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
-			// Solution, have a state struct!
 			q.Process(trimmedLine)
 		}
 	} else { // Special case for ViM
-		// First loop from 0 up to to offset to figure out if we are already in a multiLine comment or a multiLine string at the current line
-		for li = LineIndex(0); li < offsetY; li++ {
+		for li = qStartLine; li < offsetY; li++ {
+			if e.hlCache != nil && li > 0 && li%highlightCacheInterval == 0 && li > qStartLine {
+				e.hlCache.PutQuote(li, *q)
+			}
 			trimmedLine = strings.TrimSpace(e.Line(li))
 			if strings.HasPrefix(trimmedLine, "\"") {
 				q.hasSingleLineComment = true
@@ -276,8 +326,6 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 				q.singleQuote = 0
 				continue
 			}
-			// Have a trimmed line. Want to know: the current state of which quotes, comments or strings we are in.
-			// Solution, have a state struct!
 			q.Process(trimmedLine)
 		}
 	}

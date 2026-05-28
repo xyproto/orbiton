@@ -50,6 +50,7 @@ type Editor struct {
 	lines                        map[int][]rune    // the contents of the current document
 	linesMut                     *sync.Mutex       // protects concurrent access to lines (e.g. signal handler save vs main goroutine)
 	macro                        *Macro            // the contents of the current macro (will be cleared when esc is pressed)
+	hlCache                      *highlightCache   // cached QuoteState checkpoints for fast redraw of large files
 	debugWatches                 map[string]string // watches preserved across debug sessions
 	blockCursors                 map[int]int       // per-line cursor X positions for block editing (line Y -> X)
 	selection                    *Selection        // active text selection, nil if none
@@ -262,12 +263,17 @@ func (e *Editor) RestoreFrom(snap *Editor, lines map[int][]rune, pos Position) {
 	softWrapLimit := e.softWrapLimit
 	wrapLimitWhenTyping := e.wrapLimitWhenTyping
 	linesMut := e.linesMut // preserve the live mutex
+	hlCache := e.hlCache   // preserve the live highlight cache
 
 	const withLines = true
 	*e = *(snap.Copy(withLines))
 	e.lines = lines
 	e.pos = pos
 	e.linesMut = linesMut // restore the live mutex
+	e.hlCache = hlCache   // restore the live highlight cache
+	if e.hlCache != nil {
+		e.hlCache.Invalidate()
+	}
 
 	// Re-apply the rendering state
 	e.bookModeState.Store(bookModeState)
@@ -305,6 +311,9 @@ func (e *Editor) CopyLines() map[int][]rune {
 func (e *Editor) MarkChanged() {
 	e.changed.Store(true)
 	bookBumpContentGen()
+	if e.hlCache != nil {
+		e.hlCache.Invalidate()
+	}
 }
 
 // Set will store a rune in the editor data, at the given data coordinates
@@ -582,17 +591,16 @@ func (e *Editor) TrimRight(index LineIndex) bool {
 // TrimLeft will remove whitespace from the start of the given line number
 // Returns true if the line was trimmed
 func (e *Editor) TrimLeft(index LineIndex) bool {
-	changed := false
 	n := int(index)
 	if line, ok := e.lines[n]; ok {
 		newRunes := []rune(strings.TrimLeftFunc(string(line), unicode.IsSpace))
 		// Compare lengths to detect trimming without full content comparison
 		if len(newRunes) != len(line) {
 			e.lines[n] = newRunes
-			changed = true
+			return true
 		}
 	}
-	return changed
+	return false
 }
 
 // StripSingleLineComment will strip away trailing single-line comments.
@@ -650,6 +658,7 @@ func (e *Editor) DeleteLine(n LineIndex) {
 	if endOfDocument {
 		// Just delete this line
 		delete(e.lines, int(n))
+		e.MarkChanged()
 		return
 	}
 	maxIndex := LineIndex(len(e.lines) - 1)
@@ -1038,6 +1047,10 @@ func (e *Editor) SetRainbow(rainbowParenthesis bool) {
 func (e *Editor) SetLine(n LineIndex, s string) {
 	e.CreateLineIfMissing(n)
 	e.lines[int(n)] = make([]rune, 0)
+	if s == "" {
+		e.MarkChanged()
+		return
+	}
 	counter := 0
 	// It's important not to use the index value when looping over a string,
 	// unless the byte index is what one's after, as opposed to the rune index.
