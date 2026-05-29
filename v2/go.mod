@@ -45,6 +45,8 @@ require github.com/xyproto/themes v0.0.3
 
 require github.com/xyproto/slay v1.3.2
 
+require github.com/peterhellberg/gfx v0.0.0-20260528221839-3f985a9df2a8 // indirect
+
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/DataDog/gostackparse v0.7.0 // indirect
@@ -57,11 +59,10 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xfmoulet/qoi v0.2.0 // indirect
-	github.com/xyproto/burnpal v1.1.0 // indirect
+	github.com/xyproto/burnpal v1.1.1 // indirect
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
-	github.com/xyproto/gfx v1.0.0 // indirect
-	github.com/xyproto/palgen v1.7.2 // indirect
+	github.com/xyproto/palgen v1.7.3 // indirect
 	golang.org/x/net v0.55.0 // indirect
 	golang.org/x/sys v0.45.0 // indirect
 	golang.org/x/term v0.43.0 // indirect

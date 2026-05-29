@@ -105,6 +105,6 @@ And one extra:
 
 ### General info
 
-* Version: 1.7.2
+* Version: 1.7.3
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

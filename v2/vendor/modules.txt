@@ -66,6 +66,9 @@ github.com/lucasb-eyer/go-colorful
 # github.com/mattn/go-runewidth v0.0.23
 ## explicit; go 1.20
 github.com/mattn/go-runewidth
+# github.com/peterhellberg/gfx v0.0.0-20260528221839-3f985a9df2a8
+## explicit; go 1.25
+github.com/peterhellberg/gfx
 # github.com/sajari/fuzzy v1.0.0
 ## explicit
 github.com/sajari/fuzzy
@@ -90,8 +93,8 @@ github.com/xyproto/binary
 # github.com/xyproto/burnfont v1.2.3
 ## explicit; go 1.9
 github.com/xyproto/burnfont
-# github.com/xyproto/burnpal v1.1.0
-## explicit; go 1.11
+# github.com/xyproto/burnpal v1.1.1
+## explicit; go 1.25
 github.com/xyproto/burnpal
 # github.com/xyproto/clip v1.0.0
 ## explicit; go 1.11
@@ -114,9 +117,6 @@ github.com/xyproto/files
 # github.com/xyproto/fullname v1.1.0
 ## explicit; go 1.23.1
 github.com/xyproto/fullname
-# github.com/xyproto/gfx v1.0.0
-## explicit; go 1.17
-github.com/xyproto/gfx
 # github.com/xyproto/globi v1.0.2
 ## explicit; go 1.23.5
 github.com/xyproto/globi
@@ -144,7 +144,7 @@ github.com/xyproto/mode
 # github.com/xyproto/oksvg v1.0.1
 ## explicit; go 1.25.1
 github.com/xyproto/oksvg
-# github.com/xyproto/palgen v1.7.2
+# github.com/xyproto/palgen v1.7.3
 ## explicit; go 1.25.1
 github.com/xyproto/palgen
 # github.com/xyproto/slay v1.3.2
