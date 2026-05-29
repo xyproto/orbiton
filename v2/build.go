@@ -478,12 +478,21 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		}
 		// No result
 	case mode.C3:
-		if e.debugMode {
-			cmd = exec.Command("c3c", "compile", "-g", "-o", exeFilename, ".")
-		} else {
-			cmd = exec.Command("c3c", "compile", "-o", exeFilename, ".")
+		// Only use project mode if project.json is present, to avoid scanning unrelated files
+		target := sourceFilename
+		cmdDir := sourceDir
+		if files.IsFile(filepath.Join(sourceDir, "project.json")) {
+			target = "."
+		} else if files.IsFile(filepath.Join(parentDir, "project.json")) {
+			target = "."
+			cmdDir = parentDir
 		}
-		cmd.Dir = sourceDir
+		if e.debugMode {
+			cmd = exec.Command("c3c", "compile", "-g", "-o", exeFilename, target)
+		} else {
+			cmd = exec.Command("c3c", "compile", "-o", exeFilename, target)
+		}
+		cmd.Dir = cmdDir
 		return cmd, exeExists, nil
 	case mode.Clojure:
 		cmd = exec.Command("lein", "uberjar")
