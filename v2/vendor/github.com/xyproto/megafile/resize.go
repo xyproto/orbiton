@@ -33,7 +33,7 @@ func (s *State) ResetTerminal() {
 
 	// Create new canvas
 	newC := vt.NewCanvas()
-	newC.ShowCursor()
+	newC.HideCursor()
 	vt.EchoOff()
 
 	// Assign the new canvas to the current canvas
@@ -41,7 +41,7 @@ func (s *State) ResetTerminal() {
 
 	// Create another new canvas to ensure the terminal size is correct after resize
 	newC = vt.NewCanvas()
-	newC.ShowCursor()
+	newC.HideCursor()
 	vt.EchoOff()
 
 	*c = newC.Copy()

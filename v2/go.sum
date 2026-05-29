@@ -111,8 +111,8 @@ github.com/xyproto/kotlinsig v0.0.1 h1:WsRn1dyJ7EwQk5MngOujIcSZazjG+yAIiZzWIJC0F
 github.com/xyproto/kotlinsig v0.0.1/go.mod h1:tq9ILkFh43rUuDiscyTZoBs6zSDxPa+hKKM5c6Bdnio=
 github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF2WzXqz4=
 github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
-github.com/xyproto/megafile v1.7.3 h1:AdjpOTzAqLpCiCLaWPkfXt8m/NjFFO4oorV67AtgJuM=
-github.com/xyproto/megafile v1.7.3/go.mod h1:jY6bmQv5uVVowvZ6VIjHmhdQyg7J4MfZ5TAx5EbtD9M=
+github.com/xyproto/megafile v1.7.4 h1:Qvj1++FA9ap46jQ3Hn96jHXGto4ziAqYQqw5AgrIB1g=
+github.com/xyproto/megafile v1.7.4/go.mod h1:x80svSw1ytyR+nv3SKhQV4iECcBIljBRbALwdT/qnJc=
 github.com/xyproto/mode v0.12.11 h1:II49k2KufrYXIT4FcXDKyC2BD4fx4bL2Dku3cAVSioE=
 github.com/xyproto/mode v0.12.11/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
 github.com/xyproto/oksvg v1.0.1 h1:73aS/Preun72DfKyudJYIWb1wPiJRkpYHASwOBbDQBo=
