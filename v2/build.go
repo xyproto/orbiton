@@ -375,7 +375,7 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd.Dir = sourceDir
 		return cmd, func() (bool, string) {
 			executableFirstName := filepath.Base(sourceFilenameWithoutExt)
-			return files.IsFile(sourceFilenameWithoutPath), executableFirstName
+			return files.IsFile(filepath.Join(sourceDir, executableFirstName)), executableFirstName
 		}, nil
 	case mode.Cpp:
 		if files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" { // Google-style C++ + Bazel projects
@@ -857,8 +857,9 @@ analyzeOutput:
 
 	// Remove .Random.seed if a68g was just used
 	if e.mode == mode.Algol68 {
-		if files.IsFile(".Random.seed") {
-			os.Remove(".Random.seed")
+		randomSeed := filepath.Join(sourceDir, ".Random.seed")
+		if files.IsFile(randomSeed) {
+			os.Remove(randomSeed)
 		}
 	}
 
