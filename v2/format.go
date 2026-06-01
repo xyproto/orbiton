@@ -13,7 +13,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/klauspost/asmfmt"
-	"github.com/xyproto/autoimport"
 	"github.com/xyproto/files"
 	"github.com/xyproto/lookslikegoasm"
 	"github.com/xyproto/mode"
@@ -259,20 +258,6 @@ func formatTOML(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// organizeImports can fix, sort and organize imports for Kotlin and for Java
-func organizeImports(data []byte, onlyJava, removeExistingImports, deGlob bool) []byte {
-	ima, err := autoimport.New(onlyJava, removeExistingImports, deGlob)
-	if err != nil {
-		return data // no change
-	}
-	const verbose = false
-	newData, err := ima.FixImports(data, verbose)
-	if err != nil {
-		return data // no change
-	}
-	return newData
-}
-
 func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFormatToggle *bool) {
 	switch e.mode {
 	case mode.JSON: // Format JSON
@@ -360,12 +345,6 @@ func (e *Editor) formatCode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, jsonFo
 			e.redraw.Store(true)
 			return
 		}
-	case mode.Java, mode.Kotlin:
-		const removeExistingImports = false
-		const deGlobImports = true
-		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
-		e.redraw.Store(true)
-		// Do not return, since there is more formatting to be done
 	}
 
 	e.InstallMissingTools()
@@ -507,10 +486,6 @@ func runFmt(fnord FilenameOrData) error {
 			return err
 		}
 		e.LoadBytes(out)
-	case mode.Java, mode.Kotlin:
-		const removeExistingImports = false
-		const deGlobImports = true
-		e.LoadBytes(organizeImports([]byte(e.String()), e.mode == mode.Java, removeExistingImports, deGlobImports))
 	}
 
 	// Persist the in-process result to disk. Save is safe with nil canvas/tty
