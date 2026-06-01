@@ -119,7 +119,7 @@ Display brief usage information.
   Delete all characters to the end of the line. Delete the line if it is empty.
 .sp
 .B ctrl-g
-  Jump to definition, for some programming languages (experimental feature) or toggle the status bar.
+  Go to an include or definition, or toggle the status bar.
 .sp
 .B ctrl-d
   Delete a single character.
@@ -150,9 +150,8 @@ Display brief usage information.
   Also closes the portal.
 .sp
 .B ctrl-b
-  Jump back after jumping to a definition with `ctrl-g`.
-  Bookmark the current line. Press again to remove the bookmark.
-  If a bookmark is set, and not on the bookmarked line, jump to the bookmark.
+  Go back after having gone to another location or file.
+  Toggle block editing mode if there is nothing to go back to.
   Toggle the breakpoint if the editor is in debug mode.
 .sp
 .B ctrl-j

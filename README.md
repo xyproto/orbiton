@@ -223,12 +223,12 @@ There are pretty few hotkeys to remember:
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
              To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
-* `ctrl-b` - Jump back after jumping to a definition or include with `ctrl-g`, or toggle block editing mode.
+* `ctrl-b` - Go back after having gone to another location or file, or toggle block editing mode.
              In book mode: toggle bold (`**`).
 * `ctrl-i` - In book mode: toggle italic (`*`).
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
              In book mode: toggle paragraph indent.
-* `ctrl-g` - Jump to definition, for some programming languages (experimental feature), jump to an include, jump back or toggle the status bar.
+* `ctrl-g` - Go to include or definition, or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Redraw everything and clear the last search.

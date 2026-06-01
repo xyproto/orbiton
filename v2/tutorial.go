@@ -75,7 +75,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Go to definition",
-		description: "For some programming languages, ctrl-g can be pressed to jump to a definition, and ctrl-b can be used to jump back.",
+		description: "Press ctrl-g to go to a definition or include. Press ctrl-b to go back.",
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{

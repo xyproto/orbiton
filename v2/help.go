@@ -38,7 +38,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "ruff"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
-ctrl-g      jump to include, definition (experimental), back or toggle the status bar
+ctrl-g      go to include or definition, or toggle the status bar
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line
@@ -61,8 +61,8 @@ ctrl-c      to copy the current line, press twice to copy the current block
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
             press thrice to cut the current function
-ctrl-b      to jump back after having jumped to a definition or include
-            to toggle block edit mode
+ctrl-b      to go back after having gone to another location or file
+            to toggle block edit mode if there is nothing to go back to
             to toggle a breakpoint if in debug mode
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-y      to redo
