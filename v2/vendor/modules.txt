@@ -150,7 +150,7 @@ github.com/xyproto/palgen
 # github.com/xyproto/slay v1.3.2
 ## explicit; go 1.25.1
 github.com/xyproto/slay
-# github.com/xyproto/syntax v1.14.3
+# github.com/xyproto/syntax v1.14.5
 ## explicit; go 1.25.1
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
