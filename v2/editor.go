@@ -86,7 +86,8 @@ type Editor struct {
 	nanoMode                    atomic.Bool  // emulate GNU Nano
 	waitWithRedrawing           atomic.Bool  // wait with redrawing until a key is pressed
 	flaskApplication            atomic.Bool  // Python + Flask
-	moveLinesMode               atomic.Bool  // move lines up and down with ctrl-p and ctrl-n, when enabled
+	moveLines                   atomic.Bool  // move lines up and down with ctrl-p and ctrl-n, when enabled
+	disablePortals              atomic.Bool  // disable portals and let ctrl-r build+run instead
 	debugComplete               atomic.Bool  // set when the debugged program has finished execution
 	building                    atomic.Bool  // currently building code or exporting to a file?
 	runAfterBuild               atomic.Bool  // run the application after building?
@@ -226,7 +227,8 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.drawFuncName.Store(e.drawFuncName.Load())
 	e2.waitWithRedrawing.Store(e.waitWithRedrawing.Load())
 	e2.flaskApplication.Store(e.flaskApplication.Load())
-	e2.moveLinesMode.Store(e.moveLinesMode.Load())
+	e2.moveLines.Store(e.moveLines.Load())
+	e2.disablePortals.Store(e.disablePortals.Load())
 	e2.bookModeState.Store(e.bookModeState.Load())
 	e2.bookDarkMode = e.bookDarkMode
 	e2.bookParagraphIndent = e.bookParagraphIndent

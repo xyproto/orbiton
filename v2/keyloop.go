@@ -764,21 +764,138 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			status.HoldMessage(c, 250*time.Millisecond)
 
 		case "c:6": // ctrl-f, search for a string (or step out in debug mode)
-
 			if e.blockMode {
 				e.blockMode = false
 				e.blockCursors = nil
 				c.ShowCursor()
 			}
-
 			if e.nanoMode.Load() { // nano: ctrl-f, cursor forward
 				e.CursorForward(c, status)
 				break
 			}
-
 			const clearPreviousSearch = true
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
+
+		case "c:18": // ctrl-r, to open or close a portal. In debug mode, reverse step.
+			if !e.disablePortals.Load() {
+				// In book mode: follow the Markdown link under the cursor,
+				// or when the cursor is not on a link, navigate back one
+				// step in the per-session history. This replaces the
+				// portal/rebase behaviour (neither of which makes sense
+				// while reading a book-mode document).
+				if e.InBookMode() {
+					url := e.bookLinkURLUnderCursor()
+					pushCurrent := true
+					if url == "" {
+						url = bookPopHistory()
+						// Going back: don't push the current URL onto
+						// the stack (that would trap the user in a
+						// two-URL loop).
+						pushCurrent = false
+						if url == "" {
+							break
+						}
+					}
+					status.ClearAll(c, false)
+					status.SetMessage("Loading " + url)
+					status.Show(c, e)
+					md, err := fetchURLAsMarkdown(url)
+					if err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+					if pushCurrent {
+						if cur := bookGetCurrentURL(); cur != "" {
+							bookPushHistory(cur)
+						}
+					}
+					bookMarkLinkVisited(url)
+					bookSetCurrentURL(url)
+					// Replace the buffer with the fetched Markdown
+					// and reset the view. Matches the URL-at-startup
+					// path in main.go so the user gets consistent
+					// behaviour.
+					e.LoadBytes(md)
+					e.filename = "-"
+					e.changed.Store(false)
+					e.pos.sx = 0
+					e.pos.sy = 0
+					e.pos.offsetX = 0
+					e.pos.offsetY = 0
+					e.bookSavedLocalX = -1
+					bookBumpContentGen()
+					e.FullResetRedraw(c, status, true, true)
+					break
+				}
+				if e.nanoMode.Load() { // nano: ctrl-r, insert file
+					// Ask the user which filename to insert
+					if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
+						err := e.RunCommand(c, tty, status, undo, "insertfile", insertFilename)
+						if err != nil {
+							status.SetError(err)
+							status.Show(c, e)
+							break
+						}
+					}
+					break
+				}
+				// Are we in git mode?
+				if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
+					undo.Snapshot(e)
+					newLine := nextGitRebaseKeyword(line)
+					e.SetCurrentLine(newLine)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					break
+				}
+				// Jump to matching bracket if the cursor is on one
+				if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
+					if e.JumpToMatching(c) {
+						e.redraw.Store(true)
+						e.redrawCursor.Store(true)
+					} else {
+						name := "bracket"
+						switch r {
+						case '(', ')':
+							name = "parenthesis"
+						case '{', '}':
+							name = "curly bracket"
+						case '[', ']':
+							name = "square bracket"
+						}
+						status.ClearAll(c, false)
+						status.SetMessageAfterRedraw("Can't find a matching " + name)
+					}
+					break
+				}
+				// Deal with the portal
+				status.ClearAll(c, false)
+				if HasPortal() {
+					status.SetMessageAfterRedraw("Closing portal")
+					e.ClosePortal()
+				} else {
+					portal, err := e.NewPortal()
+					if err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+					// Portals in the same file is a special case, since lines may move around when pasting
+					if portal.SameFile(e) {
+						e.sameFilePortal = portal
+					}
+					if err := portal.Save(); err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
+				}
+				break
+			}
+			fallthrough // to build+run (same as ctrl-space)
 
 		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
 			if e.nanoMode.Load() {
@@ -1399,7 +1516,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 		case ctrlPgUpKey: // ctrl-pgup, previous file or page up
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
 				e.SaveLocation()
 				e.linesMut.Unlock()
 				return "", megafile.PreviousFile, nil
@@ -1422,7 +1539,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.drawFuncName.Store(true)
 
 		case ctrlPgDnKey: // ctrl-pgdn, next file or page down
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
 				e.SaveLocation()
 				e.linesMut.Unlock()
 				return "", megafile.NextFile, nil
@@ -1602,7 +1719,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
 
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
 				e.SaveLocation()
 				// go to the previous file, if launched from the file browser
 				e.linesMut.Unlock()
@@ -1630,7 +1747,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				} else {
 
-					if e.moveLinesMode.Load() && e.AtSecondLineOfDocumentOrLater() {
+					if e.moveLines.Load() && e.AtSecondLineOfDocumentOrLater() {
 						// Move the current line up
 						line := e.CurrentLine()
 						e.DeleteCurrentLineMoveBookmark()
@@ -1683,7 +1800,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLinesMode.Load() {
+			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
 				e.SaveLocation()
 				// go to the next file, if launched from the file browser
 				e.linesMut.Unlock()
@@ -1714,7 +1831,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 				} else {
 
-					if e.moveLinesMode.Load() && !e.AtOrAfterLastLineOfDocument() {
+					if e.moveLines.Load() && !e.AtOrAfterLastLineOfDocument() {
 						// Move the current line down
 						line := e.CurrentLine()
 						e.DeleteCurrentLineMoveBookmark()
@@ -2847,127 +2964,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			clearKeyHistory = true
 
-		case "c:18": // ctrl-r, to open or close a portal. In debug mode, reverse step.
-
-			// In book mode: follow the Markdown link under the cursor,
-			// or when the cursor is not on a link, navigate back one
-			// step in the per-session history. This replaces the
-			// portal/rebase behaviour (neither of which makes sense
-			// while reading a book-mode document).
-			if e.InBookMode() {
-				url := e.bookLinkURLUnderCursor()
-				pushCurrent := true
-				if url == "" {
-					url = bookPopHistory()
-					// Going back: don't push the current URL onto
-					// the stack (that would trap the user in a
-					// two-URL loop).
-					pushCurrent = false
-					if url == "" {
-						break
-					}
-				}
-				status.ClearAll(c, false)
-				status.SetMessage("Loading " + url)
-				status.Show(c, e)
-				md, err := fetchURLAsMarkdown(url)
-				if err != nil {
-					status.SetError(err)
-					status.Show(c, e)
-					break
-				}
-				if pushCurrent {
-					if cur := bookGetCurrentURL(); cur != "" {
-						bookPushHistory(cur)
-					}
-				}
-				bookMarkLinkVisited(url)
-				bookSetCurrentURL(url)
-				// Replace the buffer with the fetched Markdown
-				// and reset the view. Matches the URL-at-startup
-				// path in main.go so the user gets consistent
-				// behaviour.
-				e.LoadBytes(md)
-				e.filename = "-"
-				e.changed.Store(false)
-				e.pos.sx = 0
-				e.pos.sy = 0
-				e.pos.offsetX = 0
-				e.pos.offsetY = 0
-				e.bookSavedLocalX = -1
-				bookBumpContentGen()
-				e.FullResetRedraw(c, status, true, true)
-				break
-			}
-
-			if e.nanoMode.Load() { // nano: ctrl-r, insert file
-				// Ask the user which filename to insert
-				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
-					err := e.RunCommand(c, tty, status, undo, "insertfile", insertFilename)
-					if err != nil {
-						status.SetError(err)
-						status.Show(c, e)
-						break
-					}
-				}
-
-				break
-			}
-
-			// Are we in git mode?
-			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
-				undo.Snapshot(e)
-				newLine := nextGitRebaseKeyword(line)
-				e.SetCurrentLine(newLine)
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
-			}
-
-			// Jump to matching bracket if the cursor is on one
-			if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
-				if e.JumpToMatching(c) {
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-				} else {
-					name := "bracket"
-					switch r {
-					case '(', ')':
-						name = "parenthesis"
-					case '{', '}':
-						name = "curly bracket"
-					case '[', ']':
-						name = "square bracket"
-					}
-					status.ClearAll(c, false)
-					status.SetMessageAfterRedraw("Can't find a matching " + name)
-				}
-				break
-			}
-
-			// Deal with the portal
-			status.ClearAll(c, false)
-			if HasPortal() {
-				status.SetMessageAfterRedraw("Closing portal")
-				e.ClosePortal()
-			} else {
-				portal, err := e.NewPortal()
-				if err != nil {
-					status.SetError(err)
-					status.Show(c, e)
-					break
-				}
-				// Portals in the same file is a special case, since lines may move around when pasting
-				if portal.SameFile(e) {
-					e.sameFilePortal = portal
-				}
-				if err := portal.Save(); err != nil {
-					status.SetError(err)
-					status.Show(c, e)
-					break
-				}
-				status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
-			}
 		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
 			if e.InBookMode() { // book mode: toggle bold
 				undo.Snapshot(e)
