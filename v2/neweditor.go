@@ -366,6 +366,8 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	if inVTEGUI && isDarwin {
 		// Workaround for an issue where opening empty or small files is too quick for the GUI/VTE wrapper
 		time.Sleep(500 * time.Millisecond)
+	} else if isDarwin {
+		e.disablePortals.Store(true) // let ctrl-r be used to build and run by default on macOS, because ctrl-space has to be configured to work as expected
 	}
 
 	// The editing mode is decided at this point
