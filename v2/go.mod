@@ -15,7 +15,6 @@ require (
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.10
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
-	github.com/xyproto/autoimport v1.5.2
 	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/clip v1.0.0

@@ -84,9 +84,6 @@ github.com/srwiley/rasterx
 # github.com/xfmoulet/qoi v0.2.0
 ## explicit; go 1.17
 github.com/xfmoulet/qoi
-# github.com/xyproto/autoimport v1.5.2
-## explicit; go 1.19
-github.com/xyproto/autoimport
 # github.com/xyproto/binary v1.4.0
 ## explicit; go 1.18
 github.com/xyproto/binary
