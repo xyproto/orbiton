@@ -1021,6 +1021,60 @@ analyzeOutput:
 				}
 				return "", buildErr(errorMessage)
 			}
+		} else if e.mode == mode.Java {
+			// javac error format:
+			//   filename.java:linenum: error: description
+			//           source line here
+			//                    ^
+			//     symbol:   variable foo
+			//     location: class Bar
+			lines := strings.Split(string(output), "\n")
+			for i, line := range lines {
+				if !strings.Contains(line, ": error: ") {
+					continue
+				}
+				parts := strings.SplitN(line, ":", 3)
+				if len(parts) < 3 {
+					continue
+				}
+				lineNumberString := strings.TrimSpace(parts[1])
+				errorDesc := strings.TrimSpace(parts[2])
+				if after, ok := strings.CutPrefix(errorDesc, "error: "); ok {
+					errorDesc = after
+				}
+				// i+1 is the source line, i+2 is the caret line
+				col := -1
+				if i+2 < len(lines) {
+					caretLine := lines[i+2]
+					if idx := strings.Index(caretLine, "^"); idx >= 0 {
+						col = idx
+					}
+				}
+				// i+3 and i+4 may hold "symbol:" and "location:" details
+				for j := i + 3; j < len(lines) && j <= i+4; j++ {
+					if after, ok := strings.CutPrefix(strings.TrimSpace(lines[j]), "symbol:"); ok {
+						errorDesc = errorDesc + ": " + strings.TrimSpace(after)
+						break
+					}
+				}
+				baseErrorFilename := filepath.Base(parts[0])
+				if lineNum, err := strconv.Atoi(lineNumberString); err == nil {
+					foundY := LineIndex(lineNum - 1)
+					jumpedToErrorLine = true
+					redraw, _ := e.GoTo(foundY, c, status)
+					e.redraw.Store(redraw)
+					e.redrawCursor.Store(redraw)
+					if col >= 0 {
+						tabs := strings.Count(e.Line(foundY), "\t")
+						e.pos.sx = col + (tabs * (e.indentation.PerTab - 1))
+						e.Center(c)
+					}
+				}
+				if baseErrorFilename != baseFilename {
+					return "", buildErr("In " + baseErrorFilename + ": " + errorDesc)
+				}
+				return "", buildErr(errorDesc)
+			}
 		}
 
 		// Find the first error message
