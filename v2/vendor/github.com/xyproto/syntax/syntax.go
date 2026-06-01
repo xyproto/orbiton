@@ -268,8 +268,11 @@ func AdjustKeywords(m mode.Mode) {
 		SetKeywords(lilypondWords)
 	case mode.Lisp:
 		SetKeywords(emacsWords)
-	case mode.Lua, mode.Teal, mode.Terra:
+	case mode.Lua, mode.Terra:
 		SetKeywords(luaWords)
+	case mode.Teal:
+		SetKeywords(luaWords)
+		AddKeywords([]string{"global"})
 	case mode.Nroff:
 		addKws := []string{"B", "BR", "PP", "SH", "TP", "fB", "fI", "fP", "RB", "TH", "IR", "IP", "fI", "fR"}
 		delKws := []string{"class"}

@@ -32,7 +32,7 @@ require (
 	github.com/xyproto/megafile v1.7.4
 	github.com/xyproto/mode v0.12.11
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/syntax v1.14.2
+	github.com/xyproto/syntax v1.14.3
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.11
