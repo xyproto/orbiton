@@ -25,10 +25,18 @@ type autoBuildCandidate struct {
 // and skips anything that requires a source filename -- only project-level
 // builds go here, because `-b` is invoked without an explicit file.
 func autoBuildCandidates() []autoBuildCandidate {
+	rustArgs := []string{"build"}
+	if releaseBuildFlag {
+		rustArgs = []string{"build", "--release"}
+	}
+	zigArgs := []string{"build"}
+	if releaseBuildFlag {
+		zigArgs = []string{"build", "-Doptimize=ReleaseFast"}
+	}
 	return []autoBuildCandidate{
 		{marker: "go.mod", tool: "go", label: "Go", args: []string{"build", "./..."}},
-		{marker: "Cargo.toml", tool: "cargo", label: "Rust", args: []string{"build"}},
-		{marker: "build.zig", tool: "zig", label: "Zig", args: []string{"build"}},
+		{marker: "Cargo.toml", tool: "cargo", label: "Rust", args: rustArgs},
+		{marker: "build.zig", tool: "zig", label: "Zig", args: zigArgs},
 		{marker: "gleam.toml", tool: "gleam", label: "Gleam", args: []string{"build"}},
 		{marker: "shard.yml", tool: "shards", label: "Crystal", args: []string{"build"}},
 		{marker: "mix.exs", tool: "mix", label: "Elixir", args: []string{"compile"}},

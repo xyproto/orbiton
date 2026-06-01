@@ -58,7 +58,7 @@ var (
 	// Check if the parent process is "man"
 	parentIsMan *bool
 
-	// Build with release mode instead of debug mode whenever applicable
+	// Build release executables when ctrl-space is pressed, or projects when no filenames are given
 	releaseBuildFlag bool
 
 	// Best available book mode: graphical if supported, text otherwise
@@ -152,7 +152,7 @@ func main() {
 	pflag.BoolVarP(&noCacheFlag, "no-cache", "n", false, "don't write anything to cache directory")
 	pflag.BoolVarP(&ollamaEnabled, "ollama", "o", env.Bool("ORBITON_OLLAMA"), "enable Ollama-specific features")
 	pflag.BoolVarP(&pasteFlag, "paste", "p", false, "paste the clipboard into the file and quit")
-	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build with release mode instead of debug mode, whenever applicable")
+	pflag.BoolVarP(&releaseBuildFlag, "release", "r", false, "build release executables when ctrl-space is pressed, or projects when no filenames are given")
 	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in best available book mode (graphical if the terminal supports it, text otherwise)")
 	pflag.BoolVarP(&bookModeTextFlag, "book-mode-text", "T", false, "open in text book mode: soft wrap, plain text, word count")
 	pflag.BoolVarP(&bookModeGraphicalFlag, "book-mode-graphical", "G", false, "open in graphical book mode (requires Kitty, iTerm2 or Sixel support)")
@@ -380,6 +380,11 @@ func main() {
 	if buildMode {
 		buildFlag = true
 		slay.ProgName = editorExecutable
+	}
+
+	// -r implies -b when no filename is given (release build without opening the editor)
+	if releaseBuildFlag && !argsGiven {
+		buildFlag = true
 	}
 
 	// If -b was given (or obuild), try language-specific builds first (Go,

@@ -388,7 +388,8 @@ Examples:
 
 	// No args = default build
 	if len(args) == 0 {
-		return slay.DoBuild(slay.BuildOptions{})
+		opts := slay.BuildOptions{Opt: releaseBuildFlag}
+		return slay.DoBuild(opts)
 	}
 
 	// Expand legacy compound commands into modifier+action tokens
@@ -403,6 +404,9 @@ Examples:
 
 	// Parse tokens into modifiers, action, and trailing args
 	var opts slay.BuildOptions
+	if releaseBuildFlag {
+		opts.Opt = true
+	}
 	action := ""
 	var actionArgs []string
 
