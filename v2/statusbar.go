@@ -690,13 +690,17 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 	return format
 }
 
-// stickyTopBarHeight returns 1 when a sticky top bar is active in regular
-// (non-book, non-nano) mode, 0 otherwise.
+// stickyTopBarHeight returns the number of rows reserved at the top of the
+// screen by the sticky top bar and the breadcrumb bar combined.
 func (e *Editor) stickyTopBarHeight() uint {
-	if e.stickyStatusBars && !e.InBookMode() && !e.nanoMode.Load() {
-		return 1
+	var h uint
+	if breadcrumbBarShown && !e.InBookMode() && !e.nanoMode.Load() && !e.stickyStatusBars {
+		h++
 	}
-	return 0
+	if e.stickyStatusBars && !e.InBookMode() && !e.nanoMode.Load() {
+		h++
+	}
+	return h
 }
 
 // stickyBottomBarHeight returns 1 when a sticky bottom bar is active in
@@ -864,8 +868,9 @@ func (e *Editor) stickyBarStyle() barStyle {
 	}
 }
 
-// drawStickyTopBar paints the sticky status bar at row 0 using the current
-// stickyTopBarFormat and the regular-mode color scheme.
+// drawStickyTopBar paints the sticky status bar at the row just below the
+// breadcrumb bar (if any) using the current stickyTopBarFormat and the
+// regular-mode color scheme.
 func (e *Editor) drawStickyTopBar(c *vt.Canvas, statusMsg string) {
 	w := int(c.W())
 	format := e.stickyTopBarFormat
@@ -873,7 +878,8 @@ func (e *Editor) drawStickyTopBar(c *vt.Canvas, statusMsg string) {
 		format, _ = e.defaultStickyBarFormats()
 	}
 	text := e.expandStatusBarFormat(format, statusMsg)
-	e.drawBar(c, 0, w, text, e.stickyBarStyle())
+	row := e.breadcrumbBarHeight()
+	e.drawBar(c, row, w, text, e.stickyBarStyle())
 }
 
 // drawStickyBottomBar paints the sticky bottom bar at the last row using
@@ -891,11 +897,16 @@ func (e *Editor) drawStickyBottomBar(c *vt.Canvas, statusMsg string) {
 // drawBothBars draws the top and bottom sticky bars using the correct
 // style for the current editor mode (regular or book text). The status
 // message is passed through so [[...]] fields can display it.
+// It also draws the breadcrumb bar when breadcrumbs are present.
 func (e *Editor) drawBothBars(c *vt.Canvas, statusMsg string) {
 	w := int(c.W())
 	if w <= 0 {
 		return
 	}
+
+	// Draw breadcrumb bar at row 0 if there are breadcrumbs
+	e.drawBreadcrumbBar(c)
+
 	defaultTop, defaultBottom := e.defaultStickyBarFormats()
 	topFmt := e.stickyTopBarFormat
 	if topFmt == "" {
@@ -913,7 +924,8 @@ func (e *Editor) drawBothBars(c *vt.Canvas, statusMsg string) {
 
 	if topFmt != "" {
 		text := e.expandStatusBarFormat(topFmt, statusMsg)
-		e.drawBar(c, 0, w, text, style)
+		topRow := e.breadcrumbBarHeight()
+		e.drawBar(c, topRow, w, text, style)
 	}
 	if bottomFmt != "" {
 		text := e.expandStatusBarFormat(bottomFmt, statusMsg)

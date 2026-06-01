@@ -268,3 +268,18 @@ func (u *Undo) Len() int {
 	defer u.mut.RUnlock()
 	return u.count
 }
+
+// PeekFilename returns the filename of the most recently stored editor snapshot,
+// or an empty string if the buffer is empty.
+func (u *Undo) PeekFilename() string {
+	u.mut.RLock()
+	defer u.mut.RUnlock()
+	if u.count == 0 {
+		return ""
+	}
+	peekIndex := u.index - 1
+	if peekIndex < 0 {
+		peekIndex = len(u.editorCopies) - 1
+	}
+	return u.editorCopies[peekIndex].filename
+}

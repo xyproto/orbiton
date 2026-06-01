@@ -1846,6 +1846,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			const drawLines = true
 			e.FullResetRedraw(c, status, drawLines, false)
 			notRegularEditingRightNow.Store(false)
+			// Clear the breadcrumb bar if there's nothing to jump back to
+			if breadcrumbBarShown && !hasBreadcrumbs() {
+				breadcrumbBarShown = false
+				e.redraw.Store(true)
+			}
 			if e.macro != nil || e.playBackMacroCount > 0 {
 				// Stop the playback
 				e.playBackMacroCount = 0
@@ -2379,25 +2384,25 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Try to jump forward first (prioritize jumping over going back)
 			jumped := false
 			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
-				if e.JumpToMatching(c) { // jump to matching parenthesis or bracket
+				if e.OnIncludeLine() { // go to include (try before GoToDefinition)
+					if _, didJump := e.GoToInclude(tty, c, status); didJump {
+						jumped = true
+					}
+				} else if e.JumpToMatching(c) { // jump to matching parenthesis or bracket
 					e.redrawCursor.Store(true)
 					jumped = true
 				} else if e.GoToDefinition(tty, c, status) { // go to definition
 					jumped = true
 					break
-				} else if e.OnIncludeLine() { // go to include
-					if includeFilename, didJump := e.GoToInclude(tty, c, status); didJump {
-						jumped = true
-					} else {
-						status.Clear(c, false)
-						status.SetErrorMessage("could not jump to " + includeFilename)
-						status.Show(c, e)
-						e.redrawCursor.Store(true)
-					}
+				}
+			} else if e.OnIncludeLine() { // Check if we can jump to an #include file, regardless of file mode
+				if _, didJump := e.GoToInclude(tty, c, status); didJump {
+					jumped = true
 				}
 			} else if e.searchTerm != "" && strings.Contains(e.String(), e.searchTerm) {
-				// Push a function for how to go back
-				backFunctions = append(backFunctions, func() {
+				// Push breadcrumb for back navigation
+				label := breadcrumbLabel(oldFilename, oldLineIndex)
+				pushBreadcrumb(label, func() {
 					oldFilename := oldFilename
 					oldLineIndex := oldLineIndex
 					if e.filename != oldFilename {
@@ -2413,31 +2418,22 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			} else if e.JumpToMatching(c) {
 				e.redrawCursor.Store(true)
 				jumped = true
-			} else if e.OnIncludeLine() { // Check if we can jump to an #include file, regardless of file mode
-				if includeFilename, didJump := e.GoToInclude(tty, c, status); didJump {
-					jumped = true
-				} else {
+			}
+
+			// Only toggle status bars if we didn't jump forward and there's no include line
+			if !jumped {
+				if e.OnIncludeLine() {
+					// On an include line but couldn't jump — show error
+					includeFilename := e.IncludeFilename()
+					if includeFilename == "" {
+						includeFilename = "include"
+					}
 					status.Clear(c, false)
 					status.SetErrorMessage("could not jump to " + includeFilename)
 					status.Show(c, e)
 					e.redrawCursor.Store(true)
-				}
-			}
-
-			// Only go back if we didn't jump forward
-			if !jumped {
-				if len(backFunctions) > 0 { // Check if we have jumped somewhere and need to jump back
-					lastIndex := len(backFunctions) - 1
-					// call the function for getting back
-					backFunctions[lastIndex]()
-					// pop a function from the end of backFunctions
-					backFunctions = backFunctions[:lastIndex]
-					if len(backFunctions) == 0 {
-						// last possibility to jump back
-						status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
-					}
 				} else {
-					// Toggle status bar (for non-programming languages or when at/before start of text), when not on include lines
+					// Toggle status bar (for non-programming languages or when at/before start of text)
 					status.ClearAll(c, false)
 					e.stickyStatusBars = !e.stickyStatusBars
 					if e.stickyStatusBars {
@@ -2982,17 +2978,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CursorBackward(c, status)
 				break
 			}
-			// Check if we have jumped to a definition and need to go back
-			if len(backFunctions) > 0 {
-				lastIndex := len(backFunctions) - 1
-				// call the function for getting back
-				backFunctions[lastIndex]()
-				// pop a function from the end of backFunctions
-				backFunctions = backFunctions[:lastIndex]
-				if len(backFunctions) == 0 {
-					// last possibility to jump back
-					status.SetMessageAfterRedraw("Loaded " + filepath.Base(e.filename))
-				}
+			// Check if we have breadcrumbs to jump back to
+			if bc, ok := popBreadcrumb(); ok {
+				bc.BackFunc()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
 				break
 			}
 			// Block edit mode
@@ -3253,7 +3243,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		// Display the ctrl-o menu if esc was pressed 4 times. Do not react if space is pressed.
 		// Skip this when in debug mode, where esc x3 toggles the keybinding overview.
 		if !debugMode && !e.nanoMode.Load() && kh.Repeated("c:27", 4-1) { // esc pressed 4 times (minus the one that was added just now)
-			backFunctions = make([]func(), 0)
+			clearBreadcrumbs()
 			status.ClearAll(c, false)
 			undo.Snapshot(e)
 			undoBackup := undo

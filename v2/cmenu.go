@@ -106,7 +106,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 
 	vsCode := env.Str("TERM_PROGRAM") == "vscode"
 
-	if (menuTitle == "" || len(backFunctions) == 0) && !strings.HasPrefix(menuTitle, "Editing ") {
+	if (menuTitle == "" || !hasBreadcrumbs()) && !strings.HasPrefix(menuTitle, "Editing ") {
 		menuTitle = versionString
 	} else {
 		menuTitle = "Editing " + filepath.Base(e.filename)
@@ -660,8 +660,10 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 					srcDir = filepath.Dir(e.filename)
 				}
 				pdfFilename := filepath.Join(srcDir, base)
-				// Show a "Rendering..." hint that survives the redraw when the menu closes
+				// Show a "Rendering..." hint immediately and ensure it survives the menu-close redraw
 				status.SetMessageAfterRedraw("Rendering " + base + " with pandoc...")
+				status.SetMessage("Rendering " + base + " with pandoc...")
+				status.Show(c, e)
 				go func() {
 					pandocMutex.Lock()
 					defer pandocMutex.Unlock()

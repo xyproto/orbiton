@@ -233,6 +233,8 @@ func (e *Editor) InitialRedraw(c *vt.Canvas, status *StatusBar) {
 	} else if e.InBookMode() {
 		status.NanoInfo(c, e)
 	} else {
+		// Draw breadcrumb bar when present
+		e.drawBreadcrumbBar(c)
 		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {
 			msg := status.Message()
 			e.drawStickyTopBar(c, msg)
@@ -360,10 +362,15 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 	} else if e.InBookMode() {
 		status.NanoInfo(c, e)
 	} else {
+		// Draw breadcrumb bar when present
+		breadcrumbDrawn := e.breadcrumbBarHeight() > 0
+		e.drawBreadcrumbBar(c)
 		if e.stickyStatusBars && !stickyBarsJustDrawn.CompareAndSwap(true, false) {
 			msg := status.Message()
 			e.drawStickyTopBar(c, msg)
 			e.drawStickyBottomBar(c, msg)
+			c.Draw()
+		} else if breadcrumbDrawn {
 			c.Draw()
 		}
 		if !e.stickyBarsHandleStatus() && status.IsError() {

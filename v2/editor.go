@@ -2480,23 +2480,24 @@ func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *
 		displayedImage bool
 	)
 
-	if switchBuffer.Len() == 1 {
-		// Load the Editor from the switchBuffer if switchBuffer has length 1, then use that editor.
+	if switchBuffer.Len() == 1 && switchBufferMatchesFile(filenameToOpen) {
+		// Restore the Editor from the switchBuffer only if it matches the requested file.
 		switchBuffer.Restore(e)
+		adjustSyntaxHighlightingKeywords(e.mode)
 		undo, switchUndoBackup = switchUndoBackup, undo
 	} else {
 		fnord := FilenameOrData{filenameToOpen, []byte{}, 0, false}
 		e2, statusMessage, displayedImage, _, err = NewEditor(tty, c, fnord, LineNumber(0), ColNumber(0), e.Theme, e.syntaxHighlight, false, e.monitorAndReadOnly, e.nanoMode.Load(), e.createDirectoriesIfMissing, e.displayQuickHelp, e.noDisplayQuickHelp, e.cycleFilenames)
 		if err == nil { // no issue
-			// Save the current Editor to the switchBuffer if switchBuffer if empty, then use the new editor.
+			// Save the current Editor to the switchBuffer, then use the new editor.
 			switchBuffer.Snapshot(e)
 			// Now use e2 as the current editor
 			const withLines = true
 			linesMut := e.linesMut // preserve the live mutex
 			*e = *(e2.Copy(withLines))
 			e.linesMut = linesMut // restore the live mutex
-			//(*e).lines = (*e2).lines
-			//(*e).pos = (*e2).pos
+			// Ensure syntax highlighting keywords are updated for the new file's mode
+			adjustSyntaxHighlightingKeywords(e.mode)
 		} else if displayedImage {
 			// internal error
 			panic("displayed an image while switching from one Editor struct to another")
@@ -2516,6 +2517,25 @@ func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *
 	e.redrawCursor.Store(true)
 
 	return err
+}
+
+// switchBufferMatchesFile checks if the filename stored in the switchBuffer
+// matches the given filenameToOpen, comparing by absolute path to avoid
+// mismatches between relative and absolute paths.
+func switchBufferMatchesFile(filenameToOpen string) bool {
+	stored := switchBuffer.PeekFilename()
+	if stored == "" {
+		return false
+	}
+	if stored == filenameToOpen {
+		return true
+	}
+	absStored, err1 := filepath.Abs(stored)
+	absOpen, err2 := filepath.Abs(filenameToOpen)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+	return absStored == absOpen
 }
 
 // Reload tries to load the current file again
@@ -3224,7 +3244,38 @@ func (e *Editor) EnableAndPlaceCursor(c *vt.Canvas) {
 
 // OnIncludeLine checks if it looks like the current line is a C or C++ #include
 func (e *Editor) OnIncludeLine() bool {
-	return strings.HasPrefix(e.TrimmedLine(), "#include")
+	trimmed := e.TrimmedLine()
+	if strings.HasPrefix(trimmed, "#include") {
+		return true
+	}
+	// Also handle "# include" (space between # and include)
+	if strings.HasPrefix(trimmed, "#") {
+		rest := strings.TrimSpace(trimmed[1:])
+		if strings.HasPrefix(rest, "include") {
+			return true
+		}
+	}
+	return false
+}
+
+// IncludeFilename extracts the filename from an #include line, or returns ""
+func (e *Editor) IncludeFilename() string {
+	trimmed := e.TrimmedLine()
+	// Normalize "# include" to "#include"
+	line := trimmed
+	if strings.HasPrefix(trimmed, "#") && !strings.HasPrefix(trimmed, "#include") {
+		rest := strings.TrimSpace(trimmed[1:])
+		if strings.HasPrefix(rest, "include") {
+			line = "#" + rest
+		}
+	}
+	if fn := strings.TrimSpace(between(line, "\"", "\"")); fn != "" {
+		return fn
+	}
+	if fn := between(line, "<", ">"); fn != "" {
+		return fn
+	}
+	return ""
 }
 
 // GetXY tries to fetch the current x and y positions, as uints

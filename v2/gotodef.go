@@ -11,7 +11,7 @@ import (
 	"github.com/xyproto/vt"
 )
 
-var backFunctions []func()
+// backFunctions replaced by breadcrumbs (in breadcrumb.go)
 
 // GoToDefinition tries to find the definition of the given string, saves the current location and jumps to the location of the definition.
 // Returns true if it was possible to go to the definition.
@@ -130,8 +130,14 @@ func (e *Editor) jumpToLSPLocation(location *LSPLocation, tty *vt.TTY, c *vt.Can
 	e.pos.sx = targetChar + (tabs * (e.indentation.PerTab - 1))
 	e.HorizontalScrollIfNeeded(c)
 
-	// Push back function
-	backFunctions = append(backFunctions, func() {
+	// Push breadcrumb for back navigation
+	var label string
+	if targetPath != oldFilename {
+		label = breadcrumbFileLabel(oldFilename)
+	} else {
+		label = breadcrumbLabel(oldFilename, oldLineIndex)
+	}
+	pushBreadcrumb(label, func() {
 		if e.filename != oldFilename {
 			e.Switch(c, tty, status, fileLock, oldFilename)
 		}
@@ -235,8 +241,9 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 		e.pos.sx = foundX + (tabs * (e.indentation.PerTab - 1))
 		e.HorizontalScrollIfNeeded(c)
 
-		// Push a function for how to go back
-		backFunctions = append(backFunctions, func() {
+		// Push breadcrumb for back navigation
+		label := breadcrumbLabel(oldFilename, oldLineIndex)
+		pushBreadcrumb(label, func() {
 			oldFilename := oldFilename
 			oldLineIndex := oldLineIndex
 			if e.filename != oldFilename {
@@ -366,8 +373,14 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
 							e.redraw.Store(redraw || (absGoFile != oldFilename))
 
-							// Push a function for how to go back
-							backFunctions = append(backFunctions, func() {
+							// Push breadcrumb for back navigation
+							var label string
+							if absGoFile != oldFilename {
+								label = breadcrumbFileLabel(oldFilename)
+							} else {
+								label = breadcrumbLabel(oldFilename, oldLineIndex)
+							}
+							pushBreadcrumb(label, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
 								absGoFile := absGoFile
@@ -398,8 +411,14 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 							redraw, _ := e.GoTo(LineIndex(i), c, status)
 							e.redraw.Store(redraw)
 
-							// Push a function for how to go back
-							backFunctions = append(backFunctions, func() {
+							// Push breadcrumb for back navigation
+							var label string
+							if absGoFile != oldFilename {
+								label = breadcrumbFileLabel(oldFilename)
+							} else {
+								label = breadcrumbLabel(oldFilename, oldLineIndex)
+							}
+							pushBreadcrumb(label, func() {
 								oldFilename := oldFilename
 								oldLineIndex := oldLineIndex
 								absGoFile := absGoFile
@@ -426,30 +445,37 @@ func (e *Editor) textSearchDefinition(tty *vt.TTY, c *vt.Canvas, status *StatusB
 // returns the include filename (if found) and then true if a jump/switch was made.
 func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (string, bool) {
 	var goFile string
-	// First check if we are jumping to an #include
+	// First check if we are jumping to an #include (handles both "#include" and "# include")
 	trimmedLine := e.TrimmedLine()
+	includeLine := ""
 	if strings.HasPrefix(trimmedLine, "#include ") {
-		if fn := strings.TrimSpace(between(trimmedLine, "\"", "\"")); fn != "" {
+		includeLine = trimmedLine
+	} else if strings.HasPrefix(trimmedLine, "#") {
+		rest := strings.TrimSpace(trimmedLine[1:])
+		if strings.HasPrefix(rest, "include") {
+			includeLine = "#" + rest // normalize to "#include ..."
+		}
+	}
+	if includeLine != "" {
+		if fn := strings.TrimSpace(between(includeLine, "\"", "\"")); fn != "" {
 			goFile = fn
-		} else if fn := between(trimmedLine, "<", ">"); fn != "" {
+		} else if fn := between(includeLine, "<", ">"); fn != "" {
 			goFile = fn
 		}
-		systemInclude := filepath.Join("/usr/include", goFile)
-		if !files.Exists(goFile) && files.Exists(systemInclude) {
-			goFile = systemInclude
-		}
-		if goFile != "" && files.Exists(goFile) {
+		resolvedPath := e.resolveInclude(goFile)
+		if resolvedPath != "" {
 			oldFilename := e.filename
-			if goFile != oldFilename {
-				if err := e.Switch(c, tty, status, fileLock, goFile); err != nil {
+			if resolvedPath != oldFilename {
+				if err := e.Switch(c, tty, status, fileLock, resolvedPath); err != nil {
 					return goFile, false // could not switch
 				}
 			}
-			// Push a function for how to go back
-			backFunctions = append(backFunctions, func() {
+			// Push breadcrumb for back navigation
+			label := breadcrumbFileLabel(oldFilename)
+			pushBreadcrumb(label, func() {
 				oldFilename := oldFilename
-				goFile := goFile
-				if goFile != oldFilename {
+				resolvedPath := resolvedPath
+				if resolvedPath != oldFilename {
 					e.Switch(c, tty, status, fileLock, oldFilename)
 				}
 			})
@@ -457,4 +483,61 @@ func (e *Editor) GoToInclude(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (stri
 		}
 	}
 	return goFile, false // did not jump, not an #include statement
+}
+
+// resolveInclude tries to find an include file by checking multiple paths:
+// 1. Relative to the current working directory
+// 2. Relative to the directory of the current file
+// 3. In /usr/include/
+// 4. In common compiler-specific include paths
+func (e *Editor) resolveInclude(name string) string {
+	if name == "" {
+		return ""
+	}
+
+	// 1. Check relative to cwd
+	if files.Exists(name) {
+		return name
+	}
+
+	// 2. Check relative to the directory of the current file
+	if absFilename, err := filepath.Abs(e.filename); err == nil {
+		candidate := filepath.Join(filepath.Dir(absFilename), name)
+		if files.Exists(candidate) {
+			return candidate
+		}
+	}
+
+	// 3. Check /usr/include/
+	candidate := filepath.Join("/usr/include", name)
+	if files.Exists(candidate) {
+		return candidate
+	}
+
+	// 4. Search common compiler include directories
+	compilerIncludeDirs := findCompilerIncludeDirs()
+	for _, dir := range compilerIncludeDirs {
+		candidate := filepath.Join(dir, name)
+		if files.Exists(candidate) {
+			return candidate
+		}
+	}
+
+	return ""
+}
+
+// findCompilerIncludeDirs returns common GCC and Clang include directories
+func findCompilerIncludeDirs() []string {
+	var dirs []string
+	// Search for GCC include dirs
+	gccPattern := "/usr/lib/gcc/*/*/include"
+	if matches, err := filepath.Glob(gccPattern); err == nil {
+		dirs = append(dirs, matches...)
+	}
+	// Search for Clang include dirs
+	clangPattern := "/usr/lib/clang/*/include"
+	if matches, err := filepath.Glob(clangPattern); err == nil {
+		dirs = append(dirs, matches...)
+	}
+	return dirs
 }

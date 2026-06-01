@@ -14,11 +14,11 @@ const highlightCacheInterval = 1000
 // Separate maps are used for each kind of state to avoid cross-contamination
 // between the independent scan loops in WriteLines.
 type highlightCache struct {
-	mu         sync.Mutex
 	quote      map[LineIndex]QuoteState // multi-line quote/comment state
 	codeBlock  map[LineIndex]bool       // for Markdown/Python: inside a code block
 	backtick   map[LineIndex]bool       // for Go/Odin: inside a backtick string
 	cachedMode mode.Mode                // the mode when entries were cached
+	mu         sync.Mutex
 }
 
 // newHighlightCache creates an empty highlight cache
