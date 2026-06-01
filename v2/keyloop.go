@@ -1790,7 +1790,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-			fallthrough // ctrl-p in nano mode
+			// nano mode: ctrl-p moves up (like the up arrow)
+			e.ClearSelection()
+			e.Cursor().Up(c, status)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
