@@ -68,7 +68,6 @@ var (
 	bubbleColor          = vt.Magenta
 	pelletColor1         = vt.LightGreen
 	pelletColor2         = vt.Green
-	siloColor            = vt.Red
 	hunterColor          = vt.Magenta
 	statusTextColor      = vt.Black
 	statusTextBackground = vt.Blue
@@ -705,11 +704,15 @@ type Silo struct {
 	maxCharge int
 }
 
-// NewSilo creates a silo at 3/4 width, centered vertically
+// NewSilo creates a silo at a random location, keeping clear of the edges
 func NewSilo(c *vt.Canvas) *Silo {
+	marginX := int(c.W()) / 5
+	marginY := int(c.H()) / 5
+	x := marginX + rand.Intn(int(c.W())-2*marginX)
+	y := marginY + rand.Intn(int(c.H())-2*marginY)
 	return &Silo{
-		x:         int(c.W()) * 3 / 4,
-		y:         int(c.H()) / 2,
+		x:         x,
+		y:         y,
 		charge:    0,
 		maxCharge: 10,
 	}
@@ -897,7 +900,6 @@ retry:
 		bubbleColor = vt.DarkGray
 		pelletColor1 = vt.White
 		pelletColor2 = vt.White
-		siloColor = vt.LightGray
 		hunterColor = vt.White
 		statusTextColor = vt.Black
 		statusTextBackground = vt.LightGray
