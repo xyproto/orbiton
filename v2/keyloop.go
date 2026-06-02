@@ -86,6 +86,17 @@ var movementKeys = []string{
 	"c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25",
 }
 
+// verticalMovementKeys lists keys that move the cursor vertically (up/down),
+// which trigger line highlighting. Left/right do not highlight the line.
+var verticalMovementKeys = []string{
+	upArrow, downArrow,
+	pgUpKey, pgDnKey,
+	altUpKey, altDownKey,
+	ctrlUpKey, ctrlDownKey,
+	ctrlPgUpKey, ctrlPgDnKey,
+	"c:14", "c:16", // ctrl-n, ctrl-p
+}
+
 // isMovementKey reports whether key is a cursor movement key.
 func isMovementKey(key string) bool {
 	return slices.Contains(movementKeys, key)
@@ -3269,7 +3280,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		}
 
 		// Draw and/or redraw everything, with slightly different behavior over ssh
-		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, movementKeys...)
+		justMovedUpOrDown := kh.PrevIsWithin(arrowKeyHighlightTime, verticalMovementKeys...)
 		// Frame skipping: in book mode (both graphical and text) a single
 		// redraw can cost tens of milliseconds, which lets buffered key
 		// presses pile up while the user holds arrow keys. If more input
