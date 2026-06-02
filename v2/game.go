@@ -29,6 +29,8 @@ const (
 	gobblerZombieRune      = '@'
 	bobWonRune             = 'Y'
 	bobLostRune            = 'n'
+	siloRune               = '#'
+	hunterRune             = 'M'
 )
 
 var (
@@ -66,6 +68,8 @@ var (
 	bubbleColor          = vt.Magenta
 	pelletColor1         = vt.LightGreen
 	pelletColor2         = vt.Green
+	siloColor            = vt.Red
+	hunterColor          = vt.Magenta
 	statusTextColor      = vt.Black
 	statusTextBackground = vt.Blue
 	resizeColor          = vt.LightMagenta
@@ -254,14 +258,11 @@ func (b *Pellet) Next(c *vt.Canvas, e *EvilGobbler) bool {
 		return false
 	}
 	if b.x >= int(b.w) || b.x < 0 {
-		b.x -= b.vx
+		b.removed = true
 		return false
 	}
-	if b.y >= int(c.H()) {
-		b.y -= b.vy
-		return false
-	} else if b.y <= 0 {
-		b.y -= b.vy
+	if b.y >= int(c.H()) || b.y <= 0 {
+		b.removed = true
 		return false
 	}
 	return true
@@ -697,6 +698,156 @@ func (g *Gobbler) Resize(c *vt.Canvas) {
 	g.h = float64(c.H())
 }
 
+// Silo grows visually as it charges: 1 cell (red), circle (orange), large circle (green)
+type Silo struct {
+	x, y      int
+	charge    int
+	maxCharge int
+}
+
+// NewSilo creates a silo at 3/4 width, centered vertically
+func NewSilo(c *vt.Canvas) *Silo {
+	return &Silo{
+		x:         int(c.W()) * 3 / 4,
+		y:         int(c.H()) / 2,
+		charge:    0,
+		maxCharge: 10,
+	}
+}
+
+// siloColorForCharge returns the color based on charge level
+func (s *Silo) siloColorForCharge() vt.AttributeColor {
+	if s.charge <= 3 {
+		return vt.Red
+	} else if s.charge <= 6 {
+		return vt.Yellow
+	}
+	return vt.LightGreen
+}
+
+// radius returns the visual radius based on charge
+func (s *Silo) radius() int {
+	if s.charge <= 3 {
+		return 0
+	} else if s.charge <= 6 {
+		return 1
+	}
+	return 2
+}
+
+// Draw draws the silo as a growing circle
+func (s *Silo) Draw(c *vt.Canvas) {
+	color := s.siloColorForCharge()
+	r := s.radius()
+	if r == 0 {
+		// Always show the silo center as a target
+		if s.x >= 0 && s.x < int(c.W()) && s.y > 0 && s.y < int(c.H()) {
+			c.PlotColor(uint(s.x), uint(s.y), color, siloRune)
+		}
+		return
+	}
+	for dy := -r; dy <= r; dy++ {
+		for dx := -r; dx <= r; dx++ {
+			if dx*dx+dy*dy > r*r+r {
+				continue
+			}
+			px, py := s.x+dx, s.y+dy
+			if px >= 0 && px < int(c.W()) && py > 0 && py < int(c.H()) {
+				c.PlotColor(uint(px), uint(py), color, siloRune)
+			}
+		}
+	}
+}
+
+// Full returns true when the silo is fully charged
+func (s *Silo) Full() bool {
+	return s.charge >= s.maxCharge
+}
+
+// HitBy checks if a pellet hits anywhere within the silo's current radius
+func (s *Silo) HitBy(p *Pellet) bool {
+	if p.removed {
+		return false
+	}
+	r := s.radius()
+	if r == 0 {
+		return p.x == s.x && p.y == s.y
+	}
+	dx := p.x - s.x
+	dy := p.y - s.y
+	return dx*dx+dy*dy <= r*r+r
+}
+
+// Resize repositions the silo when the terminal is resized
+func (s *Silo) Resize(c *vt.Canvas) {
+	s.x = int(c.W()) * 3 / 4
+	s.y = int(c.H()) / 2
+}
+
+// Hunter is a 3x3 purple monster that chases the Evil Gobbler
+type Hunter struct {
+	x, y       int
+	oldx, oldy int
+	life       int
+	active     bool
+}
+
+// NewHunter spawns at the silo position
+func NewHunter(s *Silo) *Hunter {
+	return &Hunter{
+		x:      s.x,
+		y:      s.y,
+		oldx:   s.x,
+		oldy:   s.y,
+		life:   200,
+		active: true,
+	}
+}
+
+// Draw draws the hunter as a 3x3 block
+func (h *Hunter) Draw(c *vt.Canvas) {
+	if !h.active {
+		return
+	}
+	for dy := -1; dy <= 1; dy++ {
+		for dx := -1; dx <= 1; dx++ {
+			px, py := h.x+dx, h.y+dy
+			if px >= 0 && px < int(c.W()) && py > 0 && py < int(c.H()) {
+				c.PlotColor(uint(px), uint(py), hunterColor, hunterRune)
+			}
+		}
+	}
+}
+
+// Next moves the hunter toward the Evil Gobbler. Returns true if it caught it.
+func (h *Hunter) Next(e *EvilGobbler) bool {
+	if !h.active {
+		return false
+	}
+	h.life--
+	if h.life <= 0 {
+		h.active = false
+		return false
+	}
+	h.oldx = h.x
+	h.oldy = h.y
+	for range 2 {
+		if h.x < e.x {
+			h.x++
+		} else if h.x > e.x {
+			h.x--
+		}
+		if h.y < e.y {
+			h.y++
+		} else if h.y > e.y {
+			h.y--
+		}
+	}
+	dx := h.x - e.x
+	dy := h.y - e.y
+	return dx >= -1 && dx <= 1 && dy >= -1 && dy <= 1
+}
+
 // saveHighScore will save the given high score to a file,
 // creating a new file if needed and overwriting the existing highscore
 // if it's already there.
@@ -746,6 +897,8 @@ retry:
 		bubbleColor = vt.DarkGray
 		pelletColor1 = vt.White
 		pelletColor2 = vt.White
+		siloColor = vt.LightGray
+		hunterColor = vt.White
 		statusTextColor = vt.Black
 		statusTextBackground = vt.LightGray
 		resizeColor = vt.White
@@ -777,6 +930,8 @@ retry:
 		gobblers      = NewGobblers(c, startingWidth, 25)
 		pellets       = make([]*Pellet, 0)
 		bubbles       = NewBubbles(c, startingWidth, 15)
+		silo          = NewSilo(c)
+		hunter        *Hunter
 		score         = uint(0)
 	)
 
@@ -814,6 +969,7 @@ retry:
 				}
 				bob.Resize(c)
 				evilGobbler.Resize(c)
+				silo.Resize(c)
 				resizeMut.Unlock()
 			case <-ctx.Done():
 				return
@@ -862,6 +1018,12 @@ retry:
 		evilGobbler.Draw(c)
 		for _, gobbler := range gobblers {
 			gobbler.Draw(c)
+		}
+		if hunter == nil || !hunter.active {
+			silo.Draw(c)
+		}
+		if hunter != nil && hunter.active {
+			hunter.Draw(c)
 		}
 		bob.Draw(c)
 		centerStatus := gameTitle
@@ -992,6 +1154,18 @@ retry:
 			for _, pellet := range pellets {
 				pellet.Next(c, evilGobbler)
 			}
+			// Check if pellets hit the silo
+			if !silo.Full() {
+				for _, pellet := range pellets {
+					if silo.HitBy(pellet) {
+						pellet.removed = true
+						silo.charge++
+						if silo.Full() {
+							hunter = NewHunter(silo)
+						}
+					}
+				}
+			}
 			for _, bubble := range bubbles {
 				bubble.Next(c, bob, &gobblers)
 			}
@@ -999,6 +1173,12 @@ retry:
 				gobbler.Next(&pellets, bob)
 			}
 			evilGobbler.Next(c, &gobblers)
+			// Hunter chases the Evil Gobbler
+			if hunter != nil && hunter.active {
+				if hunter.Next(evilGobbler) {
+					evilGobbler.shot = true
+				}
+			}
 			if moved {
 				bob.ToggleState()
 			}
@@ -1007,6 +1187,13 @@ retry:
 		// Erase all previous positions not occupied by current items
 		c.Plot(uint(bob.oldx), uint(bob.oldy), ' ')
 		c.Plot(uint(evilGobbler.oldx), uint(evilGobbler.oldy), ' ')
+		if hunter != nil && hunter.active {
+			for dy := -1; dy <= 1; dy++ {
+				for dx := -1; dx <= 1; dx++ {
+					c.Plot(uint(hunter.oldx+dx), uint(hunter.oldy+dy), ' ')
+				}
+			}
+		}
 		for _, pellet := range pellets {
 			c.Plot(uint(pellet.oldx), uint(pellet.oldy), ' ')
 		}
@@ -1041,13 +1228,8 @@ retry:
 					gobbler.color = gobblerDeadColor
 				}
 			}
-			if gobblersAlive > 0 {
-				statusText = fmt.Sprintf("Score: %d", score)
-			} else if gobblersAlive > 0 && evilGobbler.shot {
+			if evilGobbler.shot && gobblersAlive > 0 {
 				paused = true
-				statusText = "You won!"
-
-				// The player can still move around bob
 				bob.state = bobWonRune
 
 				if !envNoColor {
@@ -1058,9 +1240,11 @@ retry:
 				if score > highScore {
 					statusText = fmt.Sprintf("You won! New highscore: %d", score)
 					saveHighScore(score)
-				} else if score > 0 {
+				} else {
 					statusText = fmt.Sprintf("You won! Score: %d", score)
 				}
+			} else if gobblersAlive > 0 {
+				statusText = fmt.Sprintf("Score: %d  Silo: %d/%d", score, silo.charge, silo.maxCharge)
 			} else {
 				paused = true
 				statusText = "Game over"
