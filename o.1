@@ -41,7 +41,7 @@ Enable Ollama-specific features. The model can be specified in the \fBOLLAMA_MOD
 either locally or at the host specified in the \fBOLLAMA_HOST\fP environment variable.
 .TP
 .B \-r or \-\-release
-Build release executables when ctrl-space is pressed, or projects when no filenames are given.
+Build release executables when ctrl-b is pressed, or projects when no filenames are given.
 .TP
 .B \-t or \-\-list
 List the file in a colorful way without opening it for editing.
@@ -62,7 +62,7 @@ Start in debug mode.
 List all possible digraphs.
 .TP
 .B \-i FILENAME or \-\-input-file FILENAME
-Used as stdin when running programs with ctrl-space. The default filename is input.txt.
+Used as stdin when running programs with ctrl-b. The default filename is input.txt.
 .TP
 .B \-a or \-\-nano
 Emulate Pico/Nano.
@@ -150,9 +150,10 @@ Display brief usage information.
   Also closes the portal.
 .sp
 .B ctrl-b
-  Go back after having gone to another location or file.
-  Toggle block editing mode if there is nothing to go back to.
-  Toggle the breakpoint if the editor is in debug mode.
+  Build programs, render to PDF or export to man page.
+  Double press to also run after building.
+  Use \fBo -l\fP to view the last build command.
+  Toggle bold in book mode. Toggle the breakpoint in debug mode.
 .sp
 .B ctrl-j
   Join lines.
@@ -175,34 +176,12 @@ Display brief usage information.
   Search for just \fBf\fP to find the previous function signature.
 .sp
 .B esc
+  Go back after having gone to another location or file.
   Redraw the screen and clear the last search.
 .sp
 .B ctrl-space
-  Build Go programs with `go`.
-  Build C and C++ programs with the built-in \fBorchideous\fP package, or with \fBcmake\fP or \fBbazel\fP.
-  Build Rust programs with `cargo` or `rustc`.
-  Build Zig programs with `zig`.
-  Build Haskell programs with `ghc`.
-  Check Python programs with \fBpython3 -m py_compile\fP.
-  Build Crystal programs with `crystal`.
-  Build Kotlin programs with `kotlinc`,
-    or `kotlinc-native` if available.
-  Build Java programs with `javac` and `jar`.
-  Build Scala programs with `scalac`.
-  Build Lua programs with `luac`.
-  Build Object Pascal programs with `fpc`.
-  Build Nim programs with `nim`.
-  Build Odin programs with `odin`.
-  Build V programs with `v`.
-  Build C# programs with \fBcsc -nologo -unsafe\fP.
-  Build D programs with `gdc`.
-  Build Standard ML programs with `mlton`.
-  Build OCaml programs with `ocamlopt`.
-  Export scdoc files to man using `scdoc`.
-  Export asciidoctor files to man using `asciidoctor`.
-  Build Arch Linux packages with `makepkg`.
-  Build Agda programs with `agda`.
-  Double press to render Markdown to HTML.
+  Toggle block editing mode.
+  In book mode: cycle display and export options.
 .sp
   The last used external command by `o` can be found in `~/.cache/o/last_command.sh`.
 .sp

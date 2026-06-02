@@ -35,8 +35,8 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Toggle block editing mode",
-		description: "Press ctrl-b to toggle block editing mode, where multiple lines in a block (until a blank line or EOF) can be edited at once.",
-		expectKeys:  []string{"c:2"}, // ctrl-b
+		description: "Press ctrl-space to toggle block editing mode, where multiple lines in a block (until a blank line or EOF) can be edited at once.",
+		expectKeys:  []string{"c:0"}, // ctrl-space
 	},
 	TutorialStep{
 		title:       "Copy line",
@@ -75,7 +75,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Go to definition",
-		description: "Press ctrl-g to go to a definition or include. Press ctrl-b to go back.",
+		description: "Press ctrl-g to go to a definition or include. Press esc to go back.",
 		expectKeys:  []string{"c:7"}, // ctrl-g
 	},
 	TutorialStep{
@@ -300,13 +300,13 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Build source code",
-		description: "Open a source code file and press ctrl-space to build it. This works for some projects and programming languages.",
-		expectKeys:  []string{"c:0"}, // ctrl-space
+		description: "Open a source code file and press ctrl-b to build it. This works for some projects and programming languages.",
+		expectKeys:  []string{"c:2"}, // ctrl-b
 	},
 	TutorialStep{
 		title:       "Build and run",
-		description: "Open a source code file and press ctrl-space twice to build it, run it and also display stdout + stderr.",
-		expectKeys:  []string{"c:0", "c:0"}, // ctrl-space
+		description: "Open a source code file and press ctrl-b twice to build it, run it and also display stdout + stderr.",
+		expectKeys:  []string{"c:2", "c:2"}, // ctrl-b
 	},
 	TutorialStep{
 		title:       "Insert a file",

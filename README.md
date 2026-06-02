@@ -118,7 +118,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line), press `ctrl-c` again to copy the current function.
 * Open or close a portal with `ctrl-r`. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
-* Build code with `ctrl-space` and format code with `ctrl-w`, for a wide range of programming languages.
+* Build code with `ctrl-b` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` (or `t`) to jump to the top. Press `ctrl-l` and `return` again (or `b`) to jump to the bottom. Press `c` to jump to the center.
 * When jumping to a specific line in a file with `ctrl-l`, jumping to a percentage (like `50%`) or a fraction (like `0.5` or `.5`) is also possible. It is also possible to jump to one of the highlighted letters.
@@ -136,8 +136,8 @@ These features are unique to `o`, as far as I am aware:
 
 * The syntax highlighting is instant.
 * Opens files quickly.
-* Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-space`.
-* Create, build and run a simple program in C, by running `o main.c`, pressing `ctrl-w` and then a double `ctrl-space`.
+* Can compile `"Hello, World"` in many popular programming languages simply by pressing `ctrl-b`.
+* Create, build and run a simple program in C, by running `o main.c`, pressing `ctrl-w` and then a double `ctrl-b`.
 * Configuration-free, for better and for worse.
 * Can preview `.png`, `.jpg`, `.jpeg`, `.gif`, `.ico` and `.bmp` images directly in the terminal (using a scaled down version and up to 16 colors).
 * The `-p` flag followed by a filename can be used for just pasting the clipboard to a new file, instead of editing a file.
@@ -169,9 +169,9 @@ These features are unique to `o`, as far as I am aware:
 * Will replace annoying tilde (`0xcc 0x88`) with a regular tilde (`~`) whenever possible.
 * Will replace the greek question mark that looks like a semicolon (`0xcd 0xbe`) with a regular semicolon (`;`) whenever possible.
 * If interactive rebase is launched with `git rebase -i`, then either `ctrl-w` or `ctrl-r` will cycle the keywords for the current line (`fixup`, `drop`, `edit` etc).
-* Want to quickly convert Markdown to HTML? Try `o filename.md`, press `ctrl-space` twice and quit with `ctrl-q`.
+* Want to quickly convert Markdown to HTML? Try `o filename.md`, press `ctrl-b` twice and quit with `ctrl-q`.
 * The default syntax highlighting theme aims to be as pretty as possible with less than 16 colors, but it mainly aims for clarity. It should be easy to spot a keyword, number, string or a stray parenthesis.
-* Press `ctrl-space` or `ctrl-t` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
+* Press `ctrl-t` or `ctrl-space` to toggle the check mark in `- [ ] TODO item` boxes in Markdown.
 * Can load, edit and save gzipped text files or man pages that ends with a `.gz` extension.
 * Can organize imports, for Java and for Kotlin, when formatting code with `ctrl-w`.
 * Has a built-in spellchecker (press `ctrl-f` and then `t` to search for a typo, `ctrl-n` for next match and then `ctrl-a` to add it and `ctrl-i` to ignore it).
@@ -213,9 +213,10 @@ There are pretty few hotkeys to remember:
 * `ctrl-x` - Cut the current line. Press twice to cut a block of text (to the next blank line).
 * `ctrl-c` - Copy one line. Press twice to copy a block of text. Press thrice to copy the current function.
 * `ctrl-v` - Paste one trimmed line. Press twice to paste multiple untrimmed lines.
-* `ctrl-space` - Build program, render to PDF or export to man page (see table below).
-                 For Markdown: toggle checkboxes, or double press to export to HTML.
-                 In book mode: toggle a checkbox if any, otherwise cycle book mode.
+* `ctrl-b` - Build program, render to PDF or export to man page (see table below).
+             Double press to also run, or to export Markdown as HTML.
+             In book mode: toggle bold (`**`). Toggle a breakpoint in debug mode.
+* `ctrl-space` - Toggle block editing mode, or toggle checkboxes in Markdown. In book mode: cycle display/export mode.
 * `ctrl-j` - Join the current line with the next one.
 * `ctrl-u` - Undo (`ctrl-z` is also possible, but may background the application).
 * `ctrl-y` - Redo.
@@ -223,15 +224,13 @@ There are pretty few hotkeys to remember:
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
              To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
-* `ctrl-b` - Go back after having gone to another location or file, or toggle block editing mode.
-             In book mode: toggle bold (`**`).
 * `ctrl-i` - In book mode: toggle italic (`*`).
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
              In book mode: toggle paragraph indent.
 * `ctrl-g` - Go to include or definition, or toggle the status bar.
 * `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.
 * `ctrl-~` - Insert the current date and time.
-* `esc`    - Redraw everything and clear the last search.
+* `esc`    - Go back after having gone to another location or file. Redraw everything and clear the last search.
 
 ## Screen recordings for a few select programming languages
 
@@ -279,7 +278,7 @@ There are pretty few hotkeys to remember:
 
 ## Build and format
 
-* Press `ctrl-space` to build or export the current file.
+* Press `ctrl-b` to build or export the current file.
 * Press `ctrl-w` to format the current file, in an opinionated way. If the current file is empty, a "Hello, World!" template will be inserted, for some file extensions.
 * If a build or export returns an error code and the status message is not specific enough, the last called command can be run from the command line with `$(o -l)`, to get more details. `o -l` can be used to preview the command.
 
@@ -359,7 +358,7 @@ There are pretty few hotkeys to remember:
 
 This is a brand new feature and needs more testing.
 
-* If `gdb` is installed, it's possible to select "Debug mode" from the `ctrl-o` menu and then build and step through a program with `ctrl-space`, or set a breakpoint with `ctrl-b` and continue with `ctrl-space`.
+* If `gdb` is installed, it's possible to select "Debug mode" from the `ctrl-o` menu and then build and step through a program with `ctrl-b`, or set a breakpoint with `ctrl-b` and continue with `ctrl-b`.
 * Messages printed to stdout are displayed as a status message when that line is reached.
 * An indication of which line the program is at has not yet been added, and is a work in progress.
 * There are status messages indicating when the debug session is started and ended.
@@ -439,19 +438,19 @@ It is also possible to install the symlinks that are suggested further down in t
 
 C
 
-* For building code with `ctrl-space`, `gcc` must be installed.
+* For building code with `ctrl-b`, `gcc` must be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
 * For tab completion, `clangd` must be installed.
 
 C++
 
-* For building code with `ctrl-space`, `gcc`/`clang`/`cmake`/`make`/`ninja` should be installed.
+* For building code with `ctrl-b`, `gcc`/`clang`/`cmake`/`make`/`ninja` should be installed.
 * For formatting code with `ctrl-w`, `clang-format` must be installed.
 * For tab completion, `clangd` must be installed.
 
 Go
 
-* For building code with `ctrl-space`, The `go` compiler must be installed.
+* For building code with `ctrl-b`, The `go` compiler must be installed.
 * For formatting code with `ctrl-w`, [`goimports`](https://godoc.org/golang.org/x/tools/cmd/goimports) must be installed.
 * For tab completion, `gopls` must be installed.
 
@@ -466,18 +465,18 @@ V
 
 Odin
 
-* For building code with `ctrl-space`, `odin` must be installed.
+* For building code with `ctrl-b`, `odin` must be installed.
 * For formatting code with `ctrl-w`, `odinfmt` must be installed.
 * For tab completion, `ols` must be installed.
 
 Gleam
 
-* For building code with `ctrl-space`, `gleam` must be installed.
+* For building code with `ctrl-b`, `gleam` must be installed.
 * For tab completion, `gleam lsp` is used.
 
 Lua
 
-* For building code with `ctrl-space`, `luac` must be installed.
+* For building code with `ctrl-b`, `luac` must be installed.
 * For formatting code with `ctrl-w`, `stylua` must be installed.
 * For tab completion, `lua-language-server` must be installed.
 
@@ -492,19 +491,19 @@ Bash
 
 Rust
 
-* For building code with `ctrl-space`, `Cargo.toml` must exist and `cargo` must be installed.
+* For building code with `ctrl-b`, `Cargo.toml` must exist and `cargo` must be installed.
 * For formatting code with `ctrl-w`, `rustfmt` must be installed.
 * For tab completion, `rust-analyzer` must be installed.
 
 Haskell
 
-* For building the current file with `ctrl-space`, the `ghc` compiler must be installed.
+* For building the current file with `ctrl-b`, the `ghc` compiler must be installed.
 * For formatting code with `ctrl-w`, [`ormolu`](https://github.com/tweag/ormolu) must be installed.
 * For tab completion, `haskell-language-server-wrapper` must be installed.
 
 Python
 
-* `ctrl-space` only checks the syntax, without executing. This only requires `python` to be available.
+* `ctrl-b` only checks the syntax, without executing. This only requires `python` to be available.
 * For formatting the code with `ctrl-w`, `ruff` must be installed.
 * For tab completion, `pyright-langserver` or `pylsp` must be installed.
 
@@ -514,23 +513,23 @@ Crystal
 
 Kotlin
 
-* For building code with `ctrl-space`, `kotlinc` must be installed. A `.jar` file is created if the compilation succeeded.
+* For building code with `ctrl-b`, `kotlinc` must be installed. A `.jar` file is created if the compilation succeeded.
 * For formatting code with `ctrl-w`, `ktlint` must be installed.
 
 Java
 
-* For building code with `ctrl-space`, `javac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
+* For building code with `ctrl-b`, `javac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
 * For formatting code with `ctrl-w`, `google-java-format` must be installed.
 
 Scala
 
-* For building code with `ctrl-space`, `scalac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
+* For building code with `ctrl-b`, `scalac` and `jar` must be installed. A `.jar` file is created if the compilation succeeded.
 * The jar file can be executed with `java -jar main.jar`. Use `scalac -d main.jar MyFile.scala` if you want to produce a jar that can be executed with `scala main.jar`.
 * For formatting code with `ctrl-w`, `scalafmt` must be installed.
 
 D
 
-* For building code with `ctrl-space`, `gdc` must be available.
+* For building code with `ctrl-b`, `gdc` must be available.
 
 JSON
 
@@ -716,7 +715,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
   -k, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
-  -i, --input-file FILENAME      Piped to stdin when running programs with ctrl-space.
+  -i, --input-file FILENAME      Piped to stdin when running programs with ctrl-b.
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
@@ -759,7 +758,7 @@ o omefile
 
 When using `pandoc` to export from Markdown to PDF:
 
-* If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-space`.
+* If the `PAPERSIZE` environment variable is set to ie. `a4` or `letter`, it will be respected when exporting from Markdown to PDF using pandoc, at the press of `ctrl-b`.
 * The `--pdf-engine=xelatex` and `--listings` flags are used, so `xelatex` and the `listings` package needs to be available. A standard installation of LaTeX and Pandoc should provide both.
 * `Render to PDF with pandoc` will only appear on the `ctrl-o` menu when editing a Markdown file and `pandoc` is installed.
 

@@ -31,8 +31,9 @@ ctrl-q      to quit
 ctrl-o      to open the command menu
 ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
             jump to matching parenthesis or bracket if the cursor is on one
-ctrl-space  to compile programs or export adoc/sdoc as a man page
-            toggle checkboxes in Markdown, or double press to render the file as HTML
+ctrl-b      to compile programs or export adoc/sdoc as a man page
+            double press to also run, or to render Markdown as HTML
+            to toggle a breakpoint if in debug mode
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "ruff"
@@ -61,9 +62,7 @@ ctrl-c      to copy the current line, press twice to copy the current block
 ctrl-v      to paste one line, press twice to paste the rest
 ctrl-x      to cut the current line, press twice to cut the current block
             press thrice to cut the current function
-ctrl-b      to go back after having gone to another location or file
-            to toggle block edit mode if there is nothing to go back to
-            to toggle a breakpoint if in debug mode
+ctrl-space  to toggle block edit mode, or toggle checkboxes in Markdown
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-y      to redo
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
@@ -71,7 +70,8 @@ ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
-esc         to redraw the screen, clear the last search and clear the current macro
+esc         to go back after having gone to another location or file
+            to redraw the screen, clear the last search and clear the current macro
 
 Set NO_COLOR=1 to disable colors.
 
@@ -96,7 +96,7 @@ Flags:
   -k, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
-  -i, --input-file FILENAME      Piped to stdin when running programs with ctrl-space.
+  -i, --input-file FILENAME      Piped to stdin when running programs with ctrl-b.
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.

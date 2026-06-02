@@ -83,7 +83,7 @@ var movementKeys = []string{
 	altUpKey, altDownKey,
 	ctrlUpKey, ctrlDownKey, ctrlLeftKey, ctrlRightKey,
 	ctrlPgUpKey, ctrlPgDnKey, ctrlHomeKey, ctrlEndKey,
-	"c:1", "c:2", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25",
+	"c:1", "c:5", "c:6", "c:12", "c:14", "c:16", "c:25",
 }
 
 // verticalMovementKeys lists keys that move the cursor vertically (up/down),
@@ -904,83 +904,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 				}
-				break
-			}
-			fallthrough // to build+run (same as ctrl-space)
+			} // portals disabled; build is now ctrl-b
 
-		case "c:0": // ctrl-space, build source code to executable, or export, depending on the mode
+		case "c:0": // ctrl-space, toggle block edit mode (or export/cycle when in book mode)
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
-			// For prose files (or when already in book mode), ctrl-space toggles book mode.
-			// In Markdown or book mode, a checkbox on the current line is toggled instead, if any.
-			proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
-			if proseMode || e.InBookMode() {
-				if (e.mode == mode.Markdown || e.InBookMode()) && e.ToggleCheckboxCurrentLine() {
-					undo.Snapshot(e)
-					break
-				}
+			if e.InBookMode() {
 				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
 				break
 			}
-			switch e.mode {
-			case mode.Config, mode.CSV, mode.Dhall, mode.FSTAB, mode.HCL, mode.Pkl, mode.TOML, mode.YAML:
-				break // do nothing
-			case mode.Nroff:
-				// Switch to man page mode, just in case the switching over does not work out
-				e.mode = mode.ManPage
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				// Save the current file, but only if it has changed
-				if e.changed.Load() {
-					if err := e.Save(c, tty); err != nil {
-						status.ClearAll(c, false)
-						status.SetError(err)
-						status.Show(c, e)
-						break
-					}
-				}
-				// Switch over to the rendered man page output, as produced by the "man" command
-				if pwd, err := os.Getwd(); err == nil {
-					if absFilename, err := filepath.Abs(e.filename); err == nil { // success
-						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
-						var wg sync.WaitGroup
-						e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
-						wg.Wait()
-						quitToMan(tty, pwd, absFilename, c.W(), c.H())
-					}
-				}
-			case mode.ManPage:
-				// Switch back to Nroff mode, just in case the switching below does not work out (or is activated)
-				e.mode = mode.Nroff
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				// Used when switching back and forth between editing and viewing man pages
-				if env.Has("NROFF_FILENAME") {
-					if pwd, err := os.Getwd(); err == nil {
-						e.SetUpSignalHandlers(c, tty, status, true) // only clear signals
-						var wg sync.WaitGroup
-						e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
-						wg.Wait()
-						quitToNroff(tty, pwd, c.W(), c.H())
-					}
-				}
-			default:
-				// For PKGBUILD/APKBUILD, require double ctrl-space to avoid accidental builds
-				baseFilename := filepath.Base(e.filename)
-				if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped("c:0") {
-					status.ClearAll(c, false)
-					status.SetMessageAfterRedraw("Press ctrl-space again to build")
-					break
-				}
-				// Then build, and run if ctrl-space was double-tapped
-				e.runAfterBuild.Store(kh.DoubleTapped("c:0"))
-				// Stop background processes first (if any)
-				stopBackgroundProcesses()
-				// Then build (and run)
-				e.Build(c, status, tty)
-				e.redrawCursor.Store(true)
+			if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
+				undo.Snapshot(e)
+				break
 			}
+			e.blockMode = !e.blockMode
+			if e.blockMode {
+				e.InitBlockCursors(c)
+			} else {
+				e.blockCursors = nil
+			}
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
 
 		case "c:20": // ctrl-t
 
@@ -1948,12 +1893,19 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 			fallthrough // nano: ctrl-l to refresh
-		case "c:27": // esc, clear search term (but not the sticky search term), reset, clean and redraw
+		case "c:27": // esc, go back to previous location, or clear search term and reset
 			e.blockMode = false
 			e.blockCursors = nil
 			e.ClearSelection()
 			e.showTypoHighlights = false
 			c.ShowCursor()
+			// Go back to the previous location if there are breadcrumbs
+			if bc, ok := popBreadcrumb(); ok {
+				bc.BackFunc()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
 				clearOnQuit.Store(false)
@@ -2973,7 +2925,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			clearKeyHistory = true
 
-		case "c:2": // ctrl-b, go back after jumping to a definition, or toggle block edit mode
+		case "c:2": // ctrl-b, build/export/cycle book mode (bold in book mode, cursor backward in nano mode)
 			if e.InBookMode() { // book mode: toggle bold
 				undo.Snapshot(e)
 				e.bookToggleFormat(c, "**")
@@ -2983,22 +2935,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CursorBackward(c, status)
 				break
 			}
-			// Check if we have breadcrumbs to jump back to
-			if bc, ok := popBreadcrumb(); ok {
-				bc.BackFunc()
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
-			}
-			// Block edit mode
-			e.blockMode = !e.blockMode
-			if e.blockMode {
-				e.InitBlockCursors(c)
-			} else {
-				e.blockCursors = nil
-			}
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
+			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag)
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {
 				status.SetMessage("Empty")

@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/slay"
@@ -1781,4 +1782,63 @@ func OnlyBuild(fnord FilenameOrData) (string, error) {
 		finalMessage += "\n" + msg
 	}
 	return finalMessage, nil
+}
+
+// HandleBuildKey handles ctrl-b: build/export/cycle book mode depending on the current file type.
+// Book mode (bold) and nano mode (cursor backward) are handled by the caller before this is invoked.
+func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh *KeyHistory, undo *Undo, lockTimestamp time.Time, forceFlag bool) {
+	absFilename, _ := filepath.Abs(e.filename)
+	// For prose files, cycle book/export mode (includes PDF export)
+	proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
+	if proseMode {
+		e.cycleBookMode(c, tty, status, "c:2", kh.DoubleTapped("c:2"))
+		return
+	}
+	switch e.mode {
+	case mode.Config, mode.CSV, mode.Dhall, mode.FSTAB, mode.HCL, mode.Pkl, mode.TOML, mode.YAML:
+		return // do nothing for config/data formats
+	case mode.Nroff:
+		e.mode = mode.ManPage
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		if e.changed.Load() {
+			if err := e.Save(c, tty); err != nil {
+				status.ClearAll(c, false)
+				status.SetError(err)
+				status.Show(c, e)
+				return
+			}
+		}
+		if pwd, err := os.Getwd(); err == nil {
+			e.SetUpSignalHandlers(c, tty, status, true)
+			var wg sync.WaitGroup
+			e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
+			wg.Wait()
+			quitToMan(tty, pwd, absFilename, c.W(), c.H())
+		}
+	case mode.ManPage:
+		e.mode = mode.Nroff
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		if env.Has("NROFF_FILENAME") {
+			if pwd, err := os.Getwd(); err == nil {
+				e.SetUpSignalHandlers(c, tty, status, true)
+				var wg sync.WaitGroup
+				e.CloseLocksAndLocationHistory(absFilename, lockTimestamp, forceFlag, &wg)
+				wg.Wait()
+				quitToNroff(tty, pwd, c.W(), c.H())
+			}
+		}
+	default:
+		baseFilename := filepath.Base(e.filename)
+		if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped("c:2") {
+			status.ClearAll(c, false)
+			status.SetMessageAfterRedraw("Press ctrl-b again to build")
+			return
+		}
+		e.runAfterBuild.Store(kh.DoubleTapped("c:2"))
+		stopBackgroundProcesses()
+		e.Build(c, status, tty)
+		e.redrawCursor.Store(true)
+	}
 }
