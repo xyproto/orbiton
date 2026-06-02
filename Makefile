@@ -115,11 +115,11 @@ symlinks:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/vs"
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/obuild"
 
-# For pico/nano style editing
+# For Pico/Nano style editing
 nano-symlink:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/nano"
 
-# For pico/nano style editing, but "nan" does not conflict with "nano".
+# For Pico/Nano style editing. "nan" does not conflict with "nano".
 nan-symlink:
 	ln -s -f "$(PREFIX)/bin/o" "$(DESTDIR)$(PREFIX)/bin/nan"
 
