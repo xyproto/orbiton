@@ -674,27 +674,15 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 	}
 
 	if !vsCode && c != nil && height > menuHeightThreshold {
-		if isDarwin && ProgrammingLanguage(e.mode) {
-			if e.disablePortals.Load() {
-				actions.Add("Let ctrl-r open portals", func() {
-					e.disablePortals.Store(false)
-				})
-			} else {
-				actions.Add("Let ctrl-r build and 2x ctrl-r run", func() {
-					e.disablePortals.Store(true)
-				})
-			}
+		if e.moveLines.Load() {
+			actions.Add("Scroll with ctrl-n and ctrl-p", func() {
+				e.moveLines.Store(false)
+				e.cycleFilenames = false
+			})
 		} else {
-			if e.moveLines.Load() {
-				actions.Add("Scroll with ctrl-n and ctrl-p", func() {
-					e.moveLines.Store(false)
-					e.cycleFilenames = false
-				})
-			} else {
-				actions.Add("Move lines with ctrl-n and ctrl-p", func() {
-					e.moveLines.Store(true)
-				})
-			}
+			actions.Add("Move lines with ctrl-n and ctrl-p", func() {
+				e.moveLines.Store(true)
+			})
 		}
 	}
 
