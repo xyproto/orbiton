@@ -716,7 +716,7 @@ This also means that filenames containing `+` or `:`, and then followed by a num
   -k, --create-dir               When opening a new file, create directories as needed.
   -s, --digraphs                 List all possible digraphs.
   -t, --list                     List the given file using the red/black theme and quit.
-  -i, --input-file FILENAME      Used as stdin when running programs with ctrl-space.
+  -i, --input-file FILENAME      Piped to stdin when running programs with ctrl-space.
                                  The default filename is input.txt. Handy for Advent of Code.
   -a, --nano                     Emulate Pico/Nano.
   -q, --quick-help               Always display the quick help pane at start.
