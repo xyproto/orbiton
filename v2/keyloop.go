@@ -850,8 +850,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
+			// Double-press ctrl-r: portals (for all file types)
 			if kh.DoubleTapped("c:18") && !e.disablePortals.Load() {
-				// Deal with the portal
 				status.ClearAll(c, false)
 				if HasPortal() {
 					status.SetMessageAfterRedraw("Closing portal")
@@ -903,6 +903,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					status.SetMessageAfterRedraw("Can't find a matching " + name)
 				}
 				break
+			}
+			// For non-programming-language files, toggle wrap when typing
+			if !ProgrammingLanguage(e.mode) {
+				e.wrapWhenTyping = !e.wrapWhenTyping
+				if e.wrapWhenTyping {
+					if e.wrapLimitWhenTyping <= 0 {
+						e.wrapLimitWhenTyping = 79
+					}
+					status.ClearAll(c, false)
+					status.SetMessageAfterRedraw(fmt.Sprintf("Wrap when typing at %d", e.wrapLimitWhenTyping))
+				} else {
+					status.ClearAll(c, false)
+					status.SetMessageAfterRedraw("Wrap when typing disabled")
+				}
+				e.redraw.Store(true)
 			}
 
 		case "c:0": // ctrl-space, build (or export/cycle when in book mode, toggle checkboxes in Markdown)

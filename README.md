@@ -117,7 +117,7 @@ These features are unique to `o`, as far as I am aware:
 * Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line), press `ctrl-c` again to copy the current function.
-* Jump to matching bracket with `ctrl-r`. Open or close a portal with `ctrl-r` pressed twice. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
+* Jump to matching bracket with `ctrl-r`, or toggle wrap when typing for prose. Open or close a portal with `ctrl-r` pressed twice. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` or `ctrl-b` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
 * Jump to a line with `ctrl-l`. Either enter a number to jump to a line or just press `return` (or `t`) to jump to the top. Press `ctrl-l` and `return` again (or `b`) to jump to the bottom. Press `c` to jump to the center.
@@ -225,8 +225,8 @@ There are pretty few hotkeys to remember:
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
              Double press to toggle block editing mode. Toggle paragraph indent in book mode.
 * `ctrl-g` - Go to include or definition, or toggle the status bar.
-* `ctrl-r` - Jump to matching bracket, or cycle git rebase keywords when editing a git commit message.
-             Double press to open or close a portal.
+* `ctrl-r` - Jump to matching bracket or rename something when programming, otherwise toggle "wrap when typing".
+             For git interactive rebase, cycle keywords. Press twice to open or close a portal.
 * `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.
 * `ctrl-~` - Insert the current date and time.
 * `esc`    - Go back after having gone to another location or file. Redraw everything and clear the last search.

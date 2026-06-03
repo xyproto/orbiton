@@ -29,8 +29,6 @@ Disable this overview  ctrl-l and then !`
 ctrl-s      to save
 ctrl-q      to quit
 ctrl-o      to open the command menu
-ctrl-r      jump to matching bracket, or cycle git rebase keywords
-            double press to open or close a portal
 ctrl-b      to build or export (double press to also run)
             toggle bold in book mode, toggle a breakpoint in debug mode
 ctrl-space  to build or export (double press to also run)
@@ -42,6 +40,9 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for git interactive rebases, cycle the rebase keywords
             double press to toggle block edit mode
 ctrl-g      go to include or definition, or toggle the status bar
+ctrl-r      to jump to matching bracket or rename something when programming,
+            otherwise toggle "wrap when typing". For git interactive rebase,
+            cycle keywords. Press twice to open or close a portal.
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line
