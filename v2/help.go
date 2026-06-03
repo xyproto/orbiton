@@ -29,16 +29,18 @@ Disable this overview  ctrl-l and then !`
 ctrl-s      to save
 ctrl-q      to quit
 ctrl-o      to open the command menu
-ctrl-r      to open a portal so that text can be pasted into another file with ctrl-v
-            jump to matching parenthesis or bracket if the cursor is on one
-ctrl-b      to compile programs or export adoc/sdoc as a man page
-            double press to also run, or to render Markdown as HTML
-            to toggle a breakpoint if in debug mode
+ctrl-r      jump to matching bracket, or cycle git rebase keywords
+            double press to open or close a portal
+ctrl-b      to build or export (double press to also run)
+            toggle bold in book mode, toggle a breakpoint in debug mode
+ctrl-space  to build or export (double press to also run)
+            to toggle checkboxes in Markdown
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "ruff"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
+            double press to toggle block edit mode
 ctrl-g      go to include or definition, or toggle the status bar
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
@@ -57,17 +59,18 @@ ctrl-t      for C and C++, toggle between the header and implementation,
             for Markdown, toggle checkboxes or launch the table editor
             for Agda, insert a symbol,
             for the rest, record and then play back a macro
-ctrl-c      to copy the current line, press twice to copy the current block
+ctrl-c      to copy the current line, double press to copy the current block
             press thrice to copy the current function
-ctrl-v      to paste one line, press twice to paste the rest
-ctrl-x      to cut the current line, press twice to cut the current block
+ctrl-v      to paste one line, double press to paste the rest
+ctrl-x      to cut the current line, double press to cut the current block
             press thrice to cut the current function
-ctrl-space  to toggle block edit mode, or toggle checkboxes in Markdown
 ctrl-u      to undo (ctrl-z is also possible, but may background the application)
 ctrl-y      to redo
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
+ctrl-r      to jump to a matching bracket, or cycle git rebase keywords when editing a git
+            commit message. Double press to open or close a portal.
 ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
 esc         to go back after having gone to another location or file

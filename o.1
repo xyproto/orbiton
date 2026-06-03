@@ -98,6 +98,7 @@ Display brief usage information.
   Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBormolu\fP) and Python (\fBruff format\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
   If in Markdown mode, format the table under the cursor.
+  Double press to toggle block editing mode.
 .sp
 .B ctrl-a
   Go to start of the text, then the start of the line and then the previous line.
@@ -151,9 +152,9 @@ Display brief usage information.
 .sp
 .B ctrl-b
   Build programs, render to PDF or export to man page.
-  Double press to also run after building.
+  Press twice to also run after building.
   Use \fBo -l\fP to view the last build command.
-  Toggle bold in book mode. Toggle the breakpoint in debug mode.
+  Toggle bold in book mode. Toggle a breakpoint in debug mode.
 .sp
 .B ctrl-j
   Join lines.
@@ -180,8 +181,9 @@ Display brief usage information.
   Redraw the screen and clear the last search.
 .sp
 .B ctrl-space
-  Toggle block editing mode.
-  In book mode: cycle display and export options.
+  Build programs, render to PDF or export to man page.
+  Press twice to also run after building.
+  Toggle checkboxes in Markdown. Cycle display and export options in book mode.
 .sp
   The last used external command by `o` can be found in `~/.cache/o/last_command.sh`.
 .sp
@@ -199,8 +201,8 @@ Display brief usage information.
   For a full overview, see: https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 .sp
 .B ctrl-r
-  Open or close a portal. Text can be pasted from the portal into another file with `ctrl-v`.
-  For "git interactive rebase" mode, cycle the rebase keywords.
+  Jump to matching bracket, or cycle git rebase keywords.
+  Double press to open or close a portal.
 .sp
 .SH "ENV"
 .sp

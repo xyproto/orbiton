@@ -1786,12 +1786,12 @@ func OnlyBuild(fnord FilenameOrData) (string, error) {
 
 // HandleBuildKey handles ctrl-b: build/export/cycle book mode depending on the current file type.
 // Book mode (bold) and nano mode (cursor backward) are handled by the caller before this is invoked.
-func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh *KeyHistory, undo *Undo, lockTimestamp time.Time, forceFlag bool) {
+func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh *KeyHistory, undo *Undo, lockTimestamp time.Time, forceFlag bool, keyCode string) {
 	absFilename, _ := filepath.Abs(e.filename)
 	// For prose files, cycle book/export mode (includes PDF export)
 	proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
 	if proseMode {
-		e.cycleBookMode(c, tty, status, "c:2", kh.DoubleTapped("c:2"))
+		e.cycleBookMode(c, tty, status, keyCode, kh.DoubleTapped(keyCode))
 		return
 	}
 	switch e.mode {
@@ -1831,12 +1831,12 @@ func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh
 		}
 	default:
 		baseFilename := filepath.Base(e.filename)
-		if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped("c:2") {
+		if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped(keyCode) {
 			status.ClearAll(c, false)
 			status.SetMessageAfterRedraw("Press ctrl-b again to build")
 			return
 		}
-		e.runAfterBuild.Store(kh.DoubleTapped("c:2"))
+		e.runAfterBuild.Store(kh.DoubleTapped(keyCode))
 		stopBackgroundProcesses()
 		e.Build(c, status, tty)
 		e.redrawCursor.Store(true)

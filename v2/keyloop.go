@@ -696,7 +696,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		//case "\x1b[201~", "\x1b[E", "\x1b[I", "\x1b[O":
 		//break // do nothing
 
-		case "c:23": // ctrl-w, format or insert template (or if in git mode, cycle interactive rebase keywords)
+		case "c:23": // ctrl-w, format (or double press for block edit mode)
 
 			if e.blockMode {
 				e.blockMode = false
@@ -711,16 +711,28 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			if e.InBookMode() {
+				undo.Snapshot(e)
+				e.bookToggleParagraphIndent(c)
+				break
+			}
+
+			if kh.DoubleTapped("c:23") {
+				e.blockMode = !e.blockMode
+				if e.blockMode {
+					e.InitBlockCursors(c)
+				} else {
+					e.blockCursors = nil
+				}
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+
 			undo.Snapshot(e)
 
 			// Clear the search term
 			e.ClearSearch()
-
-			// In book mode: toggle a 4-space indent on the first line of the current paragraph
-			if e.InBookMode() {
-				e.bookToggleParagraphIndent(c)
-				break
-			}
 
 			// First check if we are editing Markdown and are in a Markdown table (and that this is not the previous thing that we did)
 			if e.mode == mode.Markdown && e.InTable() && !kh.PrevIs("c:23") {
@@ -788,99 +800,57 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 
-		case "c:18": // ctrl-r, to open or close a portal. In debug mode, reverse step.
-			if !e.disablePortals.Load() {
-				// In book mode: follow the Markdown link under the cursor,
-				// or when the cursor is not on a link, navigate back one
-				// step in the per-session history. This replaces the
-				// portal/rebase behaviour (neither of which makes sense
-				// while reading a book-mode document).
-				if e.InBookMode() {
-					url := e.bookLinkURLUnderCursor()
-					pushCurrent := true
+		case "c:18": // ctrl-r, jump to matching bracket (double-press for portals)
+			if e.InBookMode() {
+				url := e.bookLinkURLUnderCursor()
+				pushCurrent := true
+				if url == "" {
+					url = bookPopHistory()
+					pushCurrent = false
 					if url == "" {
-						url = bookPopHistory()
-						// Going back: don't push the current URL onto
-						// the stack (that would trap the user in a
-						// two-URL loop).
-						pushCurrent = false
-						if url == "" {
-							break
-						}
+						break
 					}
-					status.ClearAll(c, false)
-					status.SetMessage("Loading " + url)
+				}
+				status.ClearAll(c, false)
+				status.SetMessage("Loading " + url)
+				status.Show(c, e)
+				md, err := fetchURLAsMarkdown(url)
+				if err != nil {
+					status.SetError(err)
 					status.Show(c, e)
-					md, err := fetchURLAsMarkdown(url)
+					break
+				}
+				if pushCurrent {
+					if cur := bookGetCurrentURL(); cur != "" {
+						bookPushHistory(cur)
+					}
+				}
+				bookMarkLinkVisited(url)
+				bookSetCurrentURL(url)
+				e.LoadBytes(md)
+				e.filename = "-"
+				e.changed.Store(false)
+				e.pos.sx = 0
+				e.pos.sy = 0
+				e.pos.offsetX = 0
+				e.pos.offsetY = 0
+				e.bookSavedLocalX = -1
+				bookBumpContentGen()
+				e.FullResetRedraw(c, status, true, true)
+				break
+			}
+			if e.nanoMode.Load() { // nano: ctrl-r, insert file
+				if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
+					err := e.RunCommand(c, tty, status, undo, "insertfile", insertFilename)
 					if err != nil {
 						status.SetError(err)
 						status.Show(c, e)
 						break
 					}
-					if pushCurrent {
-						if cur := bookGetCurrentURL(); cur != "" {
-							bookPushHistory(cur)
-						}
-					}
-					bookMarkLinkVisited(url)
-					bookSetCurrentURL(url)
-					// Replace the buffer with the fetched Markdown
-					// and reset the view. Matches the URL-at-startup
-					// path in main.go so the user gets consistent
-					// behaviour.
-					e.LoadBytes(md)
-					e.filename = "-"
-					e.changed.Store(false)
-					e.pos.sx = 0
-					e.pos.sy = 0
-					e.pos.offsetX = 0
-					e.pos.offsetY = 0
-					e.bookSavedLocalX = -1
-					bookBumpContentGen()
-					e.FullResetRedraw(c, status, true, true)
-					break
 				}
-				if e.nanoMode.Load() { // nano: ctrl-r, insert file
-					// Ask the user which filename to insert
-					if insertFilename, ok := e.UserInput(c, tty, status, "Insert file", "", []string{e.filename}, false, e.filename); ok {
-						err := e.RunCommand(c, tty, status, undo, "insertfile", insertFilename)
-						if err != nil {
-							status.SetError(err)
-							status.Show(c, e)
-							break
-						}
-					}
-					break
-				}
-				// Are we in git mode?
-				if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
-					undo.Snapshot(e)
-					newLine := nextGitRebaseKeyword(line)
-					e.SetCurrentLine(newLine)
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-					break
-				}
-				// Jump to matching bracket if the cursor is on one
-				if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
-					if e.JumpToMatching(c) {
-						e.redraw.Store(true)
-						e.redrawCursor.Store(true)
-					} else {
-						name := "bracket"
-						switch r {
-						case '(', ')':
-							name = "parenthesis"
-						case '{', '}':
-							name = "curly bracket"
-						case '[', ']':
-							name = "square bracket"
-						}
-						status.ClearAll(c, false)
-						status.SetMessageAfterRedraw("Can't find a matching " + name)
-					}
-					break
-				}
+				break
+			}
+			if kh.DoubleTapped("c:18") && !e.disablePortals.Load() {
 				// Deal with the portal
 				status.ClearAll(c, false)
 				if HasPortal() {
@@ -893,7 +863,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						status.Show(c, e)
 						break
 					}
-					// Portals in the same file is a special case, since lines may move around when pasting
 					if portal.SameFile(e) {
 						e.sameFilePortal = portal
 					}
@@ -904,9 +873,39 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 				}
-			} // portals disabled; build is now ctrl-b
+				break
+			}
+			// In git mode, cycle rebase keywords
+			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
+				undo.Snapshot(e)
+				newLine := nextGitRebaseKeyword(line)
+				e.SetCurrentLine(newLine)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+			// Jump to matching bracket if the cursor is on one
+			if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
+				if e.JumpToMatching(c) {
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				} else {
+					name := "bracket"
+					switch r {
+					case '(', ')':
+						name = "parenthesis"
+					case '{', '}':
+						name = "curly bracket"
+					case '[', ']':
+						name = "square bracket"
+					}
+					status.ClearAll(c, false)
+					status.SetMessageAfterRedraw("Can't find a matching " + name)
+				}
+				break
+			}
 
-		case "c:0": // ctrl-space, toggle block edit mode (or export/cycle when in book mode)
+		case "c:0": // ctrl-space, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
@@ -918,14 +917,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.Snapshot(e)
 				break
 			}
-			e.blockMode = !e.blockMode
-			if e.blockMode {
-				e.InitBlockCursors(c)
-			} else {
-				e.blockCursors = nil
-			}
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
+			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag, "c:0")
 
 		case "c:20": // ctrl-t
 
@@ -2935,7 +2927,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.CursorBackward(c, status)
 				break
 			}
-			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag)
+			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag, "c:2")
 		case "c:10": // ctrl-j, join line
 			if e.Empty() {
 				status.SetMessage("Empty")
