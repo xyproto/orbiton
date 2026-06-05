@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/xyproto/burnfont"
@@ -41,7 +40,7 @@ func FindSystemFonts() *SystemFonts {
 	if isLinux || isBSD || isDarwin {
 		fillViaFcMatch(sf)
 	}
-	if runtime.GOOS == "windows" {
+	if isWindows {
 		fillViaWindowsPaths(sf)
 	}
 	if !sf.Any() {

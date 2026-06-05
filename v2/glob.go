@@ -1,7 +1,6 @@
 package main
 
 import (
-	"runtime"
 	"sort"
 	"strings"
 
@@ -20,7 +19,7 @@ func editPriority(filename string) int {
 	if files.IsBinaryAccurate(filename) {
 		return 3
 	}
-	if runtime.GOOS != "windows" && hasSuffix(filename, []string{".bat", ".cmd"}) {
+	if !isWindows && hasSuffix(filename, []string{".bat", ".cmd"}) {
 		return 2
 	}
 	if hasSuffix(filename, probablyDoesNotWantToEditExtensions) || !strings.Contains(filename, ".") {
