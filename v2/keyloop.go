@@ -307,8 +307,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
 		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
 
-		pasteAllAtOnce bool // set when copying/cutting a selection, to paste all lines at once
-
 		clearKeyHistory  bool              // for clearing the last pressed key, for exiting modes that also reads keys
 		kh               = NewKeyHistory() // keep track of the previous key presses
 		key              string            // for the main loop
@@ -850,6 +848,17 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
+			// In git mode (commit messages, rebase), ctrl-r is reserved for cycling rebase keywords
+			if e.mode == mode.Git {
+				if line := e.CurrentLine(); hasAnyPrefixWord(line, gitRebasePrefixes) {
+					undo.Snapshot(e)
+					newLine := nextGitRebaseKeyword(line)
+					e.SetCurrentLine(newLine)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+				}
+				break
+			}
 			// Double-press ctrl-r: portals (for all file types)
 			if kh.DoubleTapped("c:18") && !e.disablePortals.Load() {
 				status.ClearAll(c, false)
@@ -873,15 +882,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					}
 					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 				}
-				break
-			}
-			// In git mode, cycle rebase keywords
-			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
-				undo.Snapshot(e)
-				newLine := nextGitRebaseKeyword(line)
-				e.SetCurrentLine(newLine)
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
 				break
 			}
 			// Jump to matching bracket if the cursor is on one
@@ -2535,7 +2535,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode.Load() { // nano: paste after cutting
-				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
+				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 				break
 			}
 
@@ -2575,7 +2575,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if selText != "" {
 					writeClipboardAsync(selText, e.primaryClipboard)
 					copyLines = strings.Split(selText, "\n")
-					pasteAllAtOnce = true
 					e.DeleteSelection(c, status)
 				}
 				e.ClearSelection()
@@ -2583,9 +2582,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 				break
 			}
-
-			// No selection: block method -- leave single-line/block paste mode
-			pasteAllAtOnce = false
 
 			if e.blockMode { // cut the entire block
 
@@ -2677,8 +2673,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 				e.redraw.Store(true)
 			}
-			// Go to the end of the current line
-			e.End(c)
 		case "c:11": // ctrl-k, delete to end of line
 			if e.blockMode { // delete to end of line on all lines in the block
 
@@ -2729,7 +2723,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if selText != "" {
 					writeClipboardAsync(selText, e.primaryClipboard)
 					copyLines = strings.Split(selText, "\n")
-					pasteAllAtOnce = true
 					copied := len(copyLines)
 					plural := "s"
 					if copied == 1 {
@@ -2742,9 +2735,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 				break
 			}
-
-			// No selection: block method -- leave selection-paste mode
-			pasteAllAtOnce = false
 
 			// Stop background processes (like playing music with timidity), if any
 			if stopBackgroundProcesses() {
@@ -2913,7 +2903,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
-			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, &pasteAllAtOnce, kh.PrevIs("c:13"))
+			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 
 		case shiftInsertKey1, shiftInsertKey2: // shift-insert, one-shot paste mode
 			wasInPasteMode := e.pasteMode

@@ -137,7 +137,7 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 }
 
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
-func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, pasteAllAtOnce *bool, prevKeyWasReturn bool) {
+func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		if err == nil {                       // success
@@ -241,50 +241,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	// Redraw after pasting
 	e.redraw.Store(true)
 
-	if *pasteAllAtOnce && len(*copyLines) > 0 { // Paste all lines at once (after copying/cutting a selection)
-		*lastPasteY = y
-
-		var (
-			firstLine     = (*copyLines)[0]
-			tailLines     = (*copyLines)[1:]
-			tailLineCount = len(tailLines)
-			lastIndex     = tailLineCount - 1
-		)
-
-		// Consider smart indentation for programming languages
-		if ProgrammingLanguage(e.mode) || e.mode == mode.Config || e.mode == mode.HCL || e.mode == mode.TOML || e.mode == mode.YAML {
-			if getLeadingWhitespace(firstLine) == "" {
-				leadingWhitespace := e.LeadingWhitespace()
-				firstLine = leadingWhitespace + firstLine
-				// Create a new slice for tailLines to avoid modifying the original copyLines
-				newTailLines := make([]string, tailLineCount)
-				for i := range tailLineCount {
-					newTailLines[i] = leadingWhitespace + tailLines[i]
-				}
-				tailLines = newTailLines
-			}
-		}
-
-		if e.EmptyRightTrimmedLine() {
-			e.SetLine(y, firstLine)
-		} else {
-			e.InsertStringAndMove(c, strings.TrimSpace(firstLine))
-		}
-
-		for i, line := range tailLines {
-			if i == lastIndex && strings.TrimSpace(line) == "" {
-				break
-			}
-			e.InsertLineBelow()
-			e.Down(c, nil)
-			e.InsertStringAndMove(c, line)
-		}
-
-		if numLines := 1 + tailLineCount; numLines > 1 {
-			status.SetMessageAfterRedraw(fmt.Sprintf("Pasted %d lines", numLines))
-		}
-
-	} else if *lastPasteY != y { // Single line paste
+	if *lastPasteY != y { // Single line paste
 		*lastPasteY = y
 		// Pressed for the first time for this line number, paste only one line
 
