@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 // feed an orbiton-facing *vt.TTY from an in-memory byte stream, with no
 // real terminal required.
 func TestMockTTY_ReadsScriptedKeys(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if isWindows {
 		t.Skip("mock TTY key reading is not supported on Windows")
 	}
 	// "ab" then ESC-[A (Up arrow) then Ctrl-Q (0x11).
@@ -65,7 +64,7 @@ func TestMockCanvas_EditorSnapshot(t *testing.T) {
 // TestMockTTY_NavigationKeys feeds escape sequences for the common navigation
 // keys into a mock TTY and verifies that ReadKey decodes each one correctly.
 func TestMockTTY_NavigationKeys(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if isWindows {
 		t.Skip("mock TTY key reading is not supported on Windows")
 	}
 	// Build a script of raw terminal bytes for: Up, Down, Left, Right, Page
@@ -96,7 +95,7 @@ func TestMockTTY_NavigationKeys(t *testing.T) {
 // (Ctrl, Alt, Shift combined with arrow keys) are decoded to the correct
 // strings by a mock TTY.
 func TestMockTTY_ModifierArrowKeys(t *testing.T) {
-	if runtime.GOOS == "windows" {
+	if isWindows {
 		t.Skip("mock TTY key reading is not supported on Windows")
 	}
 	script := []byte{
