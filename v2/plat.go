@@ -1,4 +1,4 @@
-//go:build !linux && !darwin && !netbsd && !freebsd && !openbsd && !dragonfly
+//go:build !linux && !darwin && !netbsd && !freebsd && !openbsd && !dragonfly && !windows
 
 package main
 
@@ -7,4 +7,5 @@ const (
 	isBSD    = false
 	isDarwin = false
 	isLinux  = false
+	isWindows = false
 )
