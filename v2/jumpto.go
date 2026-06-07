@@ -438,10 +438,13 @@ func (e *Editor) prevAndScroll(c *vt.Canvas) error {
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 	const searchTimeout = 2 * time.Second
-	var r = e.Rune()
-	// Find which opening and closing parenthesis/curly brackets to look for
-	opening, closing := rune(0), rune(0)
-	onparen := true
+	var (
+		originalPosition = e.pos.Copy()
+		r                = e.Rune()
+		// Find which opening and closing parenthesis/curly brackets to look for
+		opening, closing = rune(0), rune(0)
+		onparen          = true
+	)
 	switch r {
 	case '(', ')':
 		opening = '('
@@ -478,6 +481,7 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 				}
 			}
 			if !found {
+				e.pos = *originalPosition
 				return false
 			}
 		case ')', '}', ']':
@@ -499,6 +503,7 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 				}
 			}
 			if !found {
+				e.pos = *originalPosition
 				return false
 			}
 		}
@@ -508,5 +513,6 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 		e.VerticalScrollIfNeeded(c)
 		return true
 	}
+	e.pos = *originalPosition
 	return false
 }
