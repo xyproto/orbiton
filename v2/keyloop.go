@@ -2132,7 +2132,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			const drawLines = true
 			const justMovedUpOrDown = false
-			e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
+			//e.FullResetRedraw(c, status, drawLines, justMovedUpOrDown)
 
 			trimmedLine := e.TrimmedLine()
 

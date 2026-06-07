@@ -484,7 +484,7 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 		if id, err := lsp.sendRequest("workspace/symbol", params); err != nil {
 			return false
 		} else if _, err = lsp.readResponse(id, 500*time.Millisecond); err == nil {
-			return true
+			return false
 		}
 		return false
 	}
@@ -1616,7 +1616,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			c.Draw()
 			status.SetMessage("No completions found")
 			status.Show(c, e)
-			return true
+			return false
 		}
 	}
 
@@ -1631,7 +1631,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		c.Draw()
 		status.SetMessage("No completions found")
 		status.Show(c, e)
-		return true
+		return false
 	}
 
 	// find the maximum label length for column alignment
