@@ -252,7 +252,7 @@ func AdjustKeywords(m mode.Mode) {
 		fallthrough
 	case mode.Java:
 		addKws := []string{"package"}
-		delKws := []string{"add", "bool", "get", "in", "local", "sub", "until"}
+		delKws := []string{"add", "bool", "end", "get", "in", "local", "sub", "until"}
 		AddAndRemoveKeywords(addKws, delKws)
 	case mode.JavaScript:
 		AddKeywords([]string{"of", "super"})
