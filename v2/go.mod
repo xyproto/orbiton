@@ -3,7 +3,7 @@ module github.com/xyproto/orbiton/v2
 go 1.25.1
 
 require (
-	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.1
+	github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2
 	github.com/creack/pty v1.1.24
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
@@ -35,7 +35,7 @@ require (
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.11
-	github.com/xyproto/wordwrap v1.1.0
+	github.com/xyproto/wordwrap v1.2.0
 	golang.org/x/image v0.41.0
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -49,7 +49,7 @@ require github.com/peterhellberg/gfx v0.0.0-20260528221839-3f985a9df2a8 // indir
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/DataDog/gostackparse v0.7.0 // indirect
-	github.com/JohannesKaufmann/dom v0.2.0 // indirect
+	github.com/JohannesKaufmann/dom v0.3.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect

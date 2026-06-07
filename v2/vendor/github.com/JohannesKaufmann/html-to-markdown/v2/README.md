@@ -2,7 +2,7 @@
 
 A robust html-to-markdown converter that transforms HTML (even entire websites) into clean, readable Markdown. It supports complex formatting, customizable options, and plugins for full control over the conversion process.
 
-Use the fully extendable [Golang library](#golang-library) or a quick [CLI command](#cli---using-it-on-the-command-line). Alternatively, try the [Online Demo](https://html-to-markdown.com/demo) or [REST API](https://html-to-markdown.com/api) to see it in action!
+Use the fully extendable [Golang library](#golang-library) or a quick [CLI command](#cli---using-it-on-the-command-line). Alternatively, try the [Online Demo](https://html-to-markdown.com) or [REST API](https://html-to-markdown.com/api) to see it in action!
 
 Here are some _cool features_:
 
@@ -47,10 +47,7 @@ Here are some _cool features_:
 
 ## Usage
 
-[💻 Golang library](#golang-library) | [📦 CLI](#cli---using-it-on-the-command-line) | [▶️ Hosted Demo](https://html-to-markdown.com/demo) | [🌐 Hosted REST API](https://html-to-markdown.com/api)
-
-> [!TIP]
-> Looking for an all in one cloud solution? We're _sponsored_ by [🔥 Firecrawl](https://html-to-markdown.com/sponsor/firecrawl), where you can scrape any website and turn it into AI friendly markdown with one API call.
+[💻 Golang library](#golang-library) | [📦 CLI](#cli---using-it-on-the-command-line) | [▶️ Hosted Demo](https://html-to-markdown.com) | [🌐 Hosted REST API](https://html-to-markdown.com/api)
 
 ---
 
@@ -232,11 +229,9 @@ You want to write custom logic?
 1. Write your logic and **register** it.
 
    ![](./.github/images/autocomplete_register.png)
-
    - 🧑‍💻 [Example code, register](/examples/register/main.go)
 
 2. _Optional:_ Package your logic into a **plugin** and publish it.
-
    - 🗒️ [WRITING_PLUGINS.md](/WRITING_PLUGINS.md)
 
 ---
@@ -333,16 +328,22 @@ _(The cli does not support every option yet. Over time more customization will b
 
 ## FAQ
 
+### Character Encoding
+
+Regardless of which method you use (`ConvertString()`, `ConvertNode()`, etc.), the input is expected to _already_ be UTF-8 encoded. Under the hood, Go's `html.Parse()` is used to build the DOM and it requires UTF-8. It does not detect or convert other charsets.
+
+If your HTML uses a different charset (e.g. `ISO-8859-1`, `Windows-1252`), the replacement character `�` may appear in the output instead of the correct letters.
+
+This library does not handle charset detection or conversion. It is your responsibility to decode the HTML to UTF-8 before passing it in. When fetching HTML over HTTP, the `Content-Type` header tells you the charset. When reading from a file, you may need to detect it from `<meta>` tags or by inspecting the bytes. The [`golang.org/x/net/html/charset`](https://pkg.go.dev/golang.org/x/net/html/charset) package can help with these cases.
+
 ### Extending with Plugins
 
 - Need your own logic? Write your own code and then **register** it.
-
   - Don't like the **defaults** that the library uses? You can use `PriorityEarly` to run you logic _earlier_ than others.
 
   - 🧑‍💻 [Example code, register](/examples/register/main.go)
 
 - If you believe that you logic could also benefit others, you can package it up into a **plugin**.
-
   - 🗒️ [WRITING_PLUGINS.md](/WRITING_PLUGINS.md)
 
 ### Bugs
