@@ -604,9 +604,12 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd.Dir = sourceDir
 		return cmd, exeExists, nil
 	case mode.HTML:
-		if isDarwin {
+		switch {
+		case isDarwin:
 			cmd = exec.Command("open", sourceFilename)
-		} else {
+		case isWindows:
+			cmd = exec.Command("cmd", "/C", "start", "", sourceFilename)
+		default:
 			cmd = exec.Command("xdg-open", sourceFilename)
 		}
 		cmd.Dir = sourceDir
@@ -1474,6 +1477,19 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		return
 	}
 
+	// Binary files have no build step -- defer to Run() to open them externally.
+	if e.binaryFile {
+		msg, _, err := e.Run()
+		status.ClearAll(c, false)
+		if err != nil {
+			status.SetError(err)
+		} else if msg != "" {
+			status.SetMessage(msg)
+		}
+		status.Show(c, e)
+		return
+	}
+
 	// Save the current file, but only if it has changed
 	if e.changed.Load() {
 		if err := e.Save(c, tty); err != nil {
@@ -1582,9 +1598,12 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 								if e.flaskApplication.Load() {
 									msg = "Serving Flask on http://127.0.0.1:5000/ ..."
 									var cmd *exec.Cmd
-									if isDarwin {
+									switch {
+									case isDarwin:
 										cmd = exec.Command("open", "http://127.0.0.1:5000")
-									} else {
+									case isWindows:
+										cmd = exec.Command("cmd", "/C", "start", "", "http://127.0.0.1:5000")
+									default:
 										cmd = exec.Command("xdg-open", "http://127.0.0.1:5000")
 									}
 									cmd.Run()

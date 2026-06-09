@@ -70,6 +70,10 @@ func (e *Editor) UsingGDBMightWork() bool {
 
 // CanRun checks if the current file mode supports running executables after building
 func (e *Editor) CanRun() bool {
+	// Binary files: handled by Run() via the OS default application.
+	if e.binaryFile {
+		return true
+	}
 	switch e.mode {
 	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.CSV, mode.Dhall, mode.Email, mode.FSTAB, mode.Git, mode.HCL, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.TOML, mode.WGSL, mode.XML, mode.YAML:
 		return false

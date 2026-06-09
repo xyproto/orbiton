@@ -113,9 +113,12 @@ func (e *Editor) Run() (string, bool, error) {
 		ext := filepath.Ext(sourceFilename)
 		firstName := strings.TrimSuffix(filepath.Base(sourceFilename), ext)
 		pdfFilename := firstName + ".pdf"
-		if isDarwin {
+		switch {
+		case isDarwin:
 			cmd = exec.Command("open", pdfFilename)
-		} else {
+		case isWindows:
+			cmd = exec.Command("cmd", "/C", "start", "", pdfFilename)
+		default:
 			cmd = exec.Command("xdg-open", pdfFilename)
 		}
 	case mode.Markdown:
