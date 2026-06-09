@@ -2,26 +2,22 @@
 
 ## General
 
-- [ ] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
+- [/] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
       When over a link in a Markdown document, then follow the link. And if toggling mode from book to regular,
       then make sure it can *also toggle back*.
 - [ ] Add linting/formatting for Teal (possibly by using something like `tl check`).
 - [ ] If a `- [ ] Checkbox` is ticked in graphical book mode, then also gray out lines
       and bullet points/checkboxes below it that "belongs" to this checkbox.
-- [ ] Support all terminal emulators that supports Sixel (https://www.arewesixelyet.com/).
 - [ ] Save bold/italic/font/color metadata to file (e.g. .docx, .odt, .rtf).
 - [ ] Page layout: margins, alignment, line spacing, page breaks.
 - [ ] PDF export / print (WYSIWYG).
-- [ ] Create new files and directories.
+- [/] Create new files and directories.
 - [ ] Move/copy files.
 - [ ] Open files with their default application (xdg-open etc.).
 - [ ] Show size, type, and date as inline columns in the listing.
 - [ ] Support the WordGrinder file formats?
 - [ ] Find a better solution for offering help at first start. Always print ie. "ctrl-k for help" in the lower right corner,
       and then in the help box, have an easy way to disable help so that ctrl-k is used for deleting to the end of the line instead?
-- [ ] Optional first-line indent for body paragraphs for book mode.
-- [ ] Strikethrough rendering for graphical book mode.
-- [ ] Table rendering for graphical book mode.
 - [ ] Footnotes, for book mode ([^1] style).
 - [ ] Adjust line spacing in the ctrl-o menu.
 - [ ] Zoom, for graphical book mode?
@@ -49,7 +45,7 @@
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
 - [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
-- [ ] Let `ctrl-g` go to definition for more languages.
+- [/] Let `ctrl-g` go to definition for more languages.
 - [ ] Let `ctrl-space` show a preview of man pages instead of changing the syntax highlighting.
 - [ ] Port the scons/python/cxx tool over as a Go module and use that by default when building C or C++.
 - [ ] Run a specific test if the cursor is within a test function when double `ctrl-space` is pressed.
@@ -84,7 +80,7 @@
 - [ ] Let `ctrl-w` also format gzipped code, for instance when editing `main.cpp.gz`.
 - [ ] Let `delete` ask if a file should be deleted, when browsing files.
 - [ ] Let `game` or the konami code from the file browser also launch the easter egg.
-- [ ] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
+- [/] Let the status bar be toggled by the `ctrl-o` menu. Let `ctrl-g` when not on a definition do something useful, like cycle indenting a block 0 to 7 indentations.
 - [ ] Parse some programming languages to improve the quality of the "go to definition" feature.
 - [ ] Pressing ctrl-g in a script should toggle the status bar unless the cursor is on a function call and the function was found.
 - [ ] Re-think the minimap feature.
