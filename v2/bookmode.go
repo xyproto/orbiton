@@ -51,10 +51,19 @@ var (
 	bookTextFGDarkGray = vt.TrueColor(80, 80, 80)
 	bookTextFGWhite    = vt.TrueColor(255, 255, 255)
 	bookTextBG         = vt.TrueBackground(255, 255, 255)
+	// Parchment background for light text-mode on >16-colour terminals.
+	bookTextBGParchment = vt.TrueBackground(244, 236, 210)
 	// Dark-mode variants used when e.bookDarkMode is true
 	bookTextFGLight     = vt.TrueColor(220, 220, 220)
 	bookTextFGLightGray = vt.TrueColor(170, 170, 170)
 	bookTextBGDark      = vt.TrueBackground(26, 26, 26)
+)
+
+// Parchment palette for graphical book mode light theme: a warm off-white,
+// easier on the eyes than pure white.
+var (
+	bookParchmentBG     = color.NRGBA{0xf4, 0xec, 0xd2, 0xff}
+	bookParchmentCodeBG = color.NRGBA{0xe8, 0xe0, 0xc4, 0xff}
 )
 
 // bookFG returns the foreground color for book mode.
@@ -70,15 +79,12 @@ func (e *Editor) bookBG() color.NRGBA {
 	if e.bookDarkMode {
 		return color.NRGBA{0x1a, 0x1a, 0x1a, 0xff}
 	}
-	return color.NRGBA{0xff, 0xff, 0xff, 0xff}
+	return bookParchmentBG
 }
 
 // bookBGImage returns the background as a uniform image for draw.Draw.
 func (e *Editor) bookBGImage() image.Image {
-	if e.bookDarkMode {
-		return image.NewUniform(e.bookBG())
-	}
-	return image.White
+	return image.NewUniform(e.bookBG())
 }
 
 // bookCodeBG returns the code-block background color.
@@ -86,13 +92,21 @@ func (e *Editor) bookCodeBG() color.NRGBA {
 	if e.bookDarkMode {
 		return color.NRGBA{0x2a, 0x2a, 0x2a, 0xff}
 	}
-	return color.NRGBA{0xf0, 0xf0, 0xf0, 0xff}
+	return bookParchmentCodeBG
 }
 
 // bookTextModeBG returns the text-mode background attribute color.
+// Uses parchment on >16-colour terminals; plain white elsewhere, since
+// downgrading parchment to ANSI yellow looks garish.
 func (e *Editor) bookTextModeBG() vt.AttributeColor {
 	if e.bookDarkMode {
 		return bookTextBGDark
+	}
+	if !envNoColor {
+		switch env.Str("TERM") {
+		case "xterm-256color", "xterm-kitty":
+			return bookTextBGParchment
+		}
 	}
 	return bookTextBG
 }
@@ -285,18 +299,6 @@ func (e *Editor) bookTextMode() bool {
 	return e.bookState() == BookModeText
 }
 
-// bookThemeIsLight reports whether the current theme appears light.
-// Theme.Light marks terminal suitability, not appearance; this checks the actual background.
-func (e *Editor) bookThemeIsLight() bool {
-	switch e.Background {
-	case vt.BackgroundBlack, vt.BackgroundBrightBlack:
-		return false
-	case vt.BackgroundWhite, vt.BackgroundBrightWhite:
-		return true
-	}
-	return initialLightBackground == nil || *initialLightBackground
-}
-
 // enterBookModeText enables text book mode, saving settings so exitBookMode can restore them.
 func (e *Editor) enterBookModeText() {
 	if !e.bookSaved {
@@ -306,10 +308,8 @@ func (e *Editor) enterBookModeText() {
 		e.bookSavedWrapLimitWhenTyping = e.wrapLimitWhenTyping
 		e.bookSaved = true
 	}
+	// Default to a light page; user can toggle dark mode from the menu.
 	if !e.bookDarkModeInitialized {
-		if !e.bookThemeIsLight() {
-			e.bookDarkMode = true
-		}
 		e.bookDarkModeInitialized = true
 	}
 	e.setBookState(BookModeText)
@@ -331,10 +331,8 @@ func (e *Editor) enterBookModeGraphical() {
 		e.bookSavedWrapLimitWhenTyping = e.wrapLimitWhenTyping
 		e.bookSaved = true
 	}
+	// Default to a light page; user can toggle dark mode from the menu.
 	if !e.bookDarkModeInitialized {
-		if !e.bookThemeIsLight() {
-			e.bookDarkMode = true
-		}
 		e.bookDarkModeInitialized = true
 	}
 	e.setBookState(BookModeGraphical)
