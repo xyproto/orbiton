@@ -47,6 +47,10 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 		if len(line) > 0 && line[len(line)-1] == '\n' {
 			line = line[:len(line)-1]
 		}
+		// Treat a trailing '\n' as a line terminator, not an extra empty line.
+		if err == io.EOF && len(line) == 0 && index > 0 {
+			break
+		}
 		if e.binaryFile {
 			lines[index] = []rune(line)
 		} else {
