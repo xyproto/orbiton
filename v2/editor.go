@@ -3099,8 +3099,15 @@ func (e *Editor) CursorForward(c *vt.Canvas, status *StatusBar) {
 			e.Down(c, status)
 		}
 	} else if e.AfterEndOfLine() {
+		// If there is a line below, move down to its start. At the last
+		// line of the document, allow the cursor to rest one position past
+		// the last character (Vim insert-mode style) instead of jumping
+		// to the beginning of the line or wrapping further.
+		beforeY := e.DataY()
 		e.Down(c, status)
-		e.Home()
+		if e.DataY() != beforeY {
+			e.Home()
+		}
 	}
 
 	e.SaveX(true)
