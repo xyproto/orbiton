@@ -19,6 +19,28 @@ func (e *Editor) Save(c *vt.Canvas, tty *vt.TTY) error {
 	return e.SaveAs(c, tty, e.filename)
 }
 
+// binaryBytes serializes a binary file's contents, treating each rune as a single byte.
+func (e *Editor) binaryBytes() []byte {
+	n := e.Len()
+	total := 0
+	for i := range n {
+		total += len(e.lines[i])
+	}
+	if n > 1 {
+		total += n - 1
+	}
+	buf := make([]byte, 0, total)
+	for i := range n {
+		for _, r := range e.lines[i] {
+			buf = append(buf, byte(r))
+		}
+		if i < n-1 {
+			buf = append(buf, '\n')
+		}
+	}
+	return buf
+}
+
 // SaveAs will try to save the current editor contents to given file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
@@ -44,7 +66,7 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 	}
 
 	if e.binaryFile {
-		data = []byte(e.String())
+		data = e.binaryBytes()
 	} else {
 		// Strip trailing spaces on all lines
 		l := e.Len()

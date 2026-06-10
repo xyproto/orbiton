@@ -48,11 +48,17 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 			line = line[:len(line)-1]
 		}
 		// Treat a trailing '\n' as a line terminator, not an extra empty line.
-		if err == io.EOF && len(line) == 0 && index > 0 {
+		// For binary files, the trailing newline is data and must be preserved.
+		if err == io.EOF && len(line) == 0 && index > 0 && !e.binaryFile {
 			break
 		}
 		if e.binaryFile {
-			lines[index] = []rune(line)
+			// One rune per byte (rune value == byte value 0..255) so save round-trips.
+			runes := make([]rune, len(line))
+			for i := 0; i < len(line); i++ {
+				runes[i] = rune(line[i])
+			}
+			lines[index] = runes
 		} else {
 			if len(line) > 2 {
 				first = line[0]
@@ -134,6 +140,20 @@ func (e *Editor) LoadBytes(data []byte) {
 	}
 
 	lineCount := bytes.Count(data, []byte{'\n'}) + 1
+
+	// Binary path: one rune per byte (no UTF-8 decode, no indentation detection).
+	if e.binaryFile {
+		byteLines := bytes.Split(data, []byte{'\n'})
+		for i := range lineCount {
+			runes := make([]rune, len(byteLines[i]))
+			for j := 0; j < len(byteLines[i]); j++ {
+				runes[j] = rune(byteLines[i][j])
+			}
+			e.lines[i] = runes
+		}
+		e.MarkChanged()
+		return
+	}
 
 	var (
 		// Split the bytes into lines
