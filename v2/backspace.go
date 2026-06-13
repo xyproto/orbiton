@@ -6,6 +6,10 @@ import (
 
 // Backspace tries to delete characters to the left and move the cursor accordingly. Also supports block mode.
 func (e *Editor) Backspace(c *vt.Canvas) {
+	// Do nothing if the file is read only
+	if e.readOnly {
+		return
+	}
 	// doBackspace is defined as a function here in order to enclose the c argument
 	doBackspace := func() bool {
 		// Delete the character to the left
