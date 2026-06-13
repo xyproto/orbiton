@@ -924,7 +924,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 			}
 
-		case "c:0": // ctrl-space, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
+		case "c:0", "F5": // ctrl-space or F5, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
 			if e.nanoMode.Load() {
 				break // do nothing
 			}

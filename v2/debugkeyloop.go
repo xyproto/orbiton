@@ -32,7 +32,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		}
 		return true
 
-	case "c:6": // ctrl-f, step out
+	case "c:6", "F11": // ctrl-f or F11, step out
 		if e.debugger == nil {
 			// Auto-start the debug session
 			if err := e.DebugStartSession(c, tty, status, ""); err != nil {
@@ -75,7 +75,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		status.SetMessageAfterRedraw(status.Message())
 		return true
 
-	case "c:0": // ctrl-space, continue
+	case "c:0", "F5": // ctrl-space or F5, continue
 		if e.debugger != nil {
 			if e.debugComplete.Load() {
 				e.DebugEnd()
@@ -111,7 +111,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		}
 		return true
 
-	case "c:15": // ctrl-o, step over
+	case "c:15", "F10": // ctrl-o or F10, step over
 		if e.debugger == nil {
 			// Auto-start the debug session
 			if err := e.DebugStartSession(c, tty, status, ""); err != nil {
@@ -357,7 +357,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		status.SetMessageAfterRedraw(status.Message())
 		return true
 
-	case "c:2": // ctrl-b, toggle breakpoint
+	case "c:2", "F9": // ctrl-b or F9, toggle breakpoint
 		status.ClearAll(c, false)
 		if e.breakpoint == nil {
 			e.breakpoint = e.pos.Copy()
