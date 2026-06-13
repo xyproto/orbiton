@@ -42,7 +42,14 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 
 	// Find a suitable default executable first name
 	switch e.mode {
-	case mode.Assembly, mode.Go, mode.Kotlin, mode.Lua, mode.OCaml, mode.Rust, mode.Terra, mode.Zig:
+	case mode.Rust:
+		// Cargo places the executable in target/debug or target/release, not next to the source
+		if rel := e.cargoExecutable(sourceDir); rel != "" {
+			return rel
+		}
+		// Single-file rustc builds: use the source directory base name
+		return sourceDirectoryName
+	case mode.Assembly, mode.Go, mode.Kotlin, mode.Lua, mode.OCaml, mode.Terra, mode.Zig:
 		if sourceDirectoryName == "build" {
 			parentDirName := filepath.Base(filepath.Clean(filepath.Join(sourceDir, "..")))
 			if shouldExist && files.IsFile(filepath.Join(sourceDir, parentDirName)) {
@@ -88,6 +95,89 @@ func (e *Editor) exeName(sourceFilename string, shouldExist bool) string {
 
 	// Default to "main"
 	return exeFirstName
+}
+
+// cargoExecutable returns the path, relative to sourceDir, of the executable that "cargo build"
+// produces for the project sourceDir belongs to. The Cargo.toml may be in sourceDir or its parent
+// (the usual src/main.rs layout). It returns an empty string if no Cargo.toml is found.
+func (e *Editor) cargoExecutable(sourceDir string) string {
+	projectDir := sourceDir
+	if !files.IsFile(filepath.Join(projectDir, "Cargo.toml")) {
+		projectDir = filepath.Dir(sourceDir)
+		if !files.IsFile(filepath.Join(projectDir, "Cargo.toml")) {
+			return ""
+		}
+	}
+
+	profileDir := "release"
+	if e.debugMode {
+		profileDir = "debug"
+	}
+	targetDir := filepath.Join(projectDir, "target", profileDir)
+
+	binName := cargoPackageName(filepath.Join(projectDir, "Cargo.toml"))
+	if binName == "" {
+		binName = filepath.Base(projectDir)
+	}
+	exePath := filepath.Join(targetDir, binName)
+
+	// The binary may have a custom name, so fall back to any executable in the target directory
+	if !files.IsFile(exePath) {
+		if found := firstExecutableInDir(targetDir); found != "" {
+			exePath = found
+		}
+	}
+
+	if rel, err := filepath.Rel(sourceDir, exePath); err == nil {
+		return rel
+	}
+	return exePath
+}
+
+// cargoPackageName reads the package name from a Cargo.toml file, or returns "" if not found
+func cargoPackageName(cargoTomlPath string) string {
+	data, err := os.ReadFile(cargoTomlPath)
+	if err != nil {
+		return ""
+	}
+	inPackageSection := false
+	for line := range strings.SplitSeq(string(data), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "[") {
+			inPackageSection = trimmed == "[package]"
+			continue
+		}
+		if !inPackageSection {
+			continue
+		}
+		if rest, ok := strings.CutPrefix(trimmed, "name"); ok {
+			rest = strings.TrimSpace(rest)
+			if value, ok := strings.CutPrefix(rest, "="); ok {
+				return strings.Trim(strings.TrimSpace(value), "\"'")
+			}
+		}
+	}
+	return ""
+}
+
+// firstExecutableInDir returns the full path to the first regular, executable, extension-less
+// file directly inside dir, or "" if none is found
+func firstExecutableInDir(dir string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return ""
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != "" {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil || info.Mode()&0o111 == 0 {
+			continue
+		}
+		return filepath.Join(dir, entry.Name())
+	}
+	return ""
 }
 
 func has(executableInPath string) bool {
