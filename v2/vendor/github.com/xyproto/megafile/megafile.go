@@ -875,15 +875,17 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 
 	borderColor := vt.LightCyan
 	line1Color := vt.LightYellow
-	line2Color := vt.Default
-	line3Color := vt.Red
+	line2Color := vt.Black
+	line3Color := vt.LightRed
 	line4Color := vt.LightGreen
+	boxBg := vt.BackgroundBlue
 	if envNoColor {
 		borderColor = vt.White
 		line1Color = vt.White
 		line2Color = vt.Gray
 		line3Color = vt.Gray
 		line4Color = vt.Gray
+		boxBg = vt.BackgroundDefault
 	}
 
 	// Calculate dialog box dimensions
@@ -896,30 +898,33 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 	startX := (w - boxWidth) / 2
 	startY := (h - boxHeight) / 2
 
+	// Remove any Kitty graphics image so it doesn't float on top of the box
+	imagepreview.DeleteInlineImages()
+
 	// Draw fancy ASCII art dialog box
 	// Top border
-	c.Write(startX, startY, borderColor, s.EdgeBackground, "╔")
+	c.Write(startX, startY, borderColor, boxBg, "╔")
 	for i := uint(1); i < boxWidth-1; i++ {
-		c.Write(startX+i, startY, borderColor, s.EdgeBackground, "═")
+		c.Write(startX+i, startY, borderColor, boxBg, "═")
 	}
-	c.Write(startX+boxWidth-1, startY, borderColor, s.EdgeBackground, "╗")
+	c.Write(startX+boxWidth-1, startY, borderColor, boxBg, "╗")
 
 	// Middle rows
 	for i := uint(1); i < boxHeight-1; i++ {
-		c.Write(startX, startY+i, borderColor, s.EdgeBackground, "║")
-		// Clear the middle
+		c.Write(startX, startY+i, borderColor, boxBg, "║")
+		// Fill the middle
 		for j := uint(1); j < boxWidth-1; j++ {
-			c.WriteRune(startX+j, startY+i, vt.Default, s.EdgeBackground, ' ')
+			c.WriteRune(startX+j, startY+i, vt.Default, boxBg, ' ')
 		}
-		c.Write(startX+boxWidth-1, startY+i, borderColor, s.EdgeBackground, "║")
+		c.Write(startX+boxWidth-1, startY+i, borderColor, boxBg, "║")
 	}
 
 	// Bottom border
-	c.Write(startX, startY+boxHeight-1, borderColor, s.EdgeBackground, "╚")
+	c.Write(startX, startY+boxHeight-1, borderColor, boxBg, "╚")
 	for i := uint(1); i < boxWidth-1; i++ {
-		c.Write(startX+i, startY+boxHeight-1, borderColor, s.EdgeBackground, "═")
+		c.Write(startX+i, startY+boxHeight-1, borderColor, boxBg, "═")
 	}
-	c.Write(startX+boxWidth-1, startY+boxHeight-1, borderColor, s.EdgeBackground, "╝")
+	c.Write(startX+boxWidth-1, startY+boxHeight-1, borderColor, boxBg, "╝")
 
 	centerInBox := func(s string) uint {
 		if uint(len(s)) >= boxWidth {
@@ -928,21 +933,39 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 		return startX + (boxWidth-uint(len(s)))/2
 	}
 
-	c.Write(centerInBox(line1), startY+2, line1Color, s.Background, line1)
-	c.Write(centerInBox(line2), startY+4, line2Color, s.Background, line2)
-	c.Write(centerInBox(line3), startY+5, line3Color, s.Background, line3)
-	c.Write(centerInBox(line4), startY+6, line4Color, s.Background, line4)
+	c.Write(centerInBox(line1), startY+2, line1Color, boxBg, line1)
+	c.Write(centerInBox(line2), startY+4, line2Color, boxBg, line2)
+	c.Write(centerInBox(line3), startY+5, line3Color, boxBg, line3)
+	c.Write(centerInBox(line4), startY+6, line4Color, boxBg, line4)
 
+	// Draw the box on top of the canvas; don't redraw the preview over it
 	imagepreview.BeginSync()
 	c.Draw()
-	s.redrawPreview()
 	imagepreview.EndSync()
 
 	// Wait for key press
 	key := <-s.keyChan
 	s.startReadKey()
-	return key == "y" || key == "j"
 
+	// Reset the box area back to the default background. Canvas.Clear() keeps
+	// the cell background colors, and the preview pane is painted outside the
+	// canvas, so without this the colored box leaves a rectangle behind.
+	for iy := startY; iy < startY+boxHeight; iy++ {
+		for ix := startX; ix < startX+boxWidth; ix++ {
+			c.WriteRune(ix, iy, vt.Default, s.Background, ' ')
+		}
+	}
+
+	return key == "y" || key == "j"
+}
+
+// confirmTrash asks the user to confirm moving a file or directory to the trash.
+func (s *State) confirmTrash(path string) bool {
+	what := "file"
+	if files.Dir(path) {
+		what = "directory"
+	}
+	return s.msgBox("Move this "+what+" to the trash?", filepath.Base(path), "", "Press y to confirm, any other key to cancel")
 }
 
 // edit a file, but return stderr when done
@@ -1643,6 +1666,12 @@ func (s *State) Run() ([]string, error) {
 			if len(s.written) == 0 || index >= uint(len(s.written)) {
 				if s.selectedIndex() >= 0 && s.selectedIndex() < len(s.fileEntries) {
 					if path, err := s.selectedPath(); err == nil {
+						if !s.confirmTrash(path) {
+							clearAndPrepare()
+							s.ls(s.Directories[s.dirIndex])
+							s.highlightSelection()
+							break
+						}
 						if trashPath, fileHash, err := s.moveToTrash(path); err != nil {
 							clearAndPrepare()
 							s.ls(s.Directories[s.dirIndex])
@@ -1684,6 +1713,11 @@ func (s *State) Run() ([]string, error) {
 							s.ls(s.Directories[s.dirIndex])
 							s.drawError("cannot delete root directory")
 							s.highlightSelection()
+							break
+						}
+						if !s.confirmTrash(currentDir) {
+							clearAndPrepare()
+							s.ls(s.Directories[s.dirIndex])
 							break
 						}
 						s.setPath(parentDir)
