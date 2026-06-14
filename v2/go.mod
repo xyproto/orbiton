@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df
+	github.com/gomarkdown/markdown v0.0.0-20260614152104-7a011165356e
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.24
