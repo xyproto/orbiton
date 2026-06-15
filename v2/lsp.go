@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -126,6 +127,18 @@ func isMemberAccess(lineUpToCursor string) bool {
 		return true
 	}
 	return false
+}
+
+// lspSnippetPlaceholder matches LSP snippet placeholders like ${1:name}, ${0}, $1, $0.
+var lspSnippetPlaceholder = regexp.MustCompile(`\$\{\d+(?::[^}]*)?\}|\$\d+`)
+
+// stripLSPSnippetPlaceholders removes LSP snippet placeholders from the given text.
+// Some language servers return snippet syntax even when snippetSupport is false.
+func stripLSPSnippetPlaceholders(s string) string {
+	if !strings.Contains(s, "$") {
+		return s
+	}
+	return lspSnippetPlaceholder.ReplaceAllString(s, "")
 }
 
 const (
@@ -1726,6 +1739,9 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		insertText = insertText[:parenIndex]
 	}
 
+	// some language servers return snippet syntax even when snippetSupport is false
+	insertText = stripLSPSnippetPlaceholders(insertText)
+
 	addParens := ""
 	if (e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.Python) && strings.Contains(items[choice].Label, "(") {
 		trimmedLabel := strings.TrimSpace(items[choice].Label)
@@ -1746,7 +1762,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			endIdx := strings.Index(detail, ")")
 			if startIdx >= 0 && endIdx > startIdx {
 				params := strings.TrimSpace(detail[startIdx+1 : endIdx])
-				if params == "" || params == "&self" || params == "self" || params == "&mut self" || params == "mut self" {
+				if params == "" || params == "&self" || params == "self" || params == "&mut self" || params == "mut self" || params == "self: *Self" || params == "self: Self" || params == "self: *const Self" {
 					addParens = "()"
 				} else {
 					addParens = "("
@@ -1820,6 +1836,18 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 		for i := 0; i < charsToDelete; i++ {
 			e.Delete(c, false)
+		}
+	}
+
+	// don't add "(" if the next char on the line is already "(",
+	// e.g. when completing inside an existing call expression
+	if addParens != "" {
+		fullLine := e.Line(LineIndex(line))
+		if x >= 0 && x < len([]rune(fullLine)) {
+			nextRune := []rune(fullLine)[x]
+			if nextRune == '(' {
+				addParens = ""
+			}
 		}
 	}
 
