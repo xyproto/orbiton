@@ -764,7 +764,7 @@ const (
 )
 
 type parsedLine struct {
-	prefix      string // rendered prefix, e.g. "* ", "1. ", "[ ] ", "[x] "
+	prefix      string // rendered prefix, e.g. "⚬ ", "1. ", "[ ] ", "[x] "
 	body        string // text after the prefix, may contain inline markers
 	kind        lineKind
 	headerLevel int // 1, 2, 3, 4, 5 for lineKindHeader
@@ -1209,7 +1209,7 @@ func parseBookLineInContext(line string, inComment bool) parsedLine {
 		return parsedLine{
 			kind:   lineKindBullet,
 			indent: indentDepth,
-			prefix: strings.Repeat("  ", indentDepth) + "* ",
+			prefix: strings.Repeat("  ", indentDepth) + "⚬ ",
 			body:   trimmed[2:],
 		}
 	}
