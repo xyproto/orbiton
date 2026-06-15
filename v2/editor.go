@@ -3294,9 +3294,10 @@ func (e *Editor) GetXY() (uint, uint) {
 	return uint(x), uint(y)
 }
 
-// GetXYAfterText tries to fetch the current x and y positions, as uints, at the end of the text
+// GetXYAfterText tries to fetch the current screen x and y positions, at the end of the text on the current line
 func (e *Editor) GetXYAfterText() (uint, uint) {
 	y := e.DataY()
-	x := e.LastTextPosition(y) + 1
-	return uint(x), uint(y)
+	x := max(e.LastTextPosition(y)+1-e.pos.OffsetX(), 0)
+	screenY := max(e.pos.ScreenY(), 0)
+	return uint(x), uint(screenY)
 }

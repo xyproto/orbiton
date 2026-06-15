@@ -107,6 +107,27 @@ func (e *Editor) lineUpToX(line, x int) string {
 	return ""
 }
 
+// isMemberAccess reports whether the prefix being completed at the end of
+// the given line follows a struct/union member access operator ("." or "->").
+func isMemberAccess(lineUpToCursor string) bool {
+	i := len(lineUpToCursor)
+	for i > 0 {
+		r := rune(lineUpToCursor[i-1])
+		if r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			i--
+			continue
+		}
+		break
+	}
+	if i >= 2 && lineUpToCursor[i-2:i] == "->" {
+		return true
+	}
+	if i >= 1 && lineUpToCursor[i-1] == '.' {
+		return true
+	}
+	return false
+}
+
 const (
 	lspInitTimeout           = 30 * time.Second
 	lspCompletionTimeout     = 10 * time.Second
@@ -481,12 +502,12 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 			"query": "",
 		}
 
-		if id, err := lsp.sendRequest("workspace/symbol", params); err != nil {
-			return false
-		} else if _, err = lsp.readResponse(id, 500*time.Millisecond); err == nil {
+		id, err := lsp.sendRequest("workspace/symbol", params)
+		if err != nil {
 			return false
 		}
-		return false
+		_, err = lsp.readResponse(id, 500*time.Millisecond)
+		return err == nil
 	}
 
 	// For other languages, assume ready after initialization
@@ -1741,7 +1762,8 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 	// clangd may return Kind=Text with a leading space in the Label for C/C++ functions
 	// but not for variables like std::cout, so skip qualified names (lines containing ::)
-	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && items[choice].Kind <= lspKindText && strings.HasPrefix(items[choice].Label, " ") && !strings.Contains(currentLine, "::") {
+	// and skip struct/union member access (lines where the prefix follows "." or "->")
+	if addParens == "" && (e.mode == mode.C || e.mode == mode.Cpp) && items[choice].Kind <= lspKindText && strings.HasPrefix(items[choice].Label, " ") && !strings.Contains(currentLine, "::") && !isMemberAccess(currentLine) {
 		addParens = "("
 	}
 
@@ -1756,8 +1778,9 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	// For C/C++, don't add parens for qualified completions (e.g. std::cout)
-	// unless the Kind explicitly indicates a callable
-	if addParens != "" && (e.mode == mode.C || e.mode == mode.Cpp) && strings.Contains(currentLine, "::") {
+	// or struct/union member access (foo.bar, foo->bar), unless the Kind
+	// explicitly indicates a callable
+	if addParens != "" && (e.mode == mode.C || e.mode == mode.Cpp) && (strings.Contains(currentLine, "::") || isMemberAccess(currentLine)) {
 		kind := items[choice].Kind
 		if kind != lspKindMethod && kind != lspKindFunction && kind != lspKindConstructor {
 			addParens = ""
