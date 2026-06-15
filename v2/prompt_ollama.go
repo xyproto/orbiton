@@ -9,7 +9,7 @@ import (
 
 const (
 	ollamaPreamble   = "You are an expert %s programmer with at least one PhD in Computer Science and are gifted when it comes to explaining things clearly. Be truthful and concise. If you are unsure of anything, then skip it. "
-	ollamaPlainText  = " Use plain text only (no Markdown):\n\n%s"
+	ollamaPlainText  = " Output plain text only (no Markdown). Keep it short:\n\n%s"
 	ollamaPseudoText = " Also explain how the instruction works by adding example pseudocode."
 )
 
