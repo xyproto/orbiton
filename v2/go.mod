@@ -34,13 +34,13 @@ require (
 	github.com/xyproto/syntax v1.14.6
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
-	github.com/xyproto/vt v1.9.11
+	github.com/xyproto/vt v1.9.12
 	github.com/xyproto/wordwrap v1.2.0
 	golang.org/x/image v0.42.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/xyproto/themes v0.0.3
+require github.com/xyproto/themes v1.0.0
 
 require github.com/xyproto/slay v1.3.2
 
