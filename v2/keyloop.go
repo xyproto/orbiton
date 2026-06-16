@@ -596,9 +596,22 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.linesMut.Unlock()
 				key = tty.ReadKey()
 			} else {
-				// Read the next key in the regular way
+				// Read the next key, with a short timeout so we can run
+				// the settle-redraw when input is idle
+				savedTimeout, _ := tty.SetTimeout(2 * time.Second)
 				key = tty.ReadKey()
+				tty.SetTimeout(savedTimeout)
+				if key == "" {
+					if shouldSettleRedraw() {
+						e.linesMut.Lock()
+						e.WriteCurrentFunctionName(c)
+						c.HideCursorAndDraw()
+						e.linesMut.Unlock()
+					}
+					continue
+				}
 			}
+			recordKeyActivity()
 			undo.IgnoreSnapshots(false)
 		} else {
 			if e.macro.Recording {

@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/xyproto/mode"
 	"github.com/xyproto/vt"
@@ -58,11 +61,277 @@ var (
 	queueSignal        = make(chan struct{}, 1)
 
 	descriptionPopupDrawn bool // only one description popup per redraw frame
+
+	lastKeyTime       atomic.Int64
+	lastSettleKeyTime atomic.Int64
 )
+
+const keySettleDelay = 250 * time.Millisecond
+
+// recordKeyActivity stamps the time of the most recent keystroke.
+func recordKeyActivity() {
+	lastKeyTime.Store(time.Now().UnixNano())
+}
+
+// keysSettled reports whether input has been idle for at least keySettleDelay.
+func keysSettled() bool {
+	last := lastKeyTime.Load()
+	if last == 0 {
+		return true
+	}
+	return time.Since(time.Unix(0, last)) >= keySettleDelay
+}
+
+// shouldSettleRedraw fires true once per keystroke after keySettleDelay of idle.
+func shouldSettleRedraw() bool {
+	last := lastKeyTime.Load()
+	if last == 0 || last == lastSettleKeyTime.Load() {
+		return false
+	}
+	if time.Since(time.Unix(0, last)) < keySettleDelay {
+		return false
+	}
+	return lastSettleKeyTime.CompareAndSwap(lastSettleKeyTime.Load(), last)
+}
+
+// promoteAt pushes the function at line `at` onto the top of the queue, if uncached.
+func (e *Editor) promoteAt(at LineIndex, c *vt.Canvas) {
+	if !ollama.Loaded() || !functionDescriptionsAllowed() {
+		return
+	}
+	funcName := e.FunctionName(e.Line(at))
+	if funcName == "" {
+		return
+	}
+	body, err := e.FunctionBlock(at)
+	if err != nil || body == "" {
+		return
+	}
+	hash := hashFunctionBody(body)
+	ollamaMutex.RLock()
+	_, cached := ollamaResponseCache[hash]
+	ollamaMutex.RUnlock()
+	if cached {
+		return
+	}
+	start, end, hasRange := e.functionRangeForLine(funcName, at)
+	req := FunctionDescriptionRequest{
+		funcName: funcName, funcBody: body, bodyHash: hash,
+		canvas: c, editor: e,
+		start: start, end: end, hasRange: hasRange,
+	}
+	startQueueWorker()
+	queueMutex.Lock()
+	if processingFunction != funcName {
+		for i := 0; i < len(descriptionStack); i++ {
+			if descriptionStack[i].bodyHash == hash {
+				descriptionStack = append(descriptionStack[:i], descriptionStack[i+1:]...)
+				break
+			}
+		}
+		descriptionStack = append(descriptionStack, req)
+		queuedHashes[hash] = true
+	}
+	queueMutex.Unlock()
+	select {
+	case queueSignal <- struct{}{}:
+	default:
+	}
+}
+
+// promoteNeighborsOf queues the functions above and below the one at startLine.
+func (e *Editor) promoteNeighborsOf(startLine LineIndex, c *vt.Canvas) {
+	total := LineIndex(e.Len())
+	for i := startLine - 1; i >= 0; i-- {
+		if e.FunctionName(e.Line(i)) != "" {
+			e.promoteAt(i, c)
+			break
+		}
+	}
+	for i := startLine + 1; i < total; i++ {
+		if e.FunctionName(e.Line(i)) != "" {
+			e.promoteAt(i, c)
+			break
+		}
+	}
+}
+
+// promoteNeighbors queues the cursor's function and its neighbors, with the current one on top.
+func (e *Editor) promoteNeighbors(funcName, funcBody string, c *vt.Canvas) {
+	y := e.DataY()
+	total := LineIndex(e.Len())
+	_, funcStart := e.FunctionNameForLineIndex(y)
+	for i := funcStart - 1; i >= 0; i-- {
+		if e.FunctionName(e.Line(i)) != "" {
+			e.promoteAt(i, c)
+			break
+		}
+	}
+	for i := y + 1; i < total; i++ {
+		if n := e.FunctionName(e.Line(i)); n != "" && n != funcName {
+			e.promoteAt(i, c)
+			break
+		}
+	}
+	e.promoteCurrent(funcName, funcBody, c)
+}
+
+// promoteCurrent pushes the cursor's function onto the top of the queue, if uncached.
+func (e *Editor) promoteCurrent(funcName, funcBody string, c *vt.Canvas) {
+	if funcBody == "" || !ollama.Loaded() || !functionDescriptionsAllowed() {
+		return
+	}
+	hash := hashFunctionBody(funcBody)
+	ollamaMutex.RLock()
+	_, cached := ollamaResponseCache[hash]
+	ollamaMutex.RUnlock()
+	if cached {
+		return
+	}
+	start, end, hasRange := e.functionRangeForCurrentFunction(funcName)
+	req := FunctionDescriptionRequest{
+		funcName: funcName, funcBody: funcBody, bodyHash: hash,
+		canvas: c, editor: e,
+		start: start, end: end, hasRange: hasRange,
+	}
+	startQueueWorker()
+	queueMutex.Lock()
+	if processingFunction != funcName {
+		if n := len(descriptionStack); n > 0 && descriptionStack[n-1].bodyHash == hash {
+			queueMutex.Unlock()
+			return
+		}
+		for i := 0; i < len(descriptionStack); i++ {
+			if descriptionStack[i].bodyHash == hash {
+				descriptionStack = append(descriptionStack[:i], descriptionStack[i+1:]...)
+				break
+			}
+		}
+		descriptionStack = append(descriptionStack, req)
+		queuedHashes[hash] = true
+	}
+	queueMutex.Unlock()
+	select {
+	case queueSignal <- struct{}{}:
+	default:
+	}
+}
+
+// scheduleDescriptions rebuilds the queue with the closest-to-cursor uncached function on top.
+func (e *Editor) scheduleDescriptions(c *vt.Canvas) {
+	if !ollama.Loaded() || !functionDescriptionsAllowed() {
+		return
+	}
+
+	cursorLine := e.LineIndex()
+	type fnLoc struct {
+		name string
+		line LineIndex
+	}
+	var fns []fnLoc
+	total := LineIndex(e.Len())
+	for i := range total {
+		if n := e.FunctionName(e.Line(i)); n != "" {
+			fns = append(fns, fnLoc{n, i})
+		}
+	}
+	sort.Slice(fns, func(i, j int) bool {
+		di := int(fns[i].line - cursorLine)
+		if di < 0 {
+			di = -di
+		}
+		dj := int(fns[j].line - cursorLine)
+		if dj < 0 {
+			dj = -dj
+		}
+		return di < dj
+	})
+
+	var jobs []FunctionDescriptionRequest
+	seen := map[string]bool{}
+	for _, f := range fns {
+		body, err := e.FunctionBlock(f.line)
+		if err != nil || body == "" {
+			continue
+		}
+		hash := hashFunctionBody(body)
+		if seen[hash] {
+			continue
+		}
+		seen[hash] = true
+		ollamaMutex.RLock()
+		_, cached := ollamaResponseCache[hash]
+		ollamaMutex.RUnlock()
+		if cached {
+			continue
+		}
+		start, end, hasRange := e.functionRangeForLine(f.name, f.line)
+		jobs = append(jobs, FunctionDescriptionRequest{
+			funcName: f.name, funcBody: body, bodyHash: hash,
+			canvas: c, editor: e,
+			start: start, end: end, hasRange: hasRange,
+		})
+	}
+
+	startQueueWorker()
+
+	queueMutex.Lock()
+	descriptionStack = descriptionStack[:0]
+	for k := range queuedHashes {
+		delete(queuedHashes, k)
+	}
+	for i := len(jobs) - 1; i >= 0; i-- {
+		if jobs[i].funcName == processingFunction {
+			continue
+		}
+		descriptionStack = append(descriptionStack, jobs[i])
+		queuedHashes[jobs[i].bodyHash] = true
+	}
+	queueMutex.Unlock()
+
+	select {
+	case queueSignal <- struct{}{}:
+	default:
+	}
+}
+
+// showDescriptionIfCached draws the popup for funcName when its body is cached.
+func (e *Editor) showDescriptionIfCached(funcName, funcBody string, c *vt.Canvas) {
+	actualCurrentFunction = funcName
+	if funcBody == "" {
+		return
+	}
+	hash := hashFunctionBody(funcBody)
+	ollamaMutex.RLock()
+	desc, cached := ollamaResponseCache[hash]
+	ollamaMutex.RUnlock()
+	if !cached {
+		return
+	}
+	start, end, hasRange := e.functionRangeForCurrentFunction(funcName)
+	setCurrentDescribedFunction(funcName, start, end, hasRange)
+	functionDescription.Reset()
+	functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(desc)))
+	functionDescriptionReady = true
+	descriptionPopupDrawn = false
+	e.DrawFunctionDescriptionContinuous(c, false)
+	c.HideCursorAndDraw()
+}
 
 // functionDescriptionsAllowed checks if function descriptions can be requested and shown.
 func functionDescriptionsAllowed() bool {
 	return !functionDescriptionsDisabled && !hasBuildErrorExplanation()
+}
+
+// functionDescriptionWorkPending reports whether any description work is queued or running.
+func functionDescriptionWorkPending() bool {
+	if functionDescriptionThinking {
+		return true
+	}
+	queueMutex.Lock()
+	pending := len(descriptionStack) > 0 || processingFunction != ""
+	queueMutex.Unlock()
+	return pending
 }
 
 // sanitizeOllamaText replaces code fence lines with blank lines and removes control characters
@@ -190,16 +459,24 @@ func (e *Editor) functionRangeForCurrentFunction(functionName string) (LineIndex
 	if functionName == "" {
 		return 0, 0, false
 	}
-
 	currentLine := e.LineIndex()
 	foundName, functionStart := e.FunctionNameForLineIndex(currentLine)
 	if foundName == "" || foundName != functionName {
 		return 0, 0, false
 	}
+	return e.functionRangeFromStart(functionStart, max(functionStart, currentLine))
+}
 
-	functionEnd := max(functionStart, currentLine)
+func (e *Editor) functionRangeForLine(functionName string, functionStart LineIndex) (LineIndex, LineIndex, bool) {
+	if functionName == "" {
+		return 0, 0, false
+	}
+	return e.functionRangeFromStart(functionStart, functionStart)
+}
 
-	// in brace-based languages, find a stable end line to avoid popup movement
+func (e *Editor) functionRangeFromStart(functionStart, fallbackEnd LineIndex) (LineIndex, LineIndex, bool) {
+	functionEnd := fallbackEnd
+
 	if e.isBraceBasedLanguage() {
 		openBraceLineIndex := LineIndex(-1)
 		totalLines := LineIndex(e.Len())
@@ -209,7 +486,6 @@ func (e *Editor) functionRangeForCurrentFunction(functionName string) (LineIndex
 			line := e.Line(i)
 			trimmedLine := strings.TrimSpace(line)
 
-			// skip empty lines and comments while searching for the opening brace
 			if trimmedLine == "" || strings.HasPrefix(trimmedLine, "//") ||
 				strings.HasPrefix(trimmedLine, "/*") || strings.HasPrefix(trimmedLine, "*") {
 				continue
@@ -400,11 +676,15 @@ func startQueueWorker() {
 				functionDescriptionThinking = false
 				processingFunction = ""
 
+				// queue neighbors so prefetching radiates outward
+				if req.hasRange {
+					req.editor.linesMut.Lock()
+					req.editor.promoteNeighborsOf(req.start, req.canvas)
+					req.editor.linesMut.Unlock()
+				}
+
 				req.editor.WriteCurrentFunctionName(req.canvas)
 				req.canvas.HideCursorAndDraw()
-
-				// process one request at a time, then check for newer work
-				break
 			}
 		}
 	}()
@@ -444,19 +724,12 @@ func processDescriptionRequest(req FunctionDescriptionRequest) {
 	}
 }
 
-// RequestFunctionDescription queues a function description request
+// RequestFunctionDescription shows a cached description if present and (re)builds
+// the priority queue so the closest-to-cursor undescribed function is next.
 func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Canvas) {
-	if !ollama.Loaded() {
+	if !ollama.Loaded() || !functionDescriptionsAllowed() {
 		return
 	}
-	if !functionDescriptionsAllowed() {
-		return
-	}
-
-	if funcBody == "" {
-		return
-	}
-
 	if functionDescriptionDismissed {
 		if funcName == dismissedFunctionDescription {
 			return
@@ -464,85 +737,14 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 		functionDescriptionDismissed = false
 		dismissedFunctionDescription = ""
 	}
-
-	// start queue worker if needed
-	startQueueWorker()
-
-	// hash function body for cache/queue lookup
-	bodyHash := hashFunctionBody(funcBody)
-	functionStart, functionEnd, hasRange := e.functionRangeForCurrentFunction(funcName)
-
-	ollamaMutex.RLock()
-	if cachedDescription, exists := ollamaResponseCache[bodyHash]; exists {
-		ollamaMutex.RUnlock()
-		setCurrentDescribedFunction(funcName, functionStart, functionEnd, hasRange)
-		functionDescriptionReady = true
-		functionDescriptionThinking = false
-		functionDescription.Reset()
-		functionDescription.WriteString(strings.TrimSpace(sanitizeOllamaText(cachedDescription)))
-		descriptionPopupDrawn = false
-		e.DrawFunctionDescriptionContinuous(c, false)
-		c.HideCursorAndDraw()
-		return
-	}
-	ollamaMutex.RUnlock()
-
-	actualCurrentFunction = funcName
-
-	if currentDescribedFunction != funcName {
-		functionDescriptionReady = false
+	e.showDescriptionIfCached(funcName, funcBody, c)
+	if currentDescribedFunction != funcName && !functionDescriptionReady {
 		functionDescription.Reset()
 	}
-
-	queueMutex.Lock()
-
-	if processingFunction == funcName {
-		queueMutex.Unlock()
-		return
+	e.promoteNeighbors(funcName, funcBody, c)
+	if keysSettled() {
+		e.scheduleDescriptions(c)
 	}
-
-	if !queuedHashes[bodyHash] {
-		descriptionStack = append(descriptionStack, FunctionDescriptionRequest{
-			funcName: funcName,
-			funcBody: funcBody,
-			bodyHash: bodyHash,
-			canvas:   c,
-			editor:   e,
-			start:    functionStart,
-			end:      functionEnd,
-			hasRange: hasRange,
-		})
-		queuedHashes[bodyHash] = true
-
-		select {
-		case queueSignal <- struct{}{}:
-		default:
-		}
-	} else {
-		// already queued: move request to top of LIFO stack
-		for i, req := range descriptionStack {
-			if req.bodyHash == bodyHash {
-				descriptionStack = append(descriptionStack[:i], descriptionStack[i+1:]...)
-				descriptionStack = append(descriptionStack, FunctionDescriptionRequest{
-					funcName: funcName,
-					funcBody: funcBody,
-					bodyHash: bodyHash,
-					canvas:   c,
-					editor:   e,
-					start:    functionStart,
-					end:      functionEnd,
-					hasRange: hasRange,
-				})
-				break
-			}
-		}
-
-		select {
-		case queueSignal <- struct{}{}:
-		default:
-		}
-	}
-	queueMutex.Unlock()
 }
 
 // drawFuncDescText renders text inside the function description box, with
