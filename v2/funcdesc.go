@@ -545,6 +545,60 @@ func (e *Editor) RequestFunctionDescription(funcName, funcBody string, c *vt.Can
 	queueMutex.Unlock()
 }
 
+// drawFuncDescText renders text inside the function description box, with
+// inline `code` segments highlighted in bold. Backticks themselves are not
+// drawn. Returns the number of additional lines created by wrapping.
+func (e *Editor) drawFuncDescText(bt *BoxTheme, c *vt.Canvas, r *Box, text string) int {
+	text = asciiFallback(text)
+	maxWidth := r.W - 5
+	if maxWidth < 1 {
+		return 0
+	}
+	var (
+		x0         = uint(r.X) + 1
+		lineIndex  = 0
+		addedLines = 0
+		fg         = *bt.Foreground
+		boldFG     = fg.Combine(vt.Bold)
+		bg         = *bt.Background
+	)
+	for line := range strings.SplitSeq(text, "\n") {
+		if strings.TrimSpace(line) == "" {
+			lineIndex++
+			continue
+		}
+		wrapped, err := wordwrap.WordWrap(line, maxWidth)
+		if err != nil {
+			if len(line) > maxWidth {
+				line = line[:maxWidth]
+			}
+			wrapped = []string{line}
+		} else {
+			addedLines += len(wrapped) - 1
+		}
+		// keep inCode across wrapped continuations of the same source line
+		inCode := false
+		for _, wl := range wrapped {
+			y := uint(r.Y + lineIndex)
+			x := x0
+			for _, ch := range wl {
+				if ch == '`' {
+					inCode = !inCode
+					continue
+				}
+				color := fg
+				if inCode {
+					color = boldFG
+				}
+				c.WriteRune(x, y, color, bg, ch)
+				x++
+			}
+			lineIndex++
+		}
+	}
+	return addedLines
+}
+
 // DrawFunctionDescriptionContinuous draws the function description panel in continuous mode
 func (e *Editor) DrawFunctionDescriptionContinuous(c *vt.Canvas, repositionCursor bool) {
 	if !functionDescriptionsAllowed() {
@@ -608,10 +662,33 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 
 	neededTextLines := wrappedLineCount(descriptionText, listBox.W-5)
 
-	// expand if needed, without exceeding maxHeight
+	// expand height first if needed, without exceeding maxHeight
 	if neededTextLines > listBox.H {
 		missingLines := neededTextLines - listBox.H
 		availableGrowth := maxHeight - descriptionBox.H
+		growBy := min(missingLines, availableGrowth)
+		if growBy > 0 {
+			descriptionBox.H += growBy
+			listBox.H += growBy
+		}
+	}
+
+	// if still overflowing, widen the box (keeping the upper-left corner)
+	// before falling back to growing past maxHeight
+	if neededTextLines > listBox.H {
+		maxRight := canvasBox.W - 1
+		for neededTextLines > listBox.H && (descriptionBox.X+descriptionBox.W) < maxRight {
+			descriptionBox.W++
+			listBox.W++
+			neededTextLines = wrappedLineCount(descriptionText, listBox.W-5)
+		}
+	}
+
+	// last resort: grow height past maxHeight, up to the bottom of the canvas
+	if neededTextLines > listBox.H {
+		hardMaxH := canvasBox.H - descriptionBox.Y - 1
+		missingLines := neededTextLines - listBox.H
+		availableGrowth := hardMaxH - descriptionBox.H
 		growBy := min(missingLines, availableGrowth)
 		if growBy > 0 {
 			descriptionBox.H += growBy
@@ -633,8 +710,18 @@ func (e *Editor) drawFunctionDescriptionPopup(c *vt.Canvas, title, descriptionTe
 	listBox.Y = descriptionBox.Y + 2
 
 	e.DrawBox(bt, c, descriptionBox)
-	e.DrawTitle(bt, c, descriptionBox, title, true)
-	e.DrawText(bt, c, listBox, descriptionText, false)
+	// Themes that need a different title color than the box edges set
+	// BoxTitleColor; otherwise fall back to the existing BoxUpperEdge.
+	if e.BoxTitleColor != 0 {
+		titleColor := e.BoxTitleColor
+		origEdge := bt.UpperEdge
+		bt.UpperEdge = &titleColor
+		e.DrawTitle(bt, c, descriptionBox, title, true)
+		bt.UpperEdge = origEdge
+	} else {
+		e.DrawTitle(bt, c, descriptionBox, title, true)
+	}
+	e.drawFuncDescText(bt, c, listBox, descriptionText)
 
 	if repositionCursorAfterDrawing {
 		e.EnableAndPlaceCursor(c)
