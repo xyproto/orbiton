@@ -339,7 +339,7 @@ func (e *Editor) RedrawAtEndOfKeyLoop(c *vt.Canvas, status *StatusBar, shouldHig
 		// Draw the function name if drawFuncName is set and Nano mode is not enabled.
 		// Also redraw while Ollama is thinking, so the upper-right indicator is not lost on redraw.
 		// Skip when the sticky top bar is active -- the function name is shown there instead.
-		if (e.drawFuncName.Load() || functionDescriptionThinking || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() && e.stickyTopBarHeight() == 0 {
+		if (e.drawFuncName.Load() || ollama.Loaded() || hasBuildErrorExplanationThinking()) && !e.nanoMode.Load() && e.stickyTopBarHeight() == 0 {
 			e.WriteCurrentFunctionName(c) // not drawing immediately
 			e.drawFuncName.Store(false)
 		}
