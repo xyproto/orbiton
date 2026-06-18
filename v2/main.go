@@ -106,6 +106,14 @@ func main() {
 	slay.ProgName = "o -b"
 	slay.ProgURL = "https://github.com/xyproto/orbiton"
 
+	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), take on the
+	// minimal init duties: reap orphaned child processes so they don't pile up
+	// as zombies. The editor also never exits in this mode (see the main loop
+	// near the end of this function) so the kernel doesn't panic.
+	if runningAsInit() {
+		go reapZombies()
+	}
+
 	var (
 		buildFlag              bool
 		catFlag                bool
@@ -514,7 +522,11 @@ func main() {
 	if fnord.Empty() {
 
 		if fnord.filename == "" {
-			if buildFlag {
+			if runningAsInit() {
+				// As PID 1 (init) with no filename, never try to build or exit;
+				// open the file browser on the current directory instead.
+				fnord.filename = initBrowseDir()
+			} else if buildFlag {
 				// When building without a filename, assume the current directory
 				fnord.filename = "."
 			} else if bookModeFlag {
@@ -615,52 +627,87 @@ func main() {
 	// Initialize the VT100 terminal
 	tty, err := vt.NewTTY()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		quitMut.Lock()
-		defer quitMut.Unlock()
-		os.Exit(1)
+		if runningAsInit() {
+			// As PID 1 we must not exit. Without a usable terminal, drop to a
+			// shell and keep retrying so the machine stays usable.
+			for {
+				runInitShell()
+				if tty, err = vt.NewTTY(); err == nil {
+					break
+				}
+			}
+		} else {
+			fmt.Fprintln(os.Stderr, err)
+			quitMut.Lock()
+			defer quitMut.Unlock()
+			os.Exit(1)
+		}
 	}
 	defer tty.Close()
 
-	// Run the main editor loop
-	userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
+	// The editor normally runs once and then the program exits. When running
+	// as PID 1 (init), exiting would panic the kernel, so instead of exiting
+	// we loop back into the file browser (or a shell) again and again.
+	for {
+		// Run the main editor loop
+		userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
 
-	// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
-	switch nextAction {
-	case megafile.NextFile:
-		fmt.Fprintln(os.Stderr, "nextfile")
-	case megafile.PreviousFile:
-		fmt.Fprintln(os.Stderr, "prevfile")
-	case megafile.StopParent:
-		if !inVTEGUI {
-			defer func() {
-				sendParentQuitSignal()
-			}()
+		// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
+		switch nextAction {
+		case megafile.NextFile:
+			fmt.Fprintln(os.Stderr, "nextfile")
+		case megafile.PreviousFile:
+			fmt.Fprintln(os.Stderr, "prevfile")
+		case megafile.StopParent:
+			// As PID 1 there is no meaningful parent to signal.
+			if !inVTEGUI && !runningAsInit() {
+				defer func() {
+					sendParentQuitSignal()
+				}()
+			}
 		}
-	}
 
-	// Remove the terminal title, if the current terminal emulator supports it and if NO_COLOR is not set.
-	NoTitle()
+		// Remove the terminal title, if the current terminal emulator supports it and if NO_COLOR is not set.
+		NoTitle()
 
-	// Clear the current color attribute
-	if clearOnQuit.Load() {
-		fmt.Print(vt.Stop())
-	} else {
-		fmt.Print("\n" + vt.Stop())
-	}
-
-	traceComplete() // if building with -tags trace
-
-	// Respond to the error returned from the main loop, if any
-	if err != nil {
-		// A clean file-browser exit is not an error for the user; exit silently.
-		if errors.Is(err, errFileBrowserExit) {
-			return
-		}
-		if userMessage != "" {
-			quitMessage(tty, userMessage)
+		// Clear the current color attribute
+		if clearOnQuit.Load() {
+			fmt.Print(vt.Stop())
 		} else {
-			quitError(tty, err)
+			fmt.Print("\n" + vt.Stop())
 		}
+
+		// As PID 1 (init): never exit. Report any problem on the console and
+		// loop back into the file browser on the current directory. If the
+		// terminal has become unusable, fall back to a shell first.
+		if runningAsInit() {
+			if err != nil && !errors.Is(err, errFileBrowserExit) {
+				if userMessage != "" {
+					fmt.Fprintln(os.Stderr, userMessage)
+				} else {
+					fmt.Fprintln(os.Stderr, err)
+				}
+				runInitShell()
+			}
+			fnord = FilenameOrData{filename: initBrowseDir()}
+			lineNumber, colNumber = LineNumber(0), ColNumber(0)
+			continue
+		}
+
+		traceComplete() // if building with -tags trace
+
+		// Respond to the error returned from the main loop, if any
+		if err != nil {
+			// A clean file-browser exit is not an error for the user; exit silently.
+			if errors.Is(err, errFileBrowserExit) {
+				return
+			}
+			if userMessage != "" {
+				quitMessage(tty, userMessage)
+			} else {
+				quitError(tty, err)
+			}
+		}
+		return
 	}
 }
