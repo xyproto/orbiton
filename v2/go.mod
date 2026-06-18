@@ -28,8 +28,8 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
-	github.com/xyproto/megafile v1.7.5
-	github.com/xyproto/mode v0.12.11
+	github.com/xyproto/megafile v1.7.6
+	github.com/xyproto/mode v0.12.12
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/syntax v1.14.6
 	github.com/xyproto/termtitle v1.5.1

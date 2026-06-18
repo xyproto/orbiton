@@ -117,6 +117,7 @@ const (
 	Scheme                // Scheme
 	Shader                // GLSL Shader
 	Shell                 // Shell scripts, PKGBUILD and APKBUILD files
+	Skill                 // SKILL.md files
 	Spec                  // RPM spec files / spec files
 	StandardML            // Standard ML
 	Starlark              // Starlark
@@ -370,6 +371,8 @@ func (mode Mode) String() string {
 		return "Shader"
 	case Shell:
 		return "Shell"
+	case Skill:
+		return "Skill"
 	case Spec:
 		return "RPM Spec"
 	case SQL:

@@ -956,7 +956,7 @@ func (s *State) msgBox(line1, line2, line3, line4 string) bool {
 		}
 	}
 
-	return key == "y" || key == "j"
+	return key == "y" || key == "j" || key == "c:13" // y, j or return
 }
 
 // confirmTrash asks the user to confirm moving a file or directory to the trash.
@@ -965,7 +965,7 @@ func (s *State) confirmTrash(path string) bool {
 	if files.Dir(path) {
 		what = "directory"
 	}
-	return s.msgBox("Move this "+what+" to the trash?", filepath.Base(path), "", "Press y to confirm, any other key to cancel")
+	return s.msgBox("Move this "+what+" to the trash?", filepath.Base(path), "", "Press y or return to confirm, any other key to cancel")
 }
 
 // edit a file, but return stderr when done
