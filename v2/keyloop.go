@@ -764,12 +764,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// Cycle git rebase keywords
-			if line := e.CurrentLine(); e.mode == mode.Git && hasAnyPrefixWord(line, gitRebasePrefixes) {
-				newLine := nextGitRebaseKeyword(line)
-				e.SetCurrentLine(newLine)
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
+			if e.mode == mode.Git {
+				if line := e.CurrentLine(); hasAnyPrefixWord(line, gitRebasePrefixes) {
+					newLine := nextGitRebaseKeyword(line)
+					e.SetCurrentLine(newLine)
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					break
+				}
 			}
 
 			if e.Empty() {
@@ -867,6 +869,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			// In git mode (commit messages, rebase), ctrl-r is reserved for cycling rebase keywords
 			if e.mode == mode.Git {
+				// Skip 2x ctrl-r handling when editing git commit messages so keyword cycling is not doubled
+				if kh.DoubleTapped("c:18") {
+					break
+				}
 				if line := e.CurrentLine(); hasAnyPrefixWord(line, gitRebasePrefixes) {
 					undo.Snapshot(e)
 					newLine := nextGitRebaseKeyword(line)
@@ -945,8 +951,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
 				break
 			}
-			if e.mode == mode.Markdown && e.ToggleCheckboxCurrentLine() {
-				undo.Snapshot(e)
+			if e.mode == mode.Markdown {
+				// Toggle the checkbox on the current line if there is one, otherwise switch between regular editing and book mode
+				if e.ToggleCheckboxCurrentLine() {
+					undo.Snapshot(e)
+					break
+				}
+				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
 				break
 			}
 			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag, "c:0")
