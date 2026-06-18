@@ -496,10 +496,13 @@ func main() {
 
 	if searchAndOpenFlag {
 		substring := fnord.filename
-		if matches, err := files.FindFile(substring); err == nil && len(matches) > 0 {
-			sort.Strings(matches)
-			fnord.filename = matches[0]
+		matches, err := files.FindFile(substring)
+		if err != nil || len(matches) == 0 {
+			fmt.Fprintf(os.Stderr, "no file matching the glob %q was found\n", substring)
+			os.Exit(1)
 		}
+		sort.Strings(matches)
+		fnord.filename = matches[0]
 	}
 
 	if editorExecutable == "book" {
