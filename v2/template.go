@@ -287,6 +287,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				2,
 				7,
 			},
+			mode.Skill: {
+				"---\ndescription: Summarizes uncommitted changes and flags anything risky. Use when the user asks what changed, wants a commit message or asks to review their diff.\n---\n\n## Current changes\n\n!`git diff HEAD`\n\n## Instructions\n\nSummarize the changes above in two or three bullet points, then list any issues you notice such as missing error handling, hardcoded values or outdated tests. If the diff is empty, say there are no uncommitted changes.\n\n",
+				1,
+				1,
+			},
 			mode.Spec: {
 				"Name:           hello\nVersion:        1.0\nRelease:        1%{?dist}\nSummary:        A minimal Hello World program\nLicense:        MIT\nSource0:        %{name}-%{version}.tar.gz\n\nBuildRequires:  gcc\n\n%description\nA minimal Hello World program written in C.\n\n%prep\n%autosetup\n\n%build\ngcc %{optflags} -o %{name} main.c\n\n%install\ninstall -Dm755 %{name} %{buildroot}%{_bindir}/%{name}\n\n%files\n%{_bindir}/%{name}\n\n%changelog\n* Fri Mar 27 2026 Your Name <you@example.com> - 1.0-1\n- Initial release\n\n",
 				17,
