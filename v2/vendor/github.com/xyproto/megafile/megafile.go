@@ -133,6 +133,8 @@ type State struct {
 	currentPreviewEncoded     string                          // cached base64 PNG data for the current image preview
 	currentPreviewImgW        uint                            // pixel width of the cached preview image
 	currentPreviewImgH        uint                            // pixel height of the cached preview image
+	textPreviewOffset         int                             // first line shown in the text preview pane (for page scrolling)
+	textPreviewHasMore        bool                            // whether the text preview has more lines below the visible page
 	listOffset                int                             // scroll offset for the file listing
 	splitX                    uint                            // split point between the file listing and the preview pane
 	previewCancel             context.CancelFunc              // cancels the in-flight loadImageAsync goroutine
@@ -2260,6 +2262,11 @@ func (s *State) Run() ([]string, error) {
 			s.ls(s.Directories[s.dirIndex])
 			clearWritten()
 			drawWritten() // for the cursor
+		case " ": // space: scroll the text/source preview down one page, or type a space
+			if s.scrollTextPreviewDown() {
+				break
+			}
+			fallthrough
 		default:
 			if key != " " && strings.TrimSpace(key) == "" && key != "c:160" {
 				continue

@@ -126,6 +126,8 @@ func (s *State) showPreview(path string) {
 		s.currentPreviewEncoded = ""
 		s.currentPreviewImgW = 0
 		s.currentPreviewImgH = 0
+		s.textPreviewOffset = 0
+		s.textPreviewHasMore = false
 	}
 
 	switch {
@@ -200,7 +202,13 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 	}
 
 	sc := bufio.NewScanner(f)
-	for r := uint(0); r < rows && sc.Scan(); r++ {
+
+	// Skip the lines that have been scrolled past with the space key.
+	for i := 0; i < s.textPreviewOffset && sc.Scan(); i++ {
+	}
+
+	r := uint(0)
+	for ; r < rows && sc.Scan(); r++ {
 		line := sc.Text()
 		line = strings.ReplaceAll(line, "\t", "    ")
 		runes := []rune(line)
@@ -225,6 +233,39 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s\033[0m", row+r, col, colored)
 		}
 	}
+
+	// Remember whether there are more lines below the current page.
+	s.textPreviewHasMore = sc.Scan()
+
+	// Blank any rows left over from a previous, longer page.
+	blank := strings.Repeat(" ", int(cols))
+	for ; r < rows; r++ {
+		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
+	}
+}
+
+// isTextPreview reports whether the given path is shown as a text or
+// source-code preview, i.e. not a directory, image or binary file.
+func (s *State) isTextPreview(path string) bool {
+	return !files.IsDir(path) && !imagepreview.IsImageExt(path) && !files.BinaryAccurate(path)
+}
+
+// scrollTextPreviewDown scrolls the text preview down one full page when a text
+// or source file is being previewed. It returns true if the key was consumed
+// (a text preview is active), so the caller can skip the default handling.
+func (s *State) scrollTextPreviewDown() bool {
+	if !s.showPreviewPane() || s.selectedIndex() < 0 || s.selectedIndex() >= len(s.fileEntries) {
+		return false
+	}
+	path, err := s.selectedPath()
+	if err != nil || !s.isTextPreview(path) {
+		return false
+	}
+	if s.textPreviewHasMore {
+		_, _, _, rows := s.previewPaneBounds()
+		s.textPreviewOffset += int(rows)
+	}
+	return true
 }
 
 // drawDirPreview lists the visible contents of a directory in the preview pane.
