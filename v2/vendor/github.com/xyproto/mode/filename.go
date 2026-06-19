@@ -115,8 +115,6 @@ func Detect(filename string) Mode {
 			mode = C
 		case ".c3":
 			mode = C3
-		case ".v67":
-			mode = Vibe67
 		case ".cb", ".cbl", ".cob", ".cby", ".cobol":
 			mode = COBOL
 		case ".cm":
@@ -301,6 +299,8 @@ func Detect(filename string) Mode {
 			mode = Terra
 		case ".te":
 			mode = PolicyLanguage
+		case ".tim":
+			mode = Tim
 		case ".tl":
 			mode = Teal
 		case ".ts", ".tsx":

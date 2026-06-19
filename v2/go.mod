@@ -29,14 +29,14 @@ require (
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.0
 	github.com/xyproto/megafile v1.7.6
-	github.com/xyproto/mode v0.12.12
+	github.com/xyproto/mode v0.12.13
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/syntax v1.14.6
+	github.com/xyproto/syntax v1.14.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.12
 	github.com/xyproto/wordwrap v1.2.0
-	golang.org/x/image v0.42.0
+	golang.org/x/image v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 

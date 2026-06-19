@@ -128,10 +128,10 @@ const (
 	Teal                  // Teal
 	Terra                 // Terra
 	Text                  // plain text documents
+	Tim                   // Tim
 	TOML                  // TOML configuration
 	TypeScript            // TypeScript
 	V                     // V programming language
-	Vibe67                // Vibe67
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
 	WGSL                  // WebGPU Shading Language
 	WordGrinder           // WordGrinder
@@ -229,8 +229,6 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Faust:
 		return "Faust"
-	case Vibe67:
-		return "Vibe67"
 	case Fortran77:
 		return "Fortran 77"
 	case Fortran90:
@@ -393,6 +391,8 @@ func (mode Mode) String() string {
 		return "Terra"
 	case Text:
 		return "Text"
+	case Tim:
+		return "Tim"
 	case TOML:
 		return "TOML"
 	case TypeScript:

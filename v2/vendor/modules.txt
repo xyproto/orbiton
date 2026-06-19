@@ -135,7 +135,7 @@ github.com/xyproto/lookslikegoasm
 # github.com/xyproto/megafile v1.7.6
 ## explicit; go 1.25.1
 github.com/xyproto/megafile
-# github.com/xyproto/mode v0.12.12
+# github.com/xyproto/mode v0.12.13
 ## explicit; go 1.23.2
 github.com/xyproto/mode
 # github.com/xyproto/oksvg v1.0.1
@@ -147,7 +147,7 @@ github.com/xyproto/palgen
 # github.com/xyproto/slay v1.3.2
 ## explicit; go 1.25.1
 github.com/xyproto/slay
-# github.com/xyproto/syntax v1.14.6
+# github.com/xyproto/syntax v1.14.7
 ## explicit; go 1.25.1
 github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
@@ -165,7 +165,7 @@ github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.2.0
 ## explicit; go 1.21.3
 github.com/xyproto/wordwrap
-# golang.org/x/image v0.42.0
+# golang.org/x/image v0.43.0
 ## explicit; go 1.25.0
 golang.org/x/image/ccitt
 golang.org/x/image/colornames
@@ -173,6 +173,7 @@ golang.org/x/image/draw
 golang.org/x/image/font
 golang.org/x/image/font/opentype
 golang.org/x/image/font/sfnt
+golang.org/x/image/internal/safemath
 golang.org/x/image/math/f64
 golang.org/x/image/math/fixed
 golang.org/x/image/riff

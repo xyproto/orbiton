@@ -183,8 +183,8 @@ func AdjustKeywords(m mode.Mode) {
 		SetKeywords(battlestarWords)
 	case mode.C3:
 		SetKeywords(c3Words)
-	case mode.Vibe67:
-		SetKeywords(vibe67Words)
+	case mode.Tim:
+		SetKeywords(timWords)
 		RemoveKeywords([]string{"double", "true", "false", "True", "False"})
 	case mode.Chuck:
 		SetKeywords(chuckWords)
