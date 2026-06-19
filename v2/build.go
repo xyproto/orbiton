@@ -736,8 +736,8 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("guile", "--no-auto-compile", "-s", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
-	case mode.Vibe67:
-		cmd = exec.Command("vibe67", "-o", exeFilename, sourceFilename)
+	case mode.Tim:
+		cmd = exec.Command("tim", "-o", exeFilename, sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Agda:

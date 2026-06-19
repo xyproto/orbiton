@@ -59,10 +59,10 @@ func TestShellHighlight(t *testing.T) {
 	}
 }
 
-func TestVibe67Highlight(t *testing.T) {
-	adjustSyntaxHighlightingKeywords(mode.Vibe67)
+func TestTimHighlight(t *testing.T) {
+	adjustSyntaxHighlightingKeywords(mode.Tim)
 	input := []byte("<<<b")
-	highlighted, err := AsText(input, mode.Vibe67)
+	highlighted, err := AsText(input, mode.Tim)
 	if err != nil {
 		t.Fatal(err)
 	}
