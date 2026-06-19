@@ -40,9 +40,9 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for git interactive rebases, cycle the rebase keywords
             double press to toggle block edit mode
 ctrl-g      go to include or definition, or toggle the status bar
-ctrl-r      to jump to matching bracket or rename something when programming,
-            otherwise toggle "wrap when typing". For git interactive rebase,
-            cycle keywords. Press twice to open or close a portal.
+ctrl-r      to jump to matching bracket, otherwise open or close a portal.
+            Double press to toggle "wrap when typing". For git interactive
+            rebase, cycle keywords.
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of line, then start of text and then the previous line
@@ -71,7 +71,7 @@ ctrl-l      to jump to a specific line or letter (press return to jump to the to
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-r      to jump to a matching bracket, or cycle git rebase keywords when editing a git
-            commit message. Double press to open or close a portal.
+            commit message. Double press to toggle "wrap when typing".
 ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
 esc         to go back after having gone to another location or file
