@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] If the `vt` package and Orbiton in combination toggles between raw/cooked mode too often, then fix this.
 - [/] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
       When over a link in a Markdown document, then follow the link. And if toggling mode from book to regular,
       then make sure it can *also toggle back*.
