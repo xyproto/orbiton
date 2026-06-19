@@ -2881,6 +2881,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 							plural = ""
 						}
 						// Place the block of text in the clipboard
+						var err error
 						if isDarwin {
 							err = pbcopy(s)
 						} else {
