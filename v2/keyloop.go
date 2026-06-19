@@ -814,7 +814,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 
-		case "c:18": // ctrl-r, jump to matching bracket (double-press for portals)
+		case "c:18": // ctrl-r, jump to matching bracket or toggle portals (double-press to toggle wrap)
 			if e.InBookMode() {
 				url := e.bookLinkURLUnderCursor()
 				pushCurrent := true
@@ -879,28 +879,21 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-			// Double-press ctrl-r: portals (for all file types)
-			if kh.DoubleTapped("c:18") && !e.disablePortals.Load() {
-				status.ClearAll(c, false)
-				if HasPortal() {
-					status.SetMessageAfterRedraw("Closing portal")
-					e.ClosePortal()
-				} else {
-					portal, err := e.NewPortal()
-					if err != nil {
-						status.SetError(err)
-						status.Show(c, e)
-						break
+			// Double-press ctrl-r: toggle wrap when typing, for non-programming-language files
+			if kh.DoubleTapped("c:18") {
+				if !ProgrammingLanguage(e.mode) {
+					e.wrapWhenTyping = !e.wrapWhenTyping
+					if e.wrapWhenTyping {
+						if e.wrapLimitWhenTyping <= 0 {
+							e.wrapLimitWhenTyping = 79
+						}
+						status.ClearAll(c, false)
+						status.SetMessageAfterRedraw(fmt.Sprintf("Wrap when typing at %d", e.wrapLimitWhenTyping))
+					} else {
+						status.ClearAll(c, false)
+						status.SetMessageAfterRedraw("Wrap when typing disabled")
 					}
-					if portal.SameFile(e) {
-						e.sameFilePortal = portal
-					}
-					if err := portal.Save(); err != nil {
-						status.SetError(err)
-						status.Show(c, e)
-						break
-					}
-					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
+					e.redraw.Store(true)
 				}
 				break
 			}
@@ -924,20 +917,29 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 				break
 			}
-			// For non-programming-language files, toggle wrap when typing
-			if !ProgrammingLanguage(e.mode) {
-				e.wrapWhenTyping = !e.wrapWhenTyping
-				if e.wrapWhenTyping {
-					if e.wrapLimitWhenTyping <= 0 {
-						e.wrapLimitWhenTyping = 79
-					}
-					status.ClearAll(c, false)
-					status.SetMessageAfterRedraw(fmt.Sprintf("Wrap when typing at %d", e.wrapLimitWhenTyping))
+			// Single-press ctrl-r: portals (for all file types)
+			if !e.disablePortals.Load() {
+				status.ClearAll(c, false)
+				if HasPortal() {
+					status.SetMessageAfterRedraw("Closing portal")
+					e.ClosePortal()
 				} else {
-					status.ClearAll(c, false)
-					status.SetMessageAfterRedraw("Wrap when typing disabled")
+					portal, err := e.NewPortal()
+					if err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+					if portal.SameFile(e) {
+						e.sameFilePortal = portal
+					}
+					if err := portal.Save(); err != nil {
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
+					status.SetMessageAfterRedraw("Opening a portal at " + portal.String())
 				}
-				e.redraw.Store(true)
 			}
 
 		case "c:0", "F5": // ctrl-space or F5, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
