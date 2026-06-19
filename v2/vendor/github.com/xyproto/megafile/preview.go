@@ -201,6 +201,13 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 		options = append(options, func(c *syntax.TextConfig) { *c = tc })
 	}
 
+	// Clear the pane first, so the previous page doesn't show through
+	// where the new page has shorter or fewer lines.
+	blank := strings.Repeat(" ", int(cols))
+	for r := range rows {
+		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
+	}
+
 	sc := bufio.NewScanner(f)
 
 	// Skip the lines that have been scrolled past with the space key.
@@ -236,12 +243,6 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 
 	// Remember whether there are more lines below the current page.
 	s.textPreviewHasMore = sc.Scan()
-
-	// Blank any rows left over from a previous, longer page.
-	blank := strings.Repeat(" ", int(cols))
-	for ; r < rows; r++ {
-		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
-	}
 }
 
 // isTextPreview reports whether the given path is shown as a text or
