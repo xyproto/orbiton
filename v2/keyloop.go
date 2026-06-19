@@ -728,11 +728,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
-			if kh.DoubleTapped("c:23") {
-				// Skip block edit mode when editing git commit messages to not block keyword cycling
-				if e.mode == mode.Git {
-					break
-				}
+			// Skip block edit mode when editing git commit messages, so that a double press falls through to keyword cycling
+			if kh.DoubleTapped("c:23") && e.mode != mode.Git {
 				e.blockMode = !e.blockMode
 				if e.blockMode {
 					e.InitBlockCursors(c)
