@@ -2441,8 +2441,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			e.redrawCursor.Store(true)
 		case "c:29", "c:30": // ctrl-~, insert the current date and time
-			if spellCheckFunc, err := e.CommandToFunction(c, tty, status, undo, "insertdateandtime"); err == nil { // success
-				spellCheckFunc()
+			if insertDateAndTimeFunc, err := e.CommandToFunction(c, tty, status, undo, "insertdateandtime"); err == nil { // success
+				insertDateAndTimeFunc()
 			}
 		case "c:19": // ctrl-s, save (or toggle stdout in debug mode)
 			e.UserSave(c, tty, status)
