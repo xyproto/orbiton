@@ -106,10 +106,9 @@ func main() {
 	slay.ProgName = "o -b"
 	slay.ProgURL = "https://github.com/xyproto/orbiton"
 
-	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), take on the
-	// minimal init duties: reap orphaned child processes so they don't pile up
-	// as zombies. The editor also never exits in this mode (see the main loop
-	// near the end of this function) so the kernel doesn't panic.
+	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), reap orphaned
+	// child processes so they don't pile up as zombies. The editor also never
+	// exits in this mode (see the main loop below) so the kernel doesn't panic.
 	if runningAsInit() {
 		go reapZombies()
 	}

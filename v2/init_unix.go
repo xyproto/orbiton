@@ -11,34 +11,22 @@ import (
 	"github.com/xyproto/env/v2"
 )
 
-// runningAsInit reports whether this process is PID 1, the system init
-// process. This is the case when the kernel is booted with, for example,
-// init=/usr/bin/o on the kernel command line.
-//
-// When running as init, Orbiton must never exit (the kernel panics with
-// "Attempted to kill init" if PID 1 terminates) and must take on the minimal
-// init duties, such as reaping orphaned child processes.
+// runningAsInit reports whether this process is PID 1, as when the kernel is
+// booted with init=/usr/bin/o. PID 1 must never exit (the kernel panics on a
+// dead init) and is responsible for reaping orphaned child processes.
 func runningAsInit() bool {
 	return os.Getpid() == 1
 }
 
-// reapZombies reaps orphaned child processes that have been re-parented to
-// this process. As PID 1 nobody else will wait() for orphans, so without
-// reaping they pile up as un-collectable zombies and eventually exhaust the
-// process table.
-//
-// Caveat: Orbiton (and the file browser) also launch and wait for their own
-// subprocesses via os/exec. This reaper may occasionally collect such a child
-// before os/exec's own Wait does, in which case that Wait returns a harmless
-// "waitid: no child processes" error. In practice os/exec is already blocked
-// in wait4() for its specific child when the child exits, so it almost always
-// wins the race; this reaper only mops up true orphans. The trade-off only
-// applies while running as PID 1.
+// reapZombies reaps orphaned child processes re-parented to PID 1. Nobody else
+// wait()s for orphans, so without this they pile up as zombies. Orbiton's own
+// os/exec subprocesses are usually reaped by their own Wait, but if this loop
+// wins the race that Wait returns a harmless "no child processes" error.
 func reapZombies() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGCHLD)
 	for range sigChan {
-		// Reap every child that is ready, without blocking.
+		// Reap every ready child without blocking
 		for {
 			var ws syscall.WaitStatus
 			pid, err := syscall.Wait4(-1, &ws, syscall.WNOHANG, nil)
@@ -50,9 +38,8 @@ func reapZombies() {
 }
 
 // runInitShell launches an interactive login shell and waits for it to exit.
-// It is used as a fallback when running as PID 1 and no usable terminal or
-// file browser is available, so that the machine is still usable instead of
-// the kernel panicking on a dead init.
+// Used as a fallback when running as PID 1 and no usable terminal is available,
+// to keep the machine usable instead of leaving a dead init.
 func runInitShell() {
 	shell := env.Str("SHELL", "/bin/sh")
 	cmd := exec.Command(shell, "-l")
