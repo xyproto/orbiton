@@ -1934,6 +1934,53 @@ func (e *Editor) LeadingWhitespaceAt(y LineIndex) string {
 	return e.Line(y)[:e.FirstDataPosition(y)]
 }
 
+// dedentLine tries to dedent the line at the given line index
+func (e *Editor) dedentLine(y LineIndex) int {
+	line := e.Line(y)
+	if line == "" {
+		return 0
+	}
+	if line[0] == '\t' {
+		e.SetLine(y, line[1:])
+		return e.indentation.PerTab
+	}
+	spaces := 0
+	for spaces < e.indentation.PerTab && spaces < len(line) && line[spaces] == ' ' {
+		spaces++
+	}
+	if spaces > 0 {
+		e.SetLine(y, line[spaces:])
+	}
+	return spaces
+}
+
+// Dedent tries to dedent the current text selection
+func (e *Editor) Dedent(c *vt.Canvas) {
+	if e.HasSelection() {
+		startY, _ := e.selection.start()
+		endY, _ := e.selection.end()
+		anchorRemoved, activeRemoved := 0, 0
+		for y := startY; y <= endY; y++ {
+			removed := e.dedentLine(y)
+			if y == e.selection.anchorY {
+				anchorRemoved = removed
+			}
+			if y == e.selection.activeY {
+				activeRemoved = removed
+			}
+		}
+		e.selection.anchorDisplayX = max(0, e.selection.anchorDisplayX-anchorRemoved)
+		e.selection.activeDisplayX = max(0, e.selection.activeDisplayX-activeRemoved)
+		e.pos.SetX(c, max(0, e.currentDisplayX()-activeRemoved))
+		e.MarkChanged()
+		return
+	}
+	if removed := e.dedentLine(e.DataY()); removed > 0 {
+		e.pos.SetX(c, max(0, e.currentDisplayX()-removed))
+		e.MarkChanged()
+	}
+}
+
 // LineNumber will return the current line number (data y index + 1)
 func (e *Editor) LineNumber() LineNumber {
 	return LineNumber(e.DataY() + 1)
