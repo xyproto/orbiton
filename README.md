@@ -211,7 +211,8 @@ There are pretty few hotkeys to remember:
 * `ctrl-c` - Copy one line. Double press to copy a block of text. Press thrice to copy the current function.
 * `ctrl-v` - Paste one trimmed line. Double press to paste multiple untrimmed lines.
 * `ctrl-b` - Build program, render to PDF or export to man page. Double press to also run.
-             Toggle bold (`**`) in book mode. Toggle a breakpoint in debug mode.
+             Cycle book mode. Toggle a breakpoint in debug mode.
+             Toggle bold (`**`) when started directly in book mode.
 * `ctrl-space` - Build program, render to PDF or export to man page. Double press to also run.
              Toggle checkboxes in Markdown. Cycle display/export mode in book mode.
 * `ctrl-j` - Join the current line with the next one.

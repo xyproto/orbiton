@@ -30,7 +30,8 @@ ctrl-s      to save
 ctrl-q      to quit
 ctrl-o      to open the command menu
 ctrl-b      to build or export (double press to also run)
-            toggle bold in book mode, toggle a breakpoint in debug mode
+            cycle book mode, toggle a breakpoint in debug mode
+            toggle bold when started directly in book mode
 ctrl-space  to build or export (double press to also run)
             to toggle checkboxes in Markdown
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command

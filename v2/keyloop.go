@@ -942,6 +942,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 			}
 
+		case "backtab": // shift-tab, dedent the current line or selection
+			if e.InBookMode() {
+				break
+			}
+			undo.Snapshot(e)
+			e.Dedent(c)
+			e.redrawCursor.Store(true)
+			e.redraw.Store(true)
 		case "c:0", "F5": // ctrl-space or F5, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
 			if e.nanoMode.Load() {
 				break // do nothing
@@ -2950,10 +2958,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			clearKeyHistory = true
 
-		case "c:2": // ctrl-b, build/export/cycle book mode (bold in book mode, cursor backward in nano mode)
-			if e.InBookMode() { // book mode: toggle bold
-				undo.Snapshot(e)
-				e.bookToggleFormat(c, "**")
+		case "c:2": // ctrl-b, build/export/cycle book mode (bold when started in book mode, cursor backward in nano mode)
+			if e.InBookMode() {
+				if bookModeFlag { // started directly in book mode: toggle bold
+					undo.Snapshot(e)
+					e.bookToggleFormat(c, "**")
+					break
+				}
+				// toggled into book mode: cycle/exit book mode
+				e.cycleBookMode(c, tty, status, "c:2", false)
 				break
 			}
 			if e.nanoMode.Load() { // nano: ctrl-b, cursor backward
