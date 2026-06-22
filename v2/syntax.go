@@ -48,7 +48,7 @@ func (e *Editor) SingleLineCommentMarker() string {
 	case mode.Nroff:
 		return `.\"`
 	case mode.ObjectPascal:
-		return "{"
+		return "//"
 	case mode.ReStructured:
 		return ".."
 	case mode.Vim:

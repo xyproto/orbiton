@@ -82,7 +82,8 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 			targetName := strings.TrimSpace(parts[0])
 			return targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") && !strings.Contains(targetName, " ") // looks like it could be a Makefile target name
 		}
-
+	case mode.ObjectPascal:
+		return pascalLooksLikeFunctionDef(trimmedLine)
 	case mode.GoAssembly:
 		return strings.HasPrefix(trimmedLine, "TEXT ")
 	case mode.Odin:
@@ -149,6 +150,10 @@ func (e *Editor) FunctionName(line string) string {
 			if targetName != "" && !strings.Contains(targetName, "=") && !strings.Contains(targetName, "$") && !strings.Contains(targetName, " ") { // looks like it could be a Makefile target name
 				return targetName
 			}
+		}
+	case mode.ObjectPascal:
+		if name := pascalExtractFunctionName(trimmedLine); name != "" {
+			return name
 		}
 	}
 	var (

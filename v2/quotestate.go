@@ -30,6 +30,7 @@ type QuoteState struct {
 	hasSingleLineComment               bool
 	multiLineComment                   bool
 	ignoreSingleQuotes                 bool
+	pascalCurlyComment                 bool // current Pascal multi-line comment was opened with '{' rather than '(*'
 }
 
 // NewQuoteState takes a singleLineCommentMarker (such as "//" or "#") and returns a pointer to a new QuoteState struct
@@ -102,6 +103,11 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			q.parCount-- // Not a parenthesis start after all, but the start of a multi-line comment
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
+		} else if q.mode == mode.ObjectPascal && prevRune == '(' && q.None() {
+			q.parCount-- // Not a parenthesis start after all, but the start of a Pascal multi-line comment
+			q.multiLineComment = true
+			q.startedMultiLineComment = true
+			q.pascalCurlyComment = false
 		} else if (q.mode == mode.Elm || q.mode == mode.Haskell) && prevRune == '{' && q.None() {
 			q.parCount-- // Not a parenthesis start after all, but the start of a multi-line comment
 			q.multiLineComment = true
@@ -111,6 +117,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 		if q.mode == mode.ObjectPascal && q.None() {
 			q.multiLineComment = true
 			q.startedMultiLineComment = true
+			q.pascalCurlyComment = true
 		}
 	case '-': // support for HTML-style and XML-style multi-line comments
 		if q.mode != mode.Shell && q.mode != mode.Make && q.mode != mode.Just && prevRune == '!' && prevPrevRune == '<' && q.None() {
@@ -174,6 +181,12 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
+		} else if q.mode == mode.ObjectPascal && prevRune == '*' && q.multiLineComment && !q.pascalCurlyComment {
+			q.stoppedMultiLineComment = true
+			q.multiLineComment = false
+			if q.startedMultiLineComment {
+				q.containsMultiLineComments = true
+			}
 		} else if q.None() {
 			q.parCount--
 		}
@@ -184,7 +197,7 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 			if q.startedMultiLineComment {
 				q.containsMultiLineComments = true
 			}
-		} else if q.mode == mode.ObjectPascal {
+		} else if q.mode == mode.ObjectPascal && q.multiLineComment && q.pascalCurlyComment {
 			q.stoppedMultiLineComment = true
 			q.multiLineComment = false
 			if q.startedMultiLineComment {
