@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Lines starting with `;` in Go-Style Assembly should be a hint that this might be regular Assembly.
+- [ ] `print("""text` should also be considered to be the start of a multiline string in Python.
 - [ ] ctrl-b for bold text in graphical book mode in TODO-lists can sometimes mess up the formatting. Please fix.
 - [ ] If the `vt` package and Orbiton in combination toggles between raw/cooked mode too often, then fix this.
 - [/] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
