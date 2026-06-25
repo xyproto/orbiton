@@ -281,6 +281,12 @@ func checkMultiLineString(trimmedLine string, inCodeBlock bool) (bool, bool) {
 		if inCodeBlock {
 			foundDocstringMarker = true
 		}
+	} else if strings.Count(trimmedLine, "\"\"\"")%2 != 0 || strings.Count(trimmedLine, "'''")%2 != 0 {
+		// An odd number of triple-quotes anywhere on the line, such as: print("""text
+		inCodeBlock = !inCodeBlock
+		if inCodeBlock {
+			foundDocstringMarker = true
+		}
 	}
 	return inCodeBlock, foundDocstringMarker
 }

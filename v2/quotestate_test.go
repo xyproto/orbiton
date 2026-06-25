@@ -162,6 +162,24 @@ func TestQuoteStateParBraCountSkipsStrings(t *testing.T) {
 	}
 }
 
+func TestCheckMultiLineString(t *testing.T) {
+	for _, tc := range []struct {
+		line          string
+		in            bool
+		expectedBlock bool
+	}{
+		{`print("""text`, false, true},     // a triple-quote in the middle of a line opens a multiline string
+		{`text""")`, true, false},          // and a triple-quote in the middle of a line closes it again
+		{`x = func("""a""")`, false, false}, // a complete triple-quoted string on one line stays out of the block
+		{`"""`, false, true},                // a lone triple-quote opens the block
+		{`normal code`, false, false},       // regular code does not change the state
+	} {
+		if got, _ := checkMultiLineString(tc.line, tc.in); got != tc.expectedBlock {
+			t.Errorf("checkMultiLineString(%q, %v) = %v, want %v", tc.line, tc.in, got, tc.expectedBlock)
+		}
+	}
+}
+
 func TestQuoteStateParBraCountSkipsComments(t *testing.T) {
 	q := newGoQuoteState(t)
 	par, bra := q.ParBraCount(`x := 1 // f(a[0])`)
