@@ -2156,6 +2156,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 
+			// If text is selected, indent the selected lines instead
+			if e.HasSelection() {
+				undo.Snapshot(e)
+				e.Indent(c)
+				e.redrawCursor.Store(true)
+				e.redraw.Store(true)
+				break
+			}
+
 			y := int(e.DataY())
 			r := e.Rune()
 			leftRune := e.LeftRune()

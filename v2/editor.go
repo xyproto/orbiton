@@ -1934,6 +1934,17 @@ func (e *Editor) LeadingWhitespaceAt(y LineIndex) string {
 	return e.Line(y)[:e.FirstDataPosition(y)]
 }
 
+// indentLine indents the line at the given line index by one indentation level
+// and returns the number of display columns that were added
+func (e *Editor) indentLine(y LineIndex) int {
+	line := e.Line(y)
+	if line == "" {
+		return 0
+	}
+	e.SetLine(y, e.indentation.String()+line)
+	return e.indentation.PerTab
+}
+
 // dedentLine tries to dedent the line at the given line index
 func (e *Editor) dedentLine(y LineIndex) int {
 	line := e.Line(y)
@@ -1977,6 +1988,33 @@ func (e *Editor) Dedent(c *vt.Canvas) {
 	}
 	if removed := e.dedentLine(e.DataY()); removed > 0 {
 		e.pos.SetX(c, max(0, e.currentDisplayX()-removed))
+		e.MarkChanged()
+	}
+}
+
+// Indent tries to indent the current text selection, or the current line if there is no selection
+func (e *Editor) Indent(c *vt.Canvas) {
+	if e.HasSelection() {
+		startY, _ := e.selection.start()
+		endY, _ := e.selection.end()
+		anchorAdded, activeAdded := 0, 0
+		for y := startY; y <= endY; y++ {
+			added := e.indentLine(y)
+			if y == e.selection.anchorY {
+				anchorAdded = added
+			}
+			if y == e.selection.activeY {
+				activeAdded = added
+			}
+		}
+		e.selection.anchorDisplayX += anchorAdded
+		e.selection.activeDisplayX += activeAdded
+		e.pos.SetX(c, e.currentDisplayX()+activeAdded)
+		e.MarkChanged()
+		return
+	}
+	if added := e.indentLine(e.DataY()); added > 0 {
+		e.pos.SetX(c, e.currentDisplayX()+added)
 		e.MarkChanged()
 	}
 }
