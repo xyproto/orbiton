@@ -40,7 +40,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 	if m == Assembly || m == Blank {
 		// Go/Plan9 style Assembly
 		data := bytes.TrimSpace(allBytesFunc())
-		if bytes.Contains(data, []byte("·")) || (bytes.Contains(data, []byte("TEXT")) && bytes.Contains(data, []byte("RET\n"))) {
+		if (bytes.Contains(data, []byte("·")) || (bytes.Contains(data, []byte("TEXT")) && bytes.Contains(data, []byte("RET\n")))) && !lookslikegoasm.SeveralSemicolonComments(string(data)) {
 			return GoAssembly, true
 		}
 	}

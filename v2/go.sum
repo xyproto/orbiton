@@ -107,12 +107,12 @@ github.com/xyproto/javasig v1.0.3 h1:iUYVC1pnlfXN0V22dWs189N1AxBivEQPrCw/N7oZYZU
 github.com/xyproto/javasig v1.0.3/go.mod h1:F0hqS0fXTJYLSH9kLP4XBn2pCB8GnqLmR223i1QqkTk=
 github.com/xyproto/kotlinsig v0.0.1 h1:WsRn1dyJ7EwQk5MngOujIcSZazjG+yAIiZzWIJC0FoM=
 github.com/xyproto/kotlinsig v0.0.1/go.mod h1:tq9ILkFh43rUuDiscyTZoBs6zSDxPa+hKKM5c6Bdnio=
-github.com/xyproto/lookslikegoasm v1.0.0 h1:/2nuhAu67tdjqXHkdOjP/UUAH9uJbAdptIkF2WzXqz4=
-github.com/xyproto/lookslikegoasm v1.0.0/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
+github.com/xyproto/lookslikegoasm v1.0.2 h1:IS258Bs+N3dzfYQCFzYMobgK5Kee86BJkkxCQKluoAI=
+github.com/xyproto/lookslikegoasm v1.0.2/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
 github.com/xyproto/megafile v1.7.9 h1:qtV8ReTlZnOfIerMhDGmq4uUd7R4zWHYgu6pxDUowHY=
 github.com/xyproto/megafile v1.7.9/go.mod h1:ycD3qUdyNYeBlQ9mV6F6snZus7KcOrZiAU/59/2+Lng=
-github.com/xyproto/mode v0.12.13 h1:GrDDw7Mgercg302GwUyIYUTf7V8kl0HNAn9PC8Di70U=
-github.com/xyproto/mode v0.12.13/go.mod h1:Bl7ymMitqlFLl3lgyAY3knkZb0t9/4fzgja7mWp66n0=
+github.com/xyproto/mode v0.12.14 h1:V0iHhCF6r2/BoE8Oozk1Skr67GwKVHhhRBqWOg3Li/w=
+github.com/xyproto/mode v0.12.14/go.mod h1:3F6n8rg7/JM4h6wGy6RTj0eeL+4gZHs04dV9XarHYlw=
 github.com/xyproto/oksvg v1.0.1 h1:73aS/Preun72DfKyudJYIWb1wPiJRkpYHASwOBbDQBo=
 github.com/xyproto/oksvg v1.0.1/go.mod h1:UPvMnS9w/QMxOqU7SNlmZuB+48tc2c7Kz1B3rf7JtxQ=
 github.com/xyproto/palgen v1.7.3 h1:iJBciQKbviwGk9RiCZh1GuEbPy3EZqU7kA3Z9XH+8a4=

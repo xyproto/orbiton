@@ -15,6 +15,23 @@ var (
 	intelRegisterPattern    = regexp.MustCompile(`\b(e?[abcd][xhl]|r[abcd][x]|r[0-9]+[bwd]?)\b`)
 )
 
+// SeveralSemicolonComments returns true if at least two non-empty lines start
+// with ";" (after leading whitespace). ";" starts a comment in Intel/MASM-style
+// Assembly, but not in Go/Plan9 Assembly (which uses "//"), so this is a hint
+// that the source is regular Assembly rather than Go/Plan9 Assembly.
+func SeveralSemicolonComments(sourceCode string) bool {
+	count := 0
+	for _, line := range strings.Split(sourceCode, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), ";") {
+			count++
+			if count >= 2 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // Consider checks if the given source code looks more like Go/Plan9 Assembly
 // than Intel or AT&T style Assembly. Returns true if it looks like Go/Plan9 Assembly.
 // Note that this is not an exact science!
@@ -24,6 +41,11 @@ func Consider(sourceCode string) bool {
 	for _, line := range strings.Split(sourceCode, "\n") {
 		line = strings.TrimSpace(line)
 		if line == "" || strings.HasPrefix(line, "//") || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if strings.HasPrefix(line, ";") {
+			// ";" starts a comment in Intel/MASM-style Assembly, but not in Go/Plan9 Assembly (which uses "//")
+			intelCount++
 			continue
 		}
 		if goDirectivePattern.MatchString(line) {

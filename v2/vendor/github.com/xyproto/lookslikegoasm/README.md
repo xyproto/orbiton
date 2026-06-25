@@ -16,26 +16,26 @@ package main
 import (
     "fmt"
 
-    "lookslikegoasm"
+    "github.com/xyproto/lookslikegoasm"
 )
 
 func main() {
-    goPlan9Source := `
+    asmSource := `
     TEXT hello(SB), $0-0
     MOVQ AX, BX
     ADDQ $1, AX
     CALL somefunction
     `
 
-    if lookslikegoasm.Consider(goPlan9Source) {
-        fmt.Println("This looks like Go/Plan9 Assembly")
+    if lookslikegoasm.Consider(asmSource) {
+        fmt.Println("Looks like Go/Plan9 style Assembly")
     } else {
-        fmt.Println("This does not look like Go/Plan9 Assembly")
+        fmt.Println("Does not look like Go/Plan9 style Assembly")
     }
 }
 ```
 
 General info:
 
-* Version: 1.0.0
+* Version: 1.0.2
 * License: BSD-3
