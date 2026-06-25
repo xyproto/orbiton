@@ -198,9 +198,13 @@ func (r *renameSession) handleKey(key string, index *uint, hooks renameUIHooks) 
 			return true, false
 		}
 		hooks.clearWritten()
-		tmp := append(r.s.written[:*index], []rune(key)...)
-		r.s.written = append(tmp, r.s.written[*index:]...)
-		*index += ulen([]rune(key))
+		runes := []rune(key)
+		updated := make([]rune, 0, len(r.s.written)+len(runes))
+		updated = append(updated, r.s.written[:*index]...)
+		updated = append(updated, runes...)
+		updated = append(updated, r.s.written[*index:]...)
+		r.s.written = updated
+		*index += ulen(runes)
 		hooks.drawWritten()
 		return true, true
 	}
