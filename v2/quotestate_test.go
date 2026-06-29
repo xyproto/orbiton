@@ -168,8 +168,8 @@ func TestCheckMultiLineString(t *testing.T) {
 		in            bool
 		expectedBlock bool
 	}{
-		{`print("""text`, false, true},     // a triple-quote in the middle of a line opens a multiline string
-		{`text""")`, true, false},          // and a triple-quote in the middle of a line closes it again
+		{`print("""text`, false, true},      // a triple-quote in the middle of a line opens a multiline string
+		{`text""")`, true, false},           // and a triple-quote in the middle of a line closes it again
 		{`x = func("""a""")`, false, false}, // a complete triple-quoted string on one line stays out of the block
 		{`"""`, false, true},                // a lone triple-quote opens the block
 		{`normal code`, false, false},       // regular code does not change the state
