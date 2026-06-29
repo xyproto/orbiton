@@ -199,67 +199,47 @@ func (e *Editor) handlePasteModeKey(c *vt.Canvas, status *StatusBar, undo *Undo,
 		return false
 	}
 
-	var (
-		snapshotTaken bool
-		handled       bool
-	)
-
-	takeSnapshot := func() {
-		if !snapshotTaken {
-			undo.Snapshot(e)
-			snapshotTaken = true
-			if e.HasSelection() {
-				e.DeleteSelection(c, status)
-				e.ClearSelection()
+	// Translate the key into the raw text it represents. A pasted burst arrives
+	// as a single (possibly multi-line) string, while individual Tab/Enter
+	// keypresses arrive as control-key names.
+	var text string
+	switch key {
+	case "c:9": // tab
+		text = "\t"
+	case "c:10", "c:13": // newline
+		text = "\n"
+	default:
+		if strings.HasPrefix(key, "c:") {
+			// Ignore other control keys while in paste mode
+			return true
+		}
+		// Normalize line endings and drop non-printable control characters,
+		// keeping tabs and newlines, so the text is inserted literally.
+		var sb strings.Builder
+		for _, r := range strings.ReplaceAll(strings.ReplaceAll(key, "\r\n", "\n"), "\r", "\n") {
+			if r == '\n' || r == '\t' || r == ' ' || unicode.IsGraphic(r) {
+				sb.WriteRune(r)
 			}
 		}
+		text = sb.String()
 	}
 
-	insertRune := func(r rune) {
-		takeSnapshot()
-		wrapped := e.InsertRune(c, r)
-		e.WriteRune(c)
-		if !wrapped {
-			e.Next(c)
-		}
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-		handled = true
+	if text == "" {
+		return false
 	}
 
-	insertNewLine := func() {
-		takeSnapshot()
-		e.ReturnPressed(c, status, false)
-		e.redraw.Store(true)
-		e.redrawCursor.Store(true)
-		handled = true
+	// Take a single undo snapshot for the whole inserted chunk
+	undo.Snapshot(e)
+	if e.HasSelection() {
+		e.DeleteSelection(c, status)
+		e.ClearSelection()
 	}
 
-	switch key {
-	case "c:9":
-		insertRune('\t')
-		return true
-	case "c:10", "c:13":
-		insertNewLine()
-		return true
-	}
-
-	if strings.HasPrefix(key, "c:") {
-		return true
-	}
-
-	for _, r := range strings.ReplaceAll(strings.ReplaceAll(key, "\r\n", "\n"), "\r", "\n") {
-		switch {
-		case r == '\n':
-			insertNewLine()
-		case r == '\t':
-			insertRune('\t')
-		case r == ' ' || unicode.IsGraphic(r):
-			insertRune(r)
-		}
-	}
-
-	return handled
+	// Insert the whole chunk at once, which is far faster than rune by rune
+	e.InsertText(c, text)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+	return true
 }
 
 // readPasteBurst reads currently incoming bytes until input has been idle briefly.

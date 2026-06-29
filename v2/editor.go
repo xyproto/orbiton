@@ -1204,6 +1204,96 @@ func (e *Editor) InsertString(c *vt.Canvas, s string) {
 	}
 }
 
+// InsertText inserts a (possibly multi-line) string at the current data
+// position in a single pass and moves the cursor to the end of the inserted
+// text. Unlike inserting rune by rune with InsertStringAndMove, which is
+// O(n^2) for long lines and shifts the lines map once per inserted line, this
+// rebuilds the affected lines in one go. It keeps pasting large amounts of
+// text fast. The text is inserted literally; a full redraw follows.
+func (e *Editor) InsertText(c *vt.Canvas, s string) {
+	if s == "" {
+		return
+	}
+
+	// Normalize line endings and ambiguous runes, the same way InsertRune does
+	// when typing, so the split below is correct and the text is cleaned up
+	s = pastedTextReplacer.Replace(s)
+
+	y := int(e.DataY())
+	e.CreateLineIfMissing(LineIndex(y))
+
+	// The data X position, clamped to the current line contents
+	x, err := e.DataX()
+	if err != nil {
+		x = len(e.lines[y])
+	}
+	if x > len(e.lines[y]) {
+		x = len(e.lines[y])
+	}
+
+	// Split the current line into the part before and after the cursor
+	current := e.lines[y]
+	head := current[:x]
+	tail := current[x:]
+
+	segments := strings.Split(s, "\n")
+
+	// Single-line paste: splice the runes into the current line
+	if len(segments) == 1 {
+		seg := []rune(segments[0])
+		newLine := make([]rune, 0, len(head)+len(seg)+len(tail))
+		newLine = append(newLine, head...)
+		newLine = append(newLine, seg...)
+		newLine = append(newLine, tail...)
+		e.lines[y] = newLine
+		e.MarkChanged()
+		e.GoToLineIndexAndColIndex(LineIndex(y), ColIndex(x+len(seg)), c, nil, false, true)
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		return
+	}
+
+	// Multi-line paste: the cursor line is split, the first pasted segment is
+	// appended to the part before the cursor and the last pasted segment gets
+	// the part after the cursor appended to it.
+	firstSeg := []rune(segments[0])
+	lastSeg := []rune(segments[len(segments)-1])
+
+	firstLine := make([]rune, 0, len(head)+len(firstSeg))
+	firstLine = append(firstLine, head...)
+	firstLine = append(firstLine, firstSeg...)
+
+	lastLine := make([]rune, 0, len(lastSeg)+len(tail))
+	lastLine = append(lastLine, lastSeg...)
+	lastLine = append(lastLine, tail...)
+
+	added := len(segments) - 1 // the number of new lines being inserted
+
+	// Shift every line below the cursor line down by "added", in one pass
+	for i := len(e.lines) - 1; i > y; i-- {
+		e.lines[i+added] = e.lines[i]
+	}
+
+	// Place the rebuilt first and last lines, and the untouched middle lines
+	e.lines[y] = firstLine
+	for i := 1; i < added; i++ {
+		e.lines[y+i] = []rune(segments[i])
+	}
+	e.lines[y+added] = lastLine
+
+	// Keep a portal pointing at the same file in sync with the inserted lines
+	if e.sameFilePortal != nil {
+		for range added {
+			e.sameFilePortal.NewLineInserted(LineIndex(y))
+		}
+	}
+
+	e.MarkChanged()
+	e.GoToLineIndexAndColIndex(LineIndex(y+added), ColIndex(len(lastSeg)), c, nil, false, true)
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+}
+
 // Rune will get the rune at the current data position
 func (e *Editor) Rune() rune {
 	x, err := e.DataX()

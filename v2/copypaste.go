@@ -153,7 +153,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 				e.SetCurrentLine(line)
 			} else {
 				// If the line is not empty, insert the trimmed string
-				e.InsertStringAndMove(c, strings.TrimSpace(line))
+				e.InsertText(c, strings.TrimSpace(line))
 			}
 			e.InsertLineBelow()
 			e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
@@ -252,14 +252,14 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 			e.SetLine(y, e.LeadingWhitespace()+strings.TrimSpace((*copyLines)[0]))
 		} else {
 			// If the line is not empty, insert the trimmed string
-			e.InsertStringAndMove(c, strings.TrimSpace((*copyLines)[0]))
+			e.InsertText(c, strings.TrimSpace((*copyLines)[0]))
 		}
 
 	} else { // Multi line paste (the rest of the lines)
 
 		// If there is only one line to paste (a word or partial line), just insert it again
 		if len(*copyLines) == 1 {
-			e.InsertStringAndMove(c, strings.TrimSpace((*copyLines)[0]))
+			e.InsertText(c, strings.TrimSpace((*copyLines)[0]))
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 			return
@@ -315,7 +315,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 				e.InsertLineBelow()
 				e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 			}
-			e.InsertStringAndMove(c, line)
+			e.InsertText(c, line)
 		}
 
 		if numLines := 1 + tailLineCount; numLines > 1 {
