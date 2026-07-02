@@ -2,8 +2,9 @@
 
 ## General
 
-- [ ] ctrl-b for bold text in graphical book mode in TODO-lists can sometimes mess up the formatting. Please fix.
-- [ ] If the `vt` package and Orbiton in combination toggles between raw/cooked mode too often, then fix this.
+- [ ] Add a built-in Assembler + Disassembler?
+- [ ] Add a menu entry for generating a Go report card (text + image) using https://github.com/gojp/goreportcard.
+- [ ] The `vt` package + Orbiton might toggle between raw/cooked mode too often. Investigate.
 - [/] Let `ctrl-space` be smart, so that when it is over a checkbox and not in programming code, toggle the checkbox.
       When over a link in a Markdown document, then follow the link. And if toggling mode from book to regular,
       then make sure it can *also toggle back*.
