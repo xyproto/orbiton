@@ -36,6 +36,7 @@ Wait+Screen /Completions/
 Sleep 1500ms
 
 # Accept the completion suggestion
+Down
 Enter
 Sleep 100ms
 
