@@ -72,6 +72,8 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("go", "run", sourceFilename)
 		}
+	case mode.Hare:
+		cmd = exec.Command("hare", "run", sourceFilename)
 	case mode.Haskell:
 		cmd = exec.Command("runhaskell", sourceFilename)
 	case mode.OCaml:
