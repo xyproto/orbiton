@@ -237,6 +237,11 @@ func GetTemplatePrograms() TemplatePrograms {
 				1,
 				6,
 			},
+			mode.Nix: {
+				"{\n  pkgs ? import <nixpkgs> { },\n}:\n\npkgs.writeShellScriptBin \"hello-world\" ''\n  echo \"Hello, World!\"\n''\n",
+				2,
+				6,
+			},
 			mode.ObjectPascal: {
 				"program Hello;\nconst\n  greeting = 'Hello, World!';\nbegin\n  writeln(greeting);\nend.\n",
 				4,

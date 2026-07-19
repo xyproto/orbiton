@@ -449,6 +449,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd := exec.Command("hare", "build")
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Nix:
+		cmd := exec.Command("nix", "build")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Shader:
 		sourceFilenameWithoutExt := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename))
 		shaderCode := e.String()

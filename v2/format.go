@@ -57,6 +57,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.Just:       exec.Command("just", "--unstable", "--fmt", "-f"),
 			mode.Kotlin:     exec.Command("ktlint", "-F"),
 			mode.Lua:        exec.Command("stylua"),
+			mode.Nix:        exec.Command("nixfmt"),
 			mode.OCaml:      exec.Command("ocamlformat"),
 			mode.Odin:       exec.Command("odinfmt", "-w"),
 			mode.Perl:       exec.Command("/usr/bin/vendor_perl/perltidy", "-se", "-b", "-i=2", "-ole=unix", "-bt=2", "-pt=2", "-sbt=2", "-ce"),
