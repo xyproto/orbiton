@@ -229,6 +229,13 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"compile_commands.json", ".clangd", "CMakeLists.txt", "Makefile"},
 		FileExtensions:  []string{".cpp", ".cc", ".cxx", ".c++", ".hpp", ".hh", ".hxx", ".h++", ".h"},
 	},
+	mode.Nix: {
+		Command:         "nixd",
+		Args:            []string{},
+		LanguageID:      "nix",
+		RootMarkerFiles: []string{"flake.nix", "shell.nix"},
+		FileExtensions:  []string{".nix"},
+	},
 	mode.Python: {
 		Command:         "pyright-langserver",
 		Args:            []string{"--stdio"},
@@ -508,13 +515,11 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 	if !lsp.initialized {
 		return false
 	}
-
 	// use workspace/symbol as a lightweight ping
 	if needsWorkspaceSetup(m) {
 		params := map[string]any{
 			"query": "",
 		}
-
 		id, err := lsp.sendRequest("workspace/symbol", params)
 		if err != nil {
 			return false
@@ -522,7 +527,6 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 		_, err = lsp.readResponse(id, 500*time.Millisecond)
 		return err == nil
 	}
-
 	// For other languages, assume ready after initialization
 	return true
 }
@@ -568,7 +572,6 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 			"character": character,
 		},
 	}
-
 	// add completion context
 	if triggerCharacter != "" {
 		params["context"] = map[string]any{
@@ -580,7 +583,6 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 			"triggerKind": 1, // Invoked manually
 		}
 	}
-
 	id, err := lsp.sendRequest("textDocument/completion", params)
 	if err != nil {
 		return nil, err
@@ -589,7 +591,6 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 	if err != nil {
 		return nil, err
 	}
-
 	resultData, ok := response["result"]
 	if !ok {
 		if errorData, hasError := response["error"]; hasError {
@@ -604,7 +605,6 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 	if err != nil {
 		return nil, err
 	}
-
 	var completionList LSPCompletionList
 	if err := json.Unmarshal(resultBytes, &completionList); err == nil {
 		if len(completionList.Items) > 0 {
@@ -612,12 +612,10 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 		}
 		return []LSPCompletionItem{}, nil
 	}
-
 	var items []LSPCompletionItem
 	if err := json.Unmarshal(resultBytes, &items); err == nil && len(items) > 0 {
 		return items, nil
 	}
-
 	return []LSPCompletionItem{}, nil
 }
 
@@ -657,19 +655,16 @@ func (lsp *LSPClient) GetDefinition(uri string, line, character int, timeout tim
 	if err != nil {
 		return nil, err
 	}
-
 	// Try single location
 	var location LSPLocation
 	if err := json.Unmarshal(resultBytes, &location); err == nil && location.URI != "" {
 		return &location, nil
 	}
-
 	// Try array of locations (take first one)
 	var locations []LSPLocation
 	if err := json.Unmarshal(resultBytes, &locations); err == nil && len(locations) > 0 {
 		return &locations[0], nil
 	}
-
 	return nil, errors.New("could not parse definition response")
 }
 
@@ -796,13 +791,22 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 		return nil, fmt.Errorf("no LSP configuration for mode %v", m)
 	}
 
-	// For Python, fall back to pylsp if pyright-langserver is not installed
 	command := config.Command
 	args := config.Args
-	if m == mode.Python && files.WhichCached(config.Command) == "" {
-		if files.WhichCached("pylsp") != "" {
-			command = "pylsp"
-			args = []string{}
+
+	// Some languages may have LSP server fallbacks if the initial server is missing
+	if files.WhichCached(config.Command) == "" {
+		switch m {
+		case mode.Python:
+			if files.WhichCached("pylsp") != "" {
+				command = "pylsp"
+				args = []string{}
+			}
+		case mode.Nix:
+			if files.WhichCached("nil") != "" {
+				command = "nil"
+				args = []string{}
+			}
 		}
 	}
 
