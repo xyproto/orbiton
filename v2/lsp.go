@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,6 +28,12 @@ func needsWorkspaceSetup(m mode.Mode) bool {
 	return m == mode.Rust || m == mode.C || m == mode.Cpp || m == mode.Gleam
 }
 
+// slowToWarmUp checks if the language server may need a few seconds before it
+// can answer the first completion request. nixd evaluates nixpkgs first.
+func slowToWarmUp(m mode.Mode) bool {
+	return needsWorkspaceSetup(m) || m == mode.Nix
+}
+
 // LSPClient manages communication with a language server
 type LSPClient struct {
 	stdin          io.WriteCloser
@@ -37,7 +44,8 @@ type LSPClient struct {
 	done           chan struct{}       // closed by Shutdown to unblock readLoop
 	workspaceRoot  string
 	openedURI      string
-	linkedProjects []any // inline rust-project.json objects for standalone Rust files
+	linkedProjects []any          // inline rust-project.json objects for standalone Rust files
+	initOptions    map[string]any // extra initializationOptions, ie. the nixpkgs expression for nixd
 	openedVersion  int
 	requestID      int
 	mutex          sync.Mutex
@@ -108,25 +116,53 @@ func (e *Editor) lineUpToX(line, x int) string {
 	return ""
 }
 
-// isMemberAccess reports whether the prefix being completed at the end of
-// the given line follows a struct/union member access operator ("." or "->").
+// isCompletionIdentRune reports whether r can be part of an identifier that is being
+// completed. Nix attribute names may also contain dashes and single quotes.
+func isCompletionIdentRune(r rune, m mode.Mode) bool {
+	if r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r) {
+		return true
+	}
+	return m == mode.Nix && (r == '-' || r == '\'')
+}
+
+// completionPrefix returns the identifier being typed, whether it follows a member
+// access operator (".", "->" or "::") and the identifier in front of that operator.
+// Only the tokens right before the cursor count, so an earlier dot on the line,
+// like "s.alpha + pri", does not end up as part of the prefix.
+func completionPrefix(lineUpToCursor string, m mode.Mode) (string, bool, string) {
+	runes := []rune(lineUpToCursor)
+	start := len(runes)
+	for start > 0 && isCompletionIdentRune(runes[start-1], m) {
+		start--
+	}
+	prefix := string(runes[start:])
+
+	opLen := 0
+	switch {
+	case start >= 2 && runes[start-2] == ':' && runes[start-1] == ':':
+		opLen = 2
+	case start >= 2 && runes[start-2] == '-' && runes[start-1] == '>':
+		opLen = 2
+	case start >= 1 && runes[start-1] == '.':
+		opLen = 1
+	}
+	if opLen == 0 {
+		return prefix, false, ""
+	}
+
+	ownerEnd := start - opLen
+	ownerStart := ownerEnd
+	for ownerStart > 0 && isCompletionIdentRune(runes[ownerStart-1], m) {
+		ownerStart--
+	}
+	return prefix, true, string(runes[ownerStart:ownerEnd])
+}
+
+// isMemberAccess reports whether the prefix being completed follows a
+// member access operator (".", "->" or "::").
 func isMemberAccess(lineUpToCursor string) bool {
-	i := len(lineUpToCursor)
-	for i > 0 {
-		r := rune(lineUpToCursor[i-1])
-		if r == '_' || (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
-			i--
-			continue
-		}
-		break
-	}
-	if i >= 2 && lineUpToCursor[i-2:i] == "->" {
-		return true
-	}
-	if i >= 1 && lineUpToCursor[i-1] == '.' {
-		return true
-	}
-	return false
+	_, member, _ := completionPrefix(lineUpToCursor, mode.Blank)
+	return member
 }
 
 // lspSnippetPlaceholder matches LSP snippet placeholders like ${1:name}, ${0}, $1, $0.
@@ -233,7 +269,7 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		Command:         "nixd",
 		Args:            []string{},
 		LanguageID:      "nix",
-		RootMarkerFiles: []string{"flake.nix", "shell.nix"},
+		RootMarkerFiles: []string{"flake.nix", "default.nix", "shell.nix", ".git"},
 		FileExtensions:  []string{".nix"},
 	},
 	mode.Python: {
@@ -292,6 +328,97 @@ var lspConfigs = map[mode.Mode]LSPConfig{
 		RootMarkerFiles: []string{"ols.json", ".git"},
 		FileExtensions:  []string{".odin"},
 	},
+}
+
+// Fallback language servers, in prioritized order
+var lspFallbacks = map[mode.Mode][]LSPConfig{
+	mode.Python: {{Command: "pylsp", Args: []string{}}},
+	mode.Nix:    {{Command: "nil", Args: []string{}}},
+}
+
+// lspServerFor returns the language server command and arguments for the given mode,
+// including fallbacks. The last return value is false if none was found in the PATH.
+func lspServerFor(m mode.Mode) (string, []string, bool) {
+	config, ok := lspConfigs[m]
+	if !ok {
+		return "", nil, false
+	}
+	if files.WhichCached(config.Command) != "" {
+		return config.Command, config.Args, true
+	}
+	for _, fallback := range lspFallbacks[m] {
+		if files.WhichCached(fallback.Command) != "" {
+			return fallback.Command, fallback.Args, true
+		}
+	}
+	return config.Command, config.Args, false
+}
+
+// nixpkgsAvailable checks if <nixpkgs> is likely to be resolvable. Handing nixd an
+// expression that can not be evaluated takes down its evaluator on every completion.
+func nixpkgsAvailable() bool {
+	if strings.Contains(os.Getenv("NIX_PATH"), "nixpkgs") {
+		return true
+	}
+	candidates := []string{"/nix/var/nix/profiles/per-user/root/channels/nixpkgs"}
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		candidates = append(candidates, filepath.Join(homeDir, ".nix-defexpr", "channels", "nixpkgs"))
+	}
+	for _, dir := range candidates {
+		if _, err := os.Stat(dir); err == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// nixpkgsExpr returns a Nix expression for a nixpkgs package set, or an empty string
+// if none is available. Flakes use their own input, to match the pinned revision.
+func nixpkgsExpr(workspaceRoot string) string {
+	if _, err := os.Stat(filepath.Join(workspaceRoot, "flake.nix")); err == nil {
+		return fmt.Sprintf("(builtins.getFlake %q).inputs.nixpkgs.legacyPackages.${builtins.currentSystem}", workspaceRoot)
+	}
+	if nixpkgsAvailable() {
+		return "import <nixpkgs> { }"
+	}
+	return ""
+}
+
+// nixosOptionsExpr returns a Nix expression for the NixOS options of this machine,
+// for completing option names in configuration.nix. Empty if /etc/nixos is not a flake.
+func nixosOptionsExpr() string {
+	if _, err := os.Stat("/etc/nixos/flake.nix"); err != nil {
+		return ""
+	}
+	hostname, err := os.Hostname()
+	if err != nil || hostname == "" {
+		return ""
+	}
+	return fmt.Sprintf("(builtins.getFlake \"/etc/nixos\").nixosConfigurations.%q.options", hostname)
+}
+
+// lspInitializationOptions returns the initializationOptions for the given language
+// server, or nil. nixd can not complete from nixpkgs without being told to evaluate it.
+func lspInitializationOptions(m mode.Mode, command, workspaceRoot string) map[string]any {
+	if m != mode.Nix || command != "nixd" {
+		return nil
+	}
+	options := map[string]any{}
+	if expr := nixpkgsExpr(workspaceRoot); expr != "" {
+		options["nixpkgs"] = map[string]any{"expr": expr}
+	}
+	for _, formatter := range []string{"nixfmt", "alejandra", "nixpkgs-fmt"} {
+		if files.WhichCached(formatter) != "" {
+			options["formatting"] = map[string]any{"command": []string{formatter}}
+			break
+		}
+	}
+	if expr := nixosOptionsExpr(); expr != "" {
+		options["options"] = map[string]any{
+			"nixos": map[string]any{"expr": expr},
+		}
+	}
+	return options
 }
 
 // NewLSPClient creates a new LSP client for the given language server command
@@ -426,6 +553,14 @@ func (lsp *LSPClient) readLoop() {
 		if err := json.Unmarshal(body, &result); err != nil {
 			continue
 		}
+		// Answered here, not in readResponse, since servers may block on the
+		// reply while nothing is waiting for a response
+		if method, hasMethod := result["method"].(string); hasMethod {
+			if reqID, hasID := result["id"]; hasID {
+				lsp.answerServerRequest(method, reqID, result["params"])
+			}
+			continue // notifications are not handled yet
+		}
 		select {
 		case lsp.msgCh <- result:
 		case <-lsp.done:
@@ -434,8 +569,40 @@ func (lsp *LSPClient) readLoop() {
 	}
 }
 
-// readResponse reads the JSON-RPC response matching expectedID,
-// skipping notifications and acknowledging server-to-client requests.
+// answerServerRequest replies to a request from the language server. workspace/configuration
+// needs one settings object per requested item, which is how nixd picks up its nixpkgs expression.
+func (lsp *LSPClient) answerServerRequest(method string, reqID, params any) {
+	var result any
+	if method == "workspace/configuration" {
+		items := []any{}
+		if paramMap, ok := params.(map[string]any); ok {
+			if requested, ok := paramMap["items"].([]any); ok {
+				items = requested
+			}
+		}
+		settings := make([]any, 0, len(items))
+		for range items {
+			if len(lsp.initOptions) > 0 {
+				settings = append(settings, lsp.initOptions)
+			} else {
+				settings = append(settings, map[string]any{})
+			}
+		}
+		result = settings
+	}
+	lsp.mutex.Lock()
+	defer lsp.mutex.Unlock()
+	if !lsp.running {
+		return
+	}
+	lsp.writeMessage(map[string]any{
+		"jsonrpc": "2.0",
+		"id":      reqID,
+		"result":  result,
+	})
+}
+
+// readResponse reads the JSON-RPC response matching expectedID.
 // NOTE: only one goroutine should call readResponse at a time;
 // concurrent callers would race on msgCh and discard each other's responses.
 func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[string]any, error) {
@@ -450,19 +617,6 @@ func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[s
 				lsp.openedURI = ""
 				lsp.mutex.Unlock()
 				return nil, errors.New("LSP connection closed")
-			}
-			// server-to-client request -- acknowledge it
-			if _, hasMethod := result["method"]; hasMethod {
-				if reqID, hasID := result["id"]; hasID {
-					lsp.mutex.Lock()
-					lsp.writeMessage(map[string]any{
-						"jsonrpc": "2.0",
-						"id":      reqID,
-						"result":  nil,
-					})
-					lsp.mutex.Unlock()
-				}
-				continue
 			}
 			if idVal, hasID := result["id"]; hasID {
 				if id, ok := idVal.(float64); ok && int(id) == expectedID {
@@ -484,6 +638,14 @@ func (lsp *LSPClient) Initialize() error {
 		"rootUri":   "file://" + lsp.workspaceRoot,
 		"rootPath":  lsp.workspaceRoot,
 		"capabilities": map[string]any{
+			"workspace": map[string]any{
+				// nixd fetches its configuration with workspace/configuration and
+				// gives up on completions entirely if the client can not serve it
+				"configuration": true,
+				"didChangeConfiguration": map[string]any{
+					"dynamicRegistration": true,
+				},
+			},
 			"textDocument": map[string]any{
 				"completion": map[string]any{
 					"completionItem": map[string]any{
@@ -493,10 +655,13 @@ func (lsp *LSPClient) Initialize() error {
 			},
 		},
 	}
+	initOptions := make(map[string]any, len(lsp.initOptions)+1)
+	maps.Copy(initOptions, lsp.initOptions)
 	if len(lsp.linkedProjects) > 0 {
-		params["initializationOptions"] = map[string]any{
-			"linkedProjects": lsp.linkedProjects,
-		}
+		initOptions["linkedProjects"] = lsp.linkedProjects
+	}
+	if len(initOptions) > 0 {
+		params["initializationOptions"] = initOptions
 	}
 	if id, err := lsp.sendRequest("initialize", params); err != nil {
 		return err
@@ -505,6 +670,12 @@ func (lsp *LSPClient) Initialize() error {
 	}
 	if err := lsp.sendNotification("initialized", map[string]any{}); err != nil {
 		return err
+	}
+	// nixd and others only pick up the configuration if it also arrives as a notification
+	if len(lsp.initOptions) > 0 {
+		lsp.sendNotification("workspace/didChangeConfiguration", map[string]any{
+			"settings": lsp.initOptions,
+		})
 	}
 	lsp.initialized = true
 	return nil
@@ -791,23 +962,9 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 		return nil, fmt.Errorf("no LSP configuration for mode %v", m)
 	}
 
-	command := config.Command
-	args := config.Args
-
-	// Some languages may have LSP server fallbacks if the initial server is missing
-	if files.WhichCached(config.Command) == "" {
-		switch m {
-		case mode.Python:
-			if files.WhichCached("pylsp") != "" {
-				command = "pylsp"
-				args = []string{}
-			}
-		case mode.Nix:
-			if files.WhichCached("nil") != "" {
-				command = "nil"
-				args = []string{}
-			}
-		}
+	command, args, found := lspServerFor(m)
+	if !found {
+		return nil, errors.New(config.Command + " is missing")
 	}
 
 	client, err := NewLSPClient(command, args, workspaceRoot)
@@ -817,6 +974,7 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 	if len(linkedProjects) > 0 {
 		client.linkedProjects = linkedProjects
 	}
+	client.initOptions = lspInitializationOptions(m, command, workspaceRoot)
 	if err := client.Initialize(); err != nil {
 		client.Shutdown()
 		return nil, err
@@ -1065,36 +1223,9 @@ func gatherCodebaseStatistics(workspaceRoot string, fileExtensions []string) map
 
 // sortAndFilterCompletions sorts completions by relevance
 func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspaceRoot string, fileExtensions []string, m mode.Mode) []LSPCompletionItem {
-	// Trim whitespace from context
-	context = strings.TrimSpace(context)
-
-	// Determine if we're completing after a dot/colon (member access) or a standalone identifier
-	var prefix string
-	var isMemberAccess bool
-
-	if strings.Contains(context, ".") {
-		parts := strings.Split(context, ".")
-		if len(parts) > 0 {
-			prefix = strings.ToLower(parts[len(parts)-1])
-		}
-		isMemberAccess = true
-	} else if strings.Contains(context, ":") && strings.Contains(context, "::") {
-		// Namespace/module access like std::
-		parts := strings.Split(context, "::")
-		if len(parts) > 0 {
-			prefix = strings.ToLower(parts[len(parts)-1])
-		}
-		isMemberAccess = true
-	} else {
-		// Completing a standalone identifier - extract the last word
-		words := strings.FieldsFunc(context, func(r rune) bool {
-			return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_'
-		})
-		if len(words) > 0 {
-			prefix = strings.ToLower(words[len(words)-1])
-		}
-		isMemberAccess = false
-	}
+	// what is being typed, and if it follows ie. "pkgs.", "foo->" or "std::"
+	rawPrefix, isMemberAccess, packageName := completionPrefix(context, m)
+	prefix := strings.ToLower(rawPrefix)
 
 	// Common methods that should be prioritized (especially for Rust)
 	commonMethods := map[string]int{
@@ -1115,15 +1246,8 @@ func sortAndFilterCompletions(items []LSPCompletionItem, context string, workspa
 
 	// Gather codebase statistics
 	codebaseStats := gatherCodebaseStatistics(workspaceRoot, fileExtensions)
-	hasDot := strings.HasSuffix(context, ".") || strings.HasSuffix(context, ":")
-	var packageName string
-	if hasDot {
-		if parts := strings.Split(context, "."); len(parts) >= 2 {
-			packageName = parts[len(parts)-2]
-		} else if parts := strings.Split(context, ":"); len(parts) >= 2 {
-			packageName = parts[len(parts)-2]
-		}
-	}
+	// when the cursor sits right after ie. "pkgs.", don't offer "pkgs" itself
+	hasDot := isMemberAccess && prefix == ""
 
 	scored := make([]scoredItem, 0, len(items))
 	for _, item := range items {
@@ -1373,7 +1497,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 			client.openedURI = ""
 			return nil, err
 		}
-		if needsWorkspaceSetup(e.mode) {
+		if slowToWarmUp(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1458,16 +1582,10 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		return false
 	}
 
-	// For Python, fall back to pylsp if pyright-langserver is not installed
-	lspCommand := config.Command
-	if e.mode == mode.Python && files.WhichCached(config.Command) == "" {
-		if files.WhichCached("pylsp") != "" {
-			lspCommand = "pylsp"
-		}
-	}
-
-	if _, err := exec.LookPath(lspCommand); err != nil {
-		status.SetMessageAfterRedraw(lspCommand + " is missing")
+	// falls back to ie. "nil" for Nix, if "nixd" is missing
+	lspCommand, _, found := lspServerFor(e.mode)
+	if !found {
+		status.SetMessageAfterRedraw(config.Command + " is missing")
 		return false
 	}
 
@@ -1597,7 +1715,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
 			return false
 		}
-		if needsWorkspaceSetup(e.mode) {
+		if slowToWarmUp(e.mode) {
 			time.Sleep(50 * time.Millisecond)
 		}
 	}
@@ -1640,7 +1758,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, e.mode)
 
-		if len(items) > 0 || !needsWorkspaceSetup(e.mode) {
+		if len(items) > 0 || !slowToWarmUp(e.mode) {
 			break
 		}
 
@@ -1722,7 +1840,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 	stopSpinner()
 
-	currentWord := e.CurrentWord()
 	choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false)
 	if choice < 0 || choice >= len(items) {
 		return false
@@ -1797,6 +1914,11 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		addParens = " "
 	}
 
+	// Nix applies functions by juxtaposition, and mostly completes attribute names
+	if e.mode == mode.Nix {
+		addParens = ""
+	}
+
 	// For C/C++, don't add parens for qualified completions (e.g. std::cout)
 	// or struct/union member access (foo.bar, foo->bar), unless the Kind
 	// explicitly indicates a callable
@@ -1812,26 +1934,10 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		rangeStart := items[choice].TextEdit.Range.Start.Character
 		rangeEnd := items[choice].TextEdit.Range.End.Character
 		charsToDelete = rangeEnd - rangeStart
-	} else if currentWord != "" {
-		charsToDelete = len([]rune(currentWord))
 	} else {
-		// extract prefix from the current line
-		trimmedLine := strings.TrimSpace(currentLine)
-		if strings.Contains(trimmedLine, ".") {
-			parts := strings.Split(trimmedLine, ".")
-			if len(parts) > 0 {
-				prefix := parts[len(parts)-1]
-				charsToDelete = len([]rune(prefix))
-			}
-		} else {
-			words := strings.FieldsFunc(trimmedLine, func(r rune) bool {
-				return !unicode.IsLetter(r) && !unicode.IsDigit(r) && r != '_'
-			})
-			if len(words) > 0 {
-				prefix := words[len(words)-1]
-				charsToDelete = len([]rune(prefix))
-			}
-		}
+		// replace only the identifier, keeping any "pkgs." in front of it
+		prefix, _, _ := completionPrefix(currentLine, e.mode)
+		charsToDelete = len([]rune(prefix))
 	}
 
 	if charsToDelete > 0 {
