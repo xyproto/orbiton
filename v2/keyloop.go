@@ -1696,12 +1696,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 		case "c:16": // ctrl-p, scroll up or jump to the previous match, using the sticky search term. In debug mode, change the pane layout.
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
-				e.SaveLocation()
-				// go to the previous file, if launched from the file browser
-				e.linesMut.Unlock()
-				return "", megafile.PreviousFile, nil
-			}
+
 			if !e.nanoMode.Load() {
 				e.UseStickySearchTerm()
 				if e.SearchTerm() != "" {
@@ -1776,15 +1771,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
 
-			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
-				e.SaveLocation()
-				// go to the next file, if launched from the file browser
-				e.linesMut.Unlock()
-				return "", megafile.NextFile, nil
-			}
-
 			if !e.nanoMode.Load() {
-
 				e.UseStickySearchTerm()
 				if e.SearchTerm() != "" {
 					// Go to next match
