@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] In the Linux Console, when using the Litmus theme, Markdown tables are the same gray as the background.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] When jumping to a letter with ctrl-l, if "W" is on screen, but not "w", then both "W" and "w" should jump to "W.
 - [ ] Add a built-in Assembler + Disassembler?
