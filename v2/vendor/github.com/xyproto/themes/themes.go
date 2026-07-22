@@ -584,7 +584,7 @@ func NewLitmusTheme() Theme {
 		TableColor:                  vt.Black,
 		CheckboxColor:               vt.Black,
 		XColor:                      vt.Red,
-		TableBackground:             vt.BackgroundGray,
+		TableBackground:             vt.BackgroundBlack,
 		UnmatchedParenColor:         vt.Yellow,
 		MenuTitleColor:              vt.Black,
 		MenuArrowColor:              vt.Red,
