@@ -153,7 +153,7 @@ github.com/xyproto/syntax
 # github.com/xyproto/termtitle v1.5.1
 ## explicit; go 1.11
 github.com/xyproto/termtitle
-# github.com/xyproto/themes v1.0.1
+# github.com/xyproto/themes v1.0.2
 ## explicit; go 1.25.1
 github.com/xyproto/themes
 # github.com/xyproto/usermodel v1.3.0

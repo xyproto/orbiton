@@ -40,7 +40,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/xyproto/themes v1.0.1
+require github.com/xyproto/themes v1.0.2
 
 require github.com/xyproto/slay v1.3.2
 

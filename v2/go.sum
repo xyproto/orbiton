@@ -123,8 +123,8 @@ github.com/xyproto/syntax v1.14.7 h1:5xLLLpYT/kDcNk2/gOg3pCn9VzQcP7yoqvwAWu7gH8o
 github.com/xyproto/syntax v1.14.7/go.mod h1:5VgzmnRaG9vEY4yQcPxtgQNPTqUS+4tMiP2Pllje8BE=
 github.com/xyproto/termtitle v1.5.1 h1:L1I+6juzNQk+BsoPCYw2c+3unEv4pxQqcyIoO9Xb3qc=
 github.com/xyproto/termtitle v1.5.1/go.mod h1:U+yMnuL9ENDJy9+OCDEiEx01b7Uk6Zu6g1O22xY/rvQ=
-github.com/xyproto/themes v1.0.1 h1:whLLpXZGlNTLCub34AsdtHvuz2J9RrzRMCEbyySZwaQ=
-github.com/xyproto/themes v1.0.1/go.mod h1:QLaYWv2NkxqS4F2Hc9WikQ/xWbZxIcobHHYGN/t7EjU=
+github.com/xyproto/themes v1.0.2 h1:aAjknx0SnRctrUG6UgY7qgrzf6fub/4sDAhHcsRqiJo=
+github.com/xyproto/themes v1.0.2/go.mod h1:QLaYWv2NkxqS4F2Hc9WikQ/xWbZxIcobHHYGN/t7EjU=
 github.com/xyproto/usermodel v1.3.0 h1:WVtjXSKZUBn754DvdSjA08tX86UdyLGbv1XU5VyWVMc=
 github.com/xyproto/usermodel v1.3.0/go.mod h1:gdT4d6KlASXDFnQl5gzRi73Jwb5YP338x2sC/0PqwPg=
 github.com/xyproto/vt v1.9.13 h1:eRdqQmEmkop545tJPqlQtjBIViwsTrXpPculTwfbBjI=
