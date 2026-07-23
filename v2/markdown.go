@@ -274,9 +274,9 @@ func (e *Editor) markdownHighlight(line string, inCodeBlock bool, listItemRecord
 	// Table
 	if strings.HasPrefix(rest, "|") || strings.HasSuffix(rest, "|") {
 		if strings.HasPrefix(line, "|-") {
-			return e.TableColor.String() + line + e.TableBackground.String(), true, false
+			return e.TableBackground.String() + e.TableColor.String() + line, true, false
 		}
-		return strings.ReplaceAll(line, "|", e.TableColor.String()+"|"+e.TableBackground.String()), true, false
+		return strings.ReplaceAll(line, "|", e.TableBackground.String()+e.TableColor.String()+"|"), true, false
 	}
 
 	// Split the rest of the line into words

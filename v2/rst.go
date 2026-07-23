@@ -228,10 +228,10 @@ func (e *Editor) rstHighlightNormal(line, leadingSpace, rest string, dataPos int
 	// Table lines (grid tables use +---+---+ and |   |   |, simple tables use === and ---)
 	// Check tables before block quotes to avoid "|cell|" being misidentified
 	if strings.HasPrefix(rest, "+") && strings.HasSuffix(rest, "+") && (strings.Contains(rest, "-") || strings.Contains(rest, "=")) {
-		return e.TableColor.String() + line + e.TableBackground.String(), true, toggleCodeBlock
+		return e.TableBackground.String() + e.TableColor.String() + line, true, toggleCodeBlock
 	}
 	if strings.HasPrefix(rest, "|") && strings.HasSuffix(rest, "|") && strings.Count(rest, "|") >= 2 {
-		return strings.ReplaceAll(line, "|", e.TableColor.String()+"|"+e.TableBackground.String()), true, toggleCodeBlock
+		return strings.ReplaceAll(line, "|", e.TableBackground.String()+e.TableColor.String()+"|"), true, toggleCodeBlock
 	}
 
 	// Block quote marker: line starting with "| " (line block) but not a table row
