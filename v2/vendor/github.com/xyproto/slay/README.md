@@ -8,7 +8,7 @@ Zero-configuration build tool for C and C++ projects.
 
 Have you ever had a single `main.cpp` file that you just want to compile, without having to make sure the order of flags are correct and ideally without having to provide any flags at all?
 
-**Slay** (or `slay` for short) handles compiler detection, flag ordering, library discovery via `pkg-config`, testing, formatting, cross-compilation, etc., without a single configuration file.
+**Slay** handles compiler detection, flag ordering, library discovery via `pkg-config`, testing, formatting, cross-compilation, etc., without a single configuration file.
 
 It should be possible to compile all of the examples in the `examples` directory, simply by running `slay` in each directory, as long as the right packages and libraries have been installed.
 
@@ -30,7 +30,7 @@ The auto-detection of external libraries and headers relies on them being includ
 
 If you like, you can add this shield to your project to indicate that it can be compiled without any particular build-related configuration:
 
-![Compiles with Slay](https://img.shields.io/badge/Compiles_with-Slay-2fc298)
+![Builds with Slay](https://img.shields.io/badge/Builds_with-Slay-2fc298)
 
 Just make sure that it builds with `slay` first, then add this to your `README.md`:
 
@@ -442,5 +442,5 @@ In both cases, a GCC or Clang compiler must be available on PATH.
 ## General Info
 
 * License: BSD-3
-* Version: 1.3.2
+* Version: 1.3.3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;
