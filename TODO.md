@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When viewing a man page and then pressing ctrl-f to search, then pressing esc should clear the source and not exit right away.
 - [ ] Also support info pages.
 - [ ] Remember the last location when viewing man pages.
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
