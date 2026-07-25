@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Also support info pages.
+- [ ] Remember the last location when viewing man pages.
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Fix the issue with some recordings in rec/ having stopped working:
       debug_c, debug_go, simple_bash, simple_zig
