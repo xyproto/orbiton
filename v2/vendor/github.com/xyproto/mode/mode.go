@@ -132,6 +132,7 @@ const (
 	TOML                  // TOML configuration
 	TypeScript            // TypeScript
 	V                     // V programming language
+	VersionChecker        // .nvchecker.toml / pkgctl version check
 	Vim                   // Vim or NeoVim configuration, or .vim scripts
 	WGSL                  // WebGPU Shading Language
 	WordGrinder           // WordGrinder
@@ -405,6 +406,8 @@ func (mode Mode) String() string {
 		return "WordGrinder"
 	case V:
 		return "V"
+	case VersionChecker:
+		return "Version checker"
 	case XML:
 		return "XML"
 	case YAML:
