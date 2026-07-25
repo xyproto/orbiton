@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Fix the issue with some recordings in rec/ having stopped working:
       debug_c, debug_go, simple_bash, simple_zig
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
