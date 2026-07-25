@@ -48,6 +48,8 @@ func (e *Editor) Run() (string, bool, error) {
 			audioOutputFlag = "-Od" // macOS
 		}
 		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, filepath.Join(tempDir, "o.mid"))
+	case mode.VersionChecker:
+		cmd = exec.Command("pkgctl version check", sourceFilename)
 	case mode.Shell:
 		cmd = exec.Command("bash", sourceFilename)
 	case mode.Chuck:

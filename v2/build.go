@@ -347,6 +347,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("bash", "-n", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.VersionChecker:
+		cmd = exec.Command("pkgctl", "version", "check", ".")
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Chuck, mode.SuperCollider:
 		cmd = exec.Command("true")
 		cmd.Dir = sourceDir

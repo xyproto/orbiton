@@ -333,6 +333,16 @@ func GetTemplatePrograms() TemplatePrograms {
 				2,
 				9,
 			},
+			mode.VersionChecker: {
+				`[NAME]
+source = "git"
+git = "https://github.com/USER/PROJECT.git"
+from_pattern = '^(\d+)-(\d+)-(\d+)$'
+to_pattern = '\1.\2.\3'
+`,
+				3,
+				30,
+			},
 			mode.Zig: {
 				"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.fs.File.stdout();\n    try stdout.writeAll(\"Hello, World!\\n\");\n}\n",
 				2,
