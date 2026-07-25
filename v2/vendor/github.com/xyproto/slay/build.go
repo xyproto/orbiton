@@ -2,13 +2,14 @@ package slay
 
 import (
 	"fmt"
-	"github.com/xyproto/files"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/xyproto/files"
 )
 
 // BuildOptions holds the configuration for a build.
@@ -109,10 +110,11 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		if !opts.NoSanitizers {
 			bf.CFlags = append(bf.CFlags, "-fsanitize=address")
 			bf.LDFlags = append(bf.LDFlags, "-fsanitize=address")
+			// Only link the sanitizer statically if the static library is installed
 			if !isDarwin() {
 				if isCompilerClang(compiler) {
 					bf.CFlags = append(bf.CFlags, "-static-libsan")
-				} else if isCompilerGCC(compiler) {
+				} else if isCompilerGCC(compiler) && compilerHasLib(compiler, "libasan.a") {
 					bf.CFlags = append(bf.CFlags, "-static-libasan")
 				}
 			}
@@ -250,9 +252,10 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		bf.LDFlags = appendUnique(bf.LDFlags, "-lm")
 	}
 
-	// Filesystem (only needed for GCC < 9; newer GCC and all Clang include it in libstdc++)
-	if proj.HasFS && isLinux() {
-		if isCompilerGCC(compiler) && gccMajorVersion(compiler) < 9 {
+	// Filesystem: <filesystem> only needs libstdc++fs for GCC < 9, but
+	// <experimental/filesystem> always lives there
+	if proj.HasExperimentalFS || (proj.HasFS && isCompilerGCC(compiler) && gccMajorVersion(compiler) < 9) {
+		if compilerHasLib(compiler, "libstdc++fs.a") {
 			bf.LDFlags = appendUnique(bf.LDFlags, "-lstdc++fs")
 		}
 	}
@@ -352,13 +355,13 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 
 	// Resolve extra flags for special includes
 	extraCFlags, extraLDFlags := resolveExtraFlags(proj.Includes, win64)
-	bf.CFlags = append(bf.CFlags, extraCFlags...)
-	bf.LDFlags = append(bf.LDFlags, extraLDFlags...)
+	bf.CFlags = appendAllUnique(bf.CFlags, extraCFlags)
+	bf.LDFlags = appendAllUnique(bf.LDFlags, extraLDFlags)
 
 	// Resolve via platform package manager for unresolved includes
 	pkgCFlags, pkgLDFlags := resolveIncludesViaPackageManager(proj.Includes, systemIncludeDirs(), win64, bf.Compiler)
-	bf.CFlags = append(bf.CFlags, pkgCFlags...)
-	bf.LDFlags = append(bf.LDFlags, pkgLDFlags...)
+	bf.CFlags = appendAllUnique(bf.CFlags, pkgCFlags)
+	bf.LDFlags = appendAllUnique(bf.LDFlags, pkgLDFlags)
 
 	// lib/ directory
 	if fileExists("lib") {
@@ -375,15 +378,12 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	// Platform-specific library paths (e.g. -L/usr/pkg/lib on NetBSD)
 	bf.LDFlags = append(bf.LDFlags, extraLDLibPaths()...)
 
-	// Append user compile flags from environment
-	if proj.IsC {
-		if userFlags := os.Getenv("CFLAGS"); userFlags != "" {
-			bf.CFlags = append(bf.CFlags, strings.Fields(userFlags)...)
-		}
-	} else {
-		if userFlags := os.Getenv("CXXFLAGS"); userFlags != "" {
-			bf.CFlags = append(bf.CFlags, strings.Fields(userFlags)...)
-		}
+	// Append CPPFLAGS and CFLAGS/CXXFLAGS from the environment last, so that
+	// they can override the flags above. A user-given -std= wins outright.
+	userFlags, userStd := userCompileFlags(proj.IsC)
+	bf.CFlags = append(bf.CFlags, userFlags...)
+	if userStd != "" {
+		bf.Std = userStd
 	}
 
 	// Append user LDFLAGS from environment
@@ -457,6 +457,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("compilation failed: %w", err)
 		}
+		saveFlagStamp(output, flags)
 		return nil
 	}
 
@@ -471,11 +472,14 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	}
 	var jobs []compileJob
 
+	// Different flags than the previous build means everything is recompiled
+	changedFlags := flagsChanged(output, flags)
+
 	for _, src := range srcs {
 		obj := strings.TrimSuffix(src, filepath.Ext(src)) + ".o"
 		objFiles = append(objFiles, obj)
 
-		if needsRecompile(src, obj) {
+		if changedFlags || needsRecompile(src, obj) {
 			needLink = true
 			jobs = append(jobs, compileJob{src, obj})
 		}
@@ -488,6 +492,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 
 	if !needLink {
 		fmt.Println("up to date")
+		saveFlagStamp(output, flags)
 		return nil
 	}
 
@@ -551,13 +556,17 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	args = append(args, flags.LDFlags...)
 
 	cmd := runCompiler(flags, args)
-	fmt.Printf("[%s] ", dirName)
+	if len(jobs) > 0 {
+		// The prefix printed above is already used up by the first compile line
+		fmt.Printf("[%s] ", dirName)
+	}
 	fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("linking failed: %w", err)
 	}
+	saveFlagStamp(output, flags)
 
 	return nil
 }

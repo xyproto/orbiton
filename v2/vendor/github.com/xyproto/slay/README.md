@@ -147,6 +147,36 @@ slay -C <dir> ...      # run in the given directory
 
 Legacy compound commands (`debugbuild`, `clangstrict`, `smallwin64`, etc.) are still accepted.
 
+### Environment variables
+
+| Variable   | Effect                                    |
+|------------|-------------------------------------------|
+| `CC`       | the C compiler to use                     |
+| `CXX`      | the C++ compiler to use                   |
+| `CFLAGS`   | extra flags when compiling C              |
+| `CXXFLAGS` | extra flags when compiling C++            |
+| `CPPFLAGS` | extra flags when compiling both C and C++ |
+| `LDFLAGS`  | extra flags when linking                  |
+
+These are appended after the auto-detected flags, so that they can override them.
+A `-std=` in `CFLAGS` or `CXXFLAGS` replaces the auto-detected standard. For C projects,
+`CXXFLAGS` is used if `CFLAGS` is unset, with the C++-only flags removed. Changing any
+build flag triggers a full rebuild.
+
+```sh
+CXXFLAGS="-O0 -g" slay          # build with a custom optimization level
+CXX=clang++ slay                # build with a specific compiler
+```
+
+Modifiers and variables can also be given the `cxx` way, as `name=value`:
+
+```sh
+slay strict=1                   # same as "slay strict"
+slay std=c++17                  # build with a specific C++ standard
+slay CXXFLAGS="-O0 -g"          # same as setting CXXFLAGS in the environment
+slay PREFIX=/usr install        # install to a specific prefix
+```
+
 ## Example Use
 
 Create a **main.cpp** file:
@@ -248,15 +278,15 @@ myproject/
 
 These defines are passed to the compiler, with paths that work both during development and after installation:
 
-| Define | Development | Installed |
-|---|---|---|
-| `DATADIR` | `./data` or `../data` | `$PREFIX/share/$app/data` |
-| `IMGDIR` | `./img` or `../img` | `$PREFIX/share/$app/img` |
-| `SHADERDIR` | `./shaders` or `../shaders` | `$PREFIX/share/$app/shaders` |
-| `SHAREDIR` | `./share` or `../share` | `$PREFIX/share/$app` |
+| Define        | Development                     | Installed                      |
+|---------------|---------------------------------|--------------------------------|
+| `DATADIR`     | `./data` or `../data`           | `$PREFIX/share/$app/data`      |
+| `IMGDIR`      | `./img` or `../img`             | `$PREFIX/share/$app/img`       |
+| `SHADERDIR`   | `./shaders` or `../shaders`     | `$PREFIX/share/$app/shaders`   |
+| `SHAREDIR`    | `./share` or `../share`         | `$PREFIX/share/$app`           |
 | `RESOURCEDIR` | `./resources` or `../resources` | `$PREFIX/share/$app/resources` |
-| `RESDIR` | `./res` or `../res` | `$PREFIX/share/$app/res` |
-| `SCRIPTDIR` | `./scripts` or `../scripts` | `$PREFIX/share/$app/scripts` |
+| `RESDIR`      | `./res` or `../res`             | `$PREFIX/share/$app/res`       |
+| `SCRIPTDIR`   | `./scripts` or `../scripts`     | `$PREFIX/share/$app/scripts`   |
 
 See `examples/sdl2`, `examples/win64crate` (uses `IMGDIR`) and `examples/mixer` (uses `RESOURCEDIR`).
 
@@ -284,14 +314,14 @@ When a build fails due to a missing header, Slay will suggest which package to i
 
 Over 40 examples are included in the `examples/` directory:
 
-| Category | Examples |
-|---|---|
-| **Basics** | `hello`, `args`, `lambda`, `defer`, `invoke`, `visit`, `async`, `designated`, `entities`, `validorder`, `findfiles`, `platforms`, `config` |
+| Category     | Examples                                                                                                                                                                                                   |
+|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Basics**   | `hello`, `args`, `lambda`, `defer`, `invoke`, `visit`, `async`, `designated`, `entities`, `validorder`, `findfiles`, `platforms`, `config`                                                                 |
 | **Graphics** | `sfml`, `sfml_audio`, `bisqwit`, `sdl2`, `sdl2_opengl`, `sdl3`, `gles3_sdl3`, `gl4_spirv`, `gles2_glfw`, `gles3_glfw`, `glm`, `raylib`, `raylib5`, `vulkan`, `vulkan_glfw`, `x11`, `x11_opengl`, `smallpt` |
-| **GUI** | `gtk4`, `gtk4ui`, `dunnetgtk`, `qt6` |
-| **Audio** | `openal`, `synth`, `mixer`, `pipewire`, `rtaudio` |
-| **Physics** | `box2d`, `reactphysics` |
-| **Other** | `boost`, `boost_thread`, `notify`, `fastcgi`, `tinyhello`, `win64crate` |
+| **GUI**      | `gtk4`, `gtk4ui`, `dunnetgtk`, `qt6`                                                                                                                                                                       |
+| **Audio**    | `openal`, `synth`, `mixer`, `pipewire`, `rtaudio`                                                                                                                                                          |
+| **Physics**  | `box2d`, `reactphysics`                                                                                                                                                                                    |
+| **Other**    | `boost`, `boost_thread`, `notify`, `fastcgi`, `tinyhello`, `win64crate`                                                                                                                                    |
 
 Build all examples:
 
@@ -442,5 +472,5 @@ In both cases, a GCC or Clang compiler must be available on PATH.
 ## General Info
 
 * License: BSD-3
-* Version: 1.3.3
+* Version: 1.3.4
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

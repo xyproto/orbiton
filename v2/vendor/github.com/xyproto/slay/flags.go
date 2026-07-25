@@ -2,6 +2,7 @@ package slay
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
@@ -100,6 +101,9 @@ func pkgNameFromInclude(inc string) string {
 		"libconfig.h++":                   "libconfig++",
 		"libconfig.h":                     "libconfig",
 		"fcgiapp.h":                       "fcgi",
+		"pulse/pulseaudio.h":              "libpulse",
+		"pulse/error.h":                   "libpulse",
+		"pulse/simple.h":                  "libpulse-simple",
 		"pipewire/pipewire.h":             "libpipewire-0.3",
 		"rtaudio/rtaudio.h":               "rtaudio",
 		"raylib.h":                        "raylib",
@@ -365,8 +369,9 @@ func resolveExtraFlags(includes []string, win64 bool) (cflags, ldflags []string)
 }
 
 // mergeFlags splits pkg-config output and adds to cflags/ldflags.
+// Broken .pc files are common, so flags are sanitized first.
 func mergeFlags(cflags, ldflags []string, flags string) ([]string, []string) {
-	for f := range strings.FieldsSeq(flags) {
+	for _, f := range sanitizeFlags(strings.Fields(flags)) {
 		if strings.HasPrefix(f, "-l") || strings.HasPrefix(f, "-L") || strings.HasPrefix(f, "-Wl,") {
 			ldflags = appendUnique(ldflags, f)
 		} else {
@@ -374,6 +379,40 @@ func mergeFlags(cflags, ldflags []string, flags string) ([]string, []string) {
 		}
 	}
 	return cflags, ldflags
+}
+
+// sanitizeFlags removes flags that would confuse the compiler. A .pc file with
+// an unset variable can emit a bare "-L" or "-I", which would then swallow the
+// next argument (as in "-L -lffts"), and paths that do not exist are useless.
+func sanitizeFlags(fields []string) []string {
+	var result []string
+	for i := 0; i < len(fields); i++ {
+		f := fields[i]
+		if f == "-I" || f == "-L" || f == "-l" || f == "-isystem" || f == "-D" {
+			// Join with the next argument, or drop the dangling flag
+			if i+1 < len(fields) && !strings.HasPrefix(fields[i+1], "-") {
+				f += fields[i+1]
+				i++
+			} else {
+				continue
+			}
+		}
+		if path, ok := pathFlagArg(f); ok && !fileExists(path) {
+			continue
+		}
+		result = append(result, f)
+	}
+	return result
+}
+
+// pathFlagArg returns the directory of an -I or -L flag, if it has one.
+func pathFlagArg(flag string) (string, bool) {
+	for _, prefix := range []string{"-I", "-L", "-isystem"} {
+		if path, ok := strings.CutPrefix(flag, prefix); ok && path != "" {
+			return path, true
+		}
+	}
+	return "", false
 }
 
 // findCompiler returns the path to the C++ or C compiler.
@@ -422,6 +461,51 @@ func findCompiler(useClang bool, isC bool) string {
 	return ""
 }
 
+// cxxOnlyFlags are compile flags that only make sense when compiling C++.
+var cxxOnlyFlags = []string{"-fno-rtti", "-frtti", "-fpermissive", "-Weffc++", "-fno-exceptions", "-fvisibility-inlines-hidden"}
+
+// userCompileFlags returns compile flags from the environment: CPPFLAGS applies
+// to both languages, then CFLAGS for C or CXXFLAGS for C++. For C projects,
+// CXXFLAGS is used as a fallback if CFLAGS is unset (like cxx does), with
+// C++-only flags removed. A -std= is returned separately, so that it can
+// replace the auto-detected standard instead of being passed twice.
+func userCompileFlags(isC bool) (flags []string, std string) {
+	fields := strings.Fields(os.Getenv("CPPFLAGS"))
+	if isC {
+		if cflags := strings.Fields(os.Getenv("CFLAGS")); len(cflags) > 0 {
+			fields = append(fields, cflags...)
+		} else {
+			for f := range strings.FieldsSeq(os.Getenv("CXXFLAGS")) {
+				if !slices.Contains(cxxOnlyFlags, f) && !strings.HasPrefix(f, "-std=c++") && !strings.HasPrefix(f, "-std=gnu++") && !strings.HasPrefix(f, "-stdlib=") {
+					fields = append(fields, f)
+				}
+			}
+		}
+	} else {
+		fields = append(fields, strings.Fields(os.Getenv("CXXFLAGS"))...)
+	}
+	for _, f := range fields {
+		if value, ok := strings.CutPrefix(f, "-std="); ok {
+			std = value
+			continue
+		}
+		flags = append(flags, f)
+	}
+	return flags, std
+}
+
+// compilerHasLib reports whether the compiler can find the given library file,
+// like "libstdc++fs.a". Compiler-bundled libraries live outside the system
+// library directories, so ask the compiler itself.
+func compilerHasLib(compiler, filename string) bool {
+	out, err := exec.Command(compiler, "-print-file-name="+filename).Output()
+	if err != nil {
+		return false
+	}
+	// The compiler echoes the plain filename back when the library is not found
+	return fileExists(strings.TrimSpace(string(out)))
+}
+
 // findWin64Compiler returns the path to the mingw64 cross-compiler.
 func findWin64Compiler(isC bool) string {
 	if isC {
@@ -440,23 +524,31 @@ func findWin64Compiler(isC bool) string {
 	return ""
 }
 
+// dirDefine is a project directory and the define that points to it.
+type dirDefine struct {
+	dir    string
+	define string
+}
+
+// dirDefineList is in a fixed order, to keep the build flags stable between runs.
+var dirDefineList = []dirDefine{
+	{"img", "IMGDIR"},
+	{"data", "DATADIR"},
+	{"shaders", "SHADERDIR"},
+	{"shader", "SHADERDIR"},
+	{"share", "SHAREDIR"},
+	{"shared", "SHAREDIR"},
+	{"resources", "RESOURCEDIR"},
+	{"resource", "RESOURCEDIR"},
+	{"res", "RESDIR"},
+	{"scripts", "SCRIPTDIR"},
+}
+
 // dirDefines generates -D flags for data/img/shader directories.
 func dirDefines() []string {
 	var defs []string
-	dirTypes := map[string]string{
-		"img":       "IMGDIR",
-		"data":      "DATADIR",
-		"shaders":   "SHADERDIR",
-		"shader":    "SHADERDIR",
-		"share":     "SHAREDIR",
-		"shared":    "SHAREDIR",
-		"resources": "RESOURCEDIR",
-		"resource":  "RESOURCEDIR",
-		"res":       "RESDIR",
-		"scripts":   "SCRIPTDIR",
-	}
-
-	for dir, define := range dirTypes {
+	for _, dd := range dirDefineList {
+		dir, define := dd.dir, dd.define
 		path := ""
 		if fileExists(dir) {
 			path = dir + "/"
@@ -479,7 +571,7 @@ func bestStdFlag(compiler string) string {
 			return std
 		}
 	}
-	return "c++17"
+	return "c++20"
 }
 
 // bestCStdFlag returns the best C standard flag the compiler supports.
@@ -541,6 +633,13 @@ func appendUnique(slice []string, val string) []string {
 	return append(slice, val)
 }
 
+func appendAllUnique(slice, values []string) []string {
+	for _, val := range values {
+		slice = appendUnique(slice, val)
+	}
+	return slice
+}
+
 // gccMajorVersion returns the GCC major version number, or 0 if the compiler
 // is not GCC or the version cannot be determined.
 func gccMajorVersion(compiler string) int {
@@ -571,23 +670,10 @@ func prependUnique(slice []string, val string) []string {
 // installDirDefines generates -D flags pointing to installed paths.
 func installDirDefines(prefix string) []string {
 	var defs []string
-	dirTypes := map[string]string{
-		"img":       "IMGDIR",
-		"data":      "DATADIR",
-		"shaders":   "SHADERDIR",
-		"shader":    "SHADERDIR",
-		"share":     "SHAREDIR",
-		"shared":    "SHAREDIR",
-		"resources": "RESOURCEDIR",
-		"resource":  "RESOURCEDIR",
-		"res":       "RESDIR",
-		"scripts":   "SCRIPTDIR",
-	}
-
-	for dir, define := range dirTypes {
-		if fileExists(dir) || fileExists(filepath.Join("..", dir)) {
-			path := filepath.Join(prefix, dir) + "/"
-			defs = append(defs, `-D`+define+`="`+path+`"`)
+	for _, dd := range dirDefineList {
+		if fileExists(dd.dir) || fileExists(filepath.Join("..", dd.dir)) {
+			path := filepath.Join(prefix, dd.dir) + "/"
+			defs = append(defs, `-D`+dd.define+`="`+path+`"`)
 		}
 	}
 	return defs

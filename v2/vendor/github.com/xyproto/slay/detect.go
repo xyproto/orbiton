@@ -150,21 +150,22 @@ func detectMinWinVersion(sources []string) int {
 
 // Project holds all detected project information.
 type Project struct {
-	MainSource    string
-	DepSources    []string
-	TestSources   []string
-	Includes      []string // external includes from source files
-	BoostLibs     []string
-	IsC           bool // true if main source is a .c file
-	HasOpenMP     bool
-	HasBoost      bool
-	HasQt6        bool
-	HasMathLib    bool
-	HasFS         bool
-	HasThreads    bool
-	HasWin64      bool // detected from #include <windows.h>
-	HasGLFWVulkan bool // detected from #define GLFW_INCLUDE_VULKAN
-	HasDlopen     bool // detected from #include <dlfcn.h>
+	MainSource        string
+	DepSources        []string
+	TestSources       []string
+	Includes          []string // external includes from source files
+	BoostLibs         []string
+	IsC               bool // true if main source is a .c file
+	HasOpenMP         bool
+	HasBoost          bool
+	HasQt6            bool
+	HasMathLib        bool
+	HasFS             bool
+	HasExperimentalFS bool // detected from #include <experimental/filesystem>
+	HasThreads        bool
+	HasWin64          bool // detected from #include <windows.h>
+	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
+	HasDlopen         bool // detected from #include <dlfcn.h>
 }
 
 // detectProject scans the current directory to detect the project layout.
@@ -177,15 +178,24 @@ func detectProject() Project {
 		p.IsC = true
 	}
 
-	// Scan ALL source files for special flags (not just main)
+	// Resolve common/ sources from includes (iteratively)
+	p.resolveCommonDeps()
+
+	// Final deduplication
+	p.DepSources = uniqueStrings(p.DepSources)
+	p.TestSources = uniqueStrings(p.TestSources)
+
 	allSources := []string{}
 	if p.MainSource != "" {
 		allSources = append(allSources, p.MainSource)
 	}
 	allSources = append(allSources, p.DepSources...)
 	allSources = append(allSources, p.TestSources...)
-	for _, src := range allSources {
-		scanSourceForFlags(src, &p)
+
+	// Scan all source files and project headers for special flags
+	allFiles := slices.Concat(allSources, localHeaderPaths(allSources))
+	for _, filename := range allFiles {
+		scanSourceForFlags(filename, &p)
 	}
 
 	// Verify HasWin64 using the C preprocessor: if windows.h is only
@@ -195,21 +205,8 @@ func detectProject() Project {
 		p.HasWin64 = verifyWin64WithPreprocessor(allSources)
 	}
 
-	// Resolve common/ sources from includes (iteratively)
-	p.resolveCommonDeps()
-
-	// Final deduplication
-	p.DepSources = uniqueStrings(p.DepSources)
-	p.TestSources = uniqueStrings(p.TestSources)
-
-	// Collect external includes from all sources
-	allSrcs := []string{}
-	if p.MainSource != "" {
-		allSrcs = append(allSrcs, p.MainSource)
-	}
-	allSrcs = append(allSrcs, p.DepSources...)
-	allSrcs = append(allSrcs, p.TestSources...)
-	p.Includes = collectExternalIncludes(allSrcs, p.HasWin64)
+	// Collect external includes from all sources and project headers
+	p.Includes = collectExternalIncludes(allFiles, p.HasWin64)
 
 	return p
 }
@@ -245,6 +242,9 @@ func scanSourceForFlags(filename string, p *Project) {
 		}
 		if strings.Contains(line, "#include <filesystem>") {
 			p.HasFS = true
+		}
+		if strings.Contains(line, "#include <experimental/filesystem>") {
+			p.HasExperimentalFS = true
 		}
 		if trimmed == "#include <cmath>" || trimmed == `#include "math.h"` || trimmed == "#include <math.h>" {
 			p.HasMathLib = true
@@ -445,7 +445,7 @@ func collectExternalIncludes(sourceFiles []string, win64 bool) []string {
 			lines = directScanIncludes(sf)
 		}
 		for _, inc := range lines {
-			if stdHeaders[inc] {
+			if stdHeaders[inc] || strings.HasPrefix(inc, "experimental/") {
 				continue
 			}
 			if win64 && win64SkipHeaders[inc] {
@@ -567,7 +567,24 @@ func (p *Project) resolveCommonDeps() {
 	}
 }
 
+// localHeaderPaths resolves the local includes of the given files to existing
+// header paths, so that project headers can be scanned as well.
+func localHeaderPaths(files []string) []string {
+	var result []string
+	for _, inc := range collectLocalIncludes(files) {
+		for _, lp := range localIncludePaths {
+			headerPath := filepath.Join(lp, inc)
+			if fileExists(headerPath) {
+				result = append(result, headerPath)
+				break
+			}
+		}
+	}
+	return uniqueStrings(result)
+}
+
 // collectLocalIncludes extracts #include "..." from source files and their included headers.
+// Angle bracket includes that resolve to a project header are also included.
 func collectLocalIncludes(files []string) []string {
 	seen := make(map[string]bool)
 	var result []string
@@ -592,22 +609,31 @@ func collectLocalIncludes(files []string) []string {
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := strings.TrimSpace(scanner.Text())
+			inc := ""
 			if strings.HasPrefix(line, "#include \"") {
 				parts := strings.SplitN(line, "\"", 3)
 				if len(parts) >= 2 {
-					inc := parts[1]
-					if !seen[inc] {
-						seen[inc] = true
-						result = append(result, inc)
-						// Also scan the included header itself
-						for _, lp := range localIncludePaths {
-							headerPath := filepath.Join(lp, inc)
-							if fileExists(headerPath) {
-								queue = append(queue, headerPath)
-								break
-							}
-						}
+					inc = parts[1]
+				}
+			} else if strings.HasPrefix(line, "#include <") {
+				// Project headers are sometimes included with angle brackets
+				if end := strings.Index(line, ">"); end > 10 {
+					if candidate := line[10:end]; isLocalInclude(candidate) {
+						inc = candidate
 					}
+				}
+			}
+			if inc == "" || seen[inc] {
+				continue
+			}
+			seen[inc] = true
+			result = append(result, inc)
+			// Also scan the included header itself
+			for _, lp := range localIncludePaths {
+				headerPath := filepath.Join(lp, inc)
+				if fileExists(headerPath) {
+					queue = append(queue, headerPath)
+					break
 				}
 			}
 		}

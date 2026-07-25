@@ -136,7 +136,7 @@ func doPro(opts BuildOptions) error {
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
 
 	fmt.Fprintf(f, "TEMPLATE = app\n\n")
-	fmt.Fprintln(f, "CONFIG += c++26")
+	fmt.Fprintln(f, "CONFIG += c++20")
 	fmt.Fprintln(f, "CONFIG -= console")
 	fmt.Fprintln(f, "CONFIG -= app_bundle")
 	fmt.Fprintf(f, "CONFIG -= qt\n\n")
