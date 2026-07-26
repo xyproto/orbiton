@@ -197,31 +197,31 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			})
 		}
 
-		// Reflow text at a custom width + enable wrap when typing
-		actions.Add("Reflow text at...", func() {
-			const tabInputText = "79"
-			if reflowString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Reflow text at [%d]", softWrapLimit), "", []string{}, false, tabInputText, menuBgColor); ok {
-				if strings.TrimSpace(reflowString) == "" {
-					undo.Snapshot(e)
-					e.ReflowText(softWrapLimit)
-					e.wrapWhenTyping = true
-					status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", softWrapLimit))
-				} else {
-					if ww, err := strconv.Atoi(reflowString); err != nil {
-						status.Clear(c, false)
-						status.SetError(err)
-						status.Show(c, e)
-					} else {
+		if !ProgrammingLanguage(e.mode) {
+			// Reflow text at a custom width + enable wrap when typing
+			actions.Add("Reflow text at...", func() {
+				const tabInputText = "79"
+				if reflowString, ok := e.UserInput(c, tty, status, fmt.Sprintf("Reflow text at [%d]", softWrapLimit), "", []string{}, false, tabInputText, menuBgColor); ok {
+					if strings.TrimSpace(reflowString) == "" {
 						undo.Snapshot(e)
-						e.ReflowText(ww)
+						e.ReflowText(softWrapLimit)
 						e.wrapWhenTyping = true
-						status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", ww))
+						status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", softWrapLimit))
+					} else {
+						if ww, err := strconv.Atoi(reflowString); err != nil {
+							status.Clear(c, false)
+							status.SetError(err)
+							status.Show(c, e)
+						} else {
+							undo.Snapshot(e)
+							e.ReflowText(ww)
+							e.wrapWhenTyping = true
+							status.SetMessageAfterRedraw(fmt.Sprintf("Reflow text at %d", ww))
+						}
 					}
 				}
-			}
-		})
-
-		if ProgrammingLanguage(e.mode) {
+			})
+		} else { // ProgrammingLanguage(e.mode)
 			var alsoRun = false
 			var menuItemText = "Export"
 			if e.CanRun() {
