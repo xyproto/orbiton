@@ -1731,10 +1731,13 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// request completions, retrying until timeout for Rust/C/C++
+	// request completions, retrying until timeout for language servers that are slow to warm up
+	// and also for the first request to a freshly started server, since ie. bash-language-server
+	// answers with an empty list until it has fetched its configuration from the client
 	var items []LSPCompletionItem
 	completionDeadline := time.Now().Add(lspCompletionWaitTimeout)
 	retryDelay := 500 * time.Millisecond
+	mayRetry := isNewClient || slowToWarmUp(e.mode)
 
 	for {
 		items, err = client.GetCompletions(uri, line, x, triggerChar)
@@ -1758,7 +1761,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, e.mode)
 
-		if len(items) > 0 || !slowToWarmUp(e.mode) {
+		if len(items) > 0 || !mayRetry {
 			break
 		}
 
