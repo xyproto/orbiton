@@ -344,8 +344,8 @@ to_pattern = '\1.\2.\3'
 				30,
 			},
 			mode.Zig: {
-				"const std = @import(\"std\");\n\npub fn main() !void {\n    const stdout = std.fs.File.stdout();\n    try stdout.writeAll(\"Hello, World!\\n\");\n}\n",
-				2,
+				"const std = @import(\"std\");\n\npub fn main(init: std.process.Init) !void {\n    var buf: [1024]u8 = undefined;\n    var file_writer = std.Io.File.Writer.init(.stdout(), init.io, &buf);\n    const stdout = &file_writer.interface;\n    try stdout.writeAll(\"Hello, World!\\n\");\n    try stdout.flush();\n}\n",
+				3,
 				21,
 			},
 		}
