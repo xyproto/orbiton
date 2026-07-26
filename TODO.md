@@ -7,8 +7,6 @@
 - [ ] Also support info pages.
 - [ ] Remember the last location when viewing man pages.
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
-- [ ] Fix the issue with some recordings in rec/ having stopped working:
-      debug_c, debug_go, simple_bash, simple_zig
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] When jumping to a letter with ctrl-l, if `W` is on screen, but not `w`, then both `W` and `w` should jump to `W`.
 - [ ] Add a built-in Assembler + Disassembler?
