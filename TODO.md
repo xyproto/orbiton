@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Sometimes when pasting in text, there is no X scroll.
 - [ ] When viewing a man page and then pressing ctrl-f to search, then pressing esc should clear the source and not exit right away.
 - [ ] Also support info pages.
 - [ ] Remember the last location when viewing man pages.
