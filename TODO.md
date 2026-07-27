@@ -2,12 +2,14 @@
 
 ## General
 
+- [ ] Fix the graphical book mod bullet point symbols when running under iTerm2.
 - [ ] Sometimes when pasting in text, there is no X scroll.
 - [ ] When viewing a man page and then pressing ctrl-f to search, then pressing esc should clear the source and not exit right away.
 - [ ] Also support info pages.
 - [ ] Remember the last location when viewing man pages.
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
+- [ ] Add support for Common Lisp / CMUCL.
 - [ ] When jumping to a letter with ctrl-l, if `W` is on screen, but not `w`, then both `W` and `w` should jump to `W`.
 - [ ] Add a built-in Assembler + Disassembler?
 - [ ] Add a menu entry for generating a Go report card (text + image) using https://github.com/gojp/goreportcard.
