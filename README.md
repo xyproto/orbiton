@@ -224,7 +224,7 @@ There are pretty few hotkeys to remember:
 * `ctrl-i` - Toggle italic (`*`) in book mode.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
              Double press to toggle block editing mode. Toggle paragraph indent in book mode.
-* `ctrl-g` - Go to include or definition, or toggle the status bar.
+* `ctrl-g` - Go to include or definition, go back or toggle the status bar.
 * `ctrl-r` - Jump to matching bracket, otherwise open or close a portal. Double press to toggle "wrap when typing".
              For git interactive rebase, cycle keywords.
 * `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.

@@ -40,7 +40,7 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
             double press to toggle block edit mode
-ctrl-g      go to include or definition, or toggle the status bar
+ctrl-g      go to include or definition, go back or toggle the status bar
 ctrl-r      to jump to matching bracket, otherwise open or close a portal.
             Double press to toggle "wrap when typing". For git interactive
             rebase, cycle keywords.
