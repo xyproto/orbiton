@@ -55,7 +55,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
-	github.com/lucasb-eyer/go-colorful v1.4.0 // indirect
+	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d // indirect
 	github.com/xfmoulet/qoi v0.2.0 // indirect
 	github.com/xyproto/burnpal v1.1.1 // indirect
