@@ -1921,13 +1921,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.ClearSelection()
 			e.showTypoHighlights = false
 			c.ShowCursor()
-			// Go back to the previous location if there are breadcrumbs
-			if bc, ok := popBreadcrumb(); ok {
-				bc.BackFunc()
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
-			}
+
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
 				clearOnQuit.Store(false)
@@ -2485,6 +2479,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.ClearSearch()
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
+			}
+
+			// Go back to the previous location if there are breadcrumbs
+			if bc, ok := popBreadcrumb(); ok {
+				bc.BackFunc()
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
 			}
 
 			oldFilename := e.filename
