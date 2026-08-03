@@ -943,7 +943,7 @@ func (e *Editor) bookCurrentHeadingAt(line LineIndex) (string, LineIndex, error)
 			continue
 		}
 		for _, prefix := range []string{"# ", "## ", "### ", "#### ", "##### ", "###### "} {
-			if strings.HasPrefix(raw, prefix) {
+			if strings.HasPrefix(raw, prefix) && !strings.HasSuffix(raw, ";") {
 				return bookHeadingPlainText(raw[len(prefix):]), LineIndex(i), nil
 			}
 		}
