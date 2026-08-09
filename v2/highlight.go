@@ -10,7 +10,6 @@ import (
 	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
-	"github.com/xyproto/env/v2"
 	"github.com/xyproto/mode"
 	"github.com/xyproto/syntax"
 	"github.com/xyproto/vt"
@@ -80,12 +79,21 @@ const (
 var (
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
 	tout          = vt.New()
-	resizeMut     sync.RWMutex                                         // locked when the terminal emulator is being resized
-	noGUI         = !env.Has("DISPLAY") && !env.Has("WAYLAND_DISPLAY") // no X, no Wayland
+	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 )
 
 // AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
 var AsText = syntax.AsText
+
+// writeRuneOfWidth writes r at x, y, taking up rw cells. x+rw-1 must be within the canvas.
+// A wide rune that is only given one cell makes the drawn line too wide, which makes it wrap.
+func writeRuneOfWidth(c *vt.Canvas, x, y uint, fg, bgb vt.AttributeColor, r rune, rw int) {
+	if rw == 2 {
+		c.WriteWideRuneB(x, y, fg, bgb, r)
+		return
+	}
+	c.WriteRuneB(x, y, fg, bgb, r)
+}
 
 // WriteLines will draw editor lines from "fromline" to and up to "toline" to the canvas, at cx, cy
 func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uint, shouldHighlightNow, hideCursorWhenDrawing bool) {
@@ -893,7 +901,10 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						if inSelection {
 							tabBg = e.NanoHelpBackground
 						}
-						c.Write(cx+lineRuneCount, cy+uint(y), fg, tabBg, tabString)
+						// Clamp, or the tab spills into the line below
+						if tx = cx + lineRuneCount; tx < cw {
+							c.Write(tx, cy+uint(y), fg, tabBg, tabString[:min(uint(e.indentation.PerTab), cw-tx)])
+						}
 						lineRuneCount += uint(e.indentation.PerTab)
 					}
 
@@ -927,15 +938,27 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						fgColor = e.NanoHelpForeground
 						bgColor = e.NanoHelpBackground
 					}
-					c.Write(cx+lineRuneCount, cy+uint(y), fgColor, bgColor, string(r))
+					writeRuneOfWidth(c, cx+lineRuneCount, cy+uint(y), fgColor, bgColor.Background(), r, rw)
 					lineRuneCount += uint(rw)
 				}
 			} else {
 				// Output a regular line, scrolled to the current e.pos.offsetX
 				screenLine = e.ChopLine(line, int(cw))
 				screenLine = asciiFallback(screenLine)
-				c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
-				lineRuneCount += uint(utf8.RuneCountInString(screenLine)) // rune count
+				if screenLineWidth := uint(runewidth.StringWidth(screenLine)); screenLineWidth == uint(utf8.RuneCountInString(screenLine)) {
+					// One cell per rune
+					c.Write(cx+lineRuneCount, cy+uint(y), e.Foreground, e.Background, screenLine)
+					lineRuneCount += screenLineWidth
+				} else {
+					for _, r := range screenLine {
+						rw = runewidth.RuneWidth(r)
+						if cx+lineRuneCount+uint(rw) > cw {
+							break
+						}
+						writeRuneOfWidth(c, cx+lineRuneCount, cy+uint(y), e.Foreground, bg, r, rw)
+						lineRuneCount += uint(rw)
+					}
+				}
 			}
 		}
 
@@ -967,9 +990,6 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					c.WriteRuneBNoLock(xp+3, yp, indicatorColor, bg, '─')
 				}
 			}
-		}
-		if noGUI {
-			vt.SetXY(0, yp+1)
 		}
 
 		// Draw a dotted line to remind the user of where the N-column limit is
