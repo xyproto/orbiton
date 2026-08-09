@@ -4,9 +4,7 @@
 
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
 - [ ] Sometimes when pasting in text, there is no X scroll.
-- [ ] When viewing a man page and then pressing ctrl-f to search, then pressing esc should clear the source and not exit right away.
 - [ ] Also support info pages.
-- [ ] Remember the last location when viewing man pages.
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] Add support for Common Lisp / CMUCL.
