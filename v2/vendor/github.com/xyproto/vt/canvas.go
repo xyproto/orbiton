@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 // umin returns the smaller of two uint values
@@ -439,14 +440,9 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 				if r == 0 {
 					r = ' '
 				}
-				// DECAWM off, move to (h, w), emit SGR + rune, then put DECAWM
-				// back the way the canvas is configured. Always turning it back
-				// on would leave autowrap enabled for the rest of the session,
-				// and any row that renders wider than the canvas (a rune that
-				// the terminal considers double width, say) would then wrap and
-				// scroll the screen. The diff-rendered frame would be one row
-				// out of sync with the terminal from that point on, which shows
-				// up as duplicated lines.
+				// DECAWM off, move to (h, w), emit SGR + rune, then restore the
+				// configured wrap mode. Leaving autowrap on lets a too-wide row
+				// wrap and scroll, putting the diffed frame out of sync.
 				sb.WriteString("\033[?7l")
 				fmt.Fprintf(&sb, "\033[%d;%dH", h, w)
 				if uint32(lastCR.fg) < 256 && uint32(lastCR.bg) < 256 {
@@ -577,8 +573,10 @@ func (c *Canvas) Plot(x, y uint, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
 	chars := (*c).chars
+	clearWidePartners(chars, index, index+1)
 	chars[index].r = r
 	chars[index].drawn = false
+	chars[index].cw = 0
 	c.mut.Unlock()
 }
 
@@ -590,10 +588,28 @@ func (c *Canvas) PlotColor(x, y uint, fg AttributeColor, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
 	chars := (*c).chars
+	clearWidePartners(chars, index, index+1)
 	chars[index].r = r
 	chars[index].fg = fg
 	chars[index].drawn = false
+	chars[index].cw = 0
 	c.mut.Unlock()
+}
+
+// clearWidePartners blanks the half of a double-width rune that would be left
+// dangling once the cells in [start, end) are overwritten. A stray base or
+// continuation cell makes the row render with the wrong number of columns,
+// which wraps the line. Cells inside the range need no fixup, since they are
+// overwritten anyway. Call this before writing, while the old cells are still
+// in place. The caller must hold the lock.
+func clearWidePartners(chars []ColorRune, start, end uint) {
+	n := uint(len(chars))
+	if start > 0 && start < n && chars[start].cw == 1 {
+		chars[start-1] = ColorRune{chars[start-1].fg, chars[start-1].bg, ' ', false, 0}
+	}
+	if end > 0 && end < n && chars[end-1].cw == 2 {
+		chars[end] = ColorRune{chars[end].fg, chars[end].bg, ' ', false, 0}
+	}
 }
 
 // Write is an alias for WriteString, for backwards compatibility
@@ -610,17 +626,21 @@ func (c *Canvas) WriteString(x, y uint, fg, bg AttributeColor, s string) {
 	c.mut.Lock()
 	chars := c.chars
 	startpos := y*c.w + x
-	lchars := uint(len(chars))
+	// Stop at the end of the row, or the tail of the string would land on the
+	// row below instead of being cut off at the right edge
+	endpos := umin((y+1)*c.w, uint(len(chars)))
+	clearWidePartners(chars, startpos, umin(startpos+uint(utf8.RuneCountInString(s)), endpos))
 	counter := uint(0)
 	for _, r := range s {
 		i := startpos + counter
-		if i >= lchars {
+		if i >= endpos {
 			break
 		}
 		chars[i].r = r
 		chars[i].fg = fg
 		chars[i].bg = bgb
 		chars[i].drawn = false
+		chars[i].cw = 0
 		counter++
 	}
 	c.mut.Unlock()
@@ -635,10 +655,12 @@ func (c *Canvas) WriteRune(x, y uint, fg, bg AttributeColor, r rune) {
 	c.mut.Lock()
 	defer c.mut.Unlock()
 	chars := (*c).chars
+	clearWidePartners(chars, index, index+1)
 	chars[index].r = r
 	chars[index].fg = fg
 	chars[index].bg = bg.Background()
 	chars[index].drawn = false
+	chars[index].cw = 0
 }
 
 // WriteRuneB will write a colored rune to the canvas.
@@ -647,6 +669,7 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	index := y*c.w + x
 	c.mut.Lock()
 	defer c.mut.Unlock()
+	clearWidePartners((*c).chars, index, index+1)
 	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
 }
 
@@ -654,7 +677,9 @@ func (c *Canvas) WriteRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 // The x and y must be within range (x < c.w and y < c.h).
 // The canvas mutex is not locked.
 func (c *Canvas) WriteRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
-	(*c).chars[y*c.w+x] = ColorRune{fg, bgb, r, false, 0}
+	index := y*c.w + x
+	clearWidePartners((*c).chars, index, index+1)
+	(*c).chars[index] = ColorRune{fg, bgb, r, false, 0}
 }
 
 // WriteWideRuneB writes a double-width (CJK) rune to the canvas.
@@ -664,6 +689,7 @@ func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 	base := y*c.w + x
 	c.mut.Lock()
 	defer c.mut.Unlock()
+	clearWidePartners((*c).chars, base, base+2)
 	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
 	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
 }
@@ -673,12 +699,16 @@ func (c *Canvas) WriteWideRuneB(x, y uint, fg, bgb AttributeColor, r rune) {
 // The x and y must be within range (x+1 < c.w and y < c.h).
 func (c *Canvas) WriteWideRuneBNoLock(x, y uint, fg, bgb AttributeColor, r rune) {
 	base := y*c.w + x
+	clearWidePartners((*c).chars, base, base+2)
 	(*c).chars[base] = ColorRune{fg, bgb, r, false, 2}
 	(*c).chars[base+1] = ColorRune{fg, bgb, 0, false, 1}
 }
 
 // WriteBackground sets the background color at (x, y)
 func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
+	if x >= c.w || y >= c.h {
+		return
+	}
 	index := y*c.w + x
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -688,6 +718,9 @@ func (c *Canvas) WriteBackground(x, y uint, bg AttributeColor) {
 
 // WriteBackgroundAddRuneIfEmpty sets the background color at (x, y) and writes r if the cell is empty
 func (c *Canvas) WriteBackgroundAddRuneIfEmpty(x, y uint, bg AttributeColor, r rune) {
+	if x >= c.w || y >= c.h {
+		return
+	}
 	index := y*c.w + x
 	c.mut.Lock()
 	defer c.mut.Unlock()
@@ -717,10 +750,16 @@ func (c *Canvas) Unlock() {
 
 // WriteRunesB fills count cells starting at (x, y) with the given colored rune
 func (c *Canvas) WriteRunesB(x, y uint, fg, bgb AttributeColor, r rune, count uint) {
+	if x >= c.w || y >= c.h {
+		return
+	}
 	startIndex := y*c.w + x
-	afterLastIndex := startIndex + count
+	// Stop at the end of the row, or a count that is too large writes into the
+	// row below and runs off the end of the buffer
+	afterLastIndex := umin(startIndex+count, umin((y+1)*c.w, uint(len(c.chars))))
 	c.mut.Lock()
 	chars := (*c).chars
+	clearWidePartners(chars, startIndex, afterLastIndex)
 	for i := startIndex; i < afterLastIndex; i++ {
 		chars[i] = ColorRune{fg, bgb, r, false, 0}
 	}
