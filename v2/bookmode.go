@@ -231,7 +231,7 @@ var (
 	parsedHeadingBold       *opentype.Font
 	parsedUILight           *opentype.Font
 	parsedCodeMono          *opentype.Font
-	parsedUnicodeFallback   *opentype.Font // Unicode-rich fallback
+	parsedUnicodeFallbacks  []*opentype.Font // Unicode-rich fallbacks, tried in order
 	parseFontsOnce          sync.Once
 	parseFontsErr           error
 	bookContentCache        *image.RGBA
@@ -267,7 +267,11 @@ func parsedFonts() error {
 		parsedHeadingBold = load(sf.Bold)
 		parsedUILight = load(sf.Light)
 		parsedCodeMono = load(sf.Mono)
-		parsedUnicodeFallback = load(sf.Unicode)
+		for _, path := range sf.Unicode {
+			if f := load(path); f != nil {
+				parsedUnicodeFallbacks = append(parsedUnicodeFallbacks, f)
+			}
+		}
 		// fill any missing role with the nearest available alternative
 		or := func(a, b *opentype.Font) *opentype.Font {
 			if a != nil {
@@ -407,8 +411,8 @@ const (
 	bookAffinityBackward = 1 // cursor belongs to the end of the previous sub-row
 )
 
-// bookFallbackFaces maps a font.Face to a same-size Unicode fallback for missing glyphs.
-var bookFallbackFaces sync.Map // font.Face -> font.Face
+// bookFallbackFaces maps a font.Face to same-size Unicode fallbacks for missing glyphs.
+var bookFallbackFaces sync.Map // font.Face -> []font.Face
 
 func newFace(f *opentype.Font, size float64) (font.Face, error) {
 	face, err := opentype.NewFace(f, &opentype.FaceOptions{
@@ -420,42 +424,56 @@ func newFace(f *opentype.Font, size float64) (font.Face, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Register a matching-size Unicode fallback for this face
-	if parsedUnicodeFallback != nil && f != parsedUnicodeFallback {
-		if fb, e2 := opentype.NewFace(parsedUnicodeFallback, &opentype.FaceOptions{
+	// Register matching-size Unicode fallbacks for this face
+	var fallbacks []font.Face
+	for _, ff := range parsedUnicodeFallbacks {
+		if ff == f {
+			continue
+		}
+		if fb, e2 := opentype.NewFace(ff, &opentype.FaceOptions{
 			Size:    size,
 			DPI:     96,
 			Hinting: font.HintingFull,
 		}); e2 == nil {
-			bookFallbackFaces.Store(face, fb)
+			fallbacks = append(fallbacks, fb)
 		}
+	}
+	if len(fallbacks) > 0 {
+		bookFallbackFaces.Store(face, fallbacks)
 	}
 	return face, nil
 }
 
-// faceFallback returns the registered DejaVu fallback for primary, or nil
-func faceFallback(primary font.Face) font.Face {
+// faceFallbacks returns the registered Unicode fallbacks for primary, or nil
+func faceFallbacks(primary font.Face) []font.Face {
 	if v, ok := bookFallbackFaces.Load(primary); ok {
-		return v.(font.Face)
+		return v.([]font.Face)
 	}
 	return nil
 }
 
-// faceGlyphAdvance is like face.GlyphAdvance but falls back to the Unicode fallback font
-// for runes the primary face does not cover
-func faceGlyphAdvance(face font.Face, r rune) (fixed.Int26_6, bool) {
-	if adv, ok := face.GlyphAdvance(r); ok {
-		return adv, true
+// faceForRune returns the face that should render r: the primary face, or the first
+// registered Unicode fallback that covers r. No font on the host is guaranteed to
+// cover every rune, so the primary face is returned when none of them do.
+func faceForRune(primary font.Face, r rune) font.Face {
+	if _, ok := primary.GlyphAdvance(r); ok {
+		return primary
 	}
-	if fb := faceFallback(face); fb != nil {
-		if adv, ok := fb.GlyphAdvance(r); ok {
-			return adv, true
+	for _, fb := range faceFallbacks(primary) {
+		if _, ok := fb.GlyphAdvance(r); ok {
+			return fb
 		}
 	}
-	return face.GlyphAdvance(r)
+	return primary
 }
 
-// measureStringFB measures the pixel width of s, falling back to the Unicode fallback font
+// faceGlyphAdvance is like face.GlyphAdvance but falls back to the Unicode fallback fonts
+// for runes the primary face does not cover
+func faceGlyphAdvance(face font.Face, r rune) (fixed.Int26_6, bool) {
+	return faceForRune(face, r).GlyphAdvance(r)
+}
+
+// measureStringFB measures the pixel width of s, falling back to the Unicode fallback fonts
 // for runes the primary face lacks
 func measureStringFB(face font.Face, s string) fixed.Int26_6 {
 	var total fixed.Int26_6
@@ -1271,12 +1289,12 @@ func stableDigitString(s string) string {
 }
 
 // drawString renders text at (x, baselineY) using face and returns the new X.
-// Runes the primary face lacks are rendered with the registered Unicode
-// fallback face. U+2007 (figure space) is advanced as a digit width without
-// rendering, since most embedded fonts lack that glyph.
+// Runes the primary face lacks are rendered with the first registered Unicode
+// fallback face that covers them. U+2007 (figure space) is advanced as a digit
+// width without rendering, since most embedded fonts lack that glyph.
 func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, clr color.Color) int {
-	fb := faceFallback(face)
-	if fb == nil && !strings.ContainsRune(text, ' ') {
+	hasFallbacks := len(faceFallbacks(face)) > 0
+	if !hasFallbacks && !strings.ContainsRune(text, ' ') {
 		d := &font.Drawer{
 			Dst:  img,
 			Src:  image.NewUniform(clr),
@@ -1311,12 +1329,8 @@ func drawString(img *image.RGBA, face font.Face, x, baselineY int, text string, 
 			continue
 		}
 		use := face
-		if fb != nil {
-			if _, ok := face.GlyphAdvance(r); !ok {
-				if _, ok2 := fb.GlyphAdvance(r); ok2 {
-					use = fb
-				}
-			}
+		if hasFallbacks {
+			use = faceForRune(face, r)
 		}
 		if use != curFace {
 			flush()
@@ -1395,16 +1409,7 @@ func measureHeaderSegmentsToRune(fs *bookFontSet, level int, segs []textSegment,
 				// account for that at segment boundaries below.
 				return total.Round() + col
 			}
-			adv, ok := face.GlyphAdvance(r)
-			if !ok {
-				if fb := faceFallback(face); fb != nil {
-					if a2, ok2 := fb.GlyphAdvance(r); ok2 {
-						adv = a2
-						ok = true
-					}
-				}
-			}
-			if ok {
+			if adv, ok := faceGlyphAdvance(face, r); ok {
 				total += adv
 			}
 			col++
@@ -2023,8 +2028,8 @@ func bookRenderSVGTextOverlay(img *image.RGBA, data []byte, viewW, viewH float64
 			baseFont = parsedCodeMono
 		case sp.bold && parsedHeadingBold != nil:
 			baseFont = parsedHeadingBold
-		case parsedUnicodeFallback != nil:
-			baseFont = parsedUnicodeFallback
+		case len(parsedUnicodeFallbacks) > 0:
+			baseFont = parsedUnicodeFallbacks[0]
 		case parsedUILight != nil:
 			baseFont = parsedUILight
 		case parsedBodyRegular != nil:

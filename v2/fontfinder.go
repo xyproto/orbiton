@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/xyproto/burnfont"
@@ -17,12 +18,12 @@ import (
 // SystemFonts holds file paths for each font role used in graphical book mode.
 // A field is empty when no suitable font was found for that role.
 type SystemFonts struct {
-	Regular string // serif, regular -- body text
-	Italic  string // serif, italic -- body emphasis
-	Bold    string // sans-serif, bold -- headings
-	Light   string // sans-serif, light/regular -- status bar
-	Mono    string // monospace, bold -- inline code and code blocks
-	Unicode string // wide-coverage sans -- unicode glyph fallback (optional)
+	Regular string   // serif, regular -- body text
+	Italic  string   // serif, italic -- body emphasis
+	Bold    string   // sans-serif, bold -- headings
+	Light   string   // sans-serif, light/regular -- status bar
+	Mono    string   // monospace, bold -- inline code and code blocks
+	Unicode []string // wide-coverage fonts, tried in order for glyphs the roles above lack (optional)
 }
 
 // Any reports whether at least one font path was resolved.
@@ -97,9 +98,6 @@ func fillViaFcMatch(sf *SystemFonts) {
 		{pattern: "Fira Code:style=Bold", wantFamily: "Fira Code", dest: &sf.Mono},
 		{pattern: "monospace:bold", dest: &sf.Mono},
 		{pattern: "monospace", dest: &sf.Mono},
-
-		{pattern: "DejaVu Sans:style=Book", wantFamily: "DejaVu Sans", dest: &sf.Unicode},
-		{pattern: "sans", dest: &sf.Unicode},
 	}
 	for _, query := range queries {
 		if *query.dest != "" {
@@ -109,6 +107,31 @@ func fillViaFcMatch(sf *SystemFonts) {
 			*query.dest = p
 		}
 	}
+
+	// Unicode fallbacks. Unlike the roles above, every match is kept, in
+	// priority order, because coverage differs a lot between these fonts.
+	// The macOS text fonts (Georgia, Verdana, Times) lack symbols like
+	// U+26AC, the book mode bullet, so Apple Symbols must be in the chain.
+	for _, query := range []q{
+		{pattern: "DejaVu Sans:style=Book", wantFamily: "DejaVu Sans"},
+		{pattern: "Symbola:style=Regular", wantFamily: "Symbola"},
+		{pattern: "Noto Sans Symbols 2:style=Regular", wantFamily: "Noto Sans Symbols"},
+		{pattern: "Apple Symbols:style=Regular", wantFamily: "Apple Symbols"},
+		{pattern: "Arial Unicode MS:style=Regular", wantFamily: "Arial Unicode"},
+		{pattern: "sans"},
+	} {
+		if p := fcMatchFile(query.pattern, query.wantFamily); p != "" {
+			sf.Unicode = appendUniqueString(sf.Unicode, p)
+		}
+	}
+}
+
+// appendUniqueString appends s to xs unless it is already present.
+func appendUniqueString(xs []string, s string) []string {
+	if slices.Contains(xs, s) {
+		return xs
+	}
+	return append(xs, s)
 }
 
 // fcMatchFile runs fc-match and returns the resolved font file path. When
@@ -149,7 +172,6 @@ func fillViaWindowsPaths(sf *SystemFonts) {
 		{dest: &sf.Bold, names: []string{"segoeuib.ttf", "arialbd.ttf", "calibrib.ttf"}},
 		{dest: &sf.Light, names: []string{"segoeui.ttf", "arial.ttf", "calibri.ttf"}},
 		{dest: &sf.Mono, names: []string{"consolab.ttf", "consola.ttf", "courbd.ttf", "cour.ttf"}},
-		{dest: &sf.Unicode, names: []string{"arialuni.ttf"}},
 	} {
 		if *r.dest != "" {
 			continue
@@ -159,6 +181,12 @@ func fillViaWindowsPaths(sf *SystemFonts) {
 				*r.dest = p
 				break
 			}
+		}
+	}
+	// Unicode fallbacks: keep every match, in priority order
+	for _, name := range []string{"seguisym.ttf", "arialuni.ttf", "seguiemj.ttf"} {
+		if p := validFontPath(filepath.Join(dir, name)); p != "" {
+			sf.Unicode = appendUniqueString(sf.Unicode, p)
 		}
 	}
 }
@@ -187,7 +215,26 @@ func fillViaDirScan(sf *SystemFonts) {
 		{dest: &sf.Light, frags: []string{"liberationsans", "regular"}},
 		{dest: &sf.Mono, frags: []string{"sourcecodepro", "bold"}},
 		{dest: &sf.Mono, frags: []string{"sourcecodepro", "regular"}},
-		{dest: &sf.Unicode, frags: []string{"dejavusans.ttf"}},
+	}
+	// Unicode fallback candidates, in priority order. Every match is kept,
+	// since coverage differs a lot between these fonts. "apple symbols" and
+	// "arial unicode" cover the symbols that the macOS text fonts lack.
+	unicodeFrags := [][]string{
+		{"dejavusans.ttf"},
+		{"symbola"},
+		{"notosanssymbols"},
+		{"apple symbols"},
+		{"arial unicode"},
+		{"seguisym"},
+	}
+	unicodeFound := make([]string, len(unicodeFrags))
+	matches := func(lower string, frags []string) bool {
+		for _, frag := range frags {
+			if !strings.Contains(lower, frag) {
+				return false
+			}
+		}
+		return true
 	}
 	for _, dir := range systemFontDirs() {
 		_ = filepath.WalkDir(dir, func(p string, d os.DirEntry, err error) error {
@@ -196,22 +243,22 @@ func fillViaDirScan(sf *SystemFonts) {
 			}
 			lower := strings.ToLower(filepath.Base(p))
 			for i := range rules {
-				if *rules[i].dest != "" {
-					continue
-				}
-				ok := true
-				for _, frag := range rules[i].frags {
-					if !strings.Contains(lower, frag) {
-						ok = false
-						break
-					}
-				}
-				if ok {
+				if *rules[i].dest == "" && matches(lower, rules[i].frags) {
 					*rules[i].dest = p
+				}
+			}
+			for i := range unicodeFrags {
+				if unicodeFound[i] == "" && matches(lower, unicodeFrags[i]) {
+					unicodeFound[i] = p
 				}
 			}
 			return nil
 		})
+	}
+	for _, p := range unicodeFound {
+		if p != "" {
+			sf.Unicode = appendUniqueString(sf.Unicode, p)
+		}
 	}
 }
 
