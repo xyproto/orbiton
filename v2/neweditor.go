@@ -592,7 +592,7 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 
 	// Load the location history. This will be saved again later. Errors are ignored.
 	if locationHistory, err = LoadLocationHistory(locationHistoryFilename); err == nil { // success
-		recordedLineNumber, found = locationHistory.Get(absFilename)
+		recordedLineNumber, found = locationHistory.Get(e.locationKeyFor(absFilename))
 	}
 
 	// Jump to the correct line number

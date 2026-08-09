@@ -2667,7 +2667,7 @@ func (e *Editor) Switch(c *vt.Canvas, tty *vt.TTY, status *StatusBar, fileLock *
 	e.Save(c, tty)
 
 	// Save the current location in the location history and write it to file
-	e.SaveLocationCustom(absFilename, locationHistory)
+	e.SaveLocationCustom(e.locationKeyFor(absFilename), locationHistory)
 
 	var (
 		e2             *Editor

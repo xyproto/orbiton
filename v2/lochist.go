@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,9 +12,17 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/xyproto/mode"
 )
 
-const maxLocationHistoryEntries = 1024
+const (
+	maxLocationHistoryEntries = 1024
+
+	// Man pages are piped in or read from a random temporary file, so their
+	// location is stored per contents instead. No ":", it separates the fields.
+	manPageKeyPrefix = "manpage-"
+)
 
 var locationHistory LocationHistory // per absolute filename, for jumping to the last used line when opening a file
 
@@ -490,6 +499,9 @@ func LoadEmacsLocationHistory(emacsPlacesFilename string) map[string]CharacterPo
 
 // ShouldKeep checks if the given absolute filename should be kept in the location history or not
 func ShouldKeep(absFilename string) bool {
+	if strings.HasPrefix(absFilename, manPageKeyPrefix) {
+		return true
+	}
 	if parentIsMan == nil {
 		b := parentProcessIs("man")
 		parentIsMan = &b
@@ -513,14 +525,30 @@ func ShouldKeep(absFilename string) bool {
 	return true
 }
 
+// manPageLocationKey returns a location history key based on the contents
+func manPageLocationKey(contents string) string {
+	h := fnv.New64a()
+	h.Write([]byte(contents))
+	return manPageKeyPrefix + strconv.FormatUint(h.Sum64(), 16)
+}
+
+// locationKeyFor returns the location history key: the given filename, or a
+// hash of the contents for man pages, which have no filename worth keeping
+func (e *Editor) locationKeyFor(absFilename string) string {
+	if e.mode == mode.ManPage && !ShouldKeep(absFilename) {
+		return manPageLocationKey(e.String())
+	}
+	return absFilename
+}
+
 // SaveLocation saves the current file position to the location history file
 func (e *Editor) SaveLocation() error {
 	// Save the current location in the location history and write it to file
 	absFilename, err := e.AbsFilename()
-	if err != nil {
+	if err != nil && e.mode != mode.ManPage {
 		return err
 	}
-	return e.SaveLocationCustom(absFilename, locationHistory)
+	return e.SaveLocationCustom(e.locationKeyFor(absFilename), locationHistory)
 }
 
 // SaveLocationCustom takes a filename (which includes the absolute path) and a map which contains
@@ -595,6 +623,6 @@ func (e *Editor) CloseLocksAndLocationHistory(absFilename string, lockTimestamp 
 	}
 	// Save the current location in the location history and write it to file
 	wg.Go(func() {
-		e.SaveLocationCustom(absFilename, locationHistory)
+		e.SaveLocationCustom(e.locationKeyFor(absFilename), locationHistory)
 	})
 }
