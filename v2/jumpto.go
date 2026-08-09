@@ -32,7 +32,31 @@ func (e *Editor) RegisterJumpLetter(r rune, x ColIndex, y LineIndex) bool {
 	return true
 }
 
-// HasJumpLetter checks if this jump letter has been registered yet
+// jumpLetterPosition looks up a registered jump letter. If the exact rune is not
+// registered, the opposite case is tried, so that pressing "w" jumps to a highlighted
+// "W" when only "W" is on screen (and the other way around).
+func jumpLetterPosition(r rune) (PositionIndex, bool) {
+	if jumpLetters == nil {
+		return PositionIndex{}, false
+	}
+	if xy, found := jumpLetters[r]; found {
+		return xy, true
+	}
+	var other rune
+	switch {
+	case unicode.IsUpper(r):
+		other = unicode.ToLower(r)
+	case unicode.IsLower(r):
+		other = unicode.ToUpper(r)
+	default:
+		return PositionIndex{}, false
+	}
+	xy, found := jumpLetters[other]
+	return xy, found
+}
+
+// HasJumpLetter checks if this exact jump letter has been registered yet.
+// Used when registering letters, where "W" and "w" are distinct targets.
 func (e *Editor) HasJumpLetter(r rune) bool {
 	if jumpLetters == nil {
 		return false
@@ -41,12 +65,16 @@ func (e *Editor) HasJumpLetter(r rune) bool {
 	return found
 }
 
+// CanJumpTo checks if the given letter can be jumped to, either directly
+// or by matching a registered letter of the opposite case
+func (e *Editor) CanJumpTo(r rune) bool {
+	_, found := jumpLetterPosition(r)
+	return found
+}
+
 // GetJumpX returns the X position for the given jump letter, or -1 if not found
 func (e *Editor) GetJumpX(r rune) ColIndex {
-	if jumpLetters == nil {
-		return -1
-	}
-	xy, found := jumpLetters[r]
+	xy, found := jumpLetterPosition(r)
 	if !found {
 		return -1
 	}
@@ -55,10 +83,7 @@ func (e *Editor) GetJumpX(r rune) ColIndex {
 
 // GetJumpY returns the Y position for the given jump letter, or -1 if not found
 func (e *Editor) GetJumpY(r rune) LineIndex {
-	if jumpLetters == nil {
-		return -1
-	}
-	xy, found := jumpLetters[r]
+	xy, found := jumpLetterPosition(r)
 	if !found {
 		return -1
 	}
@@ -325,7 +350,7 @@ func (e *Editor) JumpMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY) int {
 			if numkey != "" {
 				r := []rune(numkey)[0]
 				// check the "jump to" keys
-				if e.HasJumpLetter(r) {
+				if e.CanJumpTo(r) {
 					goToLetter = r
 					doneCollectingDigits = true
 				}
