@@ -56,6 +56,14 @@ func handleManPageEscape(input string) string {
 	return oscPattern.ReplaceAllString(cleanedString, "")
 }
 
+// stripManPageEscapes removes nroff overstriking and ANSI codes from every line,
+// so that the buffer matches what is drawn
+func (e *Editor) stripManPageEscapes() {
+	for i, runes := range e.lines {
+		e.lines[i] = []rune(strings.TrimRight(handleManPageEscape(string(runes)), " \t"))
+	}
+}
+
 // findFlagTokenEnd returns the byte offset in s where the leading flag token(s)
 // end, treating flags separated by ", " as one group.
 // For "--zero end each..." it returns 6, for "-a, --all" it returns 9.

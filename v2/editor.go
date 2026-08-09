@@ -550,6 +550,8 @@ func (e *Editor) Load(c *vt.Canvas, tty *vt.TTY, fnord FilenameOrData) (string, 
 
 	if e.binaryFile {
 		e.mode = mode.Blank
+	} else if e.mode == mode.ManPage {
+		e.stripManPageEscapes()
 	}
 
 	// If enough time passed so that the spinner was shown by now, enter "slow disk mode" where fewer disk-related I/O operations will be performed

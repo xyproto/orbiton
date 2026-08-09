@@ -10,7 +10,15 @@ import (
 	"sync"
 
 	"github.com/xyproto/binary"
+	"github.com/xyproto/mode"
 )
+
+// looksBinary reports if the data should be loaded one rune per byte. Man pages
+// use backspace overstriking for bold and underline, which looks binary but is
+// UTF-8 text that must be decoded as such.
+func (e *Editor) looksBinary(data []byte) bool {
+	return binary.DataAccurate(data) && e.mode != mode.ManPage
+}
 
 // ReadFileAndProcessLines reads the named file concurrently, processes its lines, and updates the Editor.
 func (e *Editor) ReadFileAndProcessLines(filename string) error {
@@ -24,7 +32,7 @@ func (e *Editor) ReadFileAndProcessLines(filename string) error {
 			return err
 		}
 	}
-	e.binaryFile = binary.DataAccurate(data)
+	e.binaryFile = e.looksBinary(data)
 	if !e.binaryFile {
 		data = []byte(opinionatedStringReplacer.Replace(string(data)))
 	}
@@ -134,7 +142,7 @@ func (e *Editor) LoadByteLine(ib IndexByteLine, eMut, tcMut *sync.RWMutex, tabIn
 
 // LoadBytes replaces the current editor contents with the given bytes
 func (e *Editor) LoadBytes(data []byte) {
-	e.binaryFile = binary.DataAccurate(data)
+	e.binaryFile = e.looksBinary(data)
 	if !e.binaryFile {
 		data = []byte(opinionatedStringReplacer.Replace(string(data)))
 	}
