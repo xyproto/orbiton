@@ -39,14 +39,26 @@ ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for HTML, format the file with "tidy", for Python: "ruff"
             for Markdown, toggle checkboxes or re-format tables
             for git interactive rebases, cycle the rebase keywords
-            double press to toggle block edit mode
+F1          show this overview of hotkeys (same as ctrl-l and then /)
+F2          save (same as ctrl-s)
+F3          go to the next search match (same as ctrl-n)
+F4          launch the file browser, also available from the ctrl-o menu
+F5          build or export (same as ctrl-space), or continue in debug mode
+F6          toggle block editing mode, also available from the ctrl-o menu
+F7          jump to the next typo
+F8          in debug mode, step over (same as F10, which some terminals take)
+F9          in debug mode, toggle a breakpoint (same as ctrl-b)
+F10         in debug mode, step over (same as ctrl-o)
+F11         in debug mode, step out (same as ctrl-f)
+F12         go to a definition or include (same as ctrl-g)
+            on macOS, the function keys may need to be held together with Fn
 ctrl-g      go to include or definition, go back or toggle the status bar
 ctrl-r      to jump to matching bracket, otherwise open or close a portal.
             Double press to toggle "wrap when typing". For git interactive
             rebase, cycle keywords.
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
-ctrl-a      go to start of line, then start of text and then the previous line
+ctrl-a      go to start of text, then start of line and then the previous line
 ctrl-e      go to end of line and then the next line
 ctrl-n      to scroll down 10 lines or go to the next match if a search is active
             insert a column when in the Markdown table editor
@@ -71,8 +83,6 @@ ctrl-y      to redo
 ctrl-l      to jump to a specific line or letter (press return to jump to the top or bottom)
 ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
-ctrl-r      to jump to a matching bracket, or cycle git rebase keywords when editing a git
-            commit message. Double press to toggle "wrap when typing".
 ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
 esc         to go back after having gone to another location or file

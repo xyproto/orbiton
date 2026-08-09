@@ -98,7 +98,6 @@ Display brief usage information.
   Zig, V, Rust (\fBrustfmt\fP), Haskell (\fBormolu\fP) and Python (\fBruff format\fP) are also supported.
   If in git mode, cycle the git interactive rebase keyword on the current line.
   If in Markdown mode, format the table under the cursor.
-  Double press to toggle block editing mode.
 .sp
 .B ctrl-a
   Go to start of the text, then the start of the line and then the previous line.
@@ -106,11 +105,11 @@ Display brief usage information.
 .B ctrl-e
   Go to end of the line and then the next line.
 .sp
-.sp
 .B ctrl-n
   Scroll down 10 lines or go to the next match if a search is active.
   Insert a new column when in the Markdown table editor.
   Jump to a matching parenthesis or bracket if the arrow keys were just used.
+.sp
 .B ctrl-p
   Scroll up 10 lines or go to the previous match if a search is active.
   Remove an empty column when in the Markdown table editor.
@@ -125,6 +124,44 @@ Display brief usage information.
 .B ctrl-d
   Delete a single character.
 .sp
+.B F1
+  Show the overview of hotkeys, the same as pressing ctrl-l and then /.
+.sp
+.B F2
+  Save, the same as ctrl-s.
+.sp
+.B F3
+  Go to the next search match, the same as ctrl-n.
+.sp
+.B F4
+  Launch the file browser, which is also available from the ctrl-o menu.
+.sp
+.B F5
+  Build or export, the same as ctrl-space. In debug mode, continue.
+.sp
+.B F6
+  Toggle block editing mode, which is also available from the ctrl-o menu.
+.sp
+.B F7
+  Jump to the next typo.
+.sp
+.B F8
+  In debug mode, step over. The same as F10, which some terminals take for themselves.
+.sp
+.B F9
+  In debug mode, toggle a breakpoint. The same as ctrl-b.
+.sp
+.B F10
+  In debug mode, step over. The same as ctrl-o.
+.sp
+.B F11
+  In debug mode, step out. The same as ctrl-f.
+.sp
+.B F12
+  Go to a definition or include, the same as ctrl-g.
+.sp
+  On macOS, the function keys may need to be held together with Fn, depending on the keyboard settings.
+.sp
 .B ctrl-o
   Open the command menu, which is a list of actions that can be performed.
   If editing a PKGBUILD file and guessica is installed, there will be a menu option for updating the pkgver + source fields.
@@ -138,7 +175,7 @@ Display brief usage information.
 .sp
 .B ctrl-c
   Press twice to copy the current block of text (until a blank line or the end of the file).
-  Press once to only copy the current line.
+  Press once to only copy the current line. Press thrice to copy the current function.
   Also closes the portal.
 .sp
 .B ctrl-v
@@ -148,6 +185,7 @@ Display brief usage information.
 .B ctrl-x
   Press once to only cut the current line (or delete the line, if empty).
   Press twice to cut the current block of text (until a blank line or the end of the file).
+  Press thrice to cut the current function.
   Also closes the portal.
 .sp
 .B ctrl-b
@@ -156,6 +194,10 @@ Display brief usage information.
   Use \fBo -l\fP to view the last build command.
   Cycle book mode. Toggle a breakpoint in debug mode.
   Toggle bold when started directly in book mode.
+.sp
+.B ctrl-i
+  Toggle italic in book mode. Otherwise the same as tab.
+  Terminals that can not display italics, like the Linux console, show it unstyled.
 .sp
 .B ctrl-j
   Join lines.

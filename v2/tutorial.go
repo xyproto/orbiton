@@ -35,8 +35,8 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Toggle block editing mode",
-		description: "Press ctrl-space to toggle block editing mode, where multiple lines in a block (until a blank line or EOF) can be edited at once.",
-		expectKeys:  []string{"c:0"}, // ctrl-space
+		description: "Press F6 to toggle block editing mode, where multiple lines in a block (until a blank line or EOF) can be edited at once. It is also in the ctrl-o menu.",
+		expectKeys:  []string{"F6"},
 	},
 	TutorialStep{
 		title:       "Copy line",
@@ -51,7 +51,7 @@ var tutorialSteps = Tutorial{
 	TutorialStep{
 		title:       "Delete the current letter",
 		description: "Press ctrl-d to delete the current letter.",
-		expectKeys:  []string{"c:8"}, // ctrl-d
+		expectKeys:  []string{"c:4"}, // ctrl-d
 	},
 	TutorialStep{
 		title:       "End of the line",
@@ -61,7 +61,7 @@ var tutorialSteps = Tutorial{
 	TutorialStep{
 		title:       "Start of the next line",
 		description: "Press ctrl-e twice to go to the start of the next line.",
-		expectKeys:  []string{"c:5"}, // ctrl-e
+		expectKeys:  []string{"c:5", "c:5"}, // ctrl-e
 	},
 	TutorialStep{
 		title:       "Search",
@@ -255,7 +255,7 @@ var tutorialSteps = Tutorial{
 	},
 	TutorialStep{
 		title:       "Undo",
-		description: "Press ctrl-u to undo the last operation. There is no redo, yet.",
+		description: "Press ctrl-u to undo the last operation. Press ctrl-y to redo.",
 		expectKeys:  []string{"c:21"}, // ctrl-u
 	},
 	TutorialStep{
@@ -289,8 +289,8 @@ var tutorialSteps = Tutorial{
 		expectKeys:  []string{"c:24", "c:24"}, // ctrl-x
 	},
 	TutorialStep{
-		title:       "Go to start of line (method 2)",
-		description: "Press ctrl-y to go to the start of the text, then line, then the end of the line above. Same as ctrl-a.",
+		title:       "Redo",
+		description: "Press ctrl-y to redo an operation that was undone with ctrl-u or ctrl-z.",
 		expectKeys:  []string{"c:25"}, // ctrl-y
 	},
 	TutorialStep{
@@ -336,7 +336,7 @@ var tutorialSteps = Tutorial{
 	TutorialStep{
 		title:       "Tutorial complete",
 		description: "Press q, esc or ctrl-q to end this tutorial.",
-		expectKeys:  []string{"c:32"}, // space
+		expectKeys:  []string{"q", "c:27", "c:17"}, // q, esc or ctrl-q
 	},
 }
 

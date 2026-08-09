@@ -206,7 +206,7 @@ There are pretty few hotkeys to remember:
              Toggle the Markdown checkbox on the current line when in book mode.
              For the rest: record and play back keypresses/"macros". Press `Esc` to clear the current macro.
 * `ctrl-o` - Open a command menu with actions that can be performed.
-* `ctrl-x` - Cut the current line. Double press to cut a block of text (to the next blank line).
+* `ctrl-x` - Cut the current line. Double press to cut a block of text (to the next blank line). Press thrice to cut the current function.
 * `ctrl-c` - Copy one line. Double press to copy a block of text. Press thrice to copy the current function.
 * `ctrl-v` - Paste one trimmed line. Double press to paste multiple untrimmed lines.
 * `ctrl-b` - Build program, render to PDF or export to man page. Double press to also run.
@@ -221,9 +221,23 @@ There are pretty few hotkeys to remember:
              Press one of the highlighted on-screen letters to jump to that location.
 * `ctrl-f` - Search for a string. The search wraps around and is case sensitive. Press `tab` instead of `return` to search and replace.
              To find typos, search for the letter `t`, then press `ctrl-n` for the next word, `ctrl-a` to add it or `ctrl-i` to ignore it.
-* `ctrl-i` - Toggle italic (`*`) in book mode.
+* `ctrl-i` - Toggle italic (`*`) in book mode. Terminals that can not display italics, like the Linux console, show it unstyled.
 * `ctrl-w` - Format the current file (see the table below), or cycle git rebase keywords. For Markdown, format the table under the cursor.
-             Double press to toggle block editing mode. Toggle paragraph indent in book mode.
+             Toggle paragraph indent in book mode.
+* `F1`     - Show the overview of hotkeys (same as `ctrl-l` and then `/`).
+* `F2`     - Save (same as `ctrl-s`).
+* `F3`     - Go to the next search match (same as `ctrl-n`).
+* `F4`     - Launch the file browser, which is also available from the `ctrl-o` menu.
+* `F5`     - Build or export (same as `ctrl-space`). In debug mode: continue.
+* `F6`     - Toggle block editing mode, which is also available from the `ctrl-o` menu.
+* `F7`     - Jump to the next typo.
+* `F8`     - In debug mode: step over (same as `F10`, which some terminals take for themselves).
+* `F9`     - In debug mode: toggle a breakpoint (same as `ctrl-b`).
+* `F10`    - In debug mode: step over (same as `ctrl-o`).
+* `F11`    - In debug mode: step out (same as `ctrl-f`).
+* `F12`    - Go to a definition or include (same as `ctrl-g`).
+
+On macOS, the function keys may need to be held together with `Fn`, depending on the keyboard settings.
 * `ctrl-g` - Go to include or definition, go back or toggle the status bar.
 * `ctrl-r` - Jump to matching bracket, otherwise open or close a portal. Double press to toggle "wrap when typing".
              For git interactive rebase, cycle keywords.
