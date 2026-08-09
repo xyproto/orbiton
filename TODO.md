@@ -51,7 +51,6 @@
 - [ ] Make it possible to disable the use of v2/ollama.go at compile time using build tags, for a slightly smaller executable.
 - [ ] When goimport is downloaded, add some info for the user, like the spinner.
 - [ ] For Go and "go to definition", let it be able to also discover packages in the parent directory.
-- [ ] For man pages: if between "[-" and "]", do not color uppercase letters differently.
 - [ ] Improve syntax highlighting of comments in JSON, ref test/tsconfig.json.
 - [/] Let `ctrl-g` go to definition for more languages.
 - [ ] Let `ctrl-space` show a preview of man pages instead of changing the syntax highlighting.

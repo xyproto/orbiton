@@ -203,17 +203,17 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 	}
 	// Regular text: highlight numbers, inline flags, uppercase words and special chars
 	var (
-		rs           []rune
-		prevRune     rune
-		inDigits     bool
-		inWord       bool
-		inAngles     bool
-		inInlineFlag bool // inside a --flag in prose text
-		inUpperWord  bool // word starting with 2+ uppercase letters
-		hasCamelCase bool // word has a lower-to-uppercase transition
-		nextRune     rune
+		rs            []rune
+		prevRune      rune
+		inDigits      bool
+		inWord        bool
+		inAngles      bool
+		inFlagBracket bool // inside a [-abcABC] cluster of flag letters
+		inInlineFlag  bool // inside a --flag in prose text
+		inUpperWord   bool // word starting with 2+ uppercase letters
+		hasCamelCase  bool // word has a lower-to-uppercase transition
+		nextRune      rune
 	)
-	rs = append(rs, []rune(normal.String())...)
 	hasAlpha := strings.Contains(trimmedLine, "@")
 	lineRunes := []rune(line)
 	for i, r := range line {
@@ -252,7 +252,13 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			inUpperWord = true
 		}
 		inAngles = (!inAngles && r == '<') || (inAngles && r != '>')
-		if !inWord && unicode.IsDigit(r) && !inDigits {
+		// A "[-abcABC]" cluster is a list of flag letters, not words
+		inFlagBracket = (!inFlagBracket && r == '[' && nextRune == '-') || (inFlagBracket && r != ']')
+		if inFlagBracket {
+			inDigits = false
+			inUpperWord = false
+			rs = append(rs, []rune(off+normal.String())...)
+		} else if !inWord && unicode.IsDigit(r) && !inDigits {
 			inDigits = true
 			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
 		} else if inDigits && !inWord && !unicode.IsDigit(r) && !hexDigit(r) {
@@ -323,11 +329,6 @@ func (e *Editor) manPageHighlight(line string, firstLine, lastLine bool) string 
 			}
 		}
 		rs = append(rs, r)
-		if r == '@' || (hasAlpha && r == '<') {
-			rs = append(rs, []rune(off+e.ItalicsColor.String())...)
-		} else if hasAlpha && r == '>' {
-			rs = append(rs, []rune(off+normal.String())...)
-		}
 		prevRune = r
 	}
 	return string(append(rs, []rune(off)...))
