@@ -44,6 +44,24 @@ func (e *Editor) searchFind(haystack, needle string) int {
 	return strings.Index(haystack, needle)
 }
 
+// conflictMarker starts a merge conflict block, as written by git
+const conflictMarker = "<<<<<<< "
+
+// FirstConflictMarker returns the line index of the first merge conflict marker
+func (e *Editor) FirstConflictMarker() (LineIndex, bool) {
+	prefix := []rune(conflictMarker)
+	for i := range e.Len() {
+		runes, ok := e.lines[i]
+		if !ok || len(runes) < len(prefix) {
+			continue
+		}
+		if slices.Equal(runes[:len(prefix)], prefix) {
+			return LineIndex(i), true
+		}
+	}
+	return 0, false
+}
+
 // SetSearchTerm will set the current search term. This initializes a new search.
 func (e *Editor) SetSearchTerm(c *vt.Canvas, status *StatusBar, s string, spellCheckMode bool) bool {
 	foundMatch := false

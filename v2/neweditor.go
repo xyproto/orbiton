@@ -595,6 +595,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		recordedLineNumber, found = locationHistory.Get(e.locationKeyFor(absFilename))
 	}
 
+	// Find the first merge conflict marker, if any
+	conflictLine := LineIndex(-1)
+	if markerLine, found := e.FirstConflictMarker(); found {
+		conflictLine = markerLine
+	}
+
 	// Jump to the correct line number
 	switch {
 	case lineNumber > 0:
@@ -605,6 +611,12 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		} else {
 			e.GoToLineNumber(lineNumber, c, nil, false)
 		}
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+	case lineNumber == 0 && conflictLine >= 0:
+		// A file with merge conflicts was most likely opened to resolve them
+		e.GoToLineNumber(conflictLine.LineNumber(), c, nil, true)
+		e.stickySearchTerm = conflictMarker // so that ctrl-n goes to the next one
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
 	case lineNumber == 0 && e.mode != mode.Git && e.mode != mode.Email:
@@ -696,6 +708,10 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 		if e.monitorAndReadOnly {
 			statusMessage += " (monitoring)"
 		}
+	}
+
+	if conflictLine >= 0 {
+		statusMessage = "Merge conflict at line " + conflictLine.LineNumber().String() + ", ctrl-n for the next one"
 	}
 
 	return e, statusMessage, false, megafile.NoAction, nil
