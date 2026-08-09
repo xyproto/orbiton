@@ -420,11 +420,11 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 
 	// Paint the bottom-right cell last with autowrap disabled. Writing a
 	// printable character into the last cell of a terminal with DECAWM
-	// (ESC [ ? 7) enabled would scroll the screen; the DECAWM-off / write /
-	// DECAWM-on dance avoids that and lets the status bar (or any other
-	// full-width painted row) occupy the entire bottom row. Only emit when
-	// the cell actually changed to keep diff-rendering efficient, and only
-	// when both dimensions are >= 1.
+	// (ESC [ ? 7) enabled would scroll the screen; turning DECAWM off around
+	// the write avoids that and lets the status bar (or any other full-width
+	// painted row) occupy the entire bottom row. Only emit when the cell
+	// actually changed to keep diff-rendering efficient, and only when both
+	// dimensions are >= 1.
 	if w > 0 && h > 0 {
 		lastIdx := w*h - 1
 		lastCR := (*c).chars[lastIdx]
@@ -439,7 +439,14 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 				if r == 0 {
 					r = ' '
 				}
-				// DECAWM off, move to (h, w), emit SGR + rune, DECAWM on.
+				// DECAWM off, move to (h, w), emit SGR + rune, then put DECAWM
+				// back the way the canvas is configured. Always turning it back
+				// on would leave autowrap enabled for the rest of the session,
+				// and any row that renders wider than the canvas (a rune that
+				// the terminal considers double width, say) would then wrap and
+				// scroll the screen. The diff-rendered frame would be one row
+				// out of sync with the terminal from that point on, which shows
+				// up as duplicated lines.
 				sb.WriteString("\033[?7l")
 				fmt.Fprintf(&sb, "\033[%d;%dH", h, w)
 				if uint32(lastCR.fg) < 256 && uint32(lastCR.bg) < 256 {
@@ -448,7 +455,9 @@ func (c *Canvas) draw(permanentlyHideCursor bool) {
 					sb.WriteString(lastCR.fg.String() + lastCR.bg.String())
 				}
 				sb.WriteRune(r)
-				sb.WriteString("\033[?7h")
+				if c.lineWrap {
+					sb.WriteString("\033[?7h")
+				}
 			}
 		}
 	}
