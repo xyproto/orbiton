@@ -29,6 +29,15 @@ func ProgrammingLanguage(m mode.Mode) bool {
 	return true
 }
 
+// proseMode returns true for prose, as opposed to code, scripts or configuration
+func proseMode(m mode.Mode) bool {
+	switch m {
+	case mode.ASCIIDoc, mode.Email, mode.Git, mode.Markdown, mode.Nroff, mode.ReStructured, mode.SCDoc, mode.Text:
+		return true
+	}
+	return false
+}
+
 // hasMarkdownHeadings returns true if the mode uses "#" as a heading marker
 // (like Markdown), as opposed to a comment character (like most config formats).
 func hasMarkdownHeadings(m mode.Mode) bool {
