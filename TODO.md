@@ -5,7 +5,6 @@
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
 - [ ] Sometimes when pasting in text, there is no X scroll.
 - [ ] Also support info pages.
-- [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] Add support for Common Lisp / CMUCL.
 - [ ] Add a built-in Assembler + Disassembler?
