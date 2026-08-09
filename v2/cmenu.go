@@ -188,6 +188,11 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		actions.AddCommand(e, c, tty, status, undo, "Copy all text to the clipboard", "copyall")
 	}
 
+	// Only offer this if a build/format/export command has been run and cached
+	if lastCommand, err := readLastCommand(); err == nil && lastCommand != "" {
+		actions.AddCommand(e, c, tty, status, undo, "Copy the last build command to the clipboard", "copylastcmd")
+	}
+
 	if !vsCode {
 		actions.AddCommand(e, c, tty, status, undo, "Insert \""+insertFilename+"\" at the current line", "insertfile", insertFilename)
 

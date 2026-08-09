@@ -114,6 +114,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		nothing = iota
 		build
 		copyall
+		copylastcmd
 		copymark
 		copy200
 		gobacktofunc
@@ -186,6 +187,22 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 				const fmtMsg = "Copied %d line%s from %s"
 				status.SetMessageAfterRedraw(fmt.Sprintf(fmtMsg, numLines, plural, filepath.Base(e.filename)))
 			}
+		},
+		copylastcmd: func() { // copy the last build/format/export command to the clipboard
+			lastCommand, err := readLastCommand()
+			if err != nil {
+				status.Clear(c, false)
+				status.SetError(err)
+				status.Show(c, e)
+				return
+			}
+			if err := clip.WriteAll(lastCommand, e.primaryClipboard); err != nil {
+				status.Clear(c, false)
+				status.SetError(err)
+				status.Show(c, e)
+				return
+			}
+			status.SetMessageAfterRedraw("Copied: " + lastCommand)
 		},
 		copymark: func() { // copy the text between the bookmark and the current line (inclusive)
 			startIndex := e.LineIndex()
@@ -381,6 +398,8 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		functionID = build
 	case "copyall", "copya":
 		functionID = copyall
+	case "copylastcmd", "copylastcommand", "copycmd":
+		functionID = copylastcmd
 	case "copymark", "copym":
 		functionID = copymark
 	case "copy200":
