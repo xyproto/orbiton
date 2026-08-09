@@ -1479,6 +1479,24 @@ func (e *Editor) InitBlockCursors(c *vt.Canvas) {
 	e.pos.sx = absX - firstOffsetX
 }
 
+// canBlockEdit is true when block editing makes sense: not in book mode, and
+// there is editable text to work on
+func (e *Editor) canBlockEdit() bool {
+	return !e.InBookMode() && !e.readOnly && !e.Empty()
+}
+
+// ToggleBlockMode enters or leaves block editing mode
+func (e *Editor) ToggleBlockMode(c *vt.Canvas) {
+	e.blockMode = !e.blockMode
+	if e.blockMode {
+		e.InitBlockCursors(c)
+	} else {
+		e.blockCursors = nil
+	}
+	e.redraw.Store(true)
+	e.redrawCursor.Store(true)
+}
+
 // BlockCursorLeft moves all virtual cursors and the real cursor one step to the left
 func (e *Editor) BlockCursorLeft() {
 	if e.blockCursors == nil {

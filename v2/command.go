@@ -112,6 +112,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 
 	const (
 		nothing = iota
+		blockedit
 		build
 		copyall
 		copylastcmd
@@ -137,6 +138,9 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 
 	// Define args and corresponding functions
 	commandLookup := map[int]func(){
+		blockedit: func() { // toggle block editing mode
+			e.ToggleBlockMode(c)
+		},
 		build: func() { // build
 			clearBuildErrorExplanationState()
 			if e.Empty() {
@@ -394,6 +398,8 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 	switch trimmedCommand {
 	case "bye", "cu", "ee", "exit", "q", "qq", "qu", "qui", "quit", "c:17": // ctrl-q
 		functionID = quit
+	case "blockedit", "block", "blockmode", "F6":
+		functionID = blockedit
 	case "build", "b", "bu", "bui":
 		functionID = build
 	case "copyall", "copya":

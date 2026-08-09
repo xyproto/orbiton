@@ -93,6 +93,37 @@ func (a *Actions) AddCommand(e *Editor, c *vt.Canvas, tty *vt.TTY, status *Statu
 	return nil
 }
 
+// LaunchFileBrowser starts the megafile file browser in the directory of the
+// current file. Quitting the browser also quits the editor.
+func (e *Editor) LaunchFileBrowser(c *vt.Canvas, tty *vt.TTY, status *StatusBar) {
+	startdir := filepath.Dir(e.filename)
+	if startdir == "" || startdir == "." {
+		startdir, _ = os.Getwd()
+	}
+	megaFileState := megafile.New(c, tty, []string{startdir}, "", getEditorCommand(), fileBrowserUndoHistoryFilename)
+	megaFileState.WrittenTextColor = e.Foreground
+	megaFileState.Background = e.Background
+	megaFileState.HeaderColor = e.HeaderTextColor
+	megaFileState.PromptColor = e.LinkColor
+	megaFileState.AngleColor = e.JumpToLetterColor
+	megaFileState.EdgeBackground = e.Background
+	megaFileState.HighlightBackground = e.NanoHelpBackground
+	megaFileState.EmptyFileColor = e.MultiLineComment
+	megaFileState.SyntaxTextConfig = e.Theme.TextConfig()
+	megaFileState.Light = e.Light
+	c.HideCursor()
+	if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
+		c.ShowCursor()
+		status.SetError(err)
+		status.Show(c, e)
+		return
+	}
+	c.ShowCursor()
+	// File browser exited cleanly; signal the editor loop to quit.
+	e.quit = true
+	clearOnQuit.Store(true)
+}
+
 // CommandMenu will display a menu with various commands that can be browsed with arrow up and arrow down.
 // Also returns the selected menu index (can be -1), and if a space should be added to the text editor after the return.
 // Returns -1, true if space was pressed.
@@ -708,36 +739,17 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
+	// Added this late on purpose: selection letters are handed out greedily in
+	// menu order, so a new entry near the top takes a letter from an entry below
+	if e.blockMode || e.canBlockEdit() {
+		actions.AddCommand(e, c, tty, status, undo, "Toggle block editing (F6)", "blockedit")
+	}
+
 	// Launch the megafile file browser
 	// (not applicable in book mode -- the user is reading, not editing)
 	if !e.InBookMode() {
-		actions.Add("File browser", func() {
-			startdir := filepath.Dir(e.filename)
-			if startdir == "" || startdir == "." {
-				startdir, _ = os.Getwd()
-			}
-			megaFileState := megafile.New(c, tty, []string{startdir}, "", getEditorCommand(), fileBrowserUndoHistoryFilename)
-			megaFileState.WrittenTextColor = e.Foreground
-			megaFileState.Background = e.Background
-			megaFileState.HeaderColor = e.HeaderTextColor
-			megaFileState.PromptColor = e.LinkColor
-			megaFileState.AngleColor = e.JumpToLetterColor
-			megaFileState.EdgeBackground = e.Background
-			megaFileState.HighlightBackground = e.NanoHelpBackground
-			megaFileState.EmptyFileColor = e.MultiLineComment
-			megaFileState.SyntaxTextConfig = e.Theme.TextConfig()
-			megaFileState.Light = e.Light
-			c.HideCursor()
-			if _, err := megaFileState.Run(); err != nil && err != megafile.ErrExit {
-				c.ShowCursor()
-				status.SetError(err)
-				status.Show(c, e)
-				return
-			}
-			c.ShowCursor()
-			// File browser exited cleanly; signal the editor loop to quit.
-			e.quit = true
-			clearOnQuit.Store(true)
+		actions.Add("File browser (F4)", func() {
+			e.LaunchFileBrowser(c, tty, status)
 		})
 	}
 
