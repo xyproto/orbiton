@@ -198,23 +198,36 @@ func fillViaDirScan(sf *SystemFonts) {
 		dest  *string
 		frags []string // all fragments must appear in the lower-cased basename
 	}
+	// The rules for a role are listed in priority order. The macOS filenames
+	// ("georgia italic.ttf", "verdana bold.ttf", ...) matter because macOS
+	// usually has no fontconfig, so this scan is the only thing that runs there.
 	rules := []rule{
-		{dest: &sf.Regular, frags: []string{"georgia"}},
+		{dest: &sf.Regular, frags: []string{"georgia.ttf"}},
 		{dest: &sf.Regular, frags: []string{"ebgaramond", "regular"}},
 		{dest: &sf.Regular, frags: []string{"liberationserif", "regular"}},
 		{dest: &sf.Regular, frags: []string{"notoserif", "regular"}},
-		{dest: &sf.Italic, frags: []string{"georgiai"}},
+		{dest: &sf.Regular, frags: []string{"times new roman.ttf"}},
+		{dest: &sf.Italic, frags: []string{"georgiai.ttf"}},
+		{dest: &sf.Italic, frags: []string{"georgia italic.ttf"}},
 		{dest: &sf.Italic, frags: []string{"ebgaramond", "italic"}},
 		{dest: &sf.Italic, frags: []string{"liberationserif", "italic"}},
 		{dest: &sf.Italic, frags: []string{"notoserif", "italic"}},
+		{dest: &sf.Italic, frags: []string{"times new roman italic.ttf"}},
 		{dest: &sf.Bold, frags: []string{"cantarell", "bold"}},
 		{dest: &sf.Bold, frags: []string{"sourcesans", "bold"}},
 		{dest: &sf.Bold, frags: []string{"liberationsans", "bold"}},
+		{dest: &sf.Bold, frags: []string{"verdana bold.ttf"}},
+		{dest: &sf.Bold, frags: []string{"arial bold.ttf"}},
 		{dest: &sf.Light, frags: []string{"cantarell", "regular"}},
 		{dest: &sf.Light, frags: []string{"sourcesans", "light"}},
 		{dest: &sf.Light, frags: []string{"liberationsans", "regular"}},
+		{dest: &sf.Light, frags: []string{"verdana.ttf"}},
+		{dest: &sf.Light, frags: []string{"arial.ttf"}},
 		{dest: &sf.Mono, frags: []string{"sourcecodepro", "bold"}},
 		{dest: &sf.Mono, frags: []string{"sourcecodepro", "regular"}},
+		{dest: &sf.Mono, frags: []string{"andale mono.ttf"}},
+		{dest: &sf.Mono, frags: []string{"menlo.ttc"}},
+		{dest: &sf.Mono, frags: []string{"courier new.ttf"}},
 	}
 	// Unicode fallback candidates, in priority order. Every match is kept,
 	// since coverage differs a lot between these fonts. "apple symbols" and
@@ -228,6 +241,7 @@ func fillViaDirScan(sf *SystemFonts) {
 		{"seguisym"},
 	}
 	unicodeFound := make([]string, len(unicodeFrags))
+	ruleFound := make([]string, len(rules))
 	matches := func(lower string, frags []string) bool {
 		for _, frag := range frags {
 			if !strings.Contains(lower, frag) {
@@ -243,8 +257,8 @@ func fillViaDirScan(sf *SystemFonts) {
 			}
 			lower := strings.ToLower(filepath.Base(p))
 			for i := range rules {
-				if *rules[i].dest == "" && matches(lower, rules[i].frags) {
-					*rules[i].dest = p
+				if ruleFound[i] == "" && matches(lower, rules[i].frags) {
+					ruleFound[i] = p
 				}
 			}
 			for i := range unicodeFrags {
@@ -254,6 +268,14 @@ func fillViaDirScan(sf *SystemFonts) {
 			}
 			return nil
 		})
+	}
+	// Assign each role from its earliest listed matching rule, so that the
+	// listed priority wins rather than whichever file the walk happened to
+	// reach first.
+	for i, p := range ruleFound {
+		if p != "" && *rules[i].dest == "" {
+			*rules[i].dest = p
+		}
 	}
 	for _, p := range unicodeFound {
 		if p != "" {
