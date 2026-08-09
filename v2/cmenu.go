@@ -739,10 +739,14 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 		})
 	}
 
-	// Added this late on purpose: selection letters are handed out greedily in
+	// Added these late on purpose: selection letters are handed out greedily in
 	// menu order, so a new entry near the top takes a letter from an entry below
 	if e.blockMode || e.canBlockEdit() {
 		actions.AddCommand(e, c, tty, status, undo, "Toggle block editing (F6)", "blockedit")
+	}
+
+	if proseMode(e.mode) && !e.Empty() {
+		actions.AddCommand(e, c, tty, status, undo, "Jump to the next typo (F7)", "nexttypo")
 	}
 
 	// Launch the megafile file browser

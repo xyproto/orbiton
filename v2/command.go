@@ -114,6 +114,7 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		nothing = iota
 		blockedit
 		build
+		nexttypo
 		copyall
 		copylastcmd
 		copymark
@@ -140,6 +141,9 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 	commandLookup := map[int]func(){
 		blockedit: func() { // toggle block editing mode
 			e.ToggleBlockMode(c)
+		},
+		nexttypo: func() { // jump to the next typo
+			e.NanoNextTypo(c, status)
 		},
 		build: func() { // build
 			clearBuildErrorExplanationState()
@@ -402,6 +406,8 @@ func (e *Editor) CommandToFunction(c *vt.Canvas, tty *vt.TTY, status *StatusBar,
 		functionID = blockedit
 	case "build", "b", "bu", "bui":
 		functionID = build
+	case "nexttypo", "typo", "nt", "F7":
+		functionID = nexttypo
 	case "copyall", "copya":
 		functionID = copyall
 	case "copylastcmd", "copylastcommand", "copycmd":
