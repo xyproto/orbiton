@@ -1985,6 +1985,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.End(c)
 			}
 
+			// Expand "const" to "const val" in Kotlin. The space below completes it.
+			e.expandKotlinConst(c)
+
 			// Place a space
 			wrapped := e.InsertRune(c, ' ')
 			if !wrapped {

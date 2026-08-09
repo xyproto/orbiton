@@ -1398,6 +1398,19 @@ func (e *Editor) autocompleteTagExpansion(c *vt.Canvas, trimmedLine, currentLead
 	return false
 }
 
+// expandKotlinConst expands a lone "const" at the start of a line into "const val",
+// which is what it is always followed by in Kotlin. Meant to be called right before
+// the space that is being typed is inserted, so that the result is "const val ".
+// Returns true if the line was expanded.
+func (e *Editor) expandKotlinConst(c *vt.Canvas) bool {
+	if e.mode != mode.Kotlin || e.TrimmedLine() != "const" || !e.AtOrAfterEndOfLine() {
+		return false
+	}
+	e.SetCurrentLine(e.LeadingWhitespace() + "const val")
+	e.End(c)
+	return true
+}
+
 // LettersBeforeCursor returns the current word up until the cursor (for autocompletion)
 func (e *Editor) LettersBeforeCursor() string {
 	y := int(e.DataY())
