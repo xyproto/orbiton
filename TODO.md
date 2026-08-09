@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] On Windows, under Kitty, the highlighting of lines when navigating may cause a line to be
+      highlighted one line too high or too low and/or the rest of the rendering is off by one line.
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
 - [ ] Fix the graphical book mod bullet point symbols when running under iTerm2.
 - [ ] Sometimes when pasting in text, there is no X scroll.
