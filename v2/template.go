@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
@@ -353,6 +356,58 @@ to_pattern = '\1.\2.\3'
 	return templatePrograms
 }
 
+// majorVersionElement checks if s is a Go module major version element, like "v2"
+func majorVersionElement(s string) bool {
+	if len(s) < 2 || s[0] != 'v' {
+		return false
+	}
+	for _, r := range s[1:] {
+		if !unicode.IsDigit(r) {
+			return false
+		}
+	}
+	return true
+}
+
+// goModuleExecutableName returns the last element of the module path in the given
+// go.mod file, which is usually the name of the executable that will be built.
+// A trailing major version element is skipped, since "example.com/hi/v2" builds "hi".
+func goModuleExecutableName(goModPath string) string {
+	data, err := os.ReadFile(goModPath)
+	if err != nil {
+		return ""
+	}
+	for line := range strings.SplitSeq(string(data), "\n") {
+		rest, ok := strings.CutPrefix(strings.TrimSpace(line), "module ")
+		if !ok {
+			continue
+		}
+		elements := strings.Split(strings.Trim(strings.TrimSpace(rest), "\""), "/")
+		for _, element := range slices.Backward(elements) {
+			if element != "" && !majorVersionElement(element) {
+				return element
+			}
+		}
+		break
+	}
+	return ""
+}
+
+// gitignoreExecutableNames returns the names of the executables that are likely to
+// be built in the given directory: one named after the directory itself and one
+// named after the Go module, if there is a go.mod file.
+func gitignoreExecutableNames(dir string) []string {
+	var names []string
+	if base := filepath.Base(dir); base != "" && base != "." && base != ".." &&
+		base != string(filepath.Separator) && !majorVersionElement(base) {
+		names = append(names, base)
+	}
+	if name := goModuleExecutableName(filepath.Join(dir, "go.mod")); name != "" {
+		names = appendUniqueString(names, name)
+	}
+	return names
+}
+
 // BaseFilenameWithoutExtension returns the base filename, without the extension
 // For instance, "/some/where/main.c" becomes just "main".
 func (e *Editor) BaseFilenameWithoutExtension() string {
@@ -407,6 +462,18 @@ func (e *Editor) InsertTemplateProgram(c *vt.Canvas) error {
 			"# Maintainer: " + fullName + " <" + env.Email() + ">\n\npkgname=\npkgver=1.0.0\npkgrel=1\npkgdesc='Example application'\narch=(x86_64)\nurl='https://github.com/example/application'\nlicense=(BSD3)\nmakedepends=(git go)\nsource=(\"git+$url#commit=asdf\") # tag: v1.0.0\nb2sums=(SKIP)\n\nbuild() {\n  cd $pkgname\n  go build -v -mod=vendor -buildmode=pie -trimpath -ldflags=\"-s -w -extldflags \\\"${LDFLAGS}\\\"\"\n}\n\npackage() {\n  install -Dm755 $pkgname/$pkgname \"$pkgdir/usr/bin/$pkgname\"\n  install -Dm644 $pkgname/LICENSE \"$pkgdir/usr/share/licenses/$pkgname/LICENSE\"\n}\n",
 			20,
 			8,
+		}
+	}
+
+	// If this is a .gitignore file, also ignore the executables that are likely to be
+	// built here: one named after the directory and one named after the Go module.
+	if e.mode == mode.Ignore {
+		dir := filepath.Dir(e.filename)
+		if absFilename, err := filepath.Abs(e.filename); err == nil { // success
+			dir = filepath.Dir(absFilename)
+		}
+		if names := gitignoreExecutableNames(dir); len(names) > 0 {
+			prog.text += "# Executables that may be built in this directory\n" + strings.Join(names, "\n") + "\n"
 		}
 	}
 
