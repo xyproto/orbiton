@@ -112,7 +112,6 @@
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users), make the esc-pressing consistent. Either 3 or 4 times.
 - [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
-- [ ] When the first word on a line in Kotlin is `const` followed by a space, expand it to `const val `, when it's being typed in.
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
 - [ ] Add a Markdown template with headers and checkboxes.
@@ -120,7 +119,6 @@
 - [ ] When the last line in a document is a long line ending with "}", make it possible to press return before the "}".
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] HTTP client - scratch document style `.http` files.
-- [ ] When inserting a .gitignore template, also ignore files with no extension with the same name as the current directory, and also the go.mod name (last part, after /)
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B. Leverage Ollama to find good questions to ask and offer good options on screen. Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu. Then package Orbiton as an app for Steam, Play Store and App Store, as some sort of programming game? Create a separate project for this.
 - [ ] New idea for a text editor: make it more like a multiplayer-game, where several people and AI agents can cooperate on the server side, with a nice client on top.
 
@@ -210,7 +208,6 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] Indentation in Rust is sometimes wonky.
 - [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
 - [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
-- [ ] If joining a line that starts with a single-line comment with a line below that also starts with a single line comment, remove the extra comment marker.
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
 - [ ] Let ctrl-k first delete until "{" and then until the end of the line if there is no "{"?
 - [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart. Perhaps use the logic for tab-indenting for when dedenting `}`?
