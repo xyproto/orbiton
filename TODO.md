@@ -105,7 +105,6 @@
 - [ ] When pressing ctrl-f and then Tab without a search string, enter regexp search mode.
 - [ ] When pressing ctrl-x twice while on a function signature, cut the entire function.
 - [ ] When pressing esc several times to make the command menu appear (to aid ViM users), make the esc-pressing consistent. Either 3 or 4 times.
-- [ ] When rebasing, look for the `>>>>` markers when opening the file and jump to the first one (and let `ctrl-n` search for the next one).
 - [ ] When removing `-` in front of lines, do not move 1 to the right when encountering `}`.
 - [ ] Write a new syntax highlight module, the current one is a bit limited.
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
