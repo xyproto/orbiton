@@ -23,7 +23,7 @@ Orbiton might be a good fit for:
 * Being placed on a live image for a Linux or BSD distro, since it is limited by VT100, is small and self-contained, has a built-in log, man page and image viewer, has an optional nano/pico mode, comes with a `visudo` replacement (`osudo`) and has built-in support for neatly formatting `/etc/fstab` files.
 * Writing any number of words in a distraction-free fullscreen environment (toggle the status bar by pressing `ctrl-g` to see the word count).
 
-This has been my main editor for around 4 years now (since early 2022), and it is mostly written in itself, apart from some NeoViM in the early beginning.
+This has been my main editor since early 2022, and it is mostly written in itself, apart from some NeoViM in the early beginning. I spent too much time configuring text editors, IDEs and plugins, so I could just as well create a new one. I wanted something simple, but capable. Hope you like it too!
 
 ## Screenshots
 
