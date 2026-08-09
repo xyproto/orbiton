@@ -1937,6 +1937,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.showTypoHighlights = false
 			c.ShowCursor()
 
+			// In a man page, clear an active search instead of exiting
+			if e.mode == mode.ManPage && e.SearchTerm() != "" {
+				e.ClearSearch()
+				status.ClearAll(c, false)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
+
 			// If o is used as a man page viewer, or if the escToExit flag is set, exit at the press of esc
 			if escToExit || e.mode == mode.ManPage {
 				clearOnQuit.Store(false)
