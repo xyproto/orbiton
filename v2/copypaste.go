@@ -137,7 +137,42 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 }
 
 // Paste is called when the user presses ctrl-v, and handles portals, clipboards and also non-clipboard-based copy and paste
+// stripDiffPrefixes removes the leading "+" or " " from text copied out of a
+// unified diff. Only done for source code, when every non-empty line has such a
+// prefix and at least one line was added, so that prose and Markdown lists that
+// happen to start with "+" are left alone.
+func (e *Editor) stripDiffPrefixes(text string) string {
+	if !ProgrammingLanguage(e.mode) || e.mode == mode.Diff {
+		return text
+	}
+	lines := strings.Split(text, "\n")
+	if len(lines) < 2 {
+		return text
+	}
+	added := 0
+	for _, line := range lines {
+		switch {
+		case line == "":
+		case line[0] == '+':
+			added++
+		case line[0] == ' ':
+		default:
+			return text
+		}
+	}
+	if added == 0 {
+		return text
+	}
+	for i, line := range lines {
+		if line != "" {
+			lines[i] = line[1:]
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
 func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
+	var strippedDiff bool
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
 		if err == nil {                       // success
@@ -185,7 +220,12 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	if err == nil { // no error
 
 		// Make the replacements, then split the text into lines and store it in "copyLines"
-		*copyLines = strings.Split(opinionatedStringReplacer.Replace(s), "\n")
+		text := opinionatedStringReplacer.Replace(s)
+		if cleaned := e.stripDiffPrefixes(text); cleaned != text {
+			text = cleaned
+			strippedDiff = true
+		}
+		*copyLines = strings.Split(text, "\n")
 
 		// Note that control characters are not replaced, they are just not printed.
 	} else if *firstPasteAction {
@@ -319,7 +359,11 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		}
 
 		if numLines := 1 + tailLineCount; numLines > 1 {
-			status.SetMessageAfterRedraw(fmt.Sprintf("Pasted %d lines", numLines))
+			msg := fmt.Sprintf("Pasted %d lines", numLines)
+			if strippedDiff {
+				msg += ", without the diff prefixes"
+			}
+			status.SetMessageAfterRedraw(msg)
 		}
 	}
 

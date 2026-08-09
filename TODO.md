@@ -98,7 +98,6 @@
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
-- [ ] When pasting lines that start with `+` and it's not a diff/patch file, then replace `+` with a blank.
 - [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
 - [ ] When pressing ctrl-c twice while on a function signature, copy the entire function.

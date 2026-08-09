@@ -115,6 +115,7 @@ These features are unique to `o`, as far as I am aware:
 * If the loaded file is read-only, all text will be red by default.
 * Smart cursor movement, trying to maintain the X position when moving up and down, across short and long lines.
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
+* When pasting lines copied out of a diff into source code, the leading `+` and ` ` are removed.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line), press `ctrl-c` again to copy the current function.
 * Jump to matching bracket with `ctrl-r`, or open or close a portal. Toggle wrap when typing for prose with `ctrl-r` pressed twice. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` or `ctrl-b` and format code with `ctrl-w`, for a wide range of programming languages.
