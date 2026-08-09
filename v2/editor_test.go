@@ -217,3 +217,30 @@ func TestFunctionNameKeywordExclusion(t *testing.T) {
 		}
 	}
 }
+
+// Joining two single-line comments should not leave a second comment marker
+// in the middle of the joined line.
+func TestJoinLineWithNextComments(t *testing.T) {
+	for _, tc := range []struct {
+		m        mode.Mode
+		a, b     string
+		expected string
+	}{
+		{mode.Go, "// one", "// two", "// one two"},
+		{mode.Go, "\t// one", "\t// two", "\t// one two"},
+		{mode.Go, "// one", "two", "// one two"},
+		{mode.Go, "one", "// two", "one // two"},
+		{mode.Go, "// one", "//", "// one"},
+		{mode.Python, "# one", "# two", "# one two"},
+		{mode.Markdown, "// one", "// two", "// one // two"}, // not a programming language
+	} {
+		e := NewSimpleEditor(80)
+		e.mode = tc.m
+		e.LoadBytes([]byte(tc.a + "\n" + tc.b + "\n"))
+		e.GoToLineNumber(1, nil, nil, false)
+		e.JoinLineWithNext(nil)
+		if got := firstLine(e); got != tc.expected {
+			t.Errorf("%v: %q + %q became %q, expected %q", tc.m, tc.a, tc.b, got, tc.expected)
+		}
+	}
+}
