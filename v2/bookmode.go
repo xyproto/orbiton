@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -4666,8 +4667,8 @@ func (e *Editor) bookStatusBarImage(pixW, statusPixH int, renderH uint) *image.R
 	drawColumnsRTL := func(text string, anchor int, clr color.Color) int {
 		cols := strings.Split(text, "{|}")
 		x := anchor
-		for i := len(cols) - 1; i >= 0; i-- {
-			col := strings.TrimSpace(cols[i])
+		for _, col := range slices.Backward(cols) {
+			col := strings.TrimSpace(col)
 			if col == "" {
 				continue
 			}

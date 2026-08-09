@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -280,12 +281,12 @@ func (e *Editor) scheduleDescriptions(c *vt.Canvas) {
 	for k := range queuedHashes {
 		delete(queuedHashes, k)
 	}
-	for i := len(jobs) - 1; i >= 0; i-- {
-		if jobs[i].funcName == processingFunction {
+	for _, job := range slices.Backward(jobs) {
+		if job.funcName == processingFunction {
 			continue
 		}
-		descriptionStack = append(descriptionStack, jobs[i])
-		queuedHashes[jobs[i].bodyHash] = true
+		descriptionStack = append(descriptionStack, job)
+		queuedHashes[job.bodyHash] = true
 	}
 	queueMutex.Unlock()
 

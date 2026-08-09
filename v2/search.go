@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -428,8 +429,8 @@ AGAIN:
 			if err == nil { // success
 				if strings.Contains(clipboardString, "\n") {
 					lines := strings.Split(clipboardString, "\n")
-					for i := len(lines) - 1; i >= 0; i-- {
-						trimmedLine := strings.TrimSpace(lines[i])
+					for _, line := range slices.Backward(lines) {
+						trimmedLine := strings.TrimSpace(line)
 						if trimmedLine != "" {
 							s = trimmedLine
 							status.SetMessage(searchPrompt + " " + s)
