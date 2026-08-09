@@ -102,6 +102,15 @@ func isMovementKey(key string) bool {
 	return slices.Contains(movementKeys, key)
 }
 
+// isFunctionKey checks for the "F1" to "F12" key names that vt reports
+func isFunctionKey(key string) bool {
+	if len(key) < 2 || len(key) > 3 || key[0] != 'F' {
+		return false
+	}
+	n, err := strconv.Atoi(key[1:])
+	return err == nil && n >= 1 && n <= 12
+}
+
 var (
 	// Create a LockKeeper for keeping track of which files are being edited
 	fileLock = NewLockKeeper(defaultLockFile)
@@ -687,7 +696,26 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		//case "\x1b[201~", "\x1b[E", "\x1b[I", "\x1b[O":
 		//break // do nothing
 
-		case "c:23": // ctrl-w, format (or double press for block edit mode)
+		case "F1": // show the overview of hotkeys, the same as ctrl-l and then /
+			const repositionCursorAfterDrawing = true
+			e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
+			e.redraw.Store(true)
+			e.redrawCursor.Store(true)
+
+		case "F4": // launch the file browser, the same as the ctrl-o menu option
+			if !e.InBookMode() {
+				e.LaunchFileBrowser(c, tty, status)
+			}
+
+		case "F6": // toggle block editing mode, the same as the ctrl-o menu option
+			if e.blockMode || e.canBlockEdit() {
+				e.ToggleBlockMode(c)
+			}
+
+		case "F7": // jump to the next typo
+			e.NanoNextTypo(c, status)
+
+		case "c:23": // ctrl-w, format
 
 			if e.blockMode {
 				e.blockMode = false
@@ -705,19 +733,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.InBookMode() {
 				undo.Snapshot(e)
 				e.bookToggleParagraphIndent(c)
-				break
-			}
-
-			// Skip block edit mode when editing git commit messages, so that a double press falls through to keyword cycling
-			if kh.DoubleTapped("c:23") && e.mode != mode.Git {
-				e.blockMode = !e.blockMode
-				if e.blockMode {
-					e.InitBlockCursors(c)
-				} else {
-					e.blockCursors = nil
-				}
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
 				break
 			}
 
@@ -1774,7 +1789,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redraw.Store(true)
 			e.redrawCursor.Store(true)
 
-		case "c:14": // ctrl-n, scroll down or jump to next match, using the sticky search term
+		case "c:14", "F3": // ctrl-n or F3, scroll down or jump to next match, using the sticky search term
 
 			if e.cycleFilenames && !e.changed.Load() && !e.moveLines.Load() {
 				e.SaveLocation()
@@ -2438,9 +2453,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if insertDateAndTimeFunc, err := e.CommandToFunction(c, tty, status, undo, "insertdateandtime"); err == nil { // success
 				insertDateAndTimeFunc()
 			}
-		case "c:19": // ctrl-s, save (or toggle stdout in debug mode)
+		case "c:19", "F2": // ctrl-s or F2, save (or toggle stdout in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7": // ctrl-g, either go to definition OR jump to matching parent/bracket OR toggle the GDB console in debug mode
+		case "c:7", "F12": // ctrl-g or F12, either go to definition OR jump to matching parent/bracket OR toggle the GDB console in debug mode
 
 			if e.nanoMode.Load() { // nano: ctrl-g, help
 				status.ClearAll(c, false)
@@ -3027,6 +3042,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Ignore CSI escape sequence remnants (e.g. "[E", "[200~")
 			if len(keyRunes) >= 2 && keyRunes[0] == '[' &&
 				(unicode.IsUpper(keyRunes[1]) || unicode.IsDigit(keyRunes[1])) {
+				break
+			}
+
+			// Function keys that are not bound to anything must be ignored, or
+			// they end up being inserted as text by the paste branch below
+			if isFunctionKey(key) {
 				break
 			}
 

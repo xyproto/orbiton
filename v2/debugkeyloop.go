@@ -111,7 +111,7 @@ func (e *Editor) handleDebugKey(key string, c *vt.Canvas, tty *vt.TTY, status *S
 		}
 		return true
 
-	case "c:15", "F10": // ctrl-o or F10, step over
+	case "c:15", "F8", "F10": // ctrl-o, F8 or F10, step over (F10 is taken by some terminals)
 		if e.debugger == nil {
 			// Auto-start the debug session
 			if err := e.DebugStartSession(c, tty, status, ""); err != nil {
