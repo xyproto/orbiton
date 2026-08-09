@@ -5,7 +5,6 @@
 - [ ] On Windows, under Kitty, the highlighting of lines when navigating may cause a line to be
       highlighted one line too high or too low and/or the rest of the rendering is off by one line.
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
-- [ ] Fix the graphical book mod bullet point symbols when running under iTerm2.
 - [ ] Sometimes when pasting in text, there is no X scroll.
 - [ ] When viewing a man page and then pressing ctrl-f to search, then pressing esc should clear the source and not exit right away.
 - [ ] Also support info pages.
@@ -13,7 +12,6 @@
 - [ ] The `nvchecker` man page has bullet point symbols that are not correctly rendered. Improve the man page renderer.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] Add support for Common Lisp / CMUCL.
-- [ ] When jumping to a letter with ctrl-l, if `W` is on screen, but not `w`, then both `W` and `w` should jump to `W`.
 - [ ] Add a built-in Assembler + Disassembler?
 - [ ] Add a menu entry for generating a Go report card (text + image) using https://github.com/gojp/goreportcard.
 - [ ] The `vt` package + Orbiton might toggle between raw/cooked mode too often. Investigate.
@@ -246,7 +244,6 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 ## Documentation
 
-- [ ] Replace ` in o.1 with \b.
 - [ ] Document that pressing the arrow keys in rapid succession and typing in `!sort` can sort a block of text with the external `sort` command.
 
 ## Cut, copy, paste and portals
@@ -256,7 +253,6 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] When starting o, hash sum the clipboards it can find. When pasting, use the latest changed clipboard. If nothing changed, use the one for Wayland or X11, depending on environment variables.
 - [ ] Use `wl-copy` for copy and cut. Use the same type of implementation as for `wl-paste`.
 - [ ] If `xclip` or similar tool is not available, cut/copy/paste via a file.
-- [ ] Add a command menu option to copy the build command to the clipboard.
 - [ ] Add a command menu option to copy the entire file to the clipboard.
 - [ ] Re-enable cross-user portals?
 - [ ] Cross user portals? Possibly by using `TMPDIR/oportal.dat`.
