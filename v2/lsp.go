@@ -452,13 +452,9 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 		workspaceRoot: workspaceRoot,
 	}
 	go client.readLoop()
-	// drain stderr in the background
+	// Drain stderr. A bufio.Scanner would stop at a >64k line, blocking the server.
 	go func() {
-		scanner := bufio.NewScanner(stderr)
-		for scanner.Scan() {
-			// Silently consume stderr for now
-			_ = scanner.Text()
-		}
+		_, _ = io.Copy(io.Discard, stderr)
 	}()
 	return client, nil
 }
