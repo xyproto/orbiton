@@ -36,7 +36,7 @@ require (
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.16
 	github.com/xyproto/wordwrap v1.2.0
-	golang.org/x/image v0.44.0
+	golang.org/x/image v0.45.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -62,7 +62,7 @@ require (
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.7.3 // indirect
-	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
