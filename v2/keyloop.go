@@ -35,42 +35,42 @@ const (
 	downArrow  = "↓"
 
 	// These keys are undocumented features
-	pgUpKey      = "⇞"       // page up
-	pgDnKey      = "⇟"       // page down
-	homeKey      = "⇱"       // home
-	endKey       = "⇲"       // end
-	copyKey      = "⎘"       // ctrl-insert
-	altUpKey     = "alt↑"    // alt-up (xterm-class terminals only)
-	altRightKey  = "alt→"    // alt-right (xterm-class terminals only)
-	altLeftKey   = "alt←"    // alt-left (xterm-class terminals only)
-	altDownKey   = "alt↓"    // alt-down (xterm-class terminals only)
-	ctrlUpKey    = "ctrl-up" // ctrl-up
-	ctrlDownKey  = "ctrl↓"   // ctrl-down
-	ctrlLeftKey  = "ctrl←"   // ctrl-left
-	ctrlRightKey = "ctrl→"   // ctrl-right
-	ctrlPgUpKey  = "ctrl⇞"   // ctrl-pgup
-	ctrlPgDnKey  = "ctrl⇟"   // ctrl-pgdn
-	ctrlHomeKey  = "ctrl⇱"   // ctrl-home
-	ctrlEndKey   = "ctrl⇲"   // ctrl-end
+	pgUpKey      = "⇞"     // page up
+	pgDnKey      = "⇟"     // page down
+	homeKey      = "⇱"     // home
+	endKey       = "⇲"     // end
+	copyKey      = "ctrl⎀" // ctrl-insert
+	altUpKey     = "alt↑"  // alt-up (xterm-class terminals only)
+	altRightKey  = "alt→"  // alt-right (xterm-class terminals only)
+	altLeftKey   = "alt←"  // alt-left (xterm-class terminals only)
+	altDownKey   = "alt↓"  // alt-down (xterm-class terminals only)
+	ctrlUpKey    = "ctrl↑" // ctrl-up
+	ctrlDownKey  = "ctrl↓" // ctrl-down
+	ctrlLeftKey  = "ctrl←" // ctrl-left
+	ctrlRightKey = "ctrl→" // ctrl-right
+	ctrlPgUpKey  = "ctrl⇞" // ctrl-pgup
+	ctrlPgDnKey  = "ctrl⇟" // ctrl-pgdn
+	ctrlHomeKey  = "ctrl⇱" // ctrl-home
+	ctrlEndKey   = "ctrl⇲" // ctrl-end
 
-	shiftLeftKey  = "shift←"     // shift-left
-	shiftRightKey = "shift→"     // shift-right
-	shiftUpKey    = "shift↑"     // shift-up
-	shiftDownKey  = "shift↓"     // shift-down
-	shiftHomeKey  = "shift⇱"     // shift-home
-	shiftEndKey   = "shift⇲"     // shift-end
-	shiftPgUpKey  = "shift⇞"     // shift-pgup
-	shiftPgDnKey  = "shift-pgdn" // shift-pgdn
-	shiftDelKey   = "shift⌦"     // shift-delete
-	fwdDelKey     = "⌦"          // forward-delete (Delete key)
+	shiftLeftKey  = "shift←" // shift-left
+	shiftRightKey = "shift→" // shift-right
+	shiftUpKey    = "shift↑" // shift-up
+	shiftDownKey  = "shift↓" // shift-down
+	shiftHomeKey  = "shift⇱" // shift-home
+	shiftEndKey   = "shift⇲" // shift-end
+	shiftPgUpKey  = "shift⇞" // shift-pgup
+	shiftPgDnKey  = "shift⇟" // shift-pgdn
+	shiftDelKey   = "shift⌦" // shift-delete
+	fwdDelKey     = "⌦"      // forward-delete (Delete key)
 
 	shiftReturnKey = "shift⏎" // shift-return
 	altReturnKey   = "alt⏎"   // alt-return
 
 	delayUntilSpeedUp = 700 * time.Millisecond
 
-	shiftInsertKey1   = "\x1b[2~"
-	shiftInsertKey2   = "\x1b[2;2~"
+	insertKey         = "⎀"         // insert
+	shiftInsertKey    = "shift⎀"    // shift-insert
 	ctrlShiftLeftKey  = "\x1b[1;6D" // ctrl-shift-left (not in the vt library)
 	ctrlShiftRightKey = "\x1b[1;6C" // ctrl-shift-right (not in the vt library)
 )
@@ -2959,7 +2959,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
 			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
 
-		case shiftInsertKey1, shiftInsertKey2: // shift-insert, one-shot paste mode
+		case insertKey, shiftInsertKey: // insert / shift-insert, one-shot paste mode
 			wasInPasteMode := e.pasteMode
 			if !wasInPasteMode {
 				e.pasteMode = true

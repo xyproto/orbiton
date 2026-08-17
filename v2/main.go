@@ -106,7 +106,7 @@ func main() {
 	slay.ProgName = "o -b"
 	slay.ProgURL = "https://github.com/xyproto/orbiton"
 
-	env.Set("ORBITON") // set ORBITON to 1, for Megafile
+	os.Setenv("ORBITON", "1") // set ORBITON to 1, for Megafile
 
 	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), reap orphaned
 	// child processes so they don't pile up as zombies. The editor also never

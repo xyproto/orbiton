@@ -28,7 +28,8 @@ var asciiFallbackReplacer = strings.NewReplacer(
 	"⇟", "D",
 	"⇱", "H",
 	"⇲", "E",
-	"⎘", "C",
+	"⎀", "I",
+	"⌦", "X",
 )
 
 // hasKey checks if the given string map contains the given key
