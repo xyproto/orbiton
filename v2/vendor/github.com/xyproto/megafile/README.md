@@ -37,7 +37,7 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 **Execution**
 * `Return` - execute selected file, or run typed command
-* `Esc` - clear selection (first press), exit program (second press)
+* `Esc` - clear selection or filter (first press), then go one directory up, or exit program when launched from Orbiton
 
 **Text Editing**
 * `Backspace` - delete character, or go up directory (when at start)
@@ -69,7 +69,8 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 * `ctrl-g` - run `lazygit`
 
 **Exit**
-* `ctrl-q` - exit program immediately
+* `ctrl-q` or `F10` - exit program immediately
+* `F4`, or `Esc` with no active selection or filter - exit program, but only when launched from Orbiton (when `$ORBITON` is set)
 
 ### Runtime dependencies
 
@@ -79,6 +80,6 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### General info
 
-* Version: 1.7.9
+* Version: 1.7.10
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

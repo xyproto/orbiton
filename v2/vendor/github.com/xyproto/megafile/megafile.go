@@ -34,6 +34,8 @@ var (
 
 	// Check if $NO_COLOR is set, or if the terminal is strict VT100
 	envNoColor = env.Bool("NO_COLOR") || envVT100
+
+	launchedFromOrbiton = env.Bool("ORBITON")
 )
 
 const (
@@ -117,6 +119,7 @@ type State struct {
 	BinaryConfirmBackground   vt.AttributeColor
 	SyntaxTextConfig          *synhi.TextConfig // theme colors for syntax highlighting in previews
 	Light                     bool              // true if the theme has a light background
+	EscToQuit                 bool              // let esc and F4 quit directly, for when Megafile was launched from Orbiton
 	quit                      bool
 	selectionMoved            bool
 	binaryConfirmPending      bool
@@ -263,6 +266,7 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 		previewResultChan:         make(chan imagepreview.PreviewResult, 1),
 		keyChan:                   make(chan string, 1),
 	}
+	state.EscToQuit = launchedFromOrbiton
 	state.loadUndoHistory()
 	state.applyThemeFromEnv()
 	return state
@@ -1545,6 +1549,10 @@ func (s *State) Run() ([]string, error) {
 			//s.quit = true
 			//break
 			//}
+			if s.EscToQuit {
+				s.quit = true
+				break
+			}
 			fallthrough
 		case "c:127", "c:31": // backspace or ctrl-dash, either go one directory up or delete text
 			if index == 0 { // cursor is at the start of the line, nothing to delete
@@ -1570,7 +1578,11 @@ func (s *State) Run() ([]string, error) {
 			s.quit = true
 		case "c:18", "F2": // ctrl-r or F2 : rename selected file or directory
 			rename.enter(&index, renameHooks)
-		case "F1", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F11", "F12": // unhandled function keys: do nothing
+		case "F4":
+			if s.EscToQuit {
+				s.quit = true
+			}
+		case "F1", "F3", "F5", "F6", "F7", "F8", "F9", "F11", "F12": // unhandled function keys: do nothing
 		case "c:13": // return
 			okToAutoSelect := !s.autoSelected
 			if s.autoSelected && len(s.written) == 0 {

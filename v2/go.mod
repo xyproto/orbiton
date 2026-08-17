@@ -28,7 +28,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.2
-	github.com/xyproto/megafile v1.7.9
+	github.com/xyproto/megafile v1.7.10
 	github.com/xyproto/mode v0.12.15
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/syntax v1.14.7
