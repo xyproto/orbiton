@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] If a file is recognized as a programming language, do best-effort syntex highlighting.
+- [ ] Also support Groovy.
 - [ ] Render VGA and text when stepping through DOS com files + integrate an x86 emulator?
 - [ ] If the cursor is on the top line, hide the status text in the upper right corner, or use a different background color.
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
