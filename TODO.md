@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Make ctrl-b more predictable.
+- [ ] Fix æøå under Mingw+Windows.
 - [ ] When ctrl-w is pressed the first time on Windows, don't hang while trying to download goimport, at least show a status message.
 - [ ] When running a program with 2x ctrl-space, if there is no output, say "No output" intead of just a box that quickly flickers in and out of view.
 - [ ] If a file is recognized as a programming language, do best-effort syntex highlighting.
