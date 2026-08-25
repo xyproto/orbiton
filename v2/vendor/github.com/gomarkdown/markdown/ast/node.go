@@ -1,7 +1,7 @@
 package ast
 
 // An attribute can be attached to block elements. They are specified as
-// {#id .classs key="value"} where quotes for values are mandatory, multiple
+// {#id .class key="value"} where quotes for values are mandatory, multiple
 // key/value pairs are separated by whitespace.
 type Attribute struct {
 	ID      []byte
@@ -339,7 +339,7 @@ type Hardbreak struct {
 	Leaf
 }
 
-// NonBlockingSpace represents markdown non-blocking space node
+// NonBlockingSpace represents a markdown non-breaking space node
 type NonBlockingSpace struct {
 	Leaf
 }
@@ -430,6 +430,17 @@ type Superscript struct {
 // Footnotes is a node that contains all footnotes
 type Footnotes struct {
 	Container
+}
+
+// ReferenceDefinition is a [label]: destination "title" definition.
+// Links still resolve Destination at parse time; this node is additive so
+// round-trippers can recover the original reference syntax.
+type ReferenceDefinition struct {
+	Leaf
+
+	Label       []byte
+	Destination []byte
+	Title       []byte
 }
 
 func removeNodeFromArray(a []Node, node Node) []Node {
