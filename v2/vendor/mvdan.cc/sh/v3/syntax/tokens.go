@@ -4,6 +4,7 @@
 package syntax
 
 //go:generate go tool stringer -type token -linecomment -trimprefix _
+//go:generate go run gen_token_parse.go
 
 type token uint32
 

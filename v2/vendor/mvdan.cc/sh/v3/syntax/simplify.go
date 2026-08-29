@@ -17,25 +17,50 @@ import "strings"
 //	Merge negations with unary operators     [[ ! -n $var ]]
 //	Use single quotes to shorten literals    "\$foo"
 func Simplify(n Node) bool {
-	s := simplifier{}
-	Walk(n, s.visit)
+	s := simplifier{keepParams: make(map[ArithmExpr]bool)}
+	for node := range Preorder(n) {
+		s.visit(node)
+	}
 	return s.modified
 }
 
 type simplifier struct {
 	modified bool
+
+	// keepParams holds arithmetic nodes within an array index;
+	// see [simplifier.markIndex].
+	keepParams map[ArithmExpr]bool
 }
 
-func (s *simplifier) visit(node Node) bool {
+// markIndex records an array index so that its parameters are not inlined,
+// as x[i] and x[$i] differ when x is an associative array.
+// Nested arithmetic expansions like x[$((i))] are left out,
+// as those are always arithmetic and never string keys.
+func (s *simplifier) markIndex(expr ArithmExpr) {
+	switch expr := expr.(type) {
+	case *BinaryArithm:
+		s.keepParams[expr] = true
+		s.markIndex(expr.X)
+		s.markIndex(expr.Y)
+	case *ParenArithm:
+		s.keepParams[expr] = true
+		s.markIndex(expr.X)
+	case *UnaryArithm:
+		// visit never inlines the parameters of a unary expression.
+		s.markIndex(expr.X)
+	}
+}
+
+func (s *simplifier) visit(node Node) {
 	switch node := node.(type) {
 	case *Assign:
 		node.Index = s.removeParensArithm(node.Index)
-		// Don't inline params, as x[i] and x[$i] mean
-		// different things when x is an associative
-		// array; the first means "i", the second "$i".
+		s.markIndex(node.Index)
+	case *ArrayElem:
+		s.markIndex(node.Index)
 	case *ParamExp:
 		node.Index = s.removeParensArithm(node.Index)
-		// don't inline params - same as above.
+		s.markIndex(node.Index)
 
 		if node.Slice == nil {
 			break
@@ -52,10 +77,14 @@ func (s *simplifier) visit(node Node) bool {
 		node.X = s.inlineSimpleParams(node.X)
 	case *ParenArithm:
 		node.X = s.removeParensArithm(node.X)
-		node.X = s.inlineSimpleParams(node.X)
+		if !s.keepParams[node] {
+			node.X = s.inlineSimpleParams(node.X)
+		}
 	case *BinaryArithm:
-		node.X = s.inlineSimpleParams(node.X)
-		node.Y = s.inlineSimpleParams(node.Y)
+		if !s.keepParams[node] {
+			node.X = s.inlineSimpleParams(node.X)
+			node.Y = s.inlineSimpleParams(node.Y)
+		}
 	case *CmdSubst:
 		node.Stmts = s.inlineSubshell(node.Stmts)
 	case *Subshell:
@@ -78,6 +107,8 @@ func (s *simplifier) visit(node Node) bool {
 		switch node.Op {
 		case TsMatch, TsNoMatch:
 			// unquoting enables globbing
+		case TsReMatch:
+			// unquoting turns a literal string into a regular expression
 		default:
 			node.Y = s.unquoteParams(node.Y)
 		}
@@ -85,7 +116,6 @@ func (s *simplifier) visit(node Node) bool {
 	case *UnaryTest:
 		node.X = s.unquoteParams(node.X)
 	}
-	return true
 }
 
 func (s *simplifier) simplifyWord(wps []WordPart) []WordPart {

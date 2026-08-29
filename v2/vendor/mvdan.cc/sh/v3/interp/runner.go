@@ -5,6 +5,7 @@ package interp
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -74,6 +75,9 @@ func (r *Runner) fillExpandConfig(ctx context.Context) {
 			return nil
 		},
 		ProcSubst: func(ps *syntax.ProcSubst) (string, error) {
+			if ps.Op == syntax.CmdInTemp { // zsh's =(...)
+				return "", fmt.Errorf("unsupported")
+			}
 			if runtime.GOOS == "windows" {
 				return "", fmt.Errorf("TODO: support process substitution on Windows")
 			}
@@ -193,16 +197,18 @@ func (r *Runner) expandErr(err error) {
 	}
 	errMsg := err.Error()
 	fmt.Fprintln(r.stderr, errMsg)
+	_, unsetParam := errors.AsType[expand.UnsetParameterError](err)
 	switch {
-	case errors.As(err, &expand.UnsetParameterError{}):
-	case errMsg == "invalid indirect expansion":
+	case unsetParam, errMsg == "invalid indirect expansion":
 		// TODO: These errors are treated as fatal by bash.
 		// Make the error type reflect that.
-	default:
-		return // other cases do not exit
+		r.exit.code = 1
+		r.exit.exiting = true
+	case errors.Is(err, errReadOnly):
+		// Like in bash, assigning to a read-only variable fails
+		// the command at hand without exiting the shell.
+		r.exit.code = 1
 	}
-	r.exit.code = 1
-	r.exit.exiting = true
 }
 
 func (r *Runner) arithm(expr syntax.ArithmExpr) int {
@@ -247,8 +253,7 @@ func (e expandEnv) Get(name string) expand.Variable {
 }
 
 func (e expandEnv) Set(name string, vr expand.Variable) error {
-	e.r.setVar(name, vr)
-	return nil // TODO: return any errors
+	return e.r.setVarErr(name, vr)
 }
 
 func (e expandEnv) Each(fn func(name string, vr expand.Variable) bool) {
@@ -259,13 +264,14 @@ var todoPos syntax.Pos // for handlerCtx callers where we don't yet have a posit
 
 func (r *Runner) handlerCtx(ctx context.Context, kind handlerKind, pos syntax.Pos) context.Context {
 	hc := HandlerContext{
-		runner: r,
-		kind:   kind,
-		Env:    &overlayEnviron{parent: r.writeEnv},
-		Dir:    r.Dir,
-		Pos:    pos,
-		Stdout: r.stdout,
-		Stderr: r.stderr,
+		runner:         r,
+		kind:           kind,
+		Env:            &overlayEnviron{parent: r.writeEnv},
+		Dir:            r.Dir,
+		Pos:            pos,
+		Stdout:         r.stdout,
+		Stderr:         r.stderr,
+		LastExitStatus: int(r.lastExit.code),
 	}
 	if r.stdin != nil { // do not leave hc.Stdin as a typed nil
 		hc.Stdin = r.stdin
@@ -329,14 +335,19 @@ func (r *Runner) stmt(ctx context.Context, st *syntax.Stmt) {
 
 func (r *Runner) stmtSync(ctx context.Context, st *syntax.Stmt) {
 	oldIn, oldOut, oldErr := r.stdin, r.stdout, r.stderr
+	var closers []io.Closer
 	for _, rd := range st.Redirs {
 		cls, err := r.redir(ctx, rd)
 		if err != nil {
+			if !r.exit.fatalExit {
+				// A fatal error from a handler is reported by [Runner.Run].
+				r.errf("%v\n", err)
+			}
 			r.exit.code = 1
 			break
 		}
 		if cls != nil {
-			defer cls.Close()
+			closers = append(closers, cls)
 		}
 	}
 	if r.exit.ok() && st.Cmd != nil {
@@ -360,8 +371,15 @@ func (r *Runner) stmtSync(ctx context.Context, st *syntax.Stmt) {
 			r.exit.exiting = true
 		}
 	}
-	if !r.keepRedirs {
+	if r.keepRedirs {
+		// The exec builtin made this statement's redirections apply to the
+		// shell itself, so don't undo them and keep their files open.
+		r.keepRedirs = false
+	} else if len(st.Redirs) > 0 {
 		r.stdin, r.stdout, r.stderr = oldIn, oldOut, oldErr
+		for _, cls := range closers {
+			cls.Close()
+		}
 	}
 }
 
@@ -382,7 +400,8 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 		r2.exit.exiting = false // subshells don't exit the parent shell
 		r.exit = r2.exit
 	case *syntax.CallExpr:
-		// Use a new slice, to not modify the slice in the alias map.
+		// Build new slices, to not modify the caller's AST
+		// nor the slices in the alias map.
 		args := cm.Args
 		for i := 0; i < len(args); {
 			if !r.opts[optExpandAliases] {
@@ -392,7 +411,7 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 			if !ok {
 				break
 			}
-			args = slices.Replace(args, i, i+1, als.args...)
+			args = slices.Concat(args[:i], als.args, args[i+1:])
 			if !als.blank {
 				break
 			}
@@ -420,15 +439,12 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 
 				// Strangely enough, it seems like Bash prints original
 				// source for arrays, but the expanded value otherwise.
-				// TODO: add test cases for x[i]=y and x+=y.
+				// Note that, unlike bash, we print neither the subscript
+				// in `x[i]=y` nor just the appended value in `x+=y`.
 				if as.Array != nil {
 					trace.expr(as)
 				} else if as.Value != nil {
-					val, err := syntax.Quote(vr.String(), syntax.LangBash)
-					if err != nil { // should never happen
-						panic(err)
-					}
-					trace.stringf("%s=%s", name, val)
+					trace.stringf("%s=%s", name, quoteBash(vr.String()))
 				}
 				trace.newLineFlush()
 			}
@@ -482,7 +498,7 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 				r.stmt(ctx, cm.Y)
 			}
 		case syntax.Pipe, syntax.PipeAll:
-			pr, pw, err := os.Pipe()
+			pr, pw, err := newPipe()
 			if err != nil {
 				r.exit.fatal(err) // not being able to create a pipe is rare but critical
 				return
@@ -494,6 +510,7 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 			} else {
 				r2.stderr = r.stderr
 			}
+			oldIn := r.stdin
 			r.stdin = pr
 			var wg sync.WaitGroup
 			wg.Go(func() {
@@ -504,6 +521,7 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 			r.stmt(ctx, cm.Y)
 			pr.Close()
 			wg.Wait()
+			r.stdin = oldIn
 			if r.opts[optPipeFail] && !r2.exit.ok() && r.exit.ok() {
 				r.exit = r2.exit
 			}
@@ -550,44 +568,44 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 			}
 
 			if cm.Select {
-				ps3 := shellDefaultPS3
-				if e := r.envGet(shellReplyPS3Var); e != "" {
-					ps3 = e
-				}
+				ps3 := cmp.Or(r.envGet(shellReplyPS3Var), shellDefaultPS3)
 
-				prompt := func() []byte {
-					// display menu
-					for i, word := range items {
-						r.errf("%d) %v\n", i+1, word)
+				for menu := true; ; {
+					if menu {
+						// display menu
+						for i, word := range items {
+							r.errf("%d) %v\n", i+1, word)
+						}
+						menu = false
 					}
 					r.errf("%s", ps3)
 
 					line, err := r.readLine(ctx, true)
 					if err != nil {
+						r.errf("\n")
 						r.exit.code = 1
-						return nil
+						break
 					}
-					return line
-				}
+					if len(line) == 0 {
+						menu = true // no reply; show the menu again
+						continue
+					}
 
-			retry:
-				choice := prompt()
-				if len(choice) == 0 {
-					goto retry // no reply; try again
-				}
+					reply := string(line)
+					r.setVarString(shellReplyVar, reply)
 
-				reply := string(choice)
-				r.setVarString(shellReplyVar, reply)
+					if c, _ := strconv.Atoi(reply); c > 0 && c <= len(items) {
+						r.setVarString(name, items[c-1])
+					} else {
+						r.setVarString(name, "")
+					}
 
-				c, _ := strconv.Atoi(reply)
-				if c > 0 && c <= len(items) {
-					r.setVarString(name, items[c-1])
+					// execute commands until break or return is encountered
+					if r.loopStmtsBroken(ctx, cm.Do) {
+						break
+					}
 				}
-
-				// execute commands until break or return is encountered
-				if r.loopStmtsBroken(ctx, cm.Do) {
-					break
-				}
+				break
 			}
 
 			for _, field := range items {
@@ -620,33 +638,26 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 			}
 		}
 	case *syntax.FuncDecl:
+		if cm.Name == nil { // e.g. zsh's anonymous or multi-name functions
+			r.errf("unsupported\n")
+			r.exit.code = 1
+			break
+		}
 		r.setFunc(cm.Name.Value, cm.Body)
 	case *syntax.ArithmCmd:
 		r.exit.oneIf(r.arithm(cm.X) == 0)
 	case *syntax.LetClause:
+		if tracingEnabled {
+			trace.string("let")
+			for _, expr := range cm.Exprs {
+				trace.stringf(" %s", r.letArgString(trace.printer, expr))
+			}
+			trace.newLineFlush()
+		}
 		var val int
 		for _, expr := range cm.Exprs {
 			val = r.arithm(expr)
-
-			if !tracingEnabled {
-				continue
-			}
-
-			switch expr := expr.(type) {
-			case *syntax.Word:
-				qs, err := syntax.Quote(r.literal(expr), syntax.LangBash)
-				if err != nil {
-					return
-				}
-				trace.stringf("let %v", qs)
-			case *syntax.BinaryArithm, *syntax.UnaryArithm:
-				trace.expr(cm)
-			case *syntax.ParenArithm:
-				// TODO
-			}
 		}
-
-		trace.newLineFlush()
 		r.exit.oneIf(val == 0)
 	case *syntax.CaseClause:
 		trace.string("case ")
@@ -654,13 +665,21 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 		trace.string(" in")
 		trace.newLineFlush()
 		str := r.literal(cm.Word)
+		runNext := false // whether the previous item ended with ";&"
 		for _, ci := range cm.Items {
-			for _, word := range ci.Patterns {
-				pattern := r.pattern(word)
-				if match(pattern, str) {
-					r.stmts(ctx, ci.Stmts)
-					return
-				}
+			if !runNext && !slices.ContainsFunc(ci.Patterns, func(word *syntax.Word) bool {
+				return r.match(r.pattern(word), str)
+			}) {
+				continue
+			}
+			r.stmts(ctx, ci.Stmts)
+			switch ci.Op {
+			case syntax.Fallthrough: // ";&" runs the next item unconditionally
+				runNext = true
+			case syntax.Resume, syntax.ResumeKorn: // ";;&" and ";|" resume matching
+				runNext = false
+			default: // ";;" or the last item stop
+				return
 			}
 		}
 	case *syntax.TestClause:
@@ -751,7 +770,11 @@ func (r *Runner) cmd(ctx context.Context, cm syntax.Command) {
 						if i > 0 {
 							r.out(" ")
 						}
-						r.outf("[%d]=%q", i, v)
+						idx := i
+						if vr.Indexes != nil {
+							idx = vr.Indexes[i]
+						}
+						r.outf("[%d]=%q", idx, v)
 					}
 					r.out(")\n")
 				case expand.Associative:
@@ -826,6 +849,7 @@ func (r *Runner) trapCallback(ctx context.Context, callback, name string) {
 		return // don't recurse, as that could lead to cycles
 	}
 	r.handlingTrap = true
+	defer func() { r.handlingTrap = false }()
 
 	p := syntax.NewParser()
 	// TODO: do this parsing when "trap" is called?
@@ -835,11 +859,10 @@ func (r *Runner) trapCallback(ctx context.Context, callback, name string) {
 		// ignore errors in the callback
 		return
 	}
-	oldExit := r.exit
+	oldExit, oldLastExit := r.exit, r.lastExit
+	r.lastExit = r.exit
 	r.stmts(ctx, file.Stmts)
-	r.exit = oldExit // traps on EXIT or ERR should not modify the result
-
-	r.handlingTrap = false
+	r.exit, r.lastExit = oldExit, oldLastExit // traps on EXIT or ERR should not modify the result
 }
 
 func (r *Runner) flattenAssigns(args []*syntax.Assign) iter.Seq[*syntax.Assign] {
@@ -873,19 +896,47 @@ func (r *Runner) flattenAssigns(args []*syntax.Assign) iter.Seq[*syntax.Assign] 
 	}
 }
 
-func match(pat, name string) bool {
+// letArgString reproduces one expression of a let clause as bash would print it
+// when tracing, that is, as the single quoted word that bash's let receives.
+func (r *Runner) letArgString(printer *syntax.Printer, expr syntax.ArithmExpr) string {
+	if word, ok := expr.(*syntax.Word); ok {
+		return quoteBash(r.literal(word))
+	}
+	// The printer only prints an arithmetic expression as part of a parent node,
+	// so print a let clause holding just this expression and drop the keyword.
+	// The keyword borrows the expression's position to stay on the same line.
+	// TODO: drop this workaround if [syntax.Printer.Print] learns to print
+	// an arithmetic expression on its own.
+	var sb strings.Builder
+	if err := printer.Print(&sb, &syntax.LetClause{
+		Let:   expr.Pos(),
+		Exprs: []syntax.ArithmExpr{expr},
+	}); err != nil { // should never happen
+		panic(err)
+	}
+	return strings.TrimPrefix(sb.String(), "let ")
+}
+
+func (r *Runner) match(pat, name string) bool {
 	matcher, err := internal.ExtendedPatternMatcher(pat, pattern.EntireString|pattern.ExtendedOperators)
-	_ = err // TODO: report these errors
-	return matcher != nil && matcher(name)
+	if err != nil {
+		// A malformed pattern simply does not match, like in bash.
+		// Any other error, such as an unsupported extended pattern, is reported.
+		if _, ok := errors.AsType[*pattern.SyntaxError](err); !ok {
+			r.expandErr(err)
+		}
+		return false
+	}
+	return matcher(name)
 }
 
 func elapsedString(d time.Duration, posix bool) string {
 	if posix {
 		return fmt.Sprintf("%.2f", d.Seconds())
 	}
-	min := int(d.Minutes())
+	mins := int(d.Minutes())
 	sec := math.Mod(d.Seconds(), 60.0)
-	return fmt.Sprintf("%dm%.3fs", min, sec)
+	return fmt.Sprintf("%dm%.3fs", mins, sec)
 }
 
 func (r *Runner) stmts(ctx context.Context, stmts []*syntax.Stmt) {
@@ -894,30 +945,70 @@ func (r *Runner) stmts(ctx context.Context, stmts []*syntax.Stmt) {
 	}
 }
 
-func (r *Runner) hdocReader(rd *syntax.Redirect) (*os.File, error) {
-	pr, pw, err := os.Pipe()
+func (r *Runner) hdocReader(rd *syntax.Redirect) (stdinFile, error) {
+	pr, pw, err := newPipe()
 	if err != nil {
 		return nil, err
 	}
+	hdoc := r.hdocString(rd)
 	// We write to the pipe in a new goroutine,
 	// as pipe writes may block once the buffer gets full.
 	// We still construct and buffer the entire heredoc first,
 	// as doing it concurrently would lead to different semantics and be racy.
-	if rd.Op != syntax.DashHdoc {
-		hdoc := r.document(rd.Hdoc)
-		go func() {
-			pw.WriteString(hdoc)
-			pw.Close()
-		}()
-		return pr, nil
+	go func() {
+		io.WriteString(pw, hdoc)
+		pw.Close()
+	}()
+	return pr, nil
+}
+
+// hdocQuotedDelim reports whether a here-document delimiter word is quoted,
+// as in "<<'EOF'" or "<<\EOF", which makes its body literal.
+func hdocQuotedDelim(word *syntax.Word) bool {
+	for _, wp := range word.Parts {
+		switch wp := wp.(type) {
+		case *syntax.Lit:
+			if strings.Contains(wp.Value, "\\") {
+				return true
+			}
+		case *syntax.SglQuoted, *syntax.DblQuoted:
+			return true
+		}
 	}
-	var buf bytes.Buffer
+	return false
+}
+
+// hdocWord returns a here-document body, or one of its lines, as a string.
+// A quoted delimiter, as in "<<'EOF'", makes the body literal,
+// in which case the parser only gives us literal parts.
+// Note that a partly quoted delimiter, such as "<<'A'B",
+// is not spotted by the parser either, so we still expand its body.
+func (r *Runner) hdocWord(word *syntax.Word, quoted bool) string {
+	if quoted {
+		if lit := word.Lit(); lit != "" {
+			return lit
+		}
+	}
+	return r.document(word)
+}
+
+// hdocString returns the body of a here-document as a string.
+func (r *Runner) hdocString(rd *syntax.Redirect) string {
+	if rd.Hdoc == nil {
+		return "" // an empty here-document
+	}
+	quoted := hdocQuotedDelim(rd.Word)
+	if rd.Op != syntax.DashHdoc {
+		return r.hdocWord(rd.Hdoc, quoted)
+	}
+	// Strip the leading tabs from each line.
+	var buf strings.Builder
 	var cur []syntax.WordPart
 	flushLine := func() {
 		if buf.Len() > 0 {
 			buf.WriteByte('\n')
 		}
-		buf.WriteString(r.document(&syntax.Word{Parts: cur}))
+		buf.WriteString(r.hdocWord(&syntax.Word{Parts: cur}, quoted))
 		cur = cur[:0]
 	}
 	for _, wp := range rd.Hdoc.Parts {
@@ -930,7 +1021,6 @@ func (r *Runner) hdocReader(rd *syntax.Redirect) (*os.File, error) {
 		for part := range strings.SplitSeq(lit.Value, "\n") {
 			if !first {
 				flushLine()
-				cur = cur[:0]
 			}
 			first = false
 			part = strings.TrimLeft(part, "\t")
@@ -938,15 +1028,12 @@ func (r *Runner) hdocReader(rd *syntax.Redirect) (*os.File, error) {
 		}
 	}
 	flushLine()
-	go func() {
-		pw.Write(buf.Bytes())
-		pw.Close()
-	}()
-	return pr, nil
+	return buf.String()
 }
 
 func (r *Runner) redir(ctx context.Context, rd *syntax.Redirect) (io.Closer, error) {
-	if rd.Hdoc != nil {
+	// Note that Hdoc is nil for an empty here-document.
+	if rd.Op == syntax.Hdoc || rd.Op == syntax.DashHdoc {
 		pr, err := r.hdocReader(rd)
 		if err != nil {
 			return nil, err
@@ -972,7 +1059,7 @@ func (r *Runner) redir(ctx context.Context, rd *syntax.Redirect) (io.Closer, err
 	arg := r.literal(rd.Word)
 	switch rd.Op {
 	case syntax.WordHdoc:
-		pr, pw, err := os.Pipe()
+		pr, pw, err := newPipe()
 		if err != nil {
 			return nil, err
 		}
@@ -980,8 +1067,8 @@ func (r *Runner) redir(ctx context.Context, rd *syntax.Redirect) (io.Closer, err
 		// We write to the pipe in a new goroutine,
 		// as pipe writes may block once the buffer gets full.
 		go func() {
-			pw.WriteString(arg)
-			pw.WriteString("\n")
+			io.WriteString(pw, arg)
+			io.WriteString(pw, "\n")
 			pw.Close()
 		}()
 		return pr, nil
@@ -1018,13 +1105,13 @@ func (r *Runner) redir(ctx context.Context, rd *syntax.Redirect) (io.Closer, err
 	case syntax.RdrOut, syntax.RdrAll:
 		mode = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
 	}
-	f, err := r.open(ctx, arg, mode, 0o644, true)
+	f, err := r.open(ctx, arg, mode, 0o644, false)
 	if err != nil {
 		return nil, err
 	}
 	switch rd.Op {
 	case syntax.RdrIn:
-		stdin, err := stdinFile(f)
+		stdin, err := newStdinFile(f)
 		if err != nil {
 			return nil, err
 		}
@@ -1135,10 +1222,15 @@ func (r *Runner) open(ctx context.Context, path string, flags int, mode os.FileM
 
 func (r *Runner) stat(ctx context.Context, name string) (fs.FileInfo, error) {
 	path := absPath(r.Dir, name)
-	return r.statHandler(ctx, path, true)
+	return r.statHandler(r.handlerCtx(ctx, handlerKindStat, todoPos), path, true)
 }
 
 func (r *Runner) lstat(ctx context.Context, name string) (fs.FileInfo, error) {
 	path := absPath(r.Dir, name)
-	return r.statHandler(ctx, path, false)
+	return r.statHandler(r.handlerCtx(ctx, handlerKindStat, todoPos), path, false)
+}
+
+func (r *Runner) access(ctx context.Context, name string, mode AccessMode) error {
+	path := absPath(r.Dir, name)
+	return r.accessHandler(r.handlerCtx(ctx, handlerKindAccess, todoPos), path, mode)
 }

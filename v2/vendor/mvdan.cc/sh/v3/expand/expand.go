@@ -19,6 +19,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
+	"unicode/utf8"
 
 	"mvdan.cc/sh/v3/internal"
 	"mvdan.cc/sh/v3/pattern"
@@ -138,18 +140,20 @@ func prepareConfig(cfg *Config) *Config {
 }
 
 func (cfg *Config) ifsRune(r rune) bool {
-	for _, r2 := range cfg.ifs {
-		if r == r2 {
-			return true
-		}
-	}
-	return false
+	return strings.ContainsRune(cfg.ifs, r)
+}
+
+// ifsWhitespace reports whether r is a space, tab, or newline present in IFS.
+func (cfg *Config) ifsWhitespace(r rune) bool {
+	return (r == ' ' || r == '\t' || r == '\n') && cfg.ifsRune(r)
 }
 
 func (cfg *Config) ifsJoin(strs []string) string {
 	sep := ""
 	if cfg.ifs != "" {
-		sep = cfg.ifs[:1]
+		// The separator is the first character of IFS, not the first byte.
+		_, size := utf8.DecodeRuneInString(cfg.ifs)
+		sep = cfg.ifs[:size]
 	}
 	return strings.Join(strs, sep)
 }
@@ -424,21 +428,31 @@ func (cfg *Config) fieldJoin(parts []fieldPart) string {
 }
 
 func (cfg *Config) escapedGlobField(parts []fieldPart) (escaped string, glob bool) {
+	candidate := false
+	for _, part := range parts {
+		if part.quote == quoteNone && strings.ContainsAny(part.val, "*?[") {
+			candidate = true
+			break
+		}
+	}
+	if !candidate {
+		return "", false
+	}
 	sb := cfg.strBuilder()
 	for _, part := range parts {
 		if part.quote > quoteNone {
 			sb.WriteString(pattern.QuoteMeta(part.val, 0))
-			continue
-		}
-		sb.WriteString(part.val)
-		if pattern.HasMeta(part.val, 0) {
-			glob = true
+		} else {
+			sb.WriteString(part.val)
 		}
 	}
-	if glob { // only copy the string if it will be used
-		escaped = sb.String()
+	// Check the entire escaped word, as a bracket expression could span
+	// multiple unquoted parts, such as `[a$x` where x holds "]".
+	escaped = sb.String()
+	if pattern.HasMeta(escaped, 0) {
+		return escaped, true
 	}
-	return escaped, glob
+	return "", false
 }
 
 // Fields is a pre-iterators API which now wraps [FieldsSeq].
@@ -460,43 +474,55 @@ func FieldsSeq(cfg *Config, words ...*syntax.Word) iter.Seq2[string, error] {
 	cfg = prepareConfig(cfg)
 	dir := cfg.envGet("PWD")
 	return func(yield func(string, error) bool) {
+		expandWord := func(w *syntax.Word) (stop bool) {
+			wfields, err := cfg.wordFields(w.Parts)
+			if err != nil {
+				yield("", err)
+				return true
+			}
+			for _, field := range wfields {
+				path, doGlob := cfg.escapedGlobField(field)
+				if doGlob && cfg.ReadDir2 != nil {
+					// Note that globbing requires keeping a slice state, so it doesn't
+					// really benefit from using an iterator.
+					matches, err := cfg.glob(dir, path)
+					if err != nil {
+						// We avoid [errors.As] as it allocates,
+						// and we know that [Config.glob] returns [pattern.Regexp] errors without wrapping.
+						if _, ok := err.(*pattern.SyntaxError); !ok {
+							yield("", err)
+							return true
+						}
+					} else if len(matches) > 0 || cfg.NullGlob {
+						for _, m := range matches {
+							if !yield(m, nil) {
+								return true
+							}
+						}
+						continue
+					}
+				}
+				if !yield(cfg.fieldJoin(field), nil) {
+					return true
+				}
+			}
+			return false
+		}
 		for _, word := range words {
 			word := *word // make a copy, since SplitBraces replaces the Parts slice
-			afterBraces := []*syntax.Word{&word}
-			if syntax.SplitBraces(&word) {
-				afterBraces = Braces(&word)
+			if !syntax.SplitBraces(&word) {
+				if expandWord(&word) {
+					return
+				}
+				continue
 			}
-			for _, word2 := range afterBraces {
-				wfields, err := cfg.wordFields(word2.Parts)
+			for w, err := range BracesSeq(cfg, &word) {
 				if err != nil {
 					yield("", err)
 					return
 				}
-				for _, field := range wfields {
-					path, doGlob := cfg.escapedGlobField(field)
-					if doGlob && cfg.ReadDir2 != nil {
-						// Note that globbing requires keeping a slice state, so it doesn't
-						// really benefit from using an iterator.
-						matches, err := cfg.glob(dir, path)
-						if err != nil {
-							// We avoid [errors.As] as it allocates,
-							// and we know that [Config.glob] returns [pattern.Regexp] errors without wrapping.
-							if _, ok := err.(*pattern.SyntaxError); !ok {
-								yield("", err)
-								return
-							}
-						} else if len(matches) > 0 || cfg.NullGlob {
-							for _, m := range matches {
-								if !yield(m, nil) {
-									return
-								}
-							}
-							continue
-						}
-					}
-					if !yield(cfg.fieldJoin(field), nil) {
-						return
-					}
+				if expandWord(w) {
+					return
 				}
 			}
 		}
@@ -686,7 +712,11 @@ func (cfg *Config) wordFields(wps []syntax.WordPart) ([][]fieldPart, error) {
 		case *syntax.DblQuoted:
 			if len(wp.Parts) == 1 {
 				pe, _ := wp.Parts[0].(*syntax.ParamExp)
-				if elems := cfg.quotedElemFields(pe); elems != nil {
+				elems, err := cfg.quotedElemFields(pe)
+				if err != nil {
+					return nil, err
+				}
+				if elems != nil {
 					for i, elem := range elems {
 						if i > 0 {
 							flush()
@@ -709,6 +739,18 @@ func (cfg *Config) wordFields(wps []syntax.WordPart) ([][]fieldPart, error) {
 				curField = append(curField, part)
 			}
 		case *syntax.ParamExp:
+			if elems, ok := cfg.unquotedElemFields(wp); ok {
+				// Unquoted "*" or "@" expansions produce one field per
+				// element; joining and re-splitting them would lose
+				// fields when IFS is empty.
+				for j, elem := range elems {
+					if j > 0 {
+						flush()
+					}
+					splitAdd(elem)
+				}
+				continue
+			}
 			val, err := cfg.paramExp(wp)
 			if err != nil {
 				return nil, err
@@ -755,64 +797,81 @@ func (cfg *Config) wordFields(wps []syntax.WordPart) ([][]fieldPart, error) {
 	return fields, nil
 }
 
+// listElems returns the elements of a "*" or "@" expansion of a list, like
+// $@ or ${arr[*]}, with star set for the "*" forms which join into a single
+// field when quoted. ok is false for any other parameter expansion.
+func (cfg *Config) listElems(pe *syntax.ParamExp) (elems []string, star, ok bool) {
+	if pe.Param == nil { // e.g. zsh's ${}; paramExp rejects it
+		return nil, false, false
+	}
+	switch name := pe.Param.Value; name {
+	case "*", "@":
+		return cfg.sliceElems(pe, cfg.Env.Get(name).List, nil, true), name == "*", true
+	}
+	switch lit := nodeLit(pe.Index); lit {
+	case "@", "*":
+		switch vr := cfg.Env.Get(pe.Param.Value); vr.Kind {
+		case Indexed:
+			return cfg.sliceElems(pe, vr.List, vr.Indexes, false), lit == "*", true
+		case Associative:
+			return slices.Sorted(maps.Values(vr.Map)), lit == "*", true
+		}
+	}
+	return nil, false, false
+}
+
+// unquotedElemFields returns the elements of an unquoted "*" or "@" list
+// expansion like $* or ${foo[@]}; ok is false for any other expansion.
+func (cfg *Config) unquotedElemFields(pe *syntax.ParamExp) ([]string, bool) {
+	if pe.Excl || pe.Length || pe.Width || pe.IsSet || pe.Repl != nil || pe.Exp != nil {
+		return nil, false
+	}
+	elems, _, ok := cfg.listElems(pe)
+	return elems, ok
+}
+
 // quotedElemFields returns the list of elements resulting from a quoted
 // parameter expansion that should be treated especially, like "${foo[@]}".
-func (cfg *Config) quotedElemFields(pe *syntax.ParamExp) []string {
-	if pe == nil || pe.Length || pe.Width || pe.IsSet {
-		return nil
+// The result is nil for any other parameter expansion.
+func (cfg *Config) quotedElemFields(pe *syntax.ParamExp) ([]string, error) {
+	if pe == nil || pe.Param == nil || pe.Length || pe.Width || pe.IsSet {
+		return nil, nil
 	}
 	name := pe.Param.Value
 	if pe.Excl {
 		switch pe.Names {
 		case syntax.NamesPrefixWords: // "${!prefix@}"
-			return cfg.namesByPrefix(pe.Param.Value)
+			return cfg.namesByPrefix(pe.Param.Value), nil
 		case syntax.NamesPrefix: // "${!prefix*}"
-			return nil
+			return nil, nil
 		}
 		switch nodeLit(pe.Index) {
 		case "@": // "${!name[@]}"
 			switch vr := cfg.Env.Get(name); vr.Kind {
 			case Indexed:
-				// TODO: if an indexed array only has elements 0 and 10,
-				// we should not return all indices in between those.
-				keys := make([]string, 0, len(vr.List))
-				for key := range vr.List {
-					keys = append(keys, strconv.Itoa(key))
-				}
-				return keys
+				return vr.indexedKeys(), nil
 			case Associative:
-				return slices.Collect(maps.Keys(vr.Map))
+				return slices.Collect(maps.Keys(vr.Map)), nil
 			}
 		}
-		return nil
+		return nil, nil
 	}
-	switch name {
-	case "*": // "${*}" or "${*:offset:length}"
-		return []string{cfg.ifsJoin(cfg.sliceElems(pe, cfg.Env.Get(name).List, true))}
-	case "@": // "${@}" or "${@:offset:length}"
-		return cfg.sliceElems(pe, cfg.Env.Get(name).List, true)
-	}
-	switch nodeLit(pe.Index) {
-	case "@": // "${name[@]}"
-		vr := cfg.Env.Get(name)
-		switch vr.Kind {
-		case Indexed:
-			return cfg.sliceElems(pe, vr.List, false)
-		case Associative:
-			return slices.Collect(maps.Values(vr.Map))
-		case Unknown:
-			if !vr.IsSet() {
-				// An unset variable expanded as "${name[@]}" produces
-				// zero fields, just like an empty array.
-				return []string{}
-			}
+	if elems, star, ok := cfg.listElems(pe); ok {
+		// Operators like "${foo[@]#prefix}" apply to each element.
+		elems, err := cfg.perElemOps(pe, elems)
+		if err != nil {
+			return nil, err
 		}
-	case "*": // "${name[*]}"
-		if vr := cfg.Env.Get(name); vr.Kind == Indexed {
-			return []string{cfg.ifsJoin(cfg.sliceElems(pe, vr.List, false))}
+		if star {
+			return []string{cfg.ifsJoin(elems)}, nil
 		}
+		return elems, nil
 	}
-	return nil
+	if nodeLit(pe.Index) == "@" && !cfg.Env.Get(name).IsSet() {
+		// An unset "${name[@]}" produces zero fields, like an empty array.
+		return []string{}, nil
+	}
+	return nil, nil
 }
 
 // sliceElems applies ${var:offset:length} slicing to a list of elements.
@@ -820,7 +879,9 @@ func (cfg *Config) quotedElemFields(pe *syntax.ParamExp) []string {
 // In bash, positional parameter offsets ($@ and $*) are 1-based and
 // offset 0 includes $0 (the shell or script name). Negative offsets
 // count from $# + 1, so $0 is reachable via large enough negative values.
-func (cfg *Config) sliceElems(pe *syntax.ParamExp, elems []string, positional bool) []string {
+// A non-nil indexes records the index of each element in a sparse array;
+// see [Variable.Indexes].
+func (cfg *Config) sliceElems(pe *syntax.ParamExp, elems []string, indexes []int, positional bool) []string {
 	if pe.Slice == nil {
 		return elems
 	}
@@ -843,7 +904,21 @@ func (cfg *Config) sliceElems(pe *syntax.ParamExp, elems []string, positional bo
 		if err != nil {
 			return elems
 		}
-		elems = elems[slicePos(offset):]
+		if len(indexes) > 0 {
+			// Sparse arrays slice by index: a negative offset counts
+			// from one past the maximum index, and the result begins
+			// with the first element whose index is at least the offset.
+			if offset < 0 {
+				offset += indexes[len(indexes)-1] + 1
+				if offset < 0 {
+					offset = indexes[len(indexes)-1] + 1
+				}
+			}
+			pos, _ := slices.BinarySearch(indexes, offset)
+			elems = elems[pos:]
+		} else {
+			elems = elems[slicePos(offset):]
+		}
 	}
 	if pe.Slice.Length != nil {
 		length, err := Arithm(cfg, pe.Slice.Length)
@@ -985,14 +1060,11 @@ func (cfg *Config) glob(base, pat string) ([]string, error) {
 				// which can be wasteful if we only want to see if it exists,
 				// but at least it's correct in all scenarios.
 				if _, err := cfg.ReadDir2(match); err != nil {
-					if isWindowsErrPathNotFound(err) {
-						// Unfortunately, [os.File.Readdir] on a regular file on
-						// Windows returns an error that satisfies [fs.ErrNotExist].
-						// Luckily, it returns a special "path not found" rather
-						// than the normal "file not found" for missing files,
-						// so we can use that knowledge to work around the bug.
-						// See https://github.com/golang/go/issues/46734.
-						// TODO: remove when the Go issue above is resolved.
+					if errors.Is(err, syscall.ENOTDIR) {
+						// Reading a regular file as a directory.
+						// Note that on Windows this error also satisfies
+						// [fs.ErrNotExist], so it must be checked first;
+						// see https://github.com/golang/go/issues/46734.
 					} else if errors.Is(err, fs.ErrNotExist) {
 						continue // simply doesn't exist
 					}
@@ -1148,8 +1220,16 @@ func ReadFields(cfg *Config, s string, n int, raw bool) []string {
 
 	switch {
 	case n == 1:
-		// include heading/trailing IFSs
-		fpos[0].start, fpos[0].end = 0, len(runes)
+		// The single field spans the whole line minus leading and trailing
+		// IFS whitespace; anything outside the fields is already IFS.
+		lo, hi := 0, len(runes)
+		for lo < fpos[0].start && cfg.ifsWhitespace(runes[lo]) {
+			lo++
+		}
+		for hi > fpos[len(fpos)-1].end && cfg.ifsWhitespace(runes[hi-1]) {
+			hi--
+		}
+		fpos[0].start, fpos[0].end = lo, hi
 		fpos = fpos[:1]
 	case n != -1 && n < len(fpos):
 		// combine to max n fields

@@ -14,7 +14,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"golang.org/x/term"
@@ -38,7 +37,8 @@ import (
 func IsBuiltin(name string) bool {
 	switch name {
 	case
-		// POSIX Shell builtins, from section 1.d obtained in September 2025 from:
+		// POSIX Shell regular built-ins, that is, the utilities which the shell
+		// must provide as built-ins, from section 1.d obtained in September 2025 from:
 		// https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html#tag_18_09_01_01
 		"alias",
 		"bg",
@@ -90,7 +90,6 @@ func IsBuiltin(name string) bool {
 		"typeset", // NOTE: our parser treats this as a keyword
 		"dirs",
 		"disown",
-		"echo", // TODO: surely this is POSIX? but why is it not in the main POSIX spec page?
 		"enable",
 		"history",
 		"help",
@@ -100,14 +99,20 @@ func IsBuiltin(name string) bool {
 		"mapfile",
 		"readarray",
 		"popd",
-		"printf", // TODO: surely this is POSIX? but why is it not in the main POSIX spec page?
 		"pushd",
 		"shopt",
 		"suspend",
-		"test",
-		"[", // NOTE: an alias for "test", not explicitly listed
 		"type",
-		"ulimit":
+		"ulimit",
+
+		// POSIX utilities which the shell need not provide as built-ins,
+		// so they are separate executables found via PATH, but which we
+		// implement as built-ins just like Bash does. Obtained in September
+		// 2025 from https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html
+		"echo",
+		"printf",
+		"test",
+		"[": // NOTE: an alias for "test", not documented separately
 		return true
 	}
 	return false
@@ -155,6 +160,16 @@ func (r *Runner) builtin(ctx context.Context, pos syntax.Pos, name string, args 
 	case ":", "true":
 	case "false":
 		exit.code = 1
+	case "help":
+		return r.runHelp(args)
+	case "times":
+		// js/wasm has no per-process CPU accounting at all, so report zeros
+		// in bash's format — shell user/sys, then children user/sys — rather
+		// than fail.
+		// TODO: report real times on platforms that can, via os/exec's
+		// ProcessState or syscall.Getrusage. Not urgent; nothing depends on
+		// the values being non-zero.
+		r.out("0m0.000s 0m0.000s\n0m0.000s 0m0.000s\n")
 	case "exit":
 		switch len(args) {
 		case 0:
@@ -209,7 +224,9 @@ func (r *Runner) builtin(ctx context.Context, pos syntax.Pos, name string, args 
 		}
 
 		for _, arg := range args {
-			if vars && r.lookupVar(arg).IsSet() {
+			if name, sub, ok := cutElemSubscript(arg); vars && ok {
+				r.unsetElem(name, sub)
+			} else if vars && r.lookupVar(arg).IsSet() {
 				r.delVar(arg)
 			} else if _, ok := r.Funcs[arg]; ok && funcs {
 				delete(r.Funcs, arg)
@@ -362,11 +379,11 @@ func (r *Runner) builtin(ctx context.Context, pos syntax.Pos, name string, args 
 		for fp.more() {
 			switch flag := fp.flag(); flag {
 			case "-a", "-f", "--help":
-				return failf(3, "command: NOT IMPLEMENTED\n")
+				return failf(3, "type: NOT IMPLEMENTED\n")
 			case "-p", "-P", "-t":
 				mode = flag
 			default:
-				return failf(2, "command: invalid option %q\n", flag)
+				return failf(2, "type: invalid option %q\n", flag)
 			}
 		}
 		args := fp.args()
@@ -697,9 +714,14 @@ func (r *Runner) builtin(ctx context.Context, pos syntax.Pos, name string, args 
 
 		var line []byte
 		var err error
+		fd, terminal := -1, false
 		if silent {
-			// Note that on Windows, syscall.Stdin is of type uintptr.
-			line, err = term.ReadPassword(int(syscall.Stdin))
+			fd, terminal = stdinTerminal(r.stdin)
+		}
+		if terminal {
+			// Only a terminal echoes what we read, so it is the only case
+			// where we need to read without echoing.
+			line, err = term.ReadPassword(fd)
 		} else {
 			line, err = r.readLine(ctx, raw)
 		}
@@ -716,11 +738,25 @@ func (r *Runner) builtin(ctx context.Context, pos syntax.Pos, name string, args 
 				Kind: expand.Indexed,
 				List: values,
 			})
-		} else {
-			if len(args) == 0 {
-				args = append(args, shellReplyVar)
+		} else if len(args) == 0 {
+			// Bare "read" assigns the whole line to REPLY without any
+			// trimming, only discarding backslash escapes unless raw.
+			val := string(line)
+			if !raw {
+				var sb strings.Builder
+				esc := false
+				for i := range len(val) {
+					if val[i] == '\\' && !esc {
+						esc = true
+						continue
+					}
+					sb.WriteByte(val[i])
+					esc = false
+				}
+				val = sb.String()
 			}
-
+			r.setVarString(shellReplyVar, val)
+		} else {
 			values := expand.ReadFields(r.ecfg, string(line), len(args), raw)
 			for i, name := range args {
 				val := ""
@@ -1057,8 +1093,8 @@ func (r *Runner) readLine(ctx context.Context, raw bool) ([]byte, error) {
 				line = append(line, b)
 				esc = !esc
 			case !raw && b == '\n' && esc:
-				// line continuation
-				line = line[len(line)-1:]
+				// line continuation; drop the trailing backslash
+				line = line[:len(line)-1]
 				esc = false
 			case b == '\n':
 				return line, nil
@@ -1084,7 +1120,7 @@ func (r *Runner) changeDir(ctx context.Context, cmd, path string) uint8 {
 		r.errf("%s: no such file or directory: %q\n", cmd, path)
 		return 1
 	}
-	if r.access(ctx, apath, access_X_OK) != nil {
+	if r.access(ctx, apath, AccessExec) != nil {
 		r.errf("%s: permission denied: %q\n", cmd, path)
 		return 1
 	}
@@ -1101,7 +1137,9 @@ func absPath(dir, path string) string {
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(dir, path)
 	}
-	return filepath.Clean(path) // TODO: this clean is likely unnecessary
+	// Note that [filepath.Join] cleans its result, but an already absolute
+	// path needs cleaning too, such as turning "/a/../b" into "/b".
+	return filepath.Clean(path)
 }
 
 func (r *Runner) absPath(path string) string {
@@ -1186,30 +1224,39 @@ func (g *getopts) next(optstr string, args []string) (opt rune, optarg string, d
 
 	opts := arg[1:]
 	opt = opts[g.runeidx]
+
+	i := strings.IndexRune(optstr, opt)
+	if i >= 0 && i+1 < len(optstr) && optstr[i+1] == ':' {
+		// the option requires an argument
+		if g.runeidx+1 < len(opts) {
+			// attached to the option in the same word, like -bval
+			optarg = string(opts[g.runeidx+1:])
+		} else if g.argidx+1 < len(args) {
+			// the word that follows
+			optarg = args[g.argidx+1]
+			g.argidx++
+		} else {
+			// missing argument
+			g.argidx++
+			g.runeidx = 0
+			return ':', string(opt), false
+		}
+		g.argidx++
+		g.runeidx = 0
+		return opt, optarg, false
+	}
+
 	if g.runeidx+1 < len(opts) {
 		g.runeidx++
 	} else {
 		g.argidx++
 		g.runeidx = 0
 	}
-
-	i := strings.IndexRune(optstr, opt)
 	if i < 0 {
 		// invalid option
 		return '?', string(opt), false
 	}
-
-	if i+1 < len(optstr) && optstr[i+1] == ':' {
-		if g.argidx >= len(args) {
-			// missing argument
-			return ':', string(opt), false
-		}
-		optarg = args[g.argidx]
-		g.argidx++
-		g.runeidx = 0
-	}
-
-	return opt, optarg, false
+	return opt, "", false
 }
 
 // optStatusText returns a shell option's status text display

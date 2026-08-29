@@ -4,11 +4,12 @@
 package interp
 
 import (
+	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -41,6 +42,8 @@ const (
 	handlerKindCall                // [CallHandlerFunc]
 	handlerKindOpen                // [OpenHandlerFunc]
 	handlerKindReadDir             // [ReadDirHandlerFunc2]
+	handlerKindStat                // [StatHandlerFunc]
+	handlerKindAccess              // [AccessHandlerFunc]
 )
 
 // HandlerContext is the data passed to all the handler functions via [context.WithValue].
@@ -67,13 +70,20 @@ type HandlerContext struct {
 	// TODO(v4): use an os.File for stdin below directly.
 
 	// Stdin is the interpreter's current standard input reader.
-	// It is always an [*os.File], but the type here remains an [io.Reader]
+	// It is always an [*os.File], except on js/wasm, where it may be
+	// any reader; the type here remains an [io.Reader]
 	// due to backwards compatibility.
 	Stdin io.Reader
 	// Stdout is the interpreter's current standard output writer.
 	Stdout io.Writer
 	// Stderr is the interpreter's current standard error writer.
 	Stderr io.Writer
+
+	// LastExitStatus is the value that "$?" would hold when the handler is called.
+	// A [CallHandlerFunc] or [ExecHandlerFunc] runs as part of its own command,
+	// so this refers to the command before it.
+	// At the start of a trap callback, it is the status of the command which triggered the trap.
+	LastExitStatus int
 }
 
 // CallHandlerFunc is a handler which runs on every [syntax.CallExpr].
@@ -121,6 +131,13 @@ type ExecHandlerFunc func(ctx context.Context, args []string) error
 // On Windows, the kill signal is always sent immediately,
 // because Go doesn't currently support sending Interrupt on Windows.
 // [Runner] defaults to a killTimeout of 2 seconds.
+//
+// On Unix, a file which fails to execute with ENOEXEC, such as a script
+// without a shebang line, is run as a shell script with a new [Runner]
+// using default options and handlers, like other shells do.
+//
+// TODO: perhaps intercept ENOEXEC scripts as well as shell shebangs
+// such as "#!/bin/sh" so that they reuse the runner's configured handlers.
 func DefaultExecHandler(killTimeout time.Duration) ExecHandlerFunc {
 	return func(ctx context.Context, args []string) error {
 		hc := HandlerCtx(ctx)
@@ -129,31 +146,42 @@ func DefaultExecHandler(killTimeout time.Duration) ExecHandlerFunc {
 			fmt.Fprintln(hc.Stderr, err)
 			return ExitStatus(127)
 		}
-		cmd := exec.Cmd{
-			Path:   path,
-			Args:   args,
-			Env:    execEnv(hc.Env),
-			Dir:    hc.Dir,
-			Stdin:  hc.Stdin,
-			Stdout: hc.Stdout,
-			Stderr: hc.Stderr,
+		newCmd := func() *exec.Cmd {
+			cmd := exec.CommandContext(ctx, path)
+			cmd.Args = args
+			cmd.Env = execEnv(hc.Env)
+			cmd.Dir = hc.Dir
+			cmd.Stdin = hc.Stdin
+			cmd.Stdout = hc.Stdout
+			cmd.Stderr = hc.Stderr
+			if killTimeout > 0 && runtime.GOOS != "windows" {
+				// On cancellation, send an interrupt signal first, and let
+				// WaitDelay escalate to a kill signal if the process does not
+				// exit in time. Otherwise, keep the default of killing right away.
+				cmd.Cancel = func() error { return cmd.Process.Signal(os.Interrupt) }
+				cmd.WaitDelay = killTimeout
+			}
+			return cmd
 		}
-
+		cmd := newCmd()
 		err = cmd.Start()
+		// On Unix, a concurrently forked process may briefly hold a write
+		// file descriptor for the file inherited before its exec, making
+		// our exec fail with ETXTBSY; see https://go.dev/issue/22315.
+		// The window is short-lived, so retry with backoff. A failed Start
+		// closes the command's pipes, so build a fresh one for each attempt.
+		for delay := time.Millisecond; isETXTBSY(err) && delay < 300*time.Millisecond; delay *= 2 {
+			time.Sleep(delay)
+			cmd = newCmd()
+			err = cmd.Start()
+		}
+		if isENOEXEC(err) {
+			// Like other shells, run a file which the kernel refuses to
+			// execute with ENOEXEC, such as a script without a shebang line,
+			// as a shell script with a new copy of the shell.
+			return runScriptENOEXEC(ctx, hc, killTimeout, path, args)
+		}
 		if err == nil {
-			stopf := context.AfterFunc(ctx, func() {
-				if killTimeout <= 0 || runtime.GOOS == "windows" {
-					_ = cmd.Process.Signal(os.Kill)
-					return
-				}
-				_ = cmd.Process.Signal(os.Interrupt)
-				// TODO: don't sleep in this goroutine if the program
-				// stops itself with the interrupt above.
-				time.Sleep(killTimeout)
-				_ = cmd.Process.Signal(os.Kill)
-			})
-			defer stopf()
-
 			err = cmd.Wait()
 		}
 
@@ -174,9 +202,48 @@ func DefaultExecHandler(killTimeout time.Duration) ExecHandlerFunc {
 			fmt.Fprintf(hc.Stderr, "%v\n", err)
 			return ExitStatus(127)
 		default:
+			// The command exited with success, but WaitDelay elapsed with its
+			// I/O pipes still open, e.g. due to an orphaned subprocess.
+			if errors.Is(err, exec.ErrWaitDelay) {
+				return nil
+			}
 			return err
 		}
 	}
+}
+
+// runScriptENOEXEC runs a file as a shell script with a new shell,
+// as POSIX requires when the kernel fails to execute it with ENOEXEC.
+// The new shell does not inherit functions or unexported variables.
+func runScriptENOEXEC(ctx context.Context, hc HandlerContext, killTimeout time.Duration, path string, args []string) error {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintln(hc.Stderr, err)
+		return ExitStatus(126)
+	}
+	// Like Bash, refuse to run the file as a script
+	// if a null byte appears before the first newline.
+	line, _, _ := bytes.Cut(b, []byte("\n"))
+	if bytes.IndexByte(line, 0) >= 0 {
+		fmt.Fprintf(hc.Stderr, "%s: cannot execute binary file\n", args[0])
+		return ExitStatus(126)
+	}
+	file, err := syntax.NewParser().Parse(bytes.NewReader(b), args[0])
+	if err != nil {
+		fmt.Fprintln(hc.Stderr, err)
+		return ExitStatus(2) // like Bash with a syntax error
+	}
+	r, err := New(
+		Dir(hc.Dir),
+		Env(expand.ListEnviron(execEnv(hc.Env)...)),
+		StdIO(hc.Stdin, hc.Stdout, hc.Stderr),
+		ExecHandler(DefaultExecHandler(killTimeout)),
+	)
+	if err != nil {
+		return err
+	}
+	r.Params = args[1:]
+	return r.Run(ctx, file)
 }
 
 func checkStat(dir, file string, checkExec bool) (string, error) {
@@ -346,8 +413,6 @@ func DefaultOpenHandler() OpenHandlerFunc {
 	}
 }
 
-// TODO(v4): if this is kept in v4, it most likely needs to use [io/fs.DirEntry] for efficiency
-
 // ReadDirHandlerFunc is a handler which reads directories. It is called during
 // shell globbing, if enabled.
 //
@@ -360,10 +425,24 @@ type ReadDirHandlerFunc func(ctx context.Context, path string) ([]fs.FileInfo, e
 type ReadDirHandlerFunc2 func(ctx context.Context, path string) ([]fs.DirEntry, error)
 
 // DefaultReadDirHandler returns the [ReadDirHandlerFunc] used by default.
-// It makes use of [ioutil.ReadDir].
+// It uses [os.ReadDir].
+//
+// Deprecated: use [DefaultReadDirHandler2], which uses [fs.DirEntry].
 func DefaultReadDirHandler() ReadDirHandlerFunc {
 	return func(ctx context.Context, path string) ([]fs.FileInfo, error) {
-		return ioutil.ReadDir(path)
+		entries, err := os.ReadDir(path)
+		if err != nil {
+			return nil, err
+		}
+		infos := make([]fs.FileInfo, 0, len(entries))
+		for _, entry := range entries {
+			info, err := entry.Info()
+			if err != nil {
+				return nil, err
+			}
+			infos = append(infos, info)
+		}
+		return infos, nil
 	}
 }
 
@@ -389,4 +468,31 @@ func DefaultStatHandler() StatHandlerFunc {
 			return os.Stat(path)
 		}
 	}
+}
+
+// AccessMode is a bitmask of file access checks, used by [AccessHandlerFunc].
+type AccessMode uint32
+
+// The values match access(2)'s R_OK, W_OK, and X_OK.
+const (
+	AccessRead  AccessMode = 0b100
+	AccessWrite AccessMode = 0b010
+	AccessExec  AccessMode = 0b001
+)
+
+// TODO(v4): fold AccessHandlerFunc into StatHandlerFunc.
+
+// AccessHandlerFunc is a handler which checks whether the current user can
+// access a file. It is called by the unary test operators -r, -w, and -x,
+// and by builtins such as cd. The path is always absolute.
+// A nil error means access is allowed.
+// The context includes a [HandlerContext] value.
+type AccessHandlerFunc func(ctx context.Context, path string, mode AccessMode) error
+
+// DefaultAccessHandler returns the [AccessHandlerFunc] used by default.
+// On Unix it uses access(2), which consults the real filesystem and the
+// current user's role. On other platforms, which lack access(2), it
+// approximates the check via the stat handler and the file's permission bits.
+func DefaultAccessHandler() AccessHandlerFunc {
+	return defaultAccess
 }

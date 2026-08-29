@@ -85,10 +85,27 @@ func Arithm(cfg *Config, expr syntax.ArithmExpr) (int, error) {
 				return 0, err
 			}
 			b2 := expr.Y.(*syntax.BinaryArithm) // must have Op==TernColon
-			if cond == 1 {
+			if cond != 0 {
 				return Arithm(cfg, b2.X)
 			}
 			return Arithm(cfg, b2.Y)
+		case syntax.AndArit, syntax.OrArit:
+			// Like Bash, short-circuit the right operand.
+			left, err := Arithm(cfg, expr.X)
+			if err != nil {
+				return 0, err
+			}
+			if expr.Op == syntax.AndArit && left == 0 {
+				return 0, nil
+			}
+			if expr.Op == syntax.OrArit && left != 0 {
+				return 1, nil
+			}
+			right, err := Arithm(cfg, expr.Y)
+			if err != nil {
+				return 0, err
+			}
+			return oneIf(right != 0), nil
 		}
 		left, err := Arithm(cfg, expr.X)
 		if err != nil {
@@ -99,6 +116,8 @@ func Arithm(cfg *Config, expr syntax.ArithmExpr) (int, error) {
 			return 0, err
 		}
 		return binArit(expr.Op, left, right)
+	case *syntax.FlagsArithm: // e.g. zsh's ${a[(r)b]}
+		return 0, fmt.Errorf("unsupported")
 	default:
 		panic(fmt.Sprintf("unexpected arithm expr: %T", expr))
 	}
@@ -111,10 +130,79 @@ func oneIf(b bool) int {
 	return 0
 }
 
-// atoi is like [strconv.ParseInt](s, 10, 64), but it ignores errors and trims whitespace.
+// atoi is like [strconv.ParseInt](s, BASE, 64), but it handles integer
+// base prefixes according to bash-shell's rules, ignores errors, and
+// trims whitespace.
+//
+// For more information about bash's integer base handling syntax,
+// refer to the bash manual:
+// https://www.man7.org/linux/man-pages/man1/bash.1.html
 func atoi(s string) int64 {
 	s = strings.TrimSpace(s)
-	n, _ := strconv.ParseInt(s, 10, 64)
+	neg := false
+	switch {
+	case strings.HasPrefix(s, "+"):
+		s = s[1:]
+	case strings.HasPrefix(s, "-"):
+		neg = true
+		s = s[1:]
+	}
+	base := int64(10)
+	switch {
+	case strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X"):
+		base = 16
+		s = s[2:]
+	case strings.HasPrefix(s, "0"):
+		base = 8
+		s = s[1:]
+	default:
+		baseStr, intStr, hasSep := strings.Cut(s, "#")
+		if hasSep {
+			var err error
+			base, err = strconv.ParseInt(baseStr, 10, 8)
+			if err != nil || base < 2 || base > 64 {
+				return 0
+			}
+			s = intStr
+		}
+	}
+	var n int64
+	if base > 36 {
+		n = atoiLargeBase(s, base)
+	} else {
+		n, _ = strconv.ParseInt(s, int(base), 64)
+	}
+	if neg {
+		n = -n
+	}
+	return n
+}
+
+// atoiLargeBase parses bases 37 to 64, which [strconv.ParseInt] does not
+// support, using bash's digit set: 0-9, a-z, A-Z, "@", and "_".
+func atoiLargeBase(s string, base int64) int64 {
+	var n int64
+	for i := range len(s) {
+		var d int64
+		switch c := s[i]; {
+		case c >= '0' && c <= '9':
+			d = int64(c - '0')
+		case c >= 'a' && c <= 'z':
+			d = int64(c-'a') + 10
+		case c >= 'A' && c <= 'Z':
+			d = int64(c-'A') + 36
+		case c == '@':
+			d = 62
+		case c == '_':
+			d = 63
+		default:
+			return 0
+		}
+		if d >= base {
+			return 0
+		}
+		n = n*base + d
+	}
 	return n
 }
 
@@ -193,6 +281,9 @@ func binArit(op syntax.BinAritOperator, x, y int) (int, error) {
 		}
 		return x % y, nil
 	case syntax.Pow:
+		if y < 0 {
+			return 0, fmt.Errorf("exponent less than 0")
+		}
 		return intPow(x, y), nil
 	case syntax.Eql:
 		return oneIf(x == y), nil
@@ -216,10 +307,6 @@ func binArit(op syntax.BinAritOperator, x, y int) (int, error) {
 		return x >> uint(y), nil
 	case syntax.Shl:
 		return x << uint(y), nil
-	case syntax.AndArit:
-		return oneIf(x != 0 && y != 0), nil
-	case syntax.OrArit:
-		return oneIf(x != 0 || y != 0), nil
 	case syntax.Comma:
 		// x is executed but its result discarded
 		return y, nil

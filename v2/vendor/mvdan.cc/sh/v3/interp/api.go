@@ -17,8 +17,10 @@ import (
 	"io"
 	"io/fs"
 	"maps"
+	mathrand "math/rand/v2"
 	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strconv"
 	"time"
@@ -95,7 +97,10 @@ type Runner struct {
 	// statHandler is a function responsible for getting file stat. It must be non-nil.
 	statHandler StatHandlerFunc
 
-	stdin  *os.File // e.g. the read end of a pipe
+	// accessHandler is a function responsible for checking file access. It must be non-nil.
+	accessHandler AccessHandlerFunc
+
+	stdin  stdinFile // e.g. the read end of a pipe
 	stdout io.Writer
 	stderr io.Writer
 
@@ -110,6 +115,10 @@ type Runner struct {
 	usedNew bool
 
 	filename string // only if Node was a File
+
+	// rand is the pseudo-random number generator behind the RANDOM variable,
+	// only set once RANDOM has been assigned to in order to seed it.
+	rand *mathrand.Rand
 
 	// >0 to break or continue out of N enclosing loops
 	breakEnclosing, contnEnclosing int
@@ -148,7 +157,7 @@ type Runner struct {
 	origDir    string
 	origParams []string
 	origOpts   runnerOpts
-	origStdin  *os.File
+	origStdin  stdinFile
 	origStdout io.Writer
 	origStderr io.Writer
 
@@ -159,8 +168,9 @@ type Runner struct {
 
 	optState getopts
 
-	// keepRedirs is used so that "exec" can make any redirections
+	// keepRedirs is set by "exec" so that its statement's redirections
 	// apply to the current shell, and not just the command.
+	// It is consumed by the enclosing statement once it finishes.
 	keepRedirs bool
 
 	// Fake signal callbacks
@@ -229,11 +239,9 @@ func (e *exitStatus) fromHandlerError(err error) {
 	if err == nil {
 		return
 	}
-	var exit errBuiltinExitStatus
-	var es ExitStatus
-	if errors.As(err, &exit) {
+	if exit, ok := errors.AsType[errBuiltinExitStatus](err); ok {
 		*e = exitStatus(exit)
-	} else if errors.As(err, &es) {
+	} else if es, ok := errors.AsType[ExitStatus](err); ok {
 		e.err = err
 		e.code = uint8(es)
 	} else {
@@ -266,6 +274,7 @@ func New(opts ...RunnerOption) (*Runner, error) {
 		openHandler:    DefaultOpenHandler(),
 		readDirHandler: DefaultReadDirHandler2(),
 		statHandler:    DefaultStatHandler(),
+		accessHandler:  DefaultAccessHandler(),
 	}
 	r.dirStack = r.dirBootstrap[:0]
 	// turn "on" the default Bash options
@@ -296,11 +305,16 @@ func New(opts ...RunnerOption) (*Runner, error) {
 
 // RunnerOption can be passed to [New] to alter a [Runner]'s behaviour.
 // It can also be applied directly on an existing Runner,
-// such as interp.Params("-e")(runner).
-// Note that options cannot be applied once Run or Reset have been called.
+// such as interp.Params("-e")(runner) or interp.StdIO(nil, w, w)(runner).
+//
+// Note that [Env] and [Dir] only take effect the next time that the runner is
+// reset, as [Runner.Reset] derives state from them, such as the variables and
+// the value of PWD. Since running a node only resets a runner the first time
+// around, applying either option after a run requires an explicit reset.
 type RunnerOption func(*Runner) error
 
-// TODO: enforce the rule above via didReset.
+// TODO(v4): consider making [Env] and [Dir] fail when applied after a reset,
+// rather than being silently held back until the next one.
 
 // Env sets the interpreter's environment. If nil, a copy of the current
 // process's environment is used.
@@ -321,6 +335,12 @@ func Dir(path string) RunnerOption {
 		if path == "" {
 			path, err := os.Getwd()
 			if err != nil {
+				if runtime.GOOS == "js" {
+					// js/wasm has no working directory; virtual
+					// filesystems set Runner.Dir themselves
+					r.Dir = "/"
+					return nil
+				}
 				return fmt.Errorf("could not get current dir: %w", err)
 			}
 			r.Dir = path
@@ -352,18 +372,27 @@ func Interactive(enabled bool) RunnerOption {
 	}
 }
 
+// TODO(v4): split the "set" options into [PosixOpts], mirroring [BashOpts],
+// leaving Params for the positional parameters alone. Accepting both means that
+// Params with user-supplied arguments can set options by accident.
+
 // Params populates the shell options and parameters. For example, Params("-e",
 // "--", "foo") will set the "-e" option and the parameters ["foo"], and
 // Params("+e") will unset the "-e" option and leave the parameters untouched.
 //
 // This is similar to what the interpreter's "set" builtin does.
+// See [BashOpts] for the Bash options which "set" cannot change.
 func Params(args ...string) RunnerOption {
 	return func(r *Runner) error {
 		fp := flagParser{remaining: args}
 		for fp.more() {
 			flag := fp.flag()
-			if flag == "-" {
-				// TODO: implement "The -x and -v options are turned off."
+			if flag == "-" || flag == "+" {
+				if flag == "-" {
+					// Bash turns off the -x and -v options; note that
+					// we don't support the -v option at all.
+					r.opts[optXTrace] = false
+				}
 				if args := fp.args(); len(args) > 0 {
 					r.Params = args
 				}
@@ -410,6 +439,58 @@ func Params(args ...string) RunnerOption {
 			if r.inSource {
 				r.sourceSetParams = true
 			}
+		}
+		return nil
+	}
+}
+
+// BashOpts sets or unsets Bash shell options. For example,
+// BashOpts("-s", "extglob", "globstar") sets both the "extglob" and "globstar"
+// options, and BashOpts("-u", "extglob") unsets "extglob" alone.
+//
+// Just like the builtin, "-o" restricts the names to the POSIX options,
+// which [Params] can set as well.
+//
+// This is similar to what the interpreter's "shopt" builtin does, except that
+// no arguments is a no-op rather than printing all options.
+func BashOpts(args ...string) RunnerOption {
+	return func(r *Runner) error {
+		mode := ""
+		posixOpts := false
+		fp := flagParser{remaining: args}
+		for fp.more() {
+			switch flag := fp.flag(); flag {
+			case "-s", "-u":
+				mode = flag
+			case "-o":
+				posixOpts = true
+			default:
+				return fmt.Errorf("invalid option: %q", flag)
+			}
+		}
+		names := fp.args()
+		if len(names) > 0 && mode == "" {
+			return fmt.Errorf("either -s or -u must be given to set or unset options")
+		}
+		for _, name := range names {
+			opt, supported := (*bool)(nil), true
+			if posixOpts {
+				opt = r.posixOptByName(name)
+			} else {
+				opt, supported = r.bashOptByName(name)
+			}
+			if opt == nil {
+				return fmt.Errorf("invalid option name: %q", name)
+			}
+			if !supported {
+				return fmt.Errorf("unsupported option: %q", name)
+			}
+			*opt = mode == "-s"
+		}
+		if r.didReset {
+			// Some options affect expansion; before the first reset,
+			// the reset itself takes care of this.
+			r.updateExpandOpts()
 		}
 		return nil
 	}
@@ -508,22 +589,11 @@ func StatHandler(f StatHandlerFunc) RunnerOption {
 	}
 }
 
-func stdinFile(r io.Reader) (*os.File, error) {
-	switch r := r.(type) {
-	case *os.File:
-		return r, nil
-	case nil:
-		return nil, nil
-	default:
-		pr, pw, err := os.Pipe()
-		if err != nil {
-			return nil, err
-		}
-		go func() {
-			io.Copy(pw, r)
-			pw.Close()
-		}()
-		return pr, nil
+// AccessHandler sets the file access handler. See [AccessHandlerFunc] for more info.
+func AccessHandler(f AccessHandlerFunc) RunnerOption {
+	return func(r *Runner) error {
+		r.accessHandler = f
+		return nil
 	}
 }
 
@@ -540,9 +610,13 @@ func stdinFile(r io.Reader) (*os.File, error) {
 // When providing an [*os.File] as standard input, consider using an [os.Pipe]
 // as it has the best chance to support cancellable reads via [os.File.SetReadDeadline],
 // so that cancelling the runner's context can stop a blocked standard input read.
+//
+// On js/wasm, where there are no subprocesses nor OS pipes, any reader is used
+// directly, and read deadlines are not supported: cancelling the runner's
+// context cannot stop a blocked standard input read.
 func StdIO(in io.Reader, out, err io.Writer) RunnerOption {
 	return func(r *Runner) error {
-		stdin, _err := stdinFile(in)
+		stdin, _err := newStdinFile(in)
 		if _err != nil {
 			return _err
 		}
@@ -566,6 +640,20 @@ func (r *Runner) posixOptByName(name string) *bool {
 		}
 	}
 	return nil
+}
+
+// posixOptFlags returns the one-character flags of the enabled POSIX options,
+// as held by the "$-" special parameter.
+func (r *Runner) posixOptFlags() string {
+	// Note that some options, such as pipefail, have no one-character flag.
+	flags := make([]byte, 0, len(posixOptsTable))
+	for i, opt := range &posixOptsTable {
+		if opt.flag != ' ' && r.opts[i] {
+			flags = append(flags, opt.flag)
+		}
+	}
+	slices.Sort(flags) // posixOptsTable is sorted by name rather than by flag
+	return string(flags)
 }
 
 func (r *Runner) posixOptByFlag(flag byte) *bool {
@@ -664,7 +752,6 @@ var bashOptsTable = [...]bashOpt{
 	{name: "compat40"},
 	{name: "compat41"},
 	{name: "compat42"},
-	{name: "compat44"},
 	{name: "compat43"},
 	{name: "compat44"},
 	{
@@ -799,6 +886,7 @@ func (r *Runner) Reset() {
 		openHandler:    r.openHandler,
 		readDirHandler: r.readDirHandler,
 		statHandler:    r.statHandler,
+		accessHandler:  r.accessHandler,
 
 		// These can be set by functions like [Dir] or [Params], but
 		// builtins can overwrite them; reset the fields to whatever the
@@ -891,8 +979,7 @@ func NewExitStatus(status uint8) error {
 //
 //go:fix inline
 func IsExitStatus(err error) (status uint8, ok bool) {
-	var es ExitStatus
-	if errors.As(err, &es) {
+	if es, ok := errors.AsType[ExitStatus](err); ok {
 		return uint8(es), true
 	}
 	return 0, false
@@ -926,7 +1013,13 @@ func (r *Runner) Run(ctx context.Context, node syntax.Node) error {
 	default:
 		return fmt.Errorf("node can only be File, Stmt, or Command: %T", node)
 	}
-	r.trapCallback(ctx, r.callbackExit, "exit")
+	// A bare Command bypasses stmt, which normally updates lastExit.
+	r.lastExit = r.exit
+	// Running an entire file implies an exit; a statement or command
+	// only exits the shell via the exit builtin, errexit, and so on.
+	if _, ok := node.(*syntax.File); ok || r.exit.exiting {
+		r.trapCallback(ctx, r.callbackExit, "exit")
+	}
 	maps.Insert(r.Vars, r.writeEnv.Each)
 	// Return the first of: a fatal error, a non-fatal handler error, or the exit code.
 	if err := r.exit.err; err != nil {
@@ -985,6 +1078,7 @@ func (r *Runner) subshell(background bool) *Runner {
 		openHandler:    r.openHandler,
 		readDirHandler: r.readDirHandler,
 		statHandler:    r.statHandler,
+		accessHandler:  r.accessHandler,
 		stdin:          r.stdin,
 		stdout:         r.stdout,
 		stderr:         r.stderr,

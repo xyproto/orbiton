@@ -259,60 +259,113 @@ func regexpNext(sb *strings.Builder, sl *stringLexer, mode Mode) error {
 		}
 		sb.WriteString(regexp.QuoteMeta(string(c)))
 	case '[':
-		// TODO: surely char classes can be mixed with others, e.g. [[:foo:]xyz]
-		if name, err := charClass(sl.peekRest()); err != nil {
-			return &SyntaxError{msg: "charClass invalid", err: err}
-		} else if name != "" {
-			sb.WriteByte('[')
-			sb.WriteString(name)
-			sl.i += len(name)
-			break
+		lit := sl.i // to reparse from, if the bracket turns out to be literal
+		filenames := mode&Filenames != 0
+		// Build the bracket expression separately; in Filenames mode, one
+		// which could match a slash must be emitted literally instead.
+		var bsb strings.Builder
+		bsb.WriteByte('[')
+		hasSlash := false
+		var deferredErr error // reported only if the bracket expression closes
+		var classErr error    // reported even if the bracket is unmatched
+		// Like Bash, an unmatched "[" is a literal; emit it and reparse
+		// the rest of the pattern.
+		literalBracket := func() error {
+			sl.i = lit
+			sb.WriteString(`\[`)
+			return nil
 		}
-		if mode&Filenames != 0 {
-			for i, c := range sl.peekRest() {
-				if i > 0 && c == ']' {
-					break
-				} else if c == '/' {
-					sb.WriteString(`\[`)
-					return nil
-				}
-			}
-		}
-		sb.WriteRune(c)
 		if c = sl.next(); c == '\x00' {
-			return &SyntaxError{msg: "[ was not matched with a closing ]"}
+			return literalBracket()
 		}
 		switch c {
 		case '!', '^':
-			sb.WriteByte('^')
+			bsb.WriteByte('^')
 			if c = sl.next(); c == '\x00' {
-				return &SyntaxError{msg: "[ was not matched with a closing ]"}
+				return literalBracket()
 			}
 		}
 		if c == ']' {
-			sb.WriteByte(']')
+			bsb.WriteByte(']')
 			if c = sl.next(); c == '\x00' {
-				return &SyntaxError{msg: "[ was not matched with a closing ]"}
+				return literalBracket()
 			}
 		}
 		for {
-			sb.WriteRune(c)
 			switch c {
 			case '\x00':
-				return &SyntaxError{msg: "[ was not matched with a closing ]"}
+				// Bash is inconsistent about invalid character classes
+				// in an unmatched bracket: `case` treats the whole
+				// bracket as literal, but ${a//[[:} refuses to match.
+				// We follow the latter, keeping the error.
+				if classErr != nil {
+					return classErr
+				}
+				return literalBracket()
 			case '\\':
-				if c = sl.next(); c != '0' {
-					sb.WriteRune(c)
+				// An escaped character matches itself; quote it so that
+				// the regexp doesn't give it a special meaning, such as
+				// \0 being an octal escape or \d a character class.
+				switch c = sl.next(); {
+				case c == '\x00':
+					continue // handled by the case above
+				case c == '-':
+					// regexp.QuoteMeta does not escape '-', which would
+					// form a range inside a bracket expression.
+					bsb.WriteString(`\-`)
+				case c > utf8.RuneSelf:
+					bsb.WriteRune(c)
+				default:
+					if filenames && c == '/' {
+						hasSlash = true
+					}
+					bsb.WriteString(regexp.QuoteMeta(string(c)))
 				}
 			case '-':
+				bsb.WriteByte('-')
 				start := sl.last()
 				end := sl.peekNext()
 				// TODO: what about overlapping ranges, like: [a--z]
-				if end != ']' && start > end {
-					return &SyntaxError{msg: fmt.Sprintf("invalid range: %c-%c", start, end)}
+				if end != ']' && start > end && deferredErr == nil {
+					deferredErr = &SyntaxError{msg: fmt.Sprintf("invalid range: %c-%c", start, end)}
 				}
 			case ']':
+				if hasSlash {
+					// Bracket expressions can't match slashes in filename
+					// patterns; emit the whole expression literally.
+					sb.WriteString(regexp.QuoteMeta(sl.s[lit-1 : sl.i]))
+					return nil
+				}
+				if deferredErr != nil {
+					return deferredErr
+				}
+				bsb.WriteByte(']')
+				sb.WriteString(bsb.String())
 				return nil
+			case '[':
+				rest := sl.peekRest()
+				n, err := charClass(rest)
+				if err != nil {
+					if classErr == nil {
+						classErr = &SyntaxError{msg: "charClass invalid", err: err}
+					}
+					if deferredErr == nil {
+						deferredErr = classErr
+					}
+				}
+				bsb.WriteByte('[')
+				if n > 0 {
+					if filenames && strings.Contains(rest[:n], "/") {
+						hasSlash = true
+					}
+					bsb.WriteString(rest[:n])
+					sl.i += n
+				}
+			default:
+				if filenames && c == '/' {
+					hasSlash = true
+				}
+				bsb.WriteRune(c)
 			}
 			c = sl.next()
 		}
@@ -326,30 +379,42 @@ func regexpNext(sb *strings.Builder, sl *stringLexer, mode Mode) error {
 	return nil
 }
 
-func charClass(s string) (string, error) {
-	if strings.HasPrefix(s, "[.") || strings.HasPrefix(s, "[=") {
-		return "", fmt.Errorf("collating features not available")
+// charClass returns the length in bytes of the bracket expression element
+// starting just after an opening "[" in s, such as ":alpha:]" for the
+// character class [:alpha:]. Elements which are well formed but invalid or
+// unsupported, such as collating symbols, return their length with an error.
+func charClass(s string) (int, error) {
+	if len(s) > 0 && (s[0] == '.' || s[0] == '=') {
+		sep := ".]"
+		if s[0] == '=' {
+			sep = "=]"
+		}
+		name, _, ok := strings.Cut(s[1:], sep)
+		if !ok {
+			return 0, fmt.Errorf("collating features not available")
+		}
+		return len(name) + 3, fmt.Errorf("collating features not available")
 	}
-	name, ok := strings.CutPrefix(s, "[:")
+	name, ok := strings.CutPrefix(s, ":")
 	if !ok {
-		return "", nil
+		return 0, nil
 	}
-	name, _, ok = strings.Cut(name, ":]]")
+	name, _, ok = strings.Cut(name, ":]")
 	if !ok {
-		return "", fmt.Errorf("[[: was not matched with a closing :]]")
+		return 0, fmt.Errorf("[[: was not matched with a closing :]")
 	}
 	switch name {
 	case "alnum", "alpha", "ascii", "blank", "cntrl", "digit", "graph",
 		"lower", "print", "punct", "space", "upper", "word", "xdigit":
 	default:
-		return "", fmt.Errorf("invalid character class: %q", name)
+		return len(name) + 3, fmt.Errorf("invalid character class: %q", name)
 	}
-	return s[:len(name)+5], nil
+	return len(name) + 3, nil
 }
 
 // HasMeta returns whether a string contains any unescaped pattern
-// metacharacters: '*', '?', or '['. When the function returns false, the given
-// pattern can only match at most one string.
+// metacharacters: '*', '?', or '[' followed by a matching ']'. When the
+// function returns false, the given pattern can only match at most one string.
 //
 // For example, HasMeta(`foo\*bar`) returns false, but HasMeta(`foo*bar`)
 // returns true.
@@ -360,12 +425,21 @@ func charClass(s string) (string, error) {
 //
 // The [Mode] parameter is unused, and will be removed in v4.
 func HasMeta(pat string, mode Mode) bool {
+	openBracket := false
 	for i := 0; i < len(pat); i++ {
 		switch pat[i] {
 		case '\\':
 			i++
-		case '*', '?', '[':
+		case '*', '?':
 			return true
+		case '[':
+			openBracket = true
+		case ']':
+			// Like Bash, an unmatched '[' is a literal,
+			// so it can only match one string.
+			if openBracket {
+				return true
+			}
 		}
 	}
 	return false
