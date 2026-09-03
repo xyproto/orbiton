@@ -3297,8 +3297,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if status.messageAfterRedraw == "" && justMovedByKeypress {
 				go func() {
 					thisID := highlightTimerCounter.Add(1)
+					vt.ShowCursor(true) // Needed for the cursor to be shown in Konsole
 					time.Sleep(arrowKeyHighlightTime)
 					if thisID < highlightTimerCounter.Load() { // only the freshest ID should be active
+						vt.ShowCursor(true) // Needed for the cursor to be shown in Konsole
 						return
 					}
 					highlightTimerMut.Lock()
