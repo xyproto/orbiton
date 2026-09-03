@@ -11,7 +11,7 @@ import (
 // SetTitle sets an appropriate terminal emulator title, unless NO_COLOR is set
 // or the terminal does not support it
 func (fnord *FilenameOrData) SetTitle() {
-	if envNoColor || !vt.XtermLike() {
+	if envNoColor || !vt.XtermLike() || vt.Zutty() {
 		return
 	}
 	title := "?"
@@ -36,7 +36,7 @@ func (fnord *FilenameOrData) SetTitle() {
 // NoTitle will remove the filename title by setting the shell name as the title,
 // or just "-", if NO_COLOR is not set and the terminal emulator supports it.
 func NoTitle() {
-	if envNoColor || !vt.XtermLike() {
+	if envNoColor || !vt.XtermLike() || vt.Zutty() {
 		return
 	}
 	if shell := env.Str("SHELL"); shell != "" {
