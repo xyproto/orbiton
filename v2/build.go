@@ -947,8 +947,7 @@ analyzeOutput:
 
 	// Get the exit code and combined output of the build command
 	exitCode := 0
-	var exitError *exec.ExitError
-	if errors.As(err, &exitError) {
+	if exitError, ok := errors.AsType[*exec.ExitError](err); ok {
 		exitCode = exitError.ExitCode()
 	}
 	outputString := string(bytes.TrimSpace(output))
