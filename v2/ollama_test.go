@@ -4,6 +4,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	"github.com/xyproto/env/v2"
 )
 
 func TestBuildErrorJumpedToSource(t *testing.T) {
@@ -95,5 +97,24 @@ func TestSetBuildErrorExplanationIgnoredWhenInactive(t *testing.T) {
 
 	if hasBuildErrorExplanation() {
 		t.Fatal("expected inactive build error state to remain inactive")
+	}
+}
+
+func TestOllamaServerAddr(t *testing.T) {
+	for _, name := range []string{"OLLAMA_HOST", "LLMMAN_HOST"} {
+		old := env.Str(name)
+		defer env.Set(name, old)
+		env.Unset(name)
+	}
+	if got := ollamaServerAddr(); got != ollamaDefaultAddr {
+		t.Fatalf("expected %q, got %q", ollamaDefaultAddr, got)
+	}
+	env.Set("LLMMAN_HOST", ":17434")
+	if got, want := ollamaServerAddr(), "http://localhost:17434"; got != want {
+		t.Fatalf("expected %q, got %q", want, got)
+	}
+	env.Set("OLLAMA_HOST", "https://example.com:11434/")
+	if got, want := ollamaServerAddr(), "https://example.com:11434"; got != want {
+		t.Fatalf("expected $OLLAMA_HOST to win with %q, got %q", want, got)
 	}
 }

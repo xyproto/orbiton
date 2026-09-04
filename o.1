@@ -38,7 +38,8 @@ Clear all file locks and close all portals.
 .TP
 .B \-o or \-\-ollama
 Enable Ollama-specific features. The model can be specified in the \fBOLLAMA_MODEL\fP environment variable. This requires that Ollama is up and running,
-either locally or at the host specified in the \fBOLLAMA_HOST\fP environment variable.
+either locally or at the host specified in the \fBOLLAMA_HOST\fP environment variable. Any server that speaks the Ollama API can be used,
+for instance llmman, by setting \fBLLMMAN_HOST\fP to \fBlocalhost:17434\fP.
 .TP
 .B \-r or \-\-release
 Build release executables when ctrl-b is pressed, or projects when no filenames are given.
@@ -258,6 +259,8 @@ The \fBORBITON_OLLAMA\fP environment variable can be set to 1 to enable Ollama-s
 The \fBOLLAMA_MODEL\fP environment variable can be set to specify which Ollama model to use for code completion.
 .sp
 The \fBOLLAMA_HOST\fP environment variable specifies the host for the Ollama service if a non-local service should be used.
+.sp
+The \fBLLMMAN_HOST\fP environment variable is used if \fBOLLAMA_HOST\fP is not set, for using llmman (https://github.com/llmmanorg/llmman), which serves the Ollama API on port 17434.
 .sp
 .SH "MAN PAGER"
 O can be used for viewing man pages by setting MANPAGER to "o" with ie. \fBexport MANPAGER=o\fP.

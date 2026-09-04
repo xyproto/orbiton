@@ -57,10 +57,10 @@ func (cc *Ollama) LoadModel() error {
 	cc.ollamaClient.Verbose = false
 	const verbosePull = true
 	if err := cc.ollamaClient.PullIfNeeded(verbosePull); err != nil {
-		if ollamaHost := env.Str("OLLAMA_HOST"); ollamaHost != "" {
-			return fmt.Errorf("could not fetch the %s model, check if Ollama is up and running at %s", cc.ModelName, ollamaHost)
+		if env.Has("OLLAMA_HOST") || env.Has("LLMMAN_HOST") {
+			return fmt.Errorf("could not fetch the %s model, check if Ollama or llmman is up and running at %s", cc.ModelName, cc.ollamaClient.ServerAddr)
 		}
-		return fmt.Errorf("could not fetch the %s model, check if Ollama is up and running locally or at $OLLAMA_HOST", cc.ModelName)
+		return fmt.Errorf("could not fetch the %s model, check if Ollama is up and running locally or at $OLLAMA_HOST or $LLMMAN_HOST", cc.ModelName)
 	}
 	cc.ollamaClient.SetReproducible()
 	return nil

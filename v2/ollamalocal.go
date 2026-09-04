@@ -32,10 +32,23 @@ type ollamaConfig struct {
 	Verbose     bool
 }
 
+// ollamaServerAddr returns the server URL from $OLLAMA_HOST, then $LLMMAN_HOST (llmman
+// serves the Ollama API on port 17434), then the default. A bare ":port" means localhost.
+func ollamaServerAddr() string {
+	addr := env.StrAlt("OLLAMA_HOST", "LLMMAN_HOST", ollamaDefaultAddr)
+	if strings.HasPrefix(addr, ":") {
+		addr = "localhost" + addr
+	}
+	if !strings.Contains(addr, "://") {
+		addr = "http://" + addr
+	}
+	return strings.TrimSuffix(addr, "/")
+}
+
 // newOllamaConfig mirrors ollamaclient.New.
 func newOllamaConfig(model string) *ollamaConfig {
 	return &ollamaConfig{
-		ServerAddr:  env.Str("OLLAMA_HOST", ollamaDefaultAddr),
+		ServerAddr:  ollamaServerAddr(),
 		ModelName:   env.Str("OLLAMA_MODEL", model),
 		Seed:        ollamaDefaultSeed,
 		Temperature: 0,
