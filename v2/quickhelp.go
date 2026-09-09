@@ -58,7 +58,7 @@ func QuickHelpScreenIsDisabled() bool {
 // DrawQuickHelp draws the quick help + some help for new users
 func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) {
 	const (
-		maxLines = 8
+		maxLines = 10
 		title    = "Quick Overview"
 	)
 
@@ -93,9 +93,9 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 	centerBox := NewBox()
 
 	centerBox.UpperRightPlacement(canvasBox, minWidth)
-	centerBox.H += 2
-	centerBox.X -= 10
-	centerBox.W += 5
+	centerBox.H += 3
+	centerBox.X -= 18
+	centerBox.W += 15
 
 	// Then create a list box
 	listBox := NewBox()
@@ -113,7 +113,7 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 	// This is just an attempt at drawing the text, in order to find addedLinesBecauseWordWrap
 	const dryRun = true
 	if addedLinesBecauseWordWrap := e.DrawText(bt, c, listBox, quickHelpText, dryRun); leftoverHeight > addedLinesBecauseWordWrap {
-		centerBox.H += addedLinesBecauseWordWrap + 2
+		centerBox.H += addedLinesBecauseWordWrap + 3
 	}
 
 	e.DrawBox(bt, c, centerBox)
