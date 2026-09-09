@@ -89,7 +89,11 @@ func (p Palette) AsColorPalette() color.Palette {
 // At returns the color at the given float64 value (range 0-1)
 func (p Palette) At(t float64) color.Color {
 	n := len(p)
-	if t <= 0 || math.IsNaN(t) {
+	// A palette with fewer than two colors has nothing to interpolate between.
+	if n == 0 {
+		return color.NRGBA{}
+	}
+	if n == 1 || t <= 0 || math.IsNaN(t) {
 		return p[0]
 	}
 	if t >= 1 {

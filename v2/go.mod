@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20260824154242-13c5cf49db8d
+	github.com/gomarkdown/markdown v0.0.0-20260907091611-16791ada75cf
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.29
@@ -36,7 +36,7 @@ require (
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.18
 	github.com/xyproto/wordwrap v1.2.0
-	golang.org/x/image v0.45.0
+	golang.org/x/image v0.46.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -44,7 +44,7 @@ require github.com/xyproto/themes v1.0.2
 
 require github.com/xyproto/slay v1.3.4
 
-require github.com/peterhellberg/gfx v0.0.0-20260528221839-3f985a9df2a8 // indirect
+require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
 
 require (
 	github.com/BurntSushi/toml v1.6.0
@@ -62,9 +62,9 @@ require (
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.7.3 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/term v0.45.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
-	mvdan.cc/sh/v3 v3.14.0 // indirect
+	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/term v0.46.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	mvdan.cc/sh/v3 v3.14.1 // indirect
 )
