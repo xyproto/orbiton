@@ -2,19 +2,19 @@
 
 ## General
 
+- [ ] Fix the issue that sometimes when pasting in text, there is no X scroll.
 - [ ] Best effort syntax highlighting both in `o` and the file browser, when the file format is not recognized.
-- [ ] The cursor is sometimes hidden when it should not be hidden in Konsole.
 - [ ] When launching `og` and then entering the file browser and then opening a file, Esc should not go back to the file browser.
 - [ ] Let the `.desktop` file for the light version use the same executable as the dark version instead of `lig`?
-- [ ] Make ctrl-b more predictable.
-- [ ] When ctrl-w is pressed the first time on Windows, don't hang while trying to download goimport, at least show a status message.
-- [ ] When running a program with 2x ctrl-space, if there is no output, say "No output" intead of just a box that quickly flickers in and out of view.
+- [ ] Make `ctrl-b` more predictable.
+- [ ] When `ctrl-w` is pressed the first time on Windows, don't hang while trying to download goimport, at least show a status message.
+- [ ] When running a program with 2x ctrl-space, if there is no output, say `No output` instead of just a box that quickly flickers in and out of view.
 - [ ] If a file is recognized as a programming language, do best-effort syntex highlighting.
 - [ ] Also support Groovy.
+- [ ] Support the WordGrinder file format(s).
 - [ ] Render VGA and text when stepping through DOS com files + integrate an x86 emulator?
 - [ ] If the cursor is on the top line, hide the status text in the upper right corner, or use a different background color.
 - [ ] When highlighting numbers such as `7.0.8` in xml files, also highlight the first digit(s).
-- [ ] Sometimes when pasting in text, there is no X scroll.
 - [ ] Also support info pages.
 - [ ] Make Orbiton as suitable for editing LISP as Vlime (ref: https://github.com/vlime/vlime/blob/master/vim/doc/vlime-tutor.txt)
 - [ ] Add support for Common Lisp / CMUCL.
@@ -34,7 +34,6 @@
 - [ ] Move/copy files.
 - [ ] Open files with their default application (xdg-open etc.).
 - [ ] Show size, type, and date as inline columns in the listing.
-- [ ] Support the WordGrinder file formats?
 - [ ] Find a better solution for offering help at first start. Always print ie. "ctrl-k for help" in the lower right corner,
       and then in the help box, have an easy way to disable help so that ctrl-k is used for deleting to the end of the line instead?
 - [ ] Footnotes, for book mode ([^1] style).
