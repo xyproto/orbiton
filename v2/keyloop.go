@@ -2550,12 +2550,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				jumped = true
 			}
 
-			// Go back to the previous location if there are breadcrumbs
-			if bc, ok := popBreadcrumb(); ok {
-				bc.BackFunc()
-				e.redraw.Store(true)
-				e.redrawCursor.Store(true)
-				break
+			// Go back to the previous location if there are breadcrumbs and this keypress did not jump anywhere
+			if !jumped {
+				if bc, ok := popBreadcrumb(); ok {
+					bc.BackFunc()
+					e.redraw.Store(true)
+					e.redrawCursor.Store(true)
+					break
+				}
 			}
 
 			// Only toggle status bars if we didn't jump forward, didn't jump back and there's no include line
