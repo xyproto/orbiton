@@ -3,6 +3,8 @@
 ## General
 
 - [ ] Fix the issue that sometimes when pasting in text, there is no X scroll.
+- [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
+      over being red if they are read-only, for readability. Like /usr/lib/tcc/include/tgmath.h.
 - [ ] Best effort syntax highlighting both in `o` and the file browser, when the file format is not recognized.
 - [ ] When launching `og` and then entering the file browser and then opening a file, Esc should not go back to the file browser.
 - [ ] Let the `.desktop` file for the light version use the same executable as the dark version instead of `lig`?
