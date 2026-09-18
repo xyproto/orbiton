@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20260914122325-add8e0bd8ae0
+	github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.30
@@ -52,7 +52,7 @@ require (
 	github.com/JohannesKaufmann/dom v0.3.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect

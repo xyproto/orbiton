@@ -31,8 +31,8 @@ github.com/cyrus-and/gdb
 # github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06
 ## explicit
 github.com/dkua/go-ico
-# github.com/dustin/go-humanize v1.0.1
-## explicit; go 1.16
+# github.com/dustin/go-humanize v1.1.0
+## explicit; go 1.21
 github.com/dustin/go-humanize
 # github.com/felixge/fgtrace v0.2.0
 ## explicit; go 1.18
@@ -42,11 +42,12 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20260914122325-add8e0bd8ae0
+# github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05
 ## explicit; go 1.12
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
+github.com/gomarkdown/markdown/internal/textutil
 github.com/gomarkdown/markdown/parser
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
 ## explicit
