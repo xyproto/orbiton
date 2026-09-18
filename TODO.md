@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] When editing git commit messages, don't let ctrl-up and ctrl-down go to next/prev block of text.
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Fix the issue that sometimes when pasting in text, there is no X scroll.
 - [ ] When pasting in text in MINGW64 / Git Bash in Windows, then the last line

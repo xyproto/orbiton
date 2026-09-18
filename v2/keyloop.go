@@ -1491,21 +1491,25 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.redrawCursor.Store(true)
 
 		case ctrlUpKey: // ctrl-up, go to the previous function/header/paragraph
-			e.ClearSelection()
-			e.GoToPrevFuncOrSection(c, status)
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
-			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.drawFuncName.Store(true)
+			if e.mode != mode.Git {
+				e.ClearSelection()
+				e.GoToPrevFuncOrSection(c, status)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				if e.highlightCurrentLine || e.highlightCurrentText {
+					e.drawFuncName.Store(true)
+				}
 			}
 
 		case ctrlDownKey: // ctrl-down, go to the next function/header/paragraph
-			e.ClearSelection()
-			e.GoToNextFuncOrSection(c, status)
-			e.redraw.Store(true)
-			e.redrawCursor.Store(true)
-			if e.highlightCurrentLine || e.highlightCurrentText {
-				e.drawFuncName.Store(true)
+			if e.mode != mode.Git {
+				e.ClearSelection()
+				e.GoToNextFuncOrSection(c, status)
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				if e.highlightCurrentLine || e.highlightCurrentText {
+					e.drawFuncName.Store(true)
+				}
 			}
 
 		case ctrlPgUpKey: // ctrl-pgup, previous file or page up
