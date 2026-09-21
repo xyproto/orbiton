@@ -15,35 +15,14 @@ import (
 	"github.com/xyproto/vt"
 )
 
-var (
-	controlRuneReplacement = func() rune {
-		if useASCII {
-			return '?'
-		}
-		return '¿' // for displaying control sequence characters. Could also use: ?
-	}()
-	wrapMarkerRune = func() rune {
-		if useASCII {
-			return '.'
-		}
-		return '·'
-	}()
-	ellipsisRune = func() rune {
-		if useASCII {
-			return '~'
-		}
-		return '…'
-	}()
+type (
+	// Kind is a type alias for syntax.Kind.
+	Kind = syntax.Kind
+	// TextConfig is a type alias for syntax.TextConfig.
+	TextConfig = syntax.TextConfig
+	// Option is a type alias for syntax.Option.
+	Option = syntax.Option
 )
-
-// Kind is a type alias for syntax.Kind.
-type Kind = syntax.Kind
-
-// TextConfig is a type alias for syntax.TextConfig.
-type TextConfig = syntax.TextConfig
-
-// Option is a type alias for syntax.Option.
-type Option = syntax.Option
 
 // Supported highlighting kinds (aliases for syntax constants).
 const (
@@ -77,13 +56,29 @@ const (
 )
 
 var (
+	runeReplacements = map[bool][]rune{
+		false: { // > ASCII
+			'¿', // control sequence characters (could also use '?')
+			'.', // wrap marker
+			'…', // ellipsis
+		},
+		true: { // useASCII
+			'?', // control sequence characters
+			'.', // wrap marker
+			'~', // ellipsis replacement
+		},
+	}
+	controlRuneReplacement = runeReplacements[useASCII][0]
+	wrapMarkerRune         = runeReplacements[useASCII][1]
+	ellipsisRune           = runeReplacements[useASCII][2]
+
 	colorTagRegex = regexp.MustCompile(`<([a-nA-Np-zP-Z]\w+)>`) // not starting with "o"
 	tout          = vt.New()
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
-)
 
-// AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
-var AsText = syntax.AsText
+	// AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
+	AsText = syntax.AsText
+)
 
 // writeRuneOfWidth writes r at x, y, taking up rw cells. x+rw-1 must be within the canvas.
 // A wide rune that is only given one cell makes the drawn line too wide, which makes it wrap.
@@ -112,7 +107,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		doneHighlighting                   = true
 		hasSearchTerm                      = len(e.searchTerm) > 0
 		searchCaseInsensitive              = hasSearchTerm && !ProgrammingLanguage(e.mode)
-		ignoreSingleQuotes                 = e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
+		ignoreSingleQuotes                 = e.ignoreSingleQuotes()
 		numLinesToDraw                     int
 		runeIndex                          int
 		length                             int
