@@ -1093,7 +1093,7 @@ func (e *Editor) SplitLine() bool {
 		return false
 	}
 	leftContents := trimRightSpace(string(runeLine[:x]))
-	rightContents := string(runeLine[x:])
+	rightContents := strings.TrimLeft(string(runeLine[x:]), " \t")
 	// Insert a new line above this one
 	e.InsertLineAbove()
 	// Replace this line with the left contents
