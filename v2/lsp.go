@@ -42,10 +42,10 @@ type LSPClient struct {
 	cmd            *exec.Cmd
 	msgCh          chan map[string]any // receives parsed messages from the background readLoop
 	done           chan struct{}       // closed by Shutdown to unblock readLoop
+	initOptions    map[string]any      // extra initializationOptions, ie. the nixpkgs expression for nixd
 	workspaceRoot  string
 	openedURI      string
-	linkedProjects []any          // inline rust-project.json objects for standalone Rust files
-	initOptions    map[string]any // extra initializationOptions, ie. the nixpkgs expression for nixd
+	linkedProjects []any // inline rust-project.json objects for standalone Rust files
 	openedVersion  int
 	requestID      int
 	mutex          sync.Mutex
