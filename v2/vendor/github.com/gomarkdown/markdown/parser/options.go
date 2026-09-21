@@ -19,6 +19,18 @@ type Options struct {
 const (
 	FlagsNone        Flags = 0
 	SkipFootnoteList Flags = 1 << iota // Skip adding the footnote list (regardless of whether they are parsed)
+	// CommonMark parses closer to the CommonMark spec.
+	// A blank line ends a block quote, so
+	//
+	//	> a
+	//
+	//	> b
+	//
+	// is two quotes. The flag is off by default. It was added so existing
+	// documents keep the original behavior: those lines are one quote with
+	// two paragraphs. Put '>' on the blank line to keep one quote when the
+	// flag is on.
+	CommonMark
 )
 
 // BlockFunc allows registration of a parser function. If successful it

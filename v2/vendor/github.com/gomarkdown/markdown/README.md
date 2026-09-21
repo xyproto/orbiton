@@ -70,6 +70,31 @@ func main() {
 
 Example source: [examples/basic.go](examples/basic.go)
 
+## CommonMark
+
+`parser.CommonMark` parses closer to the [CommonMark](https://spec.commonmark.org/) spec. The flag is off by default. It was added so existing documents keep their current parsing.
+
+With the flag on, a blank line ends a block quote:
+
+```markdown
+> a
+
+> b
+```
+
+That is two quotes. The same input is one quote with two paragraphs when the flag is off, which is the original Markdown behavior. To keep both paragraphs in one quote with the flag on, put `>` on the blank line:
+
+```markdown
+> a
+>
+> b
+```
+
+```go
+p := parser.New()
+p.Opts.Flags |= parser.CommonMark
+```
+
 For more documentation, read [this guide](https://blog.kowalczyk.info/article/cxn3/advanced-markdown-processing-in-go.html)
 
 Comparing to other markdown parsers: https://babelmark.github.io/
