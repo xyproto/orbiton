@@ -747,6 +747,7 @@ func NewCustomEditor(indentation mode.TabsSpaces, scrollSpeed int, m mode.Mode, 
 	e.displayQuickHelp = displayQuickHelp
 	e.noDisplayQuickHelp = noDisplayQuickHelp
 	e.cycleFilenames = cycleFilenames
+	e.ResetCutCopyPasteState()
 
 	p := NewPosition(scrollSpeed)
 	e.pos = *p

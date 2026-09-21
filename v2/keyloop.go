@@ -309,10 +309,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		firstPasteAction = true
 		firstCopyAction  = true
 
-		lastCopyY  LineIndex = -1 // used for keeping track if ctrl-c has been pressed twice on the same line
-		lastPasteY LineIndex = -1 // used for keeping track if ctrl-v has been pressed twice on the same line
-		lastCutY   LineIndex = -1 // used for keeping track if ctrl-x has been pressed twice on the same line
-
 		clearKeyHistory  bool              // for clearing the last pressed key, for exiting modes that also reads keys
 		kh               = NewKeyHistory() // keep track of the previous key presses
 		key              string            // for the main loop
@@ -635,9 +631,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.macro.Home()
 					e.playBackMacroCount--
 					// Reset copy/paste/cut state between macro iterations
-					lastCopyY = -1
-					lastPasteY = -1
-					lastCutY = -1
+					e.ResetCutCopyPasteState()
 					if e.playBackMacroCount > 0 {
 						// More iterations remain, get the first key of the next pass
 						key = e.macro.Next()
@@ -1166,9 +1160,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.IgnoreSnapshots(true)
 				e.playBackMacroCount = 0
 				// Reset copy/paste/cut state so playback starts fresh
-				lastCopyY = -1
-				lastPasteY = -1
-				lastCutY = -1
+				e.ResetCutCopyPasteState()
 				status.Clear(c, false)
 				if macroLen := e.macro.Len(); macroLen == 0 {
 					status.SetMessage("Stopped recording")
@@ -1191,9 +1183,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				undo.Snapshot(e)
 				status.ClearAll(c, false)
 				// Reset copy/paste/cut state so playback doesn't inherit stale line tracking
-				lastCopyY = -1
-				lastPasteY = -1
-				lastCutY = -1
+				e.ResetCutCopyPasteState()
 				// Play back the macro, once
 				e.playBackMacroCount = 1
 			}
@@ -1727,7 +1717,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 			} else {
 				undo.Snapshot(e)
-				e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
+				e.CutSingleLine(status, &copyLines, &firstCopyAction)
 				e.End(c)
 			}
 
@@ -1974,9 +1964,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				break
 			}
 			// Reset the cut/copy/paste double-keypress detection
-			lastCopyY = -1
-			lastPasteY = -1
-			lastCutY = -1
+			e.ResetCutCopyPasteState()
 			// Stop background processes (like playing music with timidity), if any
 			stopBackgroundProcesses()
 			// Clear function description boxes, if any
@@ -2069,8 +2057,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// Modify the paste double-keypress detection to allow for a manual return before pasting the rest
-			if lastPasteY != -1 && kh.Prev() != "c:13" {
-				lastPasteY++
+			if e.lastPasteY != -1 && kh.Prev() != "c:13" {
+				e.lastPasteY++
 			}
 
 			undo.Snapshot(e)
@@ -2611,17 +2599,13 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:21": // ctrl-u to undo
 
 			if e.nanoMode.Load() { // nano: paste after cutting
-				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
+				e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, kh.PrevIs("c:13"), kh.PrevIs(key))
 				break
 			}
 
 			fallthrough // undo behavior
 		case "c:26": // ctrl-z to undo (my also background the application, unfortunately)
 
-			// Forget the cut, copy and paste line state
-			lastCutY = -1
-			lastPasteY = -1
-			lastCopyY = -1
 			if undo.Len() == 0 {
 				status.SetMessageAfterRedraw("Nothing more to undo")
 				break
@@ -2677,9 +2661,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.blockMode = false
 				e.blockCursors = nil
 				c.ShowCursor()
-				lastCutY = -1
-				lastCopyY = -1
-				lastPasteY = -1
+				e.ResetCutCopyPasteState()
 				e.redrawCursor.Store(true)
 				e.redraw.Store(true)
 				break
@@ -2707,10 +2689,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 
 			// First try a single line cut
-			if y, multilineCut := e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
-				lastCutY = y
-				lastCopyY = -1
-				lastPasteY = -1
+			if y, multilineCut := e.CutSingleLine(status, &copyLines, &firstCopyAction); multilineCut { // Multi line cut (add to the clipboard, since it's the second press)
+				e.lastCutY = y
+				e.lastCopyY = -1
+				e.lastPasteY = -1
 
 				// Also close the portal, if any
 				e.ClosePortal()
@@ -2760,9 +2742,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.blockMode = false
 				e.blockCursors = nil
 				c.ShowCursor()
-				lastCopyY = -1
-				lastPasteY = -1
-				lastCutY = -1
+				e.ResetCutCopyPasteState()
 				e.redraw.Store(true)
 				e.redrawCursor.Store(true)
 				break
@@ -2770,11 +2750,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			undo.Snapshot(e)
 			if e.nanoMode.Load() { // nano: ctrl-k, cut line
 				// Prepare to cut
-				e.CutSingleLine(status, &lastCutY, &lastCopyY, &lastPasteY, &copyLines, &firstCopyAction)
+				e.CutSingleLine(status, &copyLines, &firstCopyAction)
 				break
 			}
 
-			e.DeleteToEndOfLine(c, status, &lastCopyY, &lastPasteY, &lastCutY)
+			e.DeleteToEndOfLine(c, status)
 
 			// Delete extra if the key is held down
 			if kh.TwoLastAre("c:11") && kh.AllWithin(200*time.Millisecond) && kh.LastChanged(200*time.Millisecond) {
@@ -2785,7 +2765,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// 2x slower step up for ctrl-k than for left/right arrow
 				steps := int(int64(heldDuration) / int64(delayUntilSpeedUp*2))
 				for i := 1; i < steps; i++ {
-					e.DeleteToEndOfLine(c, status, &lastCopyY, &lastPasteY, &lastCutY)
+					e.DeleteToEndOfLine(c, status)
 				}
 			} else {
 				heldDownCtrlKTime = time.Time{}
@@ -2830,12 +2810,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				y := e.DataY()
 
 				// Forget the cut and paste line state
-				lastCutY = -1
-				lastPasteY = -1
+				e.lastCutY = -1
+				e.lastPasteY = -1
 
 				if e.blockMode { // 1x copies the block, 2x copies the function
 					var s string
-					if lastCopyY == y {
+					if e.lastCopyY == y {
 						var err error
 						s, err = e.FunctionBlock(y)
 						if err != nil {
@@ -2844,7 +2824,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					} else {
 						s = e.Block(y)
 					}
-					lastCopyY = y
+					e.lastCopyY = y
 					if s != "" {
 						copyLines = strings.Split(s, "\n")
 						lineCount := strings.Count(s, "\n")
@@ -2871,8 +2851,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				}
 
 				// check if this operation is done on the same line as last time
-				singleLineCopy := lastCopyY != y
-				lastCopyY = y
+				singleLineCopy := e.lastCopyY != y
+				e.lastCopyY = y
 
 				// close the portal, if any
 				closedPortal := e.ClosePortal() == nil
@@ -2980,7 +2960,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 
 			// paste from the portal, clipboard or line buffer. Takes an undo snapshot if text is pasted.
-			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, &lastCopyY, &lastPasteY, &lastCutY, kh.PrevIs("c:13"))
+			e.Paste(c, status, &copyLines, &previousCopyLines, &firstPasteAction, kh.PrevIs("c:13"), kh.PrevIs(key))
 
 		case insertKey, shiftInsertKey: // insert / shift-insert, one-shot paste mode
 			wasInPasteMode := e.pasteMode

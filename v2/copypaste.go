@@ -191,7 +191,7 @@ func (e *Editor) placeCursorAfterPaste(c *vt.Canvas, offsetX int) {
 	e.pos.SetX(c, end)
 }
 
-func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
+func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, prevKeyWasReturn, prevKeyWasPaste bool) {
 	var strippedDiff bool
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
 		line, err := portal.PopLine(e, false) // pop the line, but don't remove it from the source file
@@ -282,12 +282,14 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	// Now save the contents to "previousCopyLines" and check if they are the same first
 	if !equalStringSlices(*copyLines, *previousCopyLines) {
 		// Start with single-line paste if the contents are new
-		*lastPasteY = -1
+		e.lastPasteY = -1
 	}
 	*previousCopyLines = *copyLines
 
 	// Prepare to paste
-	undo.Snapshot(e)
+	if !(prevKeyWasPaste && !e.HasSelection() && e.lastPasteY == e.DataY()) {
+		undo.Snapshot(e)
+	}
 	if e.HasSelection() {
 		e.DeleteSelection(c, status)
 		e.ClearSelection()
@@ -295,14 +297,14 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	y := e.DataY()
 
 	// Forget the cut and copy line state
-	*lastCutY = -1
-	*lastCopyY = -1
+	e.lastCutY = -1
+	e.lastCopyY = -1
 
 	// Redraw after pasting
 	e.redraw.Store(true)
 
-	if *lastPasteY != y { // Single line paste
-		*lastPasteY = y
+	if e.lastPasteY != y { // Single line paste
+		e.lastPasteY = y
 		// Pressed for the first time for this line number, paste only one line
 
 		// (*copyLines)[0] is the line to be pasted, and it exists

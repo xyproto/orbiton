@@ -70,6 +70,9 @@ type Editor struct {
 	previousY                    int               // previous cursor position
 	previousX                    int               // previous cursor position
 	lineBeforeSearch             LineIndex         // save the current line number before jumping between search results
+	lastCopyY                    LineIndex         // keep track if ctrl-c has been pressed 2x on the same line
+	lastPasteY                   LineIndex         // keep track if ctrl-v has been pressed 2x on the same line
+	lastCutY                     LineIndex         // keep track if ctrl-x has been pressed 2x on the same line
 	playBackMacroCount           int               // number of times the macro should be played back, right now
 	nextAction                   megafile.Action   // send SIGQUIT to the parent PID when quitting
 	debugLine                    atomic.Int64      // the data line index of the current debug position (-1 means not set)
@@ -178,6 +181,9 @@ func (e *Editor) Copy(withLines bool) *Editor {
 	e2.previousY = e.previousY
 	e2.previousX = e.previousX
 	e2.lineBeforeSearch = e.lineBeforeSearch
+	e2.lastCopyY = e.lastCopyY
+	e2.lastPasteY = e.lastPasteY
+	e2.lastCutY = e.lastCutY
 	e2.playBackMacroCount = e.playBackMacroCount
 	e2.rainbowParenthesis = e.rainbowParenthesis
 	e2.debugMode = e.debugMode
@@ -3197,16 +3203,13 @@ func (e *Editor) OnParenOrBracket() bool {
 }
 
 // DeleteToEndOfLine (ctrl-k)
-func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, lastCopyY, lastPasteY, lastCutY *LineIndex) {
+func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar) {
 	if e.Empty() {
 		status.SetMessage("Empty file")
 		status.Show(c, e)
 		return
 	}
-	// Reset the cut/copy/paste double-keypress detection
-	*lastCopyY = -1
-	*lastPasteY = -1
-	*lastCutY = -1
+	e.ResetCutCopyPasteState()
 	if e.EmptyLine() {
 		e.DeleteCurrentLineMoveBookmark()
 		e.redraw.Store(true)
@@ -3227,9 +3230,16 @@ func (e *Editor) DeleteToEndOfLine(c *vt.Canvas, status *StatusBar, lastCopyY, l
 	e.redrawCursor.Store(true)
 }
 
+// ResetCutCopyPasteState forgets the cut, copy and paste double-keypress state
+func (e *Editor) ResetCutCopyPasteState() {
+	e.lastCopyY = -1
+	e.lastPasteY = -1
+	e.lastCutY = -1
+}
+
 // CutSingleLine can be called when ctrl-x is pressed (or ctrl-k in nano mode)
 // returns true if a multi-line cut should happen instead
-func (e *Editor) CutSingleLine(status *StatusBar, lastCutY, lastCopyY, lastPasteY *LineIndex, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
+func (e *Editor) CutSingleLine(status *StatusBar, copyLines *[]string, firstCopyAction *bool) (y LineIndex, multiLineCut bool) {
 	y = e.DataY()
 	line := e.Line(y)
 	// Now check if there is anything to cut
@@ -3242,12 +3252,12 @@ func (e *Editor) CutSingleLine(status *StatusBar, lastCutY, lastCopyY, lastPaste
 		// Check if ctrl-x was pressed once or twice, for this line
 		return y, false
 	}
-	if *lastCutY != y { // Single line cut
+	if e.lastCutY != y { // Single line cut
 		// Also close the portal, if any
 		e.ClosePortal()
-		*lastCutY = y
-		*lastCopyY = -1
-		*lastPasteY = -1
+		e.lastCutY = y
+		e.lastCopyY = -1
+		e.lastPasteY = -1
 		// Copy the line internally
 		*copyLines = []string{line}
 		var err error
