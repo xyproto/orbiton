@@ -223,13 +223,18 @@ func (q *QuoteState) ProcessRune(r, prevRune, prevPrevRune rune) {
 	}
 }
 
-// Process takes a line of text and modifies the current quote state accordingly,
-// depending on which runes are encountered.
-func (q *QuoteState) Process(line string) (rune, rune) {
+// startLine resets the parts of the quote state that only last for a single line
+func (q *QuoteState) startLine() {
 	q.hasSingleLineComment = false
 	q.startedMultiLineString = false
 	q.stoppedMultiLineComment = false
 	q.containsMultiLineComments = false
+}
+
+// Process takes a line of text and modifies the current quote state accordingly,
+// depending on which runes are encountered.
+func (q *QuoteState) Process(line string) (rune, rune) {
+	q.startLine()
 	prevRune := '\n'
 	prevPrevRune := '\n'
 	for _, r := range line {
@@ -238,6 +243,23 @@ func (q *QuoteState) Process(line string) (rune, rune) {
 		prevRune = r
 	}
 	return prevRune, prevPrevRune
+}
+
+// ForEachCodeRune processes a line of text and calls the given function for each rune
+// that is not within a string or a comment. If the function returns false, the rest of
+// the line is not processed, and the quote state is then only valid for the runes so far.
+func (q *QuoteState) ForEachCodeRune(line string, f func(r rune) bool) {
+	q.startLine()
+	prevRune := '\n'
+	prevPrevRune := '\n'
+	for _, r := range line {
+		q.ProcessRune(r, prevRune, prevPrevRune)
+		if q.None() && !f(r) {
+			return
+		}
+		prevPrevRune = prevRune
+		prevRune = r
+	}
 }
 
 // ParBraCount will count the parenthesis and square brackets for a single line

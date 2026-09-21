@@ -5,13 +5,23 @@ import (
 	"github.com/xyproto/syntax"
 )
 
-// Keywords is a reference to the syntax package's global keyword map.
+// Keywords is a reference to the syntax package's global keyword map
 var Keywords = syntax.Keywords
 
-// adjustSyntaxHighlightingKeywords configures syntax highlighting keywords for the given mode.
+// adjustSyntaxHighlightingKeywords configures syntax highlighting keywords for the given mode
 func adjustSyntaxHighlightingKeywords(m mode.Mode) {
 	syntax.AdjustKeywords(m)
 	Keywords = syntax.Keywords
+}
+
+// ignoreSingleQuotes checks if this mode does not use single quotes for strings
+func (e *Editor) ignoreSingleQuotes() bool {
+	return e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
+}
+
+// NewQuoteState creates a new QuoteState for the current editor mode
+func (e *Editor) NewQuoteState() (*QuoteState, error) {
+	return NewQuoteState(e.SingleLineCommentMarker(), e.mode, e.ignoreSingleQuotes())
 }
 
 // SingleLineCommentMarker will return the string that starts a single-line
