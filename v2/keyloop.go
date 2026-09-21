@@ -2010,11 +2010,8 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// Regular behavior, take an undo snapshot and insert a space
 			undo.Snapshot(e)
 
-			// De-indent this line by 1 if the line above starts with "case " and this line is only "case" at this time.
-			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && strings.HasPrefix(e.PrevTrimmedLine(), "case ") {
-				oneIndentation := e.indentation.String()
-				deIndented := strings.Replace(e.CurrentLine(), oneIndentation, "", 1)
-				e.SetCurrentLine(deIndented)
+			// Align this line with the other "case" lines in the same switch block, if this line is only "case" at this time.
+			if cLikeSwitch(e.mode) && e.TrimmedLine() == "case" && e.alignCase() {
 				e.End(c)
 			}
 
@@ -3191,8 +3188,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 					noDedent := foundCurlyBracketBelow || foundSquareBracketBelow || foundParenthesisBelow
 
-					// Okay, dedent this line by 1 indentation, if possible
-					if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
+					// Align with the line that has the matching opening bracket, if possible
+					if matchingWhitespace, found := e.closingBracketIndentation(r); !noDedent && noContentHereAlready && found {
+						if len(matchingWhitespace) < len(leadingWhitespace) {
+							e.SetCurrentLine(matchingWhitespace)
+							e.GoToStartOfTextLine(c)
+						}
+					} else if !noDedent && e.pos.sx > 0 && len(leadingWhitespace) > 0 && noContentHereAlready {
+						// Okay, dedent this line by 1 indentation, if possible
 						newLeadingWhitespace := leadingWhitespace
 						if strings.HasSuffix(leadingWhitespace, "\t") {
 							newLeadingWhitespace = leadingWhitespace[:len(leadingWhitespace)-1]

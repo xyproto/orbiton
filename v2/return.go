@@ -64,17 +64,10 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 		e.SetCurrentLine(trimmedLine)
 		leadingWhitespace = currentLeadingWhitespace
 	} else if !e.handleReturnAutocomplete(c, trimmedLine, currentLeadingWhitespace, &indent, &leadingWhitespace) && cLikeSwitch(e.mode) {
-		currentLine := e.CurrentLine()
-		trimmedLine := e.TrimmedLine()
-		// De-indent this line by 1 if this line starts with "case " and the next line also starts with "case ", but the current line is indented differently.
-		found := strings.Contains(trimmedLine, "case ")
-		nextCaseIndex := strings.Index(e.NextTrimmedLine(), "case ")
-		if found && nextCaseIndex != -1 && strings.Index(currentLine, "case ") != strings.Index(e.NextLine(), "case ") {
-			oneIndentation := e.indentation.String()
-			deIndented := strings.Replace(currentLine, oneIndentation, "", 1)
-			e.SetCurrentLine(deIndented)
+		// Align this line with the other "case" lines in the same switch block, if this is a "case" line
+		if isCaseLine(trimmedLine) && e.AfterEndOfLine() && e.alignCase() {
 			e.End(c)
-			leadingWhitespace = currentLeadingWhitespace
+			leadingWhitespace = e.smartIndentation(e.LeadingWhitespace(), trimmedLine, false)
 		}
 	}
 
@@ -99,17 +92,16 @@ func (e *Editor) ReturnPressed(c *vt.Canvas, status *StatusBar, softReturn bool)
 	case e.AfterEndOfLine():
 		e.InsertLineBelow()
 		scrollBack = true
-	case !e.AtFirstLineOfDocument() && e.AtOrAfterLastLineOfDocument() && (e.AtStartOfTheLine() || e.AtOrAfterEndOfLine()):
-		// End of the last line: insert a blank line below so the user can
-		// actually append lines at the end of the document
-		e.InsertLineBelow()
-		scrollBack = true
 	case e.AtStartOfTheLine():
 		e.InsertLineAbove()
 		noHome = true
 	default:
 		// Split the current line in two
-		if !e.SplitLine() {
+		if e.SplitLine() {
+			if indent {
+				leadingWhitespace = e.splitIndentation(currentLeadingWhitespace, e.TrimmedLine(), e.NextTrimmedLine())
+			}
+		} else {
 			e.InsertLineBelow()
 		}
 		scrollBack = true
