@@ -171,6 +171,26 @@ func (e *Editor) stripDiffPrefixes(text string) string {
 	return strings.Join(lines, "\n")
 }
 
+// placeCursorAfterPaste keeps the horizontal scroll offset from before a multi-line paste
+// and places the cursor at the end of the current line, or at the start of the text if the
+// end is not within view. The view is only scrolled if neither position is visible.
+func (e *Editor) placeCursorAfterPaste(c *vt.Canvas, offsetX int) {
+	w := 80
+	if c != nil {
+		w = int(c.W())
+	}
+	y := e.DataY()
+	end := e.LastTextPosition(y) + 1
+	for _, x := range []int{end, int(e.FirstScreenPosition(y))} {
+		if x >= offsetX && x < offsetX+w {
+			e.pos.offsetX = offsetX
+			e.pos.sx = x - offsetX
+			return
+		}
+	}
+	e.pos.SetX(c, end)
+}
+
 func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyLines *[]string, firstPasteAction *bool, lastCopyY, lastPasteY, lastCutY *LineIndex, prevKeyWasReturn bool) {
 	var strippedDiff bool
 	if portal, err := LoadPortal(maxPortalAge); err == nil { // no error
@@ -307,6 +327,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 
 		// Pressed the second time for this line number, paste multiple lines without trimming
 		var (
+			offsetX       = e.pos.offsetX
 			firstLine     = (*copyLines)[0]
 			tailLines     = (*copyLines)[1:]
 			tailLineCount = len(tailLines)
@@ -357,6 +378,8 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 			}
 			e.InsertText(c, line)
 		}
+
+		e.placeCursorAfterPaste(c, offsetX)
 
 		if numLines := 1 + tailLineCount; numLines > 1 {
 			msg := fmt.Sprintf("Pasted %d lines", numLines)
