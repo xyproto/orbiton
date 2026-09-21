@@ -57,6 +57,9 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 	if funcPrefix != "" && strings.HasPrefix(trimmedLine, funcPrefix) {
 		return true
 	}
+	if strings.HasSuffix(funcPrefix, " ") && hasFunctionModifiers(trimmedLine, funcPrefix) {
+		return true
+	}
 	if strings.Contains(trimmedLine, singleLineComment) {
 		parts := strings.Split(trimmedLine, singleLineComment)
 		trimmedLine = strings.TrimSpace(parts[0])
@@ -111,6 +114,33 @@ func (e *Editor) LooksLikeFunctionDef(line, funcPrefix string) bool {
 		}
 	}
 	return false
+}
+
+// functionModifiers are keywords that may come before the function keyword in a function definition
+var functionModifiers = map[string]bool{
+	"abstract": true, "async": true, "const": true, "default": true, "export": true, "extern": true,
+	"final": true, "infix": true, "inline": true, "internal": true, "local": true, "open": true,
+	"operator": true, "override": true, "private": true, "protected": true, "pub": true, "public": true,
+	"static": true, "suspend": true, "tailrec": true, "unsafe": true,
+}
+
+// hasFunctionModifiers checks if the trimmed line starts with one or more modifiers (like "pub" or "async"),
+// followed by the given function prefix (like "fn ")
+func hasFunctionModifiers(trimmedLine, funcPrefix string) bool {
+	i := strings.Index(trimmedLine, " "+funcPrefix)
+	if i <= 0 {
+		return false
+	}
+	for modifier := range strings.FieldsSeq(trimmedLine[:i]) {
+		// pub(crate) and pub(super) are also modifiers in Rust
+		if j := strings.IndexByte(modifier, '('); j > 0 && strings.HasSuffix(modifier, ")") {
+			modifier = modifier[:j]
+		}
+		if !functionModifiers[modifier] {
+			return false
+		}
+	}
+	return true
 }
 
 // FunctionName tries to extract the function name given a line with what looks like a function definition.
@@ -221,9 +251,7 @@ func (e *Editor) isBraceBasedLanguage() bool {
 // It skips braces inside string literals, single-line comments and multi-line comments.
 // Returns the line index of the matching closing brace, or -1 if not found.
 func (e *Editor) findMatchingCloseBrace(openBraceLineIndex LineIndex) LineIndex {
-	singleLineCommentMarker := e.SingleLineCommentMarker()
-	ignoreSingleQuotes := e.mode == mode.Lisp || e.mode == mode.Clojure || e.mode == mode.Scheme || e.mode == mode.Ini
-	q, err := NewQuoteState(singleLineCommentMarker, e.mode, ignoreSingleQuotes)
+	q, err := e.NewQuoteState()
 	if err != nil {
 		// Fall back to naive counting if QuoteState cannot be created
 		return e.findMatchingCloseBraceNaive(openBraceLineIndex)
@@ -233,28 +261,22 @@ func (e *Editor) findMatchingCloseBrace(openBraceLineIndex LineIndex) LineIndex 
 	totalLines := LineIndex(e.Len())
 
 	for i := openBraceLineIndex; i < totalLines; i++ {
-		line := e.Line(i)
-		q.hasSingleLineComment = false
-		q.startedMultiLineString = false
-		q.stoppedMultiLineComment = false
-		q.containsMultiLineComments = false
-		prevRune := '\n'
-		prevPrevRune := '\n'
-		for _, r := range line {
-			q.ProcessRune(r, prevRune, prevPrevRune)
-			if q.None() {
-				switch r {
-				case '{':
-					braceCount++
-				case '}':
-					braceCount--
-					if braceCount == 0 {
-						return i
-					}
+		found := false
+		q.ForEachCodeRune(e.Line(i), func(r rune) bool {
+			switch r {
+			case '{':
+				braceCount++
+			case '}':
+				braceCount--
+				if braceCount == 0 {
+					found = true
+					return false
 				}
 			}
-			prevPrevRune = prevRune
-			prevRune = r
+			return true
+		})
+		if found {
+			return i
 		}
 	}
 	return -1 // No matching closing brace found
