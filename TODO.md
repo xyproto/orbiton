@@ -86,7 +86,6 @@
 - [ ] ctrl-/ should also be able to toggle /* * */ comments, not only single line comments.
 - [ ] Do not highlight lines that start with `#` in gray, for Go. Or lines that starts with `//`, for shell scripts.
 - [ ] Drop the mutexes and have one "server" that deals with I/O and one "server" that deals with presentation.
-- [ ] Figure out why multi-line commenting sometimes stops after a few lines.
 - [ ] If `ctrl-c` is pressed thrice when not in a function: copy to the end of the file.
 - [ ] If `ctrl-g` is pressed on a comment or multiline comment, toggle the status bar.
 - [ ] If a file is passed through stdin and > 70% of the lines has a `:`, it might be a log file and not configuration.
@@ -109,7 +108,6 @@
 - [ ] When calculating the progress, the algorithm assumes the cursor is at the top line of the canvas. If it's not, subtract some lines.
 - [ ] When deleting lines with `ctrl-k` more than once, scroll the cursor line a bit up, to make it easier.
 - [ ] When editing files in connection with browsing files, let `ctrl-n` and `ctrl-p` preserve the cursor position across files.
-- [ ] When pasting with _double_ `ctrl-v`, let _one_ `ctrl-z` undo both keypresses.
 - [ ] When pressing `ctrl-space` twice, adjust the status message to indicate what is happening.
 - [ ] When pressing ctrl-c twice while on a function signature, copy the entire function.
 - [ ] When pressing ctrl-f and then Tab without a search string, enter regexp search mode.
@@ -120,7 +118,6 @@
 - [ ] Add a flag for using more colors, for nicer themes, perhaps `-2`.
 - [ ] Add a Markdown template with headers and checkboxes.
 - [ ] Support the `base16` themes.
-- [ ] When the last line in a document is a long line ending with "}", make it possible to press return before the "}".
 - [ ] Draw a minimap with `silicon SOURCEFILE --theme gruvbox-dark --no-line-number --no-round-corner --no-window-controls --highlight-lines 10-20 --tab-width 4 --output IMAGEFILE` or create a custom minimap package.
 - [ ] HTTP client - scratch document style `.http` files.
 - [ ] Add a flag for only programming with arrow keys and space/return and esc, or joystick and A and B. Leverage Ollama to find good questions to ask and offer good options on screen. Use 2 to 4 large horizontal squares to choose between. Implement this is a new type of menu. Then package Orbiton as an app for Steam, Play Store and App Store, as some sort of programming game? Create a separate project for this.
@@ -211,10 +208,8 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 
 - [ ] Indentation in Rust is sometimes wonky.
 - [ ] Introduce the concept of soft and hard breaks, to keep track of where lines were broken automatically and be able to reflow the text.
-- [ ] When `}` is the last character of a file, sometimes pressing enter right before it does not work.
 - [ ] If there are four lines: not comment, comment, not comment, comment, let ctrl+/ behave differently.
 - [ ] Let ctrl-k first delete until "{" and then until the end of the line if there is no "{"?
-- [ ] Smarter indentation for `}`. There are still a few cases where it's not too smart. Perhaps use the logic for tab-indenting for when dedenting `}`?
 - [ ] Tab in the middle of a line, especially on a `|` character, could insert spaces until the `|` aligns with the `|` above, if applicable (For Markdown tables).
 - [ ] When changing a file from tabs to spaces, or the other way around, also modify indentations after comment markers.
 - [ ] When commenting out a block, move comment markers closer to the beginning of the text.
@@ -260,7 +255,6 @@ See also: https://staffwww.fullcoll.edu/sedwards/nano/nanokeyboardcommands.html
 - [ ] GUI: Look into the clipboard functions for VTE and if they can be used for mouse copy + paste.
 - [ ] Let `ctrl-t` take a line and move it through the portal?
 - [ ] Make it possible to double press `ctrl-c` again, to also copy the next block of text.
-- [ ] Let the cut/copy/paste line state be part of the editor state, because of undo.
 
 ## Encoding
 
