@@ -467,22 +467,8 @@ func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
 		originalPosition = e.pos.Copy()
 		r                = e.Rune()
 		// Find which opening and closing parenthesis/curly brackets to look for
-		opening, closing = rune(0), rune(0)
-		onparen          = true
+		opening, closing, onparen = bracketPair(r)
 	)
-	switch r {
-	case '(', ')':
-		opening = '('
-		closing = ')'
-	case '{', '}':
-		opening = '{'
-		closing = '}'
-	case '[', ']':
-		opening = '['
-		closing = ']'
-	default:
-		onparen = false
-	}
 	if onparen {
 		deadline := time.Now().Add(searchTimeout)
 		// Search either forwards or backwards to find a matching rune
