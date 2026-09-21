@@ -1905,7 +1905,7 @@ func OnlyBuild(fnord FilenameOrData) (string, error) {
 func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh *KeyHistory, undo *Undo, lockTimestamp time.Time, forceFlag bool, keyCode string) {
 	absFilename, _ := filepath.Abs(e.filename)
 	// For prose files, cycle book/export mode (includes PDF export)
-	proseMode := e.mode == mode.Blank || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
+	proseMode := (e.mode == mode.Blank && !e.GenericCode()) || e.mode == mode.Markdown || e.mode == mode.Text || e.mode == mode.ASCIIDoc || e.mode == mode.ReStructured || e.mode == mode.SCDoc
 	if proseMode {
 		e.cycleBookMode(c, tty, status, keyCode, kh.DoubleTapped(keyCode))
 		return

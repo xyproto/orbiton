@@ -222,7 +222,7 @@ func (e *Editor) SearchForTypo() (string, string, error) {
 // It modifies runesAndAttributes in-place, following the same pattern as applyAccentHighlights.
 func (e *Editor) applyTypoHighlights(line, commentMarker string, runesAndAttributes []vt.CharAttribute) {
 	sc := spellChecker.Load()
-	if sc == nil || !ProgrammingLanguage(e.mode) || commentMarker == "" || len(runesAndAttributes) == 0 {
+	if sc == nil || !e.ProgrammingLanguage() || commentMarker == "" || len(runesAndAttributes) == 0 {
 		return
 	}
 	// Find where the comment text begins in the (tab-expanded) line

@@ -233,7 +233,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 			})
 		}
 
-		if !ProgrammingLanguage(e.mode) {
+		if !e.ProgrammingLanguage() {
 			// Reflow text at a custom width + enable wrap when typing
 			actions.Add("Reflow text at...", func() {
 				const tabInputText = "79"
@@ -257,7 +257,7 @@ func (e *Editor) CommandMenu(c *vt.Canvas, tty *vt.TTY, status *StatusBar, undo 
 					}
 				}
 			})
-		} else { // ProgrammingLanguage(e.mode)
+		} else { // e.ProgrammingLanguage()
 			var alsoRun = false
 			var menuItemText = "Export"
 			if e.CanRun() {

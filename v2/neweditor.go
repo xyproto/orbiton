@@ -381,7 +381,9 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 	}
 
 	switch e.mode {
-	case mode.ASCIIDoc, mode.Blank, mode.Email, mode.Markdown, mode.Text, mode.ReStructured, mode.SCDoc:
+	case mode.Blank:
+		e.rainbowParenthesis = e.GenericCode() && e.syntaxHighlight
+	case mode.ASCIIDoc, mode.Email, mode.Markdown, mode.Text, mode.ReStructured, mode.SCDoc:
 		e.rainbowParenthesis = false
 	}
 
@@ -413,8 +415,10 @@ func NewEditor(tty *vt.TTY, c *vt.Canvas, fnord FilenameOrData, lineNumber LineN
 			e.wrapWhenTyping = true
 			e.wrapLimitWhenTyping = 79
 		case mode.Blank:
-			e.wrapWhenTyping = true
-			e.wrapLimitWhenTyping = 79
+			if !e.GenericCode() {
+				e.wrapWhenTyping = true
+				e.wrapLimitWhenTyping = 79
+			}
 		}
 	}
 

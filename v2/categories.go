@@ -1,6 +1,8 @@
 package main
 
 import (
+	"path/filepath"
+
 	"github.com/xyproto/mode"
 )
 
@@ -29,6 +31,18 @@ func ProgrammingLanguage(m mode.Mode) bool {
 	return true
 }
 
+// GenericCode returns true if the file has an unrecognized extension, so that it may be
+// source code in an unknown programming language. Extension-less files and text files are not included.
+func (e *Editor) GenericCode() bool {
+	return e.mode == mode.Blank && !e.binaryFile && filepath.Ext(e.filename) != ""
+}
+
+// ProgrammingLanguage returns true if the current mode appears to be a programming language,
+// or if the file may be source code in an unknown programming language
+func (e *Editor) ProgrammingLanguage() bool {
+	return ProgrammingLanguage(e.mode) || e.GenericCode()
+}
+
 // proseMode returns true for prose, as opposed to code, scripts or configuration
 func proseMode(m mode.Mode) bool {
 	switch m {
@@ -50,6 +64,9 @@ func hasMarkdownHeadings(m mode.Mode) bool {
 
 // NoSmartIndentation returns true if the current mode should probably not have smart tab indentation
 func (e *Editor) NoSmartIndentation() bool {
+	if e.GenericCode() {
+		return false
+	}
 	switch e.mode {
 	case mode.Assembly, mode.Blank, mode.CSV, mode.Email, mode.GoAssembly, mode.Ini, mode.Log, mode.ManPage, mode.Markdown, mode.Nroff, mode.OCaml, mode.Perl, mode.ReStructured, mode.SQL, mode.Spec, mode.StandardML, mode.Text:
 		return true

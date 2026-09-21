@@ -38,7 +38,7 @@ func (e *Editor) searchContains(haystack, needle string) bool {
 // searchFind returns the byte index of needle in haystack (-1 if not found),
 // using case-insensitive comparison for non-programming-language modes.
 func (e *Editor) searchFind(haystack, needle string) int {
-	if !ProgrammingLanguage(e.mode) {
+	if !e.ProgrammingLanguage() {
 		return strings.Index(strings.ToLower(haystack), strings.ToLower(needle))
 	}
 	return strings.Index(haystack, needle)
@@ -114,7 +114,7 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 	}
 
 	// run the search in a separate goroutine
-	caseInsensitive := !ProgrammingLanguage(e.mode)
+	caseInsensitive := !e.ProgrammingLanguage()
 	lowerS := strings.ToLower(s)
 	go func() {
 		for i, line := range lines {

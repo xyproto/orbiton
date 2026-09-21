@@ -3433,7 +3433,7 @@ func (e *Editor) JoinLineWithNext(c *vt.Canvas) bool {
 	e.redrawCursor.Store(true)
 	// When both lines are single-line comments, drop the second comment marker,
 	// so that "// one" and "// two" are joined into "// one two"
-	if marker := e.SingleLineCommentMarker(); ProgrammingLanguage(e.mode) && strings.HasPrefix(e.TrimmedLine(), marker) {
+	if marker := e.SingleLineCommentMarker(); e.ProgrammingLanguage() && strings.HasPrefix(e.TrimmedLine(), marker) {
 		if rest, ok := strings.CutPrefix(e.TrimmedLineAt(nextLineIndex), marker); ok {
 			// This may leave an empty line below, which is then removed further down
 			e.SetLine(nextLineIndex, strings.TrimLeft(rest, " \t"))

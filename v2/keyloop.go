@@ -520,7 +520,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// Initialize the spell checker in the background, but only if the document has single-line comments
-	if spellChecker.Load() == nil && ProgrammingLanguage(e.mode) {
+	if spellChecker.Load() == nil && e.ProgrammingLanguage() {
 		go func() {
 			if sc, err := NewSpellChecker(); err == nil {
 				spellChecker.Store(sc)
@@ -529,7 +529,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// Request function description at startup if cursor is on a function
-	if ollama.Loaded() && (ProgrammingLanguage(e.mode) || e.mode == mode.GoAssembly || e.mode == mode.Assembly) {
+	if ollama.Loaded() && (e.ProgrammingLanguage() || e.mode == mode.GoAssembly || e.mode == mode.Assembly) {
 		if e.mode == mode.GoAssembly || e.mode == mode.Assembly {
 			currentLine := strings.TrimSpace(e.CurrentLine())
 			if currentLine != "" && !strings.HasPrefix(currentLine, "//") && !strings.HasPrefix(currentLine, ";") {
@@ -887,7 +887,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			// Double-press ctrl-r: toggle wrap when typing, for non-programming-language files
 			if kh.DoubleTapped("c:18") {
-				if !ProgrammingLanguage(e.mode) {
+				if !e.ProgrammingLanguage() {
 					e.wrapWhenTyping = !e.wrapWhenTyping
 					if e.wrapWhenTyping {
 						if e.wrapLimitWhenTyping <= 0 {
@@ -1189,7 +1189,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 		case "c:28": // ctrl-\, toggle comment (code) or fill paragraph (prose)
 			undo.Snapshot(e)
-			if e.InBookMode() || !ProgrammingLanguage(e.mode) {
+			if e.InBookMode() || !e.ProgrammingLanguage() {
 				e.FillParagraph()
 			} else {
 				if !e.ToggleCommentFunction(c) {
@@ -2519,7 +2519,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			// Try to jump forward first (prioritize jumping over going back)
 			jumped := false
-			if ProgrammingLanguage(e.mode) && !e.AtOrBeforeStartOfTextScreenLine() {
+			if e.ProgrammingLanguage() && !e.AtOrBeforeStartOfTextScreenLine() {
 				if e.OnIncludeLine() { // go to include (try before GoToDefinition)
 					if _, didJump := e.GoToInclude(tty, c, status); didJump {
 						jumped = true
@@ -3280,7 +3280,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		justMovedByKeypress := isMovementKey(key)
 
 		notEmptyLine := !e.EmptyLine()
-		if key != "" && notEmptyLine && ProgrammingLanguage(e.mode) {
+		if key != "" && notEmptyLine && e.ProgrammingLanguage() {
 			e.drawFuncName.Store(true)
 		}
 

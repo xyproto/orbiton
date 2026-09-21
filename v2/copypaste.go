@@ -142,7 +142,7 @@ func WriteClipboardToFile(filename string, overwrite, primaryClipboard bool) (in
 // prefix and at least one line was added, so that prose and Markdown lists that
 // happen to start with "+" are left alone.
 func (e *Editor) stripDiffPrefixes(text string) string {
-	if !ProgrammingLanguage(e.mode) || e.mode == mode.Diff {
+	if !e.ProgrammingLanguage() || e.mode == mode.Diff {
 		return text
 	}
 	lines := strings.Split(text, "\n")
@@ -343,7 +343,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		)
 
 		// Consider smart indentation for programming languages
-		if ProgrammingLanguage(e.mode) || e.mode == mode.Config || e.mode == mode.HCL || e.mode == mode.TOML || e.mode == mode.YAML { // not mode.Ini and mode.Fstab, since those seldom have indentations
+		if e.ProgrammingLanguage() || e.mode == mode.Config || e.mode == mode.HCL || e.mode == mode.TOML || e.mode == mode.YAML { // not mode.Ini and mode.Fstab, since those seldom have indentations
 			// Indent the block that is about to be pasted to the smart indentation level, if the block had no indentation
 			if getLeadingWhitespace(firstLine) == "" {
 				leadingWhitespace := e.LeadingWhitespace()

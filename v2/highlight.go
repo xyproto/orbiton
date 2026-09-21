@@ -106,7 +106,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 		foundDocstringMarker               bool
 		doneHighlighting                   = true
 		hasSearchTerm                      = len(e.searchTerm) > 0
-		searchCaseInsensitive              = hasSearchTerm && !ProgrammingLanguage(e.mode)
+		searchCaseInsensitive              = hasSearchTerm && !e.ProgrammingLanguage()
 		ignoreSingleQuotes                 = e.ignoreSingleQuotes()
 		numLinesToDraw                     int
 		runeIndex                          int

@@ -427,7 +427,7 @@ func (e *Editor) WriteCurrentFunctionName(c *vt.Canvas) {
 		}
 		return
 	}
-	if !ProgrammingLanguage(e.mode) && e.mode != mode.GoAssembly && e.mode != mode.Assembly {
+	if !e.ProgrammingLanguage() && e.mode != mode.GoAssembly && e.mode != mode.Assembly {
 		// For document/markup modes where "#" denotes a heading, show
 		// the current heading in the same top-right position that
 		// function names use. Skip configuration formats where "#" is a

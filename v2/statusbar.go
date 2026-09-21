@@ -568,7 +568,7 @@ func (e *Editor) expandStatusBarFormat(format, statusMsg string, proportional ..
 	useFigureSpace := len(proportional) > 0 && proportional[0]
 	// Resolve {{funcname}}
 	funcName := ""
-	if ProgrammingLanguage(e.mode) || e.mode == mode.GoAssembly || e.mode == mode.Assembly {
+	if e.ProgrammingLanguage() || e.mode == mode.GoAssembly || e.mode == mode.Assembly {
 		funcName = e.FindCurrentFunctionName()
 	} else {
 		funcName = e.bookCurrentHeading(e.DataY())
