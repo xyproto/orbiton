@@ -196,15 +196,15 @@ func (e *Editor) GoToLineNumberAndCol(lineNumber LineNumber, colNumber ColNumber
 			}
 		}
 		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
-		if e.pos.sx != newScreenX {
+		if e.pos.sx+e.pos.offsetX != newScreenX {
 			redraw = true
 		}
-		e.pos.sx = newScreenX
+		e.pos.SetX(c, newScreenX)
 	} else {
-		if e.pos.sx != int(xIndex) {
+		if e.pos.sx+e.pos.offsetX != int(xIndex) {
 			redraw = true
 		}
-		e.pos.sx = int(xIndex)
+		e.pos.SetX(c, int(xIndex))
 	}
 	if redraw && center {
 		e.Center(c)
@@ -233,15 +233,15 @@ func (e *Editor) GoToLineIndexAndColIndex(yIndex LineIndex, xIndex ColIndex, c *
 			}
 		}
 		newScreenX := int(xIndex) + (tabs * (e.indentation.PerTab - 1))
-		if e.pos.sx != newScreenX {
+		if e.pos.sx+e.pos.offsetX != newScreenX {
 			redraw = true
 		}
-		e.pos.sx = newScreenX
+		e.pos.SetX(c, newScreenX)
 	} else {
-		if e.pos.sx != int(xIndex) {
+		if e.pos.sx+e.pos.offsetX != int(xIndex) {
 			redraw = true
 		}
-		e.pos.sx = int(xIndex)
+		e.pos.SetX(c, int(xIndex))
 	}
 	if redraw && center {
 		e.Center(c)

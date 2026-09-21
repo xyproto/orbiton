@@ -13,6 +13,7 @@ import (
 	"sync/atomic"
 	"time"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/xyproto/clip"
 	"github.com/xyproto/digraph"
@@ -249,6 +250,22 @@ func (e *Editor) handlePasteModeKey(c *vt.Canvas, status *StatusBar, undo *Undo,
 	e.redraw.Store(true)
 	e.redrawCursor.Store(true)
 	return true
+}
+
+// pastedKeyToText converts a key name from ReadKey back to the text it represents,
+// so that control characters within a bracketed paste are not inserted as "c:13"
+func pastedKeyToText(key string) string {
+	if key == "alt⏎" {
+		return "\n"
+	}
+	if !strings.HasPrefix(key, "c:") {
+		return key
+	}
+	n, err := strconv.Atoi(key[2:])
+	if err != nil || n >= utf8.RuneSelf {
+		return ""
+	}
+	return string(rune(n))
 }
 
 // readPasteBurst reads currently incoming bytes until input has been idle briefly.
@@ -686,7 +703,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				if pk == "\x1b[201~" || pk == "" {
 					break
 				}
-				pasteContent.WriteString(pk)
+				pasteContent.WriteString(pastedKeyToText(pk))
 			}
 			if s := pasteContent.String(); s != "" {
 				e.handlePasteModeKey(c, status, undo, s)

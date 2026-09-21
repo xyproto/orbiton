@@ -3,9 +3,6 @@
 ## General
 
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
-- [ ] Fix the issue that sometimes when pasting in text, there is no X scroll.
-- [ ] When pasting in text in MINGW64 / Git Bash in Windows, then the last line
-      of may behave weirdly / alternate, until the file is saved+loaded.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
       over being red if they are read-only, for readability. Like /usr/lib/tcc/include/tgmath.h.
 - [ ] Best effort syntax highlighting both in `o` and the file browser, when the file format is not recognized.

@@ -957,8 +957,8 @@ func (e *Editor) InsertLineBelowAt(index LineIndex) {
 	// Insert a blank line at y+1
 	e.lines[y+1] = make([]rune, 0)
 
-	// Skip trailing newlines after this line
-	for i := len(e.lines) - 1; i > y; i-- {
+	// Skip trailing newlines after the inserted line
+	for i := len(e.lines) - 1; i > y+1; i-- {
 		if len(e.lines[i]) == 0 {
 			delete(e.lines, i)
 		} else {
