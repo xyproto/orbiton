@@ -72,22 +72,22 @@ func FilenameLineColNumber(filename, lineNumberString, colNumberString string) (
 		if lineNumberConverted, err := strconv.Atoi(lineNumberString[1:]); err == nil { // no error
 			lineNumber = lineNumberConverted
 		}
-	} else if strings.Contains(filepath.Base(filename), ":") {
-		fields := strings.SplitN(filename, ":", 2)
+	} else if base := filepath.Base(filename); strings.HasSuffix(filename, base) && strings.Contains(base, ":") {
+		fields := strings.SplitN(base, ":", 2)
 		if lineNumberConverted, err := strconv.Atoi(fields[1]); err == nil { // no error
 			// Only treat as filename:N if "filename:N" doesn't exist as a file
 			if _, err := os.Stat(filename); err != nil {
 				lineNumber = lineNumberConverted
-				filename = fields[0]
+				filename = filename[:len(filename)-len(base)] + fields[0]
 			}
 		}
-	} else if strings.Contains(filepath.Base(filename), "+") {
-		fields := strings.SplitN(filename, "+", 2)
+	} else if base := filepath.Base(filename); strings.HasSuffix(filename, base) && strings.Contains(base, "+") {
+		fields := strings.SplitN(base, "+", 2)
 		if lineNumberConverted, err := strconv.Atoi(fields[1]); err == nil { // no error
 			// Only treat as filename+N if "filename+N" doesn't exist as a file
 			if _, err := os.Stat(filename); err != nil {
 				lineNumber = lineNumberConverted
-				filename = fields[0]
+				filename = filename[:len(filename)-len(base)] + fields[0]
 			}
 		}
 	}
