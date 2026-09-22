@@ -34,7 +34,7 @@ require (
 	github.com/xyproto/syntax v1.14.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
-	github.com/xyproto/vt v1.9.18
+	github.com/xyproto/vt v1.9.19
 	github.com/xyproto/wordwrap v1.2.0
 	golang.org/x/image v0.46.0
 	gopkg.in/yaml.v3 v3.0.1

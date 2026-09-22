@@ -9,6 +9,8 @@ import (
 	"os"
 	"os/exec"
 	"time"
+	"unicode/utf16"
+	"unicode/utf8"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -441,9 +443,7 @@ func (tty *TTY) readWithTimeoutPTY(b []byte) (int, error) {
 // readWithTimeoutConsole reads from Windows console with event filtering
 func (tty *TTY) readWithTimeoutConsole(b []byte) (int, error) {
 	if tty.timeout <= 0 {
-		var n uint32
-		err := windows.ReadFile(windows.Handle(tty.fd), b, &n, nil)
-		return int(n), err
+		return readConsoleUTF8(windows.Handle(tty.fd), b)
 	}
 
 	handle := windows.Handle(tty.fd)
@@ -526,9 +526,29 @@ func (tty *TTY) readWithTimeoutConsole(b []byte) (int, error) {
 		break
 	}
 
-	var n uint32
-	err = windows.ReadFile(handle, b, &n, nil)
-	return int(n), err
+	return readConsoleUTF8(handle, b)
+}
+
+// readConsoleUTF8 reads console input with ReadConsoleW and encodes it as UTF-8 into b
+func readConsoleUTF8(handle windows.Handle, b []byte) (int, error) {
+	toRead := uint32(len(b) / utf8.UTFMax)
+	if toRead == 0 {
+		var n uint32
+		err := windows.ReadFile(handle, b, &n, nil)
+		return int(n), err
+	}
+	buf := make([]uint16, toRead)
+	var numRead uint32
+	if err := windows.ReadConsole(handle, &buf[0], toRead, &numRead, nil); err != nil {
+		var n uint32
+		err = windows.ReadFile(handle, b, &n, nil)
+		return int(n), err
+	}
+	n := 0
+	for _, r := range utf16.Decode(buf[:numRead]) {
+		n += utf8.EncodeRune(b[n:], r)
+	}
+	return n, nil
 }
 
 // Rune reads a rune

@@ -423,6 +423,9 @@ func parseFirstKey(buf []byte) (string, int) {
 	}
 	// Non-ESC single byte: plain character or control code.
 	if buf[0] != 27 {
+		if !utf8.FullRune(buf) {
+			return "", 0
+		}
 		r, size := utf8.DecodeRune(buf)
 		if r == utf8.RuneError && size <= 1 {
 			return "c:" + strconv.Itoa(int(buf[0])), 1
@@ -579,6 +582,11 @@ func (tty *TTY) ReadKey() string {
 	if len(tty.pending) == 1 && tty.pending[0] == 27 {
 		tty.pending = tty.pending[:0]
 		return "c:27"
+	}
+	if tty.pending[0] != 27 && !utf8.FullRune(tty.pending) {
+		key := "c:" + strconv.Itoa(int(tty.pending[0]))
+		tty.pending = tty.pending[1:]
+		return key
 	}
 	s := string(tty.pending)
 	tty.pending = tty.pending[:0]
