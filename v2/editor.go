@@ -1295,23 +1295,11 @@ func (e *Editor) Rune() rune {
 
 // LeftRune will get the rune to the left of the current data position
 func (e *Editor) LeftRune() rune {
-	y := e.DataY()
-	x, err := e.DataX()
+	r, err := e.LeftRune2()
 	if err != nil {
-		// This is after the line contents, return the last rune
-		runes, ok := e.lines[int(y)]
-		if !ok || len(runes) == 0 {
-			return rune(0)
-		}
-		// Return the last rune
-		return runes[len(runes)-1]
-	}
-	if x <= 0 {
-		// Nothing to the left of this
 		return rune(0)
 	}
-	// Return the rune to the left
-	return e.Get(x-1, e.DataY())
+	return r
 }
 
 // CurrentLine will get the current data line as a string
@@ -1637,15 +1625,20 @@ func (e *Editor) Next(c *vt.Canvas) error {
 
 // LeftRune2 returns the rune to the left of the current position, or an error
 func (e *Editor) LeftRune2() (rune, error) {
+	y := e.DataY()
 	x, err := e.DataX()
 	if err != nil {
-		return rune(0), err
+		// This is after the line contents, return the last rune
+		runes, ok := e.lines[int(y)]
+		if !ok || len(runes) == 0 {
+			return rune(0), errors.New("no runes to the left")
+		}
+		return runes[len(runes)-1], nil
 	}
-	x--
 	if x <= 0 {
 		return rune(0), errors.New("no runes to the left")
 	}
-	return e.Get(x, e.DataY()), nil
+	return e.Get(x-1, y), nil
 }
 
 // TabToTheLeft returns true if there is a '\t' to the left of the current position
