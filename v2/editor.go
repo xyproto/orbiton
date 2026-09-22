@@ -382,25 +382,6 @@ func (e *Editor) Line(n LineIndex) string {
 	return ""
 }
 
-// ScreenLine returns the screen contents of line number N, counting from 0.
-// The tabs are expanded.
-func (e *Editor) ScreenLine(n int) string {
-	if line, ok := e.lines[n]; ok {
-		var sb strings.Builder
-		skipX := e.pos.offsetX
-		for _, r := range line {
-			if skipX > 0 {
-				skipX--
-				continue
-			}
-			sb.WriteRune(r)
-		}
-		tabSpace := strings.Repeat("\t", e.indentation.PerTab)
-		return strings.ReplaceAll(sb.String(), "\t", tabSpace)
-	}
-	return ""
-}
-
 // LastScreenPosition returns the last X index for this line, for the screen (expands tabs)
 // Can be negative, if the line is empty.
 func (e *Editor) LastScreenPosition(n LineIndex) int {
