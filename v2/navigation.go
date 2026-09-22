@@ -74,9 +74,11 @@ func (e *Editor) GoToPrevWord(c *vt.Canvas, status *StatusBar) {
 	y := e.DataY()
 	runes := e.lines[int(y)]
 	x, err := e.DataX()
+	if err != nil || x > len(runes) {
+		x = len(runes)
+	}
 
-	atLineStart := err != nil || x == 0
-	if atLineStart {
+	if x == 0 {
 		if y == 0 {
 			return
 		}
