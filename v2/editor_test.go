@@ -36,6 +36,33 @@ func TestTrimRight(t *testing.T) {
 	}
 }
 
+// TestLeftRune2 tests the rune to the left of the cursor at the first position and at the end of the line.
+func TestLeftRune2(t *testing.T) {
+	e := NewSimpleEditor(80)
+	e.lines[0] = []rune("\tfoo")
+
+	// Just after the leading tab
+	e.pos.sx = e.indentation.PerTab
+	if r, err := e.LeftRune2(); err != nil || r != '\t' {
+		t.Errorf("LeftRune2 after the leading tab: got (%q,%v), want ('\\t',nil)", r, err)
+	}
+	if !e.TabToTheLeft() {
+		t.Error("TabToTheLeft after the leading tab: got false, want true")
+	}
+
+	// After the last character on the line
+	e.pos.sx = e.indentation.PerTab + 3
+	if r, err := e.LeftRune2(); err != nil || r != 'o' {
+		t.Errorf("LeftRune2 at the end of the line: got (%q,%v), want ('o',nil)", r, err)
+	}
+
+	// At the start of the line there is nothing to the left
+	e.pos.sx = 0
+	if _, err := e.LeftRune2(); err == nil {
+		t.Error("LeftRune2 at the start of the line: got no error, want one")
+	}
+}
+
 // TestFilenameLineColNumber tests parsing filenames with embedded line and column specifiers.
 func TestFilenameLineColNumber(t *testing.T) {
 	var fn string
