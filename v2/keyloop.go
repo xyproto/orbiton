@@ -2374,6 +2374,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetErrorAfterRedraw(err)
 				break
 			}
+			e.ResetCutCopyPasteState()
 			e.EnableAndPlaceCursor(c)
 			e.redrawCursor.Store(true)
 			e.redraw.Store(true)
@@ -2613,6 +2614,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				status.SetErrorAfterRedraw(err)
 				break
 			}
+			e.ResetCutCopyPasteState()
 			// Undo.Restore swaps e.lines wholesale without going through
 			// MarkChanged, so the graphical book-mode content cache
 			// (keyed on bookContentGen) would otherwise serve a stale

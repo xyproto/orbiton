@@ -287,7 +287,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	*previousCopyLines = *copyLines
 
 	// Prepare to paste
-	if !(prevKeyWasPaste && !e.HasSelection() && e.lastPasteY == e.DataY()) {
+	if !(prevKeyWasPaste && len(*copyLines) > 1 && !e.HasSelection() && e.lastPasteY == e.DataY()) {
 		undo.Snapshot(e)
 	}
 	if e.HasSelection() {
@@ -367,6 +367,7 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 		}
 
 		// Then paste the rest of the lines, also untrimmed
+		numLines := 1
 		for i, line := range tailLines {
 			if i == lastIndex && strings.TrimSpace(line) == "" {
 				// If the last line is blank, skip it
@@ -379,11 +380,12 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 				e.Down(c, nil) // no status message if the end of document is reached, there should always be a new line
 			}
 			e.InsertText(c, line)
+			numLines++
 		}
 
 		e.placeCursorAfterPaste(c, offsetX)
 
-		if numLines := 1 + tailLineCount; numLines > 1 {
+		if numLines > 1 {
 			msg := fmt.Sprintf("Pasted %d lines", numLines)
 			if strippedDiff {
 				msg += ", without the diff prefixes"
