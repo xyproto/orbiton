@@ -261,3 +261,22 @@ func TestMockCanvas_GoToNextWord(t *testing.T) {
 		t.Errorf("DataX after GoToNextWord: got %d, want 4", x)
 	}
 }
+
+// TestMockCanvas_GoToPrevWordFromEndOfLine verifies that GoToPrevWord moves to the
+// start of the last word when the cursor is after the last character on the line.
+func TestMockCanvas_GoToPrevWordFromEndOfLine(t *testing.T) {
+	c := vt.NewCanvasWithSize(80, 5)
+	e := NewSimpleEditor(80)
+
+	e.InsertString(c, "foo bar baz")
+
+	e.GoToPrevWord(c, nil)
+
+	x, _ := e.DataX()
+	if x != 8 {
+		t.Errorf("DataX after GoToPrevWord: got %d, want 8", x)
+	}
+	if y := e.DataY(); y != 0 {
+		t.Errorf("DataY after GoToPrevWord: got %d, want 0", y)
+	}
+}

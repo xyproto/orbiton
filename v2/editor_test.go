@@ -61,6 +61,16 @@ func TestFilenameLineColNumber(t *testing.T) {
 	if fn != "abc" || ln != 5 || cn != 0 {
 		t.Errorf("Expected ('abc',5,0), got (%q,%d,%d)", fn, ln, cn)
 	}
+	// Plus in a directory name
+	fn, ln, cn = FilenameLineColNumber("/usr/include/c++/14/vector+100", "", "")
+	if fn != "/usr/include/c++/14/vector" || ln != 100 || cn != 0 {
+		t.Errorf("Expected ('/usr/include/c++/14/vector',100,0), got (%q,%d,%d)", fn, ln, cn)
+	}
+	// Colon in a directory name
+	fn, ln, cn = FilenameLineColNumber("/home/u/a:b/file.go:42", "", "")
+	if fn != "/home/u/a:b/file.go" || ln != 42 || cn != 0 {
+		t.Errorf("Expected ('/home/u/a:b/file.go',42,0), got (%q,%d,%d)", fn, ln, cn)
+	}
 }
 
 func ExampleEditor_InsertStringAndMove() {
