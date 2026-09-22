@@ -967,7 +967,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.mode == mode.Markdown {
 				// Toggle the checkbox on the current line if there is one, otherwise switch between regular editing and book mode
 				if e.ToggleCheckboxCurrentLine() {
-					undo.Snapshot(e)
 					break
 				}
 				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
@@ -978,9 +977,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:20": // ctrl-t
 
 			if e.InBookMode() { // book mode: toggle the Markdown checkbox on the current line, if any
-				if e.ToggleCheckboxCurrentLine() {
-					undo.Snapshot(e)
-				}
+				e.ToggleCheckboxCurrentLine()
 				break
 			}
 
@@ -1014,7 +1011,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.mode == mode.Markdown {
 				// Try to toggle checkbox first
 				if e.ToggleCheckboxCurrentLine() {
-					undo.Snapshot(e)
 					break
 				}
 				// If no checkbox, check if we're in a table

@@ -39,6 +39,7 @@ func (e *Editor) ToggleCheckboxCurrentLine() bool {
 	}
 
 	if found {
+		undo.Snapshot(e)
 		e.SetLine(e.DataY(), newLine)
 		e.redraw.Store(true)
 		e.redrawCursor.Store(true)
