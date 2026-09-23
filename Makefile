@@ -99,6 +99,7 @@ install-og: install-gtk3
 install-gtk3: gtk3/gtk3
 	mkdir -p "$(DESTDIR)$(PREFIX)/bin"
 	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/og"
+	install -m755 gtk3/gtk3 "$(DESTDIR)$(PREFIX)/bin/lig"
 	mkdir -p "$(DESTDIR)$(PREFIX)/share/pixmaps"
 	install -m644 img/og.png "$(DESTDIR)$(PREFIX)/share/pixmaps/og.png"
 	install -m644 img/lig.png "$(DESTDIR)$(PREFIX)/share/pixmaps/lig.png"
