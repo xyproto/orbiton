@@ -23,20 +23,31 @@ const (
 var (
 	trimDos bool
 
-	pasteCmdArgs []string
-	copyCmdArgs  []string
+	pasteCmdArgs        []string
+	copyCmdArgs         []string
+	primaryPasteCmdArgs []string
+	primaryCopyCmdArgs  []string
 
 	xselPasteArgs = []string{xsel, "--output", "--clipboard"}
 	xselCopyArgs  = []string{xsel, "--input", "--clipboard"}
 
+	xselPrimaryPasteArgs = []string{xsel, "--output", "--primary"}
+	xselPrimaryCopyArgs  = []string{xsel, "--input", "--primary"}
+
 	xclipPasteArgs = []string{xclip, "-out", "-selection", "clipboard"}
 	xclipCopyArgs  = []string{xclip, "-in", "-selection", "clipboard"}
+
+	xclipPrimaryPasteArgs = []string{xclip, "-out", "-selection", "primary"}
+	xclipPrimaryCopyArgs  = []string{xclip, "-in", "-selection", "primary"}
 
 	powershellExePasteArgs = []string{powershellExe, "Get-Clipboard"}
 	clipExeCopyArgs        = []string{clipExe}
 
 	wlpasteArgs = []string{wlpaste, "--no-newline"}
 	wlcopyArgs  = []string{wlcopy}
+
+	wlpastePrimaryArgs = []string{wlpaste, "--no-newline", "--primary"}
+	wlcopyPrimaryArgs  = []string{wlcopy, "--primary"}
 
 	termuxPasteArgs = []string{termuxClipboardGet}
 	termuxCopyArgs  = []string{termuxClipboardSet}
@@ -51,6 +62,8 @@ func initialize() {
 	if WSL() {
 		pasteCmdArgs = powershellExePasteArgs
 		copyCmdArgs = clipExeCopyArgs
+		primaryPasteCmdArgs = powershellExePasteArgs
+		primaryCopyCmdArgs = clipExeCopyArgs
 		trimDos = true
 
 		if _, err := exec.LookPath(clipExe); err == nil {
@@ -63,6 +76,8 @@ func initialize() {
 	if os.Getenv("WAYLAND_DISPLAY") != "" {
 		pasteCmdArgs = wlpasteArgs
 		copyCmdArgs = wlcopyArgs
+		primaryPasteCmdArgs = wlpastePrimaryArgs
+		primaryCopyCmdArgs = wlcopyPrimaryArgs
 
 		if _, err := exec.LookPath(wlcopy); err == nil {
 			if _, err := exec.LookPath(wlpaste); err == nil {
@@ -73,6 +88,8 @@ func initialize() {
 
 	pasteCmdArgs = xclipPasteArgs
 	copyCmdArgs = xclipCopyArgs
+	primaryPasteCmdArgs = xclipPrimaryPasteArgs
+	primaryCopyCmdArgs = xclipPrimaryCopyArgs
 
 	if _, err := exec.LookPath(xclip); err == nil {
 		return
@@ -80,6 +97,8 @@ func initialize() {
 
 	pasteCmdArgs = xselPasteArgs
 	copyCmdArgs = xselCopyArgs
+	primaryPasteCmdArgs = xselPrimaryPasteArgs
+	primaryCopyCmdArgs = xselPrimaryCopyArgs
 
 	if _, err := exec.LookPath(xsel); err == nil {
 		return
@@ -87,6 +106,8 @@ func initialize() {
 
 	pasteCmdArgs = termuxPasteArgs
 	copyCmdArgs = termuxCopyArgs
+	primaryPasteCmdArgs = termuxPasteArgs
+	primaryCopyCmdArgs = termuxCopyArgs
 
 	if _, err := exec.LookPath(termuxClipboardSet); err == nil {
 		if _, err := exec.LookPath(termuxClipboardGet); err == nil {
@@ -96,6 +117,8 @@ func initialize() {
 
 	pasteCmdArgs = powershellExePasteArgs
 	copyCmdArgs = clipExeCopyArgs
+	primaryPasteCmdArgs = powershellExePasteArgs
+	primaryCopyCmdArgs = clipExeCopyArgs
 	trimDos = true
 
 	if _, err := exec.LookPath(clipExe); err == nil {
@@ -111,20 +134,22 @@ func getPasteCommand(primary bool) *exec.Cmd {
 	if !initialized {
 		initialize()
 	}
-	if primary {
-		pasteCmdArgs = pasteCmdArgs[:1]
+	args := pasteCmdArgs
+	if primary && len(primaryPasteCmdArgs) > 0 {
+		args = primaryPasteCmdArgs
 	}
-	return exec.Command(pasteCmdArgs[0], pasteCmdArgs[1:]...)
+	return exec.Command(args[0], args[1:]...)
 }
 
 func getCopyCommand(primary bool) *exec.Cmd {
 	if !initialized {
 		initialize()
 	}
-	if primary {
-		copyCmdArgs = copyCmdArgs[:1]
+	args := copyCmdArgs
+	if primary && len(primaryCopyCmdArgs) > 0 {
+		args = primaryCopyCmdArgs
 	}
-	return exec.Command(copyCmdArgs[0], copyCmdArgs[1:]...)
+	return exec.Command(args[0], args[1:]...)
 }
 
 func readAllBytes(primary bool) ([]byte, error) {

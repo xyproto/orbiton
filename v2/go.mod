@@ -17,7 +17,7 @@ require (
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/burnfont v1.2.3
-	github.com/xyproto/clip v1.0.0
+	github.com/xyproto/clip v1.0.1
 	github.com/xyproto/digraph v1.3.0
 	github.com/xyproto/env/v2 v2.5.6
 	github.com/xyproto/files v1.10.8

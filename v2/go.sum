@@ -82,8 +82,8 @@ github.com/xyproto/burnfont v1.2.3 h1:4MHSRrmVqZT8i1XmDrEG/5qcg2G1bSEDlOoO3BCl11
 github.com/xyproto/burnfont v1.2.3/go.mod h1:NlQwt/VHpxq17k8CkHcWvWTGhBim818XB4onh+TeZRo=
 github.com/xyproto/burnpal v1.1.1 h1:JNsB8+ooXYcZdbiQW7pY3pZJy85g9WulUGyqH1D1xdU=
 github.com/xyproto/burnpal v1.1.1/go.mod h1:yts/hiEcLTBpbilHmMwiQ6qVZnnqkN0DGvBSoHHJw6c=
-github.com/xyproto/clip v1.0.0 h1:fA/5CK6rslFvY9Ta76A7U2z73fSaEF96EKjS/RYcC5s=
-github.com/xyproto/clip v1.0.0/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
+github.com/xyproto/clip v1.0.1 h1:jkAL5RH4JZyjjz7Slf6fubwENLUIOkYYqZeE+BFw+Rw=
+github.com/xyproto/clip v1.0.1/go.mod h1:jVRcSiAIK6dadcIXPtOa9/wetlggtIGRiRIDOrU0sfU=
 github.com/xyproto/digraph v1.3.0 h1:3zEUnFMHem6hrwePg/M9OrV+3R0GmBd2yH42QJYuIBg=
 github.com/xyproto/digraph v1.3.0/go.mod h1:jl8pUKdKdwMDDBqUQPVeKjgvV5dzMyL37pcoaBIfzSU=
 github.com/xyproto/distrodetector v1.3.2 h1:QuM4lPmELRFbkE5khHFIO2dQLW/pqwemyE7YFlKjkHY=
