@@ -1,12 +1,19 @@
 package main
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/xyproto/clip"
 )
+
+// useClipboard replaces the system clipboard with the given contents for the duration of the test
+func useClipboard(t *testing.T, contents string, err error) {
+	t.Helper()
+	original := readClipboard
+	readClipboard = func() (string, error) { return contents, err }
+	t.Cleanup(func() { readClipboard = original })
+}
 
 // pasteTwice simulates pressing ctrl-v twice on the same line, with the given lines in the internal copy buffer
 func pasteTwice(t *testing.T, e *Editor, lines []string) {
@@ -20,9 +27,7 @@ func pasteTwice(t *testing.T, e *Editor, lines []string) {
 }
 
 func TestUndoDoublePaste(t *testing.T) {
-	if s, err := clip.ReadAll(false); err == nil && strings.TrimSpace(s) != "" {
-		t.Skip("the system clipboard is available and would be used instead of the internal copy buffer")
-	}
+	useClipboard(t, "", errors.New("no clipboard"))
 	undo.Reset()
 	e := makeEditor([]string{"first", "", "last"})
 	placeCursor(e, 1, 0)
@@ -42,5 +47,28 @@ func TestUndoDoublePaste(t *testing.T) {
 	}
 	if e.lastPasteY != -1 {
 		t.Errorf("lastPasteY = %d after undo, want -1", e.lastPasteY)
+	}
+}
+
+// An empty system clipboard, like on macOS where pbpaste then succeeds, should not clear the internal copy buffer
+func TestPasteEmptyClipboard(t *testing.T) {
+	useClipboard(t, "", nil)
+	undo.Reset()
+	e := makeEditor([]string{"first", "", "last"})
+	placeCursor(e, 1, 0)
+	pasteTwice(t, e, []string{"one", "two", "three"})
+	if got := strings.Join(editorLines(e), "\n"); got != "first\none\ntwo\nthree\nlast" {
+		t.Errorf("after double paste: %q", got)
+	}
+}
+
+func TestPasteFromClipboard(t *testing.T) {
+	useClipboard(t, "alpha\nbeta", nil)
+	undo.Reset()
+	e := makeEditor([]string{"first", "", "last"})
+	placeCursor(e, 1, 0)
+	pasteTwice(t, e, []string{"one", "two", "three"})
+	if got := strings.Join(editorLines(e), "\n"); got != "first\nalpha\nbeta\nlast" {
+		t.Errorf("after double paste: %q", got)
 	}
 }
