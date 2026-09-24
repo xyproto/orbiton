@@ -34,6 +34,18 @@ func writeClipboardAsync(text string, primaryClipboard bool) {
 	}(text, primaryClipboard)
 }
 
+// readClipboard returns the contents of the system clipboard
+var readClipboard = func() (string, error) {
+	if isDarwin {
+		return pbpaste()
+	}
+	s, err := clip.ReadAll(false) // non-primary clipboard
+	if err == nil && strings.TrimSpace(s) == "" {
+		s, err = clip.ReadAll(true) // try the primary clipboard
+	}
+	return s, err
+}
+
 // SetClipboardFromFile can copy the given file to the clipboard.
 // The returned int is the number of bytes written.
 // The returned string is the last 7 characters written to the file.
@@ -224,30 +236,21 @@ func (e *Editor) Paste(c *vt.Canvas, status *StatusBar, copyLines, previousCopyL
 	// This may only work for the same user, and not with sudo/su
 
 	// Try fetching the lines from the clipboard first
-	var s string
-
-	var err error
-	if isDarwin {
-		s, err = pbpaste()
-	} else {
-		// Read the clipboard, for other platforms
-		s, err = clip.ReadAll(false) // non-primary clipboard
-		if err == nil && strings.TrimSpace(s) == "" {
-			s, err = clip.ReadAll(true) // try the primary clipboard
-		}
-	}
+	s, err := readClipboard()
 
 	if err == nil { // no error
 
-		// Make the replacements, then split the text into lines and store it in "copyLines"
-		text := opinionatedStringReplacer.Replace(s)
-		if cleaned := e.stripDiffPrefixes(text); cleaned != text {
-			text = cleaned
-			strippedDiff = true
+		// Keep the internal copy buffer if the clipboard is empty
+		if s != "" {
+			// Make the replacements, then split the text into lines and store it in "copyLines"
+			text := opinionatedStringReplacer.Replace(s)
+			if cleaned := e.stripDiffPrefixes(text); cleaned != text {
+				text = cleaned
+				strippedDiff = true
+			}
+			// Note that control characters are not replaced, they are just not printed.
+			*copyLines = strings.Split(text, "\n")
 		}
-		*copyLines = strings.Split(text, "\n")
-
-		// Note that control characters are not replaced, they are just not printed.
 	} else if *firstPasteAction {
 		missingUtility := false
 
