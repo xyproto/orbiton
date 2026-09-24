@@ -268,15 +268,44 @@ func pastedKeyToText(key string) string {
 	return string(rune(n))
 }
 
-// readPasteBurst reads currently incoming bytes until input has been idle briefly.
-func readPasteBurst(tty *vt.TTY) string {
-	savedTimeout := tty.Timeout()
-	tty.RawMode()
-	tty.SetTimeout(50 * time.Millisecond)
-	defer tty.SetTimeout(savedTimeout)
+// Bracketed paste markers
+const (
+	pasteStartMarker = "\x1b[200~"
+	pasteEndMarker   = "\x1b[201~"
+)
 
-	s, _ := tty.ReadString()
-	return s
+const (
+	// How long the main loop waits for a key before checking for a settle-redraw
+	settleReadTimeout = 2 * time.Second
+	// How long to wait for the next chunk of a paste before considering it done
+	pasteBurstIdleTimeout = 400 * time.Millisecond
+	// Longer, since a bracketed paste normally ends at the end marker instead
+	pasteMarkerIdleTimeout = 2 * time.Second
+)
+
+// collectPaste gathers pasted text until the end marker arrives, or until the
+// input has been idle for the given duration. A gap between chunks does not
+// end the paste, so long pasted lines are not cut short.
+func collectPaste(tty *vt.TTY, idle time.Duration) string {
+	var sb strings.Builder
+	for {
+		key := tty.ReadKeyTimeout(idle)
+		if key == pasteEndMarker || key == "" {
+			break
+		}
+		if key == pasteStartMarker {
+			continue
+		}
+		sb.WriteString(pastedKeyToText(key))
+	}
+	return sb.String()
+}
+
+// readPasteBurst reads pasted text from terminals that send it as plain
+// keystrokes, without the bracketed paste markers.
+func readPasteBurst(tty *vt.TTY) string {
+	tty.RawMode()
+	return collectPaste(tty, pasteBurstIdleTimeout)
 }
 
 // Loop will set up and run the main loop of the editor
@@ -574,9 +603,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			// downloading so that completed downloads trigger a redraw
 			// without waiting for a keypress.
 			if e.InBookMode() && bookImgHasInFlight() {
-				savedTimeout, _ := tty.SetTimeout(200 * time.Millisecond)
-				key = tty.ReadKey()
-				tty.SetTimeout(savedTimeout)
+				key = tty.ReadKeyTimeout(200 * time.Millisecond)
 				if key == "" {
 					// Timeout -- no keypress, but check for image redraws
 					if bookImgNeedRedraw.CompareAndSwap(true, false) {
@@ -600,9 +627,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			} else {
 				// Read the next key, with a short timeout so we can run
 				// the settle-redraw when input is idle
-				savedTimeout, _ := tty.SetTimeout(2 * time.Second)
-				key = tty.ReadKey()
-				tty.SetTimeout(savedTimeout)
+				key = tty.ReadKeyTimeout(settleReadTimeout)
 				if key == "" {
 					if shouldSettleRedraw() {
 						e.linesMut.Lock()
@@ -690,17 +715,9 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 
 			e.quit = true
 
-		case "\x1b[200~": // bracketed paste start
-			var pasteContent strings.Builder
-			for {
-				pk := tty.ReadKey()
-				if pk == "\x1b[201~" || pk == "" {
-					break
-				}
-				pasteContent.WriteString(pastedKeyToText(pk))
-			}
-			if s := pasteContent.String(); s != "" {
-				e.handlePasteModeKey(c, status, undo, s)
+		case pasteStartMarker: // bracketed paste start
+			if pasted := collectPaste(tty, pasteMarkerIdleTimeout); pasted != "" {
+				e.handlePasteModeKey(c, status, undo, pasted)
 			}
 
 		// bracketed paste end (stray), focus / "begin" event and focus in/out
