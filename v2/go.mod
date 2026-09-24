@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20260921172736-e177decc3c2f
+	github.com/gomarkdown/markdown v0.0.0-20260923180740-94fc73f6b1a3
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.30
@@ -34,7 +34,7 @@ require (
 	github.com/xyproto/syntax v1.14.7
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
-	github.com/xyproto/vt v1.9.19
+	github.com/xyproto/vt v1.9.20
 	github.com/xyproto/wordwrap v1.2.0
 	golang.org/x/image v0.46.0
 	gopkg.in/yaml.v3 v3.0.1
