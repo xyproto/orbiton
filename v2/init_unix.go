@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/xyproto/env/v2"
+	"golang.org/x/sys/unix"
 )
 
 // runningAsInit reports whether this process is PID 1, as when the kernel is
@@ -35,6 +36,24 @@ func reapZombies() {
 			}
 		}
 	}
+}
+
+// acquireCTTY makes the console the controlling terminal. A kernel-started
+// PID 1 has stdin on /dev/console but no controlling terminal, which makes
+// opening /dev/tty fail with ENXIO.
+func acquireCTTY() error {
+	// PID 1 usually already leads its session, so this often fails
+	_, _ = syscall.Setsid()
+
+	if err := unix.IoctlSetInt(int(os.Stdin.Fd()), unix.TIOCSCTTY, 0); err == nil {
+		return nil
+	}
+	f, err := os.OpenFile("/dev/console", os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return unix.IoctlSetInt(int(f.Fd()), unix.TIOCSCTTY, 0)
 }
 
 // runInitShell launches an interactive login shell and waits for it to exit.

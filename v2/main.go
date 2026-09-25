@@ -627,6 +627,13 @@ func main() {
 
 	// Initialize the VT100 terminal
 	tty, err := vt.NewTTY()
+	if err != nil && runningAsInit() {
+		// No controlling terminal yet, which is the normal state for a
+		// kernel-started PID 1. Claim the console and try again.
+		if acquireCTTY() == nil {
+			tty, err = vt.NewTTY()
+		}
+	}
 	if err != nil {
 		if runningAsInit() {
 			// As PID 1 we must not exit. Without a usable terminal, drop to a

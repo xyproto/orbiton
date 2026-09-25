@@ -12,6 +12,9 @@ func runningAsInit() bool { return false }
 // reapZombies is a no-op on Windows.
 func reapZombies() {}
 
+// acquireCTTY is a no-op on Windows.
+func acquireCTTY() error { return nil }
+
 // runInitShell is a no-op on Windows.
 func runInitShell() {}
 
