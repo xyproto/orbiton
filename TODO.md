@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When saving a file that is very slow to save, the save progress bar may remain without being cleared.
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
       over being red if they are read-only, for readability. Like /usr/lib/tcc/include/tgmath.h.
