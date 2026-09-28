@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Respect `.clang-format-ignore` when pressing ctrl-w to format C or C++ files.
 - [ ] When saving a file that is very slow to save, the save progress bar may remain without being cleared.
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
