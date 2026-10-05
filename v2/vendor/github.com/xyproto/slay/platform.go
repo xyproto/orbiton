@@ -12,7 +12,7 @@ import (
 
 // skipPackages are packages that should be skipped when resolving includes.
 var skipPackages = map[string]bool{
-	"glibc": true, "gcc": true, "wine": true,
+	"glibc": true, "gcc": true, "wine": true, "tcc": true,
 }
 
 // cachedPCFiles caches package -> .pc file list lookups.

@@ -1,7 +1,7 @@
 .PHONY: clean examples examples-clean install test
 
 PROJECT ?= slay
-GOFLAGS ?= -mod=vendor -trimpath -v -ldflags "-s -w" -buildvcs=false
+GOFLAGS ?= -mod=vendor -trimpath -ldflags "-s -w" -buildvcs=false
 GOBUILD := go build
 SRCFILES := $(wildcard go.* *.go cmd/slay/*.go)
 

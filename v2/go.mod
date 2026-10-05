@@ -42,7 +42,7 @@ require (
 
 require github.com/xyproto/themes v1.0.2
 
-require github.com/xyproto/slay v1.3.4
+require github.com/xyproto/slay v1.3.5
 
 require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
 

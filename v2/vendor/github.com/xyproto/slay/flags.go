@@ -446,7 +446,7 @@ func findCompiler(useClang bool, isC bool) string {
 
 	// Try common compilers
 	if isC {
-		for _, compiler := range []string{"gcc", "cc", "clang"} {
+		for _, compiler := range []string{"gcc", "cc", "clang", "tcc"} {
 			if p, err := exec.LookPath(compiler); err == nil {
 				return p
 			}
