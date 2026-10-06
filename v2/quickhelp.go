@@ -70,24 +70,25 @@ func (e *Editor) QuickHelpAtStart() bool {
 
 // DrawQuickHelp draws a welcome message for new users
 func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) {
+	const titleString = "Orbiton"
 	var (
 		foregroundColor = e.Foreground
 		backgroundColor = e.Background
 		edgeColor       = e.BoxUpperEdge
 		canvasBox       = NewCanvasBox(c)
 		art             = welcomeArt
+		artWidth        = uint(0)
+		bottomText = versionString + ". " + welcomeText
 	)
-
-	artWidth := uint(0)
 	for _, line := range art {
-		artWidth = max(artWidth, ulen([]rune(line)))
+		artWidth = max(artWidth, ulen([]rune(line)), ulen(titleString))
 	}
-	width := max(ulen([]rune(welcomeText)), artWidth)
+	width := max(ulen([]rune(bottomText)), artWidth)
 	boxW := int(width) + 6
-	boxH := len(art) + 5
+	boxH := len(art) + 6
 	if boxH > canvasBox.H-2 {
 		art = nil
-		boxH = 5
+		boxH = 6
 	}
 	if boxW > canvasBox.W {
 		boxW = canvasBox.W
@@ -106,7 +107,7 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 	bt.LowerEdge = bt.UpperEdge
 
 	e.DrawBox(bt, c, centerBox)
-	e.DrawTitle(bt, c, centerBox, "=[ Orbiton ]=", false)
+	e.DrawTitle(bt, c, centerBox, "=[ "+titleString+" ]=", false)
 
 	x := uint(centerBox.X + 3)
 	y := uint(centerBox.Y + 2)
@@ -117,7 +118,13 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 	if len(art) > 0 {
 		y++
 	}
-	c.Write(x, y, foregroundColor, backgroundColor, welcomeText)
+	y++
+
+	versionColor := edgeColor // e.MenuArrowColor
+	welcomeColor := edgeColor // foregroundcolor
+
+	c.Write(x, y, versionColor, backgroundColor, versionString + ".")
+	c.Write(x+ulen(versionString)+2, y, welcomeColor, backgroundColor, welcomeText)
 
 	c.HideCursorAndDraw()
 

@@ -18,12 +18,12 @@ var (
 		`  *           _____    *     .`,
 		`        .--;''     ''';-.`,
 		`   .  /  /'            \  \    *`,
-		`-=-=-|-=|-=( Orbiton )=-|=-|-=-=-`,
+		`---=-|-=|-=( oOoOoOo )=-|=-|-=---`,
 		`.     \  \,_         _,/  /`,
 		`  *    '--.._________..--'    .`,
 	}
 
-	welcomeText = "Welcome to Orbiton! Press ctrl-t for help."
+	welcomeText = "Press ctrl-t for help."
 
 	quickHelpIntroText = `Quick Help
 
