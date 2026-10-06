@@ -2,6 +2,10 @@
 
 ## General
 
+- [ ] For first-time users of Orbiton, show "Welcome to Orbiton! Press ctrl-t for help" together with nice ascii graphics.
+      Then ctrl-t is used for help instead of macros until the user decides to turn off the quickhelp at start.
+      If ctrl-t is used for help, then show a quick introduction + the most used keybindings + a menu.
+      The menu should have the choices: disable quick help at start, show the ctrl-o menu, show keybindings, launch tutorial, save and quit.
 - [ ] When editing YAML, use 2-space indentation by default.
 - [ ] Respect `.clang-format-ignore` when pressing ctrl-w to format C or C++ files.
 - [ ] When saving a file that is very slow to save, the save progress bar may remain without being cleared.
