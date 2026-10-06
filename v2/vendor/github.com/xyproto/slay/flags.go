@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strings"
 
@@ -107,6 +108,7 @@ func pkgNameFromInclude(inc string) string {
 		"pipewire/pipewire.h":             "libpipewire-0.3",
 		"rtaudio/rtaudio.h":               "rtaudio",
 		"raylib.h":                        "raylib",
+		"fluidsynth.h":                    "fluidsynth",
 		"mathematics/mathematics.h":       "reactphysics3d",
 		"reactphysics3d.h":                "reactphysics3d",
 		"reactphysics3d/reactphysics3d.h": "reactphysics3d",
@@ -159,6 +161,66 @@ func pkgNameFromInclude(inc string) string {
 	}
 
 	return ""
+}
+
+// pkgNamesForHeader returns the pkg-config names that may provide the given header.
+// Headers that pkgNameFromInclude does not know about, like "foo.h", are tried as "foo" and "libfoo".
+func pkgNamesForHeader(inc string) []string {
+	if name := pkgNameFromInclude(inc); name != "" {
+		return []string{name}
+	}
+	base := strings.TrimSuffix(filepath.Base(inc), filepath.Ext(inc))
+	if base == "" || base == "." {
+		return nil
+	}
+	return uniqueStrings([]string{base, strings.ToLower(base), "lib" + strings.ToLower(base)})
+}
+
+// pkgConfigFlagsForHeader returns the name and flags of the first pkg-config package that may provide the header.
+func pkgConfigFlagsForHeader(inc string) (string, string) {
+	for _, name := range pkgNamesForHeader(inc) {
+		if flags := pkgConfigFlags(name); flags != "" {
+			return name, flags
+		}
+	}
+	return "", ""
+}
+
+// missingHeaderPattern matches the "header not found" errors of gcc, clang and tcc.
+var missingHeaderPattern = regexp.MustCompile(`fatal error: '?([^':\s]+)'?(?:: No such file or directory| file not found)|include file '([^']+)' not found`)
+
+// missingHeaders returns the headers that the compiler output says could not be found.
+func missingHeaders(output string) []string {
+	var headers []string
+	for _, m := range missingHeaderPattern.FindAllStringSubmatch(output, -1) {
+		if m[1] != "" {
+			headers = append(headers, m[1])
+		} else {
+			headers = append(headers, m[2])
+		}
+	}
+	return uniqueStrings(headers)
+}
+
+// flagsForMissingHeaders adds pkg-config flags for the headers that the compiler could not find.
+// It returns false if no new flags were found, so that there is no point in compiling again.
+func flagsForMissingHeaders(output string, flags BuildFlags) (BuildFlags, bool) {
+	if !hasPkgConfig() {
+		return flags, false
+	}
+	cflags := slices.Clone(flags.CFlags)
+	ldflags := slices.Clone(flags.LDFlags)
+	before := len(cflags) + len(ldflags)
+	for _, header := range missingHeaders(output) {
+		if _, pkgFlags := pkgConfigFlagsForHeader(header); pkgFlags != "" {
+			cflags, ldflags = mergeFlags(cflags, ldflags, pkgFlags)
+		}
+	}
+	if len(cflags)+len(ldflags) == before {
+		return flags, false
+	}
+	flags.CFlags, flags.LDFlags = cflags, ldflags
+	return flags, true
 }
 
 // resolveExtraFlags returns additional link/compile flags for special includes.

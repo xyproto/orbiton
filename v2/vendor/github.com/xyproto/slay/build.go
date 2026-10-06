@@ -1,7 +1,9 @@
 package slay
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -340,7 +342,14 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 		seen := make(map[string]bool)
 		for _, inc := range proj.Includes {
 			pkgName := pkgNameFromInclude(inc)
-			if pkgName == "" || seen[pkgName] {
+			if pkgName == "" {
+				if name, flags := pkgConfigFlagsForHeader(inc); name != "" && !seen[name] {
+					seen[name] = true
+					bf.CFlags, bf.LDFlags = mergeFlags(bf.CFlags, bf.LDFlags, flags)
+				}
+				continue
+			}
+			if seen[pkgName] {
 				continue
 			}
 			seen[pkgName] = true
@@ -433,13 +442,25 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 	}
 
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
-	if err := compileSources(srcs, exe, flags); err != nil {
+	compilerOutput.Reset()
+	err := compileSources(srcs, exe, flags)
+	if err != nil {
+		if retryFlags, ok := flagsForMissingHeaders(compilerOutput.String(), flags); ok {
+			fmt.Println("Found pkg-config flags for the missing headers, compiling again")
+			compilerOutput.Reset()
+			err = compileSources(srcs, exe, retryFlags)
+		}
+	}
+	if err != nil {
 		recommendPackage(proj.Includes)
 		platformHints(proj.Includes)
 		return err
 	}
 	return nil
 }
+
+// compilerOutput keeps a copy of the compiler error output, so that missing headers can be detected.
+var compilerOutput bytes.Buffer
 
 // compileSources compiles and links the given source files into the output executable.
 // Uses incremental compilation: each source is compiled to a .o file, then linked.
@@ -453,7 +474,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 		cmd := runCompiler(flags, args)
 		fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
 		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stderr = io.MultiWriter(os.Stderr, &compilerOutput)
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf("compilation failed: %w", err)
 		}
@@ -537,6 +558,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 				defer mu.Unlock()
 				if len(out) > 0 {
 					os.Stderr.Write(out)
+					compilerOutput.Write(out)
 				}
 				if err != nil && firstErr == nil {
 					firstErr = fmt.Errorf("compiling %s: %w", src, err)
@@ -562,7 +584,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	}
 	fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
 	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stderr = io.MultiWriter(os.Stderr, &compilerOutput)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("linking failed: %w", err)
 	}
