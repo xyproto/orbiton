@@ -78,7 +78,7 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 		canvasBox       = NewCanvasBox(c)
 		art             = welcomeArt
 		artWidth        = uint(0)
-		bottomText = versionString + ". " + welcomeText
+		bottomText      = versionString + ". " + welcomeText
 	)
 	for _, line := range art {
 		artWidth = max(artWidth, ulen([]rune(line)), ulen(titleString))
@@ -123,7 +123,7 @@ func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) 
 	versionColor := edgeColor // e.MenuArrowColor
 	welcomeColor := edgeColor // foregroundcolor
 
-	c.Write(x, y, versionColor, backgroundColor, versionString + ".")
+	c.Write(x, y, versionColor, backgroundColor, versionString+".")
 	c.Write(x+ulen(versionString)+2, y, welcomeColor, backgroundColor, welcomeText)
 
 	c.HideCursorAndDraw()
