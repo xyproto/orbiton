@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/xyproto/files"
 	"github.com/xyproto/vt"
@@ -55,76 +54,99 @@ func QuickHelpScreenIsDisabled() bool {
 	return isAndroid || files.Exists(quickHelpToggleFilename)
 }
 
-// DrawQuickHelp draws the quick help + some help for new users
+const (
+	quickHelpMenuNoAction = iota
+	quickHelpMenuDisableAction
+	quickHelpMenuCommandMenuAction
+	quickHelpMenuHotkeysAction
+	quickHelpMenuTutorialAction
+	quickHelpMenuSaveAndQuitAction
+)
+
+// QuickHelpAtStart checks if the quick help is displayed at start, which also makes ctrl-t display help
+func (e *Editor) QuickHelpAtStart() bool {
+	return (!QuickHelpScreenIsDisabled() || e.displayQuickHelp) && !e.noDisplayQuickHelp
+}
+
+// DrawQuickHelp draws a welcome message for new users
 func (e *Editor) DrawQuickHelp(c *vt.Canvas, repositionCursorAfterDrawing bool) {
-	const (
-		maxLines = 10
-		title    = "Quick Overview"
-	)
-
 	var (
-		minWidth = 55
-
 		foregroundColor = e.Foreground
 		backgroundColor = e.Background
 		edgeColor       = e.BoxUpperEdge
+		canvasBox       = NewCanvasBox(c)
+		art             = welcomeArt
 	)
 
-	if QuickHelpScreenIsDisabled() {
-		quickHelpText = strings.ReplaceAll(quickHelpText, "Disable this overview", "Enable this overview ")
-	} else {
-		quickHelpText = strings.ReplaceAll(quickHelpText, "Enable this overview ", "Disable this overview")
+	artWidth := uint(0)
+	for _, line := range art {
+		artWidth = max(artWidth, ulen([]rune(line)))
 	}
-
-	// Get the last maxLine lines, and create a string slice
-	lines := strings.Split(quickHelpText, "\n")
-	if l := len(lines); l > maxLines {
-		lines = lines[l-maxLines:]
+	width := max(ulen([]rune(welcomeText)), artWidth)
+	boxW := int(width) + 6
+	boxH := len(art) + 5
+	if boxH > canvasBox.H-2 {
+		art = nil
+		boxH = 5
 	}
-	for _, line := range lines {
-		if len(line) > minWidth {
-			minWidth = len(line) + 5
-		}
+	if boxW > canvasBox.W {
+		boxW = canvasBox.W
 	}
-
-	// First create a box the size of the entire canvas
-	canvasBox := NewCanvasBox(c)
 
 	centerBox := NewBox()
+	centerBox.W = boxW
+	centerBox.H = boxH
+	centerBox.X = max(canvasBox.W-boxW-4, 0)
+	centerBox.Y = max(canvasBox.H/10, 1)
 
-	centerBox.UpperRightPlacement(canvasBox, minWidth)
-	centerBox.H += 3
-	centerBox.X -= 18
-	centerBox.W += 15
-
-	// Then create a list box
-	listBox := NewBox()
-	listBox.FillWithMargins(centerBox, 2, 2)
-
-	// Get the current theme for the stdout box
 	bt := e.NewBoxTheme()
 	bt.Foreground = &foregroundColor
 	bt.Background = &backgroundColor
 	bt.UpperEdge = &edgeColor
 	bt.LowerEdge = bt.UpperEdge
 
-	leftoverHeight := (canvasBox.Y + canvasBox.H) - (centerBox.Y + centerBox.H)
-
-	// This is just an attempt at drawing the text, in order to find addedLinesBecauseWordWrap
-	const dryRun = true
-	if addedLinesBecauseWordWrap := e.DrawText(bt, c, listBox, quickHelpText, dryRun); leftoverHeight > addedLinesBecauseWordWrap {
-		centerBox.H += addedLinesBecauseWordWrap + 3
-	}
-
 	e.DrawBox(bt, c, centerBox)
-	e.DrawTitle(bt, c, centerBox, "=[ Quick Help ]=", false)
-	e.DrawText(bt, c, listBox, quickHelpText, false)
+	e.DrawTitle(bt, c, centerBox, "=[ Orbiton ]=", false)
 
-	// Blit
+	x := uint(centerBox.X + 3)
+	y := uint(centerBox.Y + 2)
+	for _, line := range art {
+		c.Write(x+(width-artWidth)/2, y, edgeColor, backgroundColor, line)
+		y++
+	}
+	if len(art) > 0 {
+		y++
+	}
+	c.Write(x, y, foregroundColor, backgroundColor, welcomeText)
+
 	c.HideCursorAndDraw()
 
-	// Reposition the cursor
 	if repositionCursorAfterDrawing {
 		e.EnableAndPlaceCursor(c)
 	}
+}
+
+// QuickHelpMenu displays a quick introduction, the most used keybindings and a menu.
+// Returns one of the quickHelpMenu*Action constants.
+func (e *Editor) QuickHelpMenu(status *StatusBar, tty *vt.TTY) int {
+	choices := []string{
+		"Launch the ctrl-o menu",
+		"Overview of keybindings",
+		"Tutorial for editing",
+		"Disable quick help at start",
+		"Save and quit",
+	}
+	actions := []int{
+		quickHelpMenuCommandMenuAction,
+		quickHelpMenuHotkeysAction,
+		quickHelpMenuTutorialAction,
+		quickHelpMenuDisableAction,
+		quickHelpMenuSaveAndQuitAction,
+	}
+	const extraDashes = false
+	selected, _ := e.Menu(status, tty, quickHelpIntroText, choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, extraDashes)
+	if selected < 0 || selected >= len(actions) {
+		return quickHelpMenuNoAction
+	}
+	return actions[selected]
 }

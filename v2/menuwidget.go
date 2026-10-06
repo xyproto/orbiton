@@ -1,6 +1,7 @@
 package main
 
 import (
+	"strings"
 	"unicode"
 
 	"github.com/xyproto/vt"
@@ -40,7 +41,7 @@ func NewMenuWidget(title string, choices []string, titleColor, arrowColor, textC
 		marginLeft = 0
 	}
 	marginTop := 8
-	titleHeight := 2 // 1 row for the title + 1 blank row below it
+	titleHeight := strings.Count(title, "\n") + 2 // title rows + 1 blank row below it
 	// If the full layout overflows the canvas, drop the top margin first;
 	// if it still overflows, drop the title block (title + blank row) as well.
 	if len(choices)+titleHeight+marginTop > int(canvasHeight) {
@@ -83,7 +84,7 @@ func (m *MenuWidget) Resize(canvasWidth, canvasHeight uint) {
 		marginLeft = 0
 	}
 	marginTop := 8
-	titleHeight := 2
+	titleHeight := strings.Count(m.title, "\n") + 2
 	if len(m.choices)+titleHeight+marginTop > int(canvasHeight) {
 		marginTop = 0
 		if len(m.choices)+titleHeight > int(canvasHeight) {
@@ -105,8 +106,14 @@ func (m *MenuWidget) Selected() int {
 func (m *MenuWidget) Draw(c *vt.Canvas) {
 	titleHeight := m.titleHeight
 	if titleHeight > 0 {
-		for x, r := range m.title {
-			c.PlotColor(uint(m.marginLeft+x), uint(m.marginTop), m.titleColor, r)
+		for y, line := range strings.Split(m.title, "\n") {
+			color := m.titleColor
+			if y > 0 {
+				color = m.textColor
+			}
+			for x, r := range []rune(line) {
+				c.PlotColor(uint(m.marginLeft+x), uint(m.marginTop+y), color, r)
+			}
 		}
 	}
 	// Draw the menu entries, with various colors

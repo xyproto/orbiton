@@ -14,13 +14,34 @@ const (
 )
 
 var (
-	// NOTE: The DrawQuickHelp function requires the wording of "Disable this overview" to stay the same
-	quickHelpText = `Save                   ctrl-s
-Quit                   ctrl-q
-Main menu              ctrl-o
-Overview of hotkeys    ctrl-l and then /
-Launch tutorial        ctrl-l and then ?
-Disable this overview  ctrl-l and then !`
+	welcomeArt = []string{
+		`  *           _____    *     .`,
+		`        .--;''     ''';-.`,
+		`   .  /  /'            \  \    *`,
+		`-=-=-|-=|-=( Orbiton )=-|=-|-=-=-`,
+		`.     \  \,_         _,/  /`,
+		`  *    '--.._________..--'    .`,
+	}
+
+	welcomeText = "Welcome to Orbiton! Press ctrl-t for help."
+
+	quickHelpIntroText = `Quick Help
+
+Orbiton is a text editor and a simple IDE + gdb frontend.
+
+ctrl-s      save
+ctrl-q      quit
+ctrl-o      open the main menu
+ctrl-f      find text, press Tab instead of Return to replace
+ctrl-l      go to a line number, letter or percentage
+ctrl-u      undo
+ctrl-c      copy the current line
+ctrl-x      cut the current line
+ctrl-v      paste
+ctrl-k      delete to the end of the line
+ctrl-space  build or export, double press to also run
+ctrl-w      format code
+esc         go back or redraw the screen`
 
 	ollamaHelpText = "Ollama"
 
@@ -238,6 +259,19 @@ func (e *Editor) DrawHotkeyOverview(tty *vt.TTY, c *vt.Canvas, status *StatusBar
 	// Calculate the box width and height as 80% of the canvas height
 	pageWidth := int(float64(c.Width()) * 0.8)
 	pageHeight := int(float64(c.Height()) * 0.8)
+
+	longestLine := 0
+	for _, line := range hotkeyLines {
+		longestLine = max(longestLine, int(ulen(line)))
+	}
+	pageWidth = max(pageWidth, min(longestLine+10, int(c.Width())-1))
+	if maxLineLen := pageWidth - 10; maxLineLen > 0 && longestLine > maxLineLen {
+		for i, line := range hotkeyLines {
+			if runes := []rune(line); len(runes) > maxLineLen {
+				hotkeyLines[i] = string(runes[:maxLineLen])
+			}
+		}
+	}
 
 	// Create pages of text
 	var pages []Page

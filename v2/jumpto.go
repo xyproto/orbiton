@@ -386,6 +386,7 @@ func (e *Editor) JumpMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY) int {
 			postAction = displayQuickHelpAction
 		} else {
 			ok = DisableQuickHelpScreen(status)
+			e.displayQuickHelp = false
 		}
 		e.redraw.Store(ok)
 		e.redrawCursor.Store(ok)

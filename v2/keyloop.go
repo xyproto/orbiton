@@ -581,7 +581,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	}
 
 	// QuickHelp screen + help for new users
-	if (!QuickHelpScreenIsDisabled() || e.displayQuickHelp) && !e.noDisplayQuickHelp {
+	if e.QuickHelpAtStart() {
 		e.DrawQuickHelp(c, false)
 	}
 
@@ -992,6 +992,41 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			e.HandleBuildKey(c, tty, status, kh, undo, lockTimestamp, forceFlag, "c:0")
 
 		case "c:20": // ctrl-t
+
+			if !e.nanoMode.Load() && e.QuickHelpAtStart() {
+				status.ClearAll(c, false)
+				action := e.QuickHelpMenu(status, tty)
+				const drawLines = true
+				e.FullResetRedraw(c, status, drawLines, false)
+				switch action {
+				case quickHelpMenuDisableAction:
+					DisableQuickHelpScreen(status)
+					e.displayQuickHelp = false
+				case quickHelpMenuCommandMenuAction:
+					undo.Snapshot(e)
+					undoBackup := undo
+					selectedIndex, spacePressed := e.CommandMenu(c, tty, status, undo, lastCommandMenuIndex, forceFlag, fileLock)
+					c.HideCursorAndRedrawFull()
+					c.ShowCursor()
+					lastCommandMenuIndex = selectedIndex
+					if spacePressed {
+						status.Clear(c, false)
+						e.CommandPrompt(c, tty, status, undo)
+					}
+					undo = undoBackup
+				case quickHelpMenuHotkeysAction:
+					const repositionCursorAfterDrawing = true
+					e.DrawHotkeyOverview(tty, c, status, repositionCursorAfterDrawing)
+				case quickHelpMenuTutorialAction:
+					LaunchTutorial(tty, c, e, status)
+				case quickHelpMenuSaveAndQuitAction:
+					e.UserSave(c, tty, status)
+					e.quit = true
+				}
+				e.redraw.Store(true)
+				e.redrawCursor.Store(true)
+				break
+			}
 
 			if e.InBookMode() { // book mode: toggle the Markdown checkbox on the current line, if any
 				e.ToggleCheckboxCurrentLine()
