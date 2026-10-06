@@ -2,16 +2,13 @@
 
 ## General
 
-- [ ] For first-time users of Orbiton, show "Welcome to Orbiton! Press ctrl-t for help" together with nice ascii graphics.
-      Then ctrl-t is used for help instead of macros until the user decides to turn off the quickhelp at start.
-      If ctrl-t is used for help, then show a quick introduction + the most used keybindings + a menu.
-      The menu should have the choices: disable quick help at start, show the ctrl-o menu, show keybindings, launch tutorial, save and quit.
+- [ ] Improve the colors of the "Welcome" box.
 - [ ] When editing YAML, use 2-space indentation by default.
-- [ ] Respect `.clang-format-ignore` when pressing ctrl-w to format C or C++ files.
+- [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
 - [ ] When saving a file that is very slow to save, the save progress bar may remain without being cleared.
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
-      over being red if they are read-only, for readability. Like /usr/lib/tcc/include/tgmath.h.
+      over being red if they are read-only, for readability. Like `/usr/lib/tcc/include/tgmath.h`.
 - [ ] When launching `og` and then entering the file browser and then opening a file, Esc should not go back to the file browser.
 - [ ] Let the `.desktop` file for the light version use the same executable as the dark version instead of `lig`?
 - [ ] Make `ctrl-b` more predictable.
