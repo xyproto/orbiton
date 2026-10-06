@@ -49,6 +49,7 @@ const (
 	Faust                 // Faust
 	Fortran77             // Fortran 77
 	Fortran90             // Fortran 90
+	Fennel                // Fennel
 	FSharp                // F#
 	FSTAB                 // Filesystem table
 	Garnet                // Garnet
@@ -230,6 +231,8 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Faust:
 		return "Faust"
+	case Fennel:
+		return "Fennel"
 	case Fortran77:
 		return "Fortran 77"
 	case Fortran90:

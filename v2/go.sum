@@ -111,8 +111,8 @@ github.com/xyproto/lookslikegoasm v1.0.2 h1:IS258Bs+N3dzfYQCFzYMobgK5Kee86BJkkxC
 github.com/xyproto/lookslikegoasm v1.0.2/go.mod h1:4ck0t+iH2rEAmjwnRhMZl72lCeCxK4iylxdcZ3K3FbY=
 github.com/xyproto/megafile v1.7.10 h1:GyYSjWO6EqIaEYWS38YnaE3v8xalF3v7ckbwo6B9ui8=
 github.com/xyproto/megafile v1.7.10/go.mod h1:3KF1n9mMEaVXYbJx1FE3QWfiNoTPPX7rxBEYfF9Wzpo=
-github.com/xyproto/mode v0.12.15 h1:UGYJpJjAszlhXBzOkfyiaAhTyOisgBqSRymlaqz7sVk=
-github.com/xyproto/mode v0.12.15/go.mod h1:3F6n8rg7/JM4h6wGy6RTj0eeL+4gZHs04dV9XarHYlw=
+github.com/xyproto/mode v0.12.17 h1:wttW1MXpOTLQRcQSICZWp9CoumqiMXFXophtGgkyBqM=
+github.com/xyproto/mode v0.12.17/go.mod h1:3F6n8rg7/JM4h6wGy6RTj0eeL+4gZHs04dV9XarHYlw=
 github.com/xyproto/oksvg v1.0.1 h1:73aS/Preun72DfKyudJYIWb1wPiJRkpYHASwOBbDQBo=
 github.com/xyproto/oksvg v1.0.1/go.mod h1:UPvMnS9w/QMxOqU7SNlmZuB+48tc2c7Kz1B3rf7JtxQ=
 github.com/xyproto/palgen v1.7.3 h1:iJBciQKbviwGk9RiCZh1GuEbPy3EZqU7kA3Z9XH+8a4=
