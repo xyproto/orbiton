@@ -57,6 +57,13 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command("chuck", sourceFilename)
 	case mode.Clojure:
 		cmd = exec.Command("clojure", "-M", sourceFilename) // single file
+	case mode.Fennel:
+		if files.Exists(filepath.Join(sourceDir, "main.lua")) && files.WhichCached("love") != "" {
+			cmd = exec.Command("love", ".")
+		} else {
+			cmd = exec.Command("fennel", sourceFilename)
+		}
+		cmd.Dir = sourceDir
 	case mode.CMake:
 		cmd = exec.Command("cmake", "-B", "build", "-D", "CMAKE_BUILD_TYPE=Debug", "-S", sourceDir)
 	case mode.Kotlin:

@@ -608,6 +608,10 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 			cmd.Dir = sourceDir
 		}
 		return cmd, everythingIsFine, nil
+	case mode.Fennel:
+		cmd = exec.Command("fennel", "--compile", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.Haskell:
 		cmd = exec.Command("ghc", "-dynamic", sourceFilename)
 		cmd.Dir = sourceDir
