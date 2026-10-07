@@ -44,7 +44,7 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 	}
 
 	exe := executableName()
-	if opts.Win64 || proj.HasWin64 {
+	if opts.Win64 || proj.HasWin64 || opts.Watcom {
 		exe += ".exe"
 	}
 	result.OutputExecutable = exe
@@ -73,6 +73,18 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 func compileSourcesCaptured(srcs []string, output string, flags BuildFlags) ([]byte, []string, error) {
 	var combinedOutput bytes.Buffer
 	var commandsRun []string
+
+	if flags.Watcom {
+		args := watcomArgs(flags, srcs, output)
+		cmd := runCompiler(flags, args)
+		commandsRun = append(commandsRun, cmdToString(cmd))
+		cmdOutput, err := cmd.CombinedOutput()
+		combinedOutput.Write(cmdOutput)
+		if err != nil {
+			return combinedOutput.Bytes(), commandsRun, fmt.Errorf("compilation failed: %w", err)
+		}
+		return combinedOutput.Bytes(), commandsRun, nil
+	}
 
 	// For a single source file, compile directly
 	if len(srcs) == 1 {

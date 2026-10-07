@@ -26,6 +26,7 @@ type BuildOptions struct {
 	Clang           bool
 	Zap             bool
 	Win64           bool
+	Watcom          bool
 	NoSanitizers    bool
 	ProfileGenerate bool
 	ProfileUse      bool
@@ -33,6 +34,7 @@ type BuildOptions struct {
 
 // BuildFlags holds the assembled compiler and linker flags.
 type BuildFlags struct {
+	Watcom         bool
 	Compiler       string
 	Std            string
 	ContainerImage string // if set, compile via "docker run" or "podman run" with this image
@@ -44,6 +46,9 @@ type BuildFlags struct {
 
 // assembleFlags creates the full set of build flags for a project.
 func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
+	if opts.Watcom {
+		return assembleWatcomFlags(proj, opts)
+	}
 	// Determine if this is win64 (from options or detected from source)
 	win64 := opts.Win64 || proj.HasWin64
 
@@ -430,7 +435,7 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 	}
 
 	exe := executableName()
-	if opts.Win64 || proj.HasWin64 {
+	if opts.Win64 || proj.HasWin64 || opts.Watcom {
 		exe += ".exe"
 	}
 
@@ -469,7 +474,7 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 	fmt.Printf("[%s] ", dirName)
 
 	// For a single source file, compile directly (no incremental needed)
-	if len(srcs) == 1 {
+	if len(srcs) == 1 || flags.Watcom {
 		args := buildCompileArgs(flags, srcs, output)
 		cmd := runCompiler(flags, args)
 		fmt.Println(flags.Compiler, strings.Join(compactArgs(args), " "))
@@ -595,6 +600,9 @@ func compileSources(srcs []string, output string, flags BuildFlags) error {
 
 // buildCompileArgs builds the full compiler arguments for a single-shot compile+link.
 func buildCompileArgs(flags BuildFlags, srcs []string, output string) []string {
+	if flags.Watcom {
+		return watcomArgs(flags, srcs, output)
+	}
 	args := []string{"-std=" + flags.Std}
 	args = append(args, flags.CFlags...)
 	args = append(args, flags.Defines...)

@@ -81,6 +81,10 @@ func ZapConfig() *Config {
 	return &Config{BuildOptions: BuildOptions{Zap: true}}
 }
 
+func NewWatcom() *Config {
+	return &Config{BuildOptions: BuildOptions{Watcom: true}}
+}
+
 // withDir executes fn in the configured SourceDir, restoring the original
 // directory afterward. If SourceDir is empty, fn runs in the current directory.
 func (c *Config) withDir(fn func() error) error {

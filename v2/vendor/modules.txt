@@ -42,7 +42,7 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20261006014541-eb0281f1d676
+# github.com/gomarkdown/markdown v0.0.0-20261006233006-5e92716d526e
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -145,7 +145,7 @@ github.com/xyproto/oksvg
 # github.com/xyproto/palgen v1.7.3
 ## explicit; go 1.25.1
 github.com/xyproto/palgen
-# github.com/xyproto/slay v1.3.6
+# github.com/xyproto/slay v1.3.7
 ## explicit; go 1.25.1
 github.com/xyproto/slay
 # github.com/xyproto/syntax v1.14.7

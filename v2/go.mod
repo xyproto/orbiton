@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20261006014541-eb0281f1d676
+	github.com/gomarkdown/markdown v0.0.0-20261006233006-5e92716d526e
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.30
@@ -42,7 +42,7 @@ require (
 
 require github.com/xyproto/themes v1.0.2
 
-require github.com/xyproto/slay v1.3.6
+require github.com/xyproto/slay v1.3.7
 
 require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
 
