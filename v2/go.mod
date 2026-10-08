@@ -11,7 +11,7 @@ require (
 	github.com/gomarkdown/markdown v0.0.0-20261006233006-5e92716d526e
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
-	github.com/mattn/go-runewidth v0.0.30
+	github.com/mattn/go-runewidth v0.0.31
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.0.10
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
