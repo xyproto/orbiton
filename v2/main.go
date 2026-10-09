@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	versionString = "Orbiton 2.74.5"
+	versionString = "Orbiton 2.74.6"
 
 	// Timing for slow terminals (vt100, vt220, linux/BSD consoles)
 	slowReadTimeout = 50 * time.Millisecond
