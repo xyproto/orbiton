@@ -25,7 +25,8 @@ var (
 	specificLetter    bool             // did the editor executable start with a specific letter, or just "o"?
 	editTheme         bool             // does the theme have both a dark and a light version?
 	inVTEGUI          = env.Bool("OG") // is o running within the VTE GUI application?
-	noDrawUntilResize atomic.Bool      // we are running within the VTE GUI application, but SIGWINCH has not been sent yet
+	underKonsole      = env.Has("KONSOLE_VERSION")
+	noDrawUntilResize atomic.Bool // we are running within the VTE GUI application, but SIGWINCH has not been sent yet
 	tempDir           = env.Dir("TMPDIR", "/tmp")
 	errFileNotFound   = errors.New("file not found")
 

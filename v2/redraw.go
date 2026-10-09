@@ -140,6 +140,9 @@ func (e *Editor) PlaceAndEnableCursor(c *vt.Canvas) {
 
 	vt.SetXY(x, y)
 	c.ShowCursor()
+	if underKonsole {
+		vt.ShowCursor(true)
+	}
 
 	e.previousX = int(x)
 	e.previousY = int(y)
@@ -156,6 +159,9 @@ func (e *Editor) RepositionCursorIfNeeded(c *vt.Canvas) {
 	if x != e.previousX || y != e.previousY || e.redrawCursor.Load() {
 		e.RepositionCursor(uint(x), uint(y))
 		c.ShowCursor()
+		if underKonsole {
+			vt.ShowCursor(true)
+		}
 		e.redrawCursor.Store(false)
 	}
 }
