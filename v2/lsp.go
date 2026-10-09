@@ -49,8 +49,59 @@ type LSPClient struct {
 	openedVersion  int
 	requestID      int
 	mutex          sync.Mutex
+	readyMutex     sync.Mutex // serializes readiness checks
 	running        bool
 	initialized    bool
+	ready          bool // the server has answered requests, guarded by readyMutex
+}
+
+// errLSPStillStarting is returned when a language server is running but not ready yet
+var errLSPStillStarting = errors.New("still starting")
+
+// needsReadinessCheck returns true for language servers that accept the initialize request
+// long before they can answer other requests
+func needsReadinessCheck(m mode.Mode) bool {
+	return m == mode.Rust || m == mode.C || m == mode.Cpp
+}
+
+// checkReady returns true if the language server answers requests, and remembers it
+func (lsp *LSPClient) checkReady(m mode.Mode) bool {
+	lsp.readyMutex.Lock()
+	defer lsp.readyMutex.Unlock()
+	if !lsp.ready && lsp.initialized && (!needsReadinessCheck(m) || lsp.TestReady(m)) {
+		lsp.ready = true
+	}
+	return lsp.ready
+}
+
+// isReady returns true if the language server has been found to answer requests
+func (lsp *LSPClient) isReady() bool {
+	lsp.readyMutex.Lock()
+	defer lsp.readyMutex.Unlock()
+	return lsp.ready
+}
+
+// waitUntilReady waits for the language server to answer requests. A server that is still not
+// ready when lspReadyTimeout has passed is kept running, so that the next attempt can use it
+// once it has warmed up, instead of starting from scratch.
+func waitUntilReady(ctx context.Context, client *LSPClient, m mode.Mode) (*LSPClient, error) {
+	deadline := time.Now().Add(lspReadyTimeout)
+	for {
+		if client.checkReady(m) {
+			return client, nil
+		}
+		if !client.running {
+			return nil, errors.New("the language server stopped")
+		}
+		if time.Now().After(deadline) {
+			return nil, errLSPStillStarting
+		}
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-time.After(200 * time.Millisecond):
+		}
+	}
 }
 
 // LSPCompletionItem represents a single completion suggestion
@@ -178,9 +229,10 @@ func stripLSPSnippetPlaceholders(s string) string {
 }
 
 const (
-	lspInitTimeout           = 30 * time.Second
-	lspCompletionTimeout     = 10 * time.Second
-	lspCompletionWaitTimeout = 3 * time.Second
+	lspInitTimeout           = 60 * time.Second
+	lspReadyTimeout          = 30 * time.Second
+	lspCompletionTimeout     = 30 * time.Second
+	lspCompletionWaitTimeout = 10 * time.Second
 	lspDefinitionTimeout     = 200 * time.Millisecond
 	lspShutdownTimeout       = 2 * time.Second
 )
@@ -897,7 +949,7 @@ func GetReadyLSPClient(m mode.Mode, workspaceRoot string) *LSPClient {
 	defer lspMutex.Unlock()
 
 	key := lspClientKey(m, workspaceRoot)
-	if client, exists := lspClients[key]; exists && client != nil && client.running && client.initialized {
+	if client, exists := lspClients[key]; exists && client != nil && client.running && client.initialized && client.isReady() {
 		if !client.isAlive() {
 			client.running = false
 			delete(lspClients, key)
@@ -918,26 +970,11 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 		if !client.isAlive() {
 			client.running = false
 			delete(lspClients, key)
-		} else if client.initialized {
-			lspMutex.Unlock()
-			return client, nil
 		} else {
+			// the server is ready, starting up for another caller, or kept from an attempt that
+			// timed out, so wait for it instead of starting another one
 			lspMutex.Unlock()
-			for range 30 {
-				select {
-				case <-ctx.Done():
-					return nil, ctx.Err()
-				default:
-					time.Sleep(100 * time.Millisecond)
-					lspMutex.Lock()
-					if client.initialized {
-						lspMutex.Unlock()
-						return client, nil
-					}
-					lspMutex.Unlock()
-				}
-			}
-			return nil, errors.New("LSP client initialization timeout")
+			return waitUntilReady(ctx, client, m)
 		}
 	}
 
@@ -971,39 +1008,23 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 		client.linkedProjects = linkedProjects
 	}
 	client.initOptions = lspInitializationOptions(m, command, workspaceRoot)
-	if err := client.Initialize(); err != nil {
-		client.Shutdown()
-		return nil, err
-	}
 
-	// wait until the server is truly ready (up to 10 seconds)
-	if m == mode.Rust || m == mode.C || m == mode.Cpp {
-		ready := false
-		for range 50 {
-			select {
-			case <-ctx.Done():
-				client.Shutdown()
-				return nil, ctx.Err()
-			default:
-				if client.TestReady(m) {
-					ready = true
-					break
-				}
-				time.Sleep(200 * time.Millisecond)
-			}
-		}
-
-		if !ready {
-			client.Shutdown()
-			return nil, errors.New(config.Command + " is not responding")
-		}
-	}
-
+	// register the client before initializing it, so that other callers wait for it
 	lspMutex.Lock()
 	lspClients[key] = client
 	lspMutex.Unlock()
 
-	return client, nil
+	if err := client.Initialize(); err != nil {
+		lspMutex.Lock()
+		if lspClients[key] == client {
+			delete(lspClients, key)
+		}
+		lspMutex.Unlock()
+		client.Shutdown()
+		return nil, err
+	}
+
+	return waitUntilReady(ctx, client, m)
 }
 
 // TriggerLSPInitialization starts LSP initialization in the background if not already running
@@ -1638,6 +1659,11 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	}
 
 	client, err := GetOrCreateLSPClient(context.Background(), e.mode, workspaceRoot, linkedProjects...)
+	if errors.Is(err, errLSPStillStarting) {
+		stopSpinner()
+		status.SetMessageAfterRedraw(fmt.Sprintf("%s is still starting, press Tab again in a moment", lspCommand))
+		return false
+	}
 	if err != nil {
 		stopSpinner()
 		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
@@ -1841,6 +1867,10 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 
 	choice, _ := e.Menu(status, tty, "Completions", choices, e.Background, e.MenuTitleColor, e.MenuArrowColor, e.MenuTextColor, e.MenuHighlightColor, e.MenuSelectedColor, 0, false)
 	if choice < 0 || choice >= len(items) {
+		// the menu was canceled, so redraw the text that it covered
+		const drawLines = true
+		e.FullResetRedraw(c, status, drawLines, false)
+		c.Draw()
 		return false
 	}
 
