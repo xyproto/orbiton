@@ -1,6 +1,8 @@
 .PHONY: clean gui gui-install gui-symlinks install install-gui install-symlinks ko ko-install og og-install symlinks symlinks-install
 
 PROJECT ?= orbiton
+CGO_ENABLED ?= 0
+export CGO_ENABLED
 GOBUILD := go build
 GOFLAGS ?= -mod=vendor -trimpath -ldflags "-s -w" -buildvcs=false
 SRCFILES := $(wildcard go.* v2/*.go v2/go.*)
@@ -36,13 +38,15 @@ else
 endif
 
 MANDIR ?= $(PREFIX)/share/man/man1
-UNAME_R ?= $(shell uname -r)
+IS_ARCH ?= $(shell grep -Eq '^ID="?arch"?$$' /etc/os-release 2>/dev/null && echo 1)
 
-ifneq (,$(findstring arch,$(UNAME_R)))
+ifneq (,$(IS_ARCH))
 # Arch Linux
 LDFLAGS ?= -Wl,-O2,--as-needed,-z,relro,-z,now
 GOFLAGS += -buildmode=pie
+ifeq ($(CGO_ENABLED),1)
 BUILDFLAGS ?= -ldflags "-s -w -linkmode=external -extldflags $(LDFLAGS)"
+endif
 endif
 
 CXX ?= g++
