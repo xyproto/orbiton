@@ -72,6 +72,8 @@ func (e *Editor) Spinner(c *vt.Canvas, _ *vt.TTY, umsg, _ string, startIn time.D
 			return
 		}
 
+		bg := e.Background.String()
+
 		// Get the terminal codes for coloring the given user message
 		msg := textColor.Get(umsg)
 		if useASCII {
@@ -96,7 +98,7 @@ func (e *Editor) Spinner(c *vt.Canvas, _ *vt.TTY, umsg, _ string, startIn time.D
 		}
 
 		// Write a message
-		fmt.Print(msg)
+		fmt.Print(bg + msg)
 
 		// Prepare to output colored text
 		var (
@@ -128,7 +130,7 @@ func (e *Editor) Spinner(c *vt.Canvas, _ *vt.TTY, umsg, _ string, startIn time.D
 			default:
 				vt.SetXY(x, y)
 				// Iterate over the spinner frames as the counter increases
-				to.Print(spinnerAnimation[counter%ulen(spinnerAnimation)])
+				to.Print(bg + spinnerAnimation[counter%ulen(spinnerAnimation)])
 				counter++
 				time.Sleep(32 * time.Millisecond) // for a smoother animation
 			}
