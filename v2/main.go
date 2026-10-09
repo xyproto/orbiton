@@ -661,6 +661,7 @@ func main() {
 		userMessage, nextAction, err := Loop(tty, fnord, lineNumber, colNumber, forceFlag, theme, syntaxHighlight, monitorAndReadOnlyFlag, nanoMode, createDirectoriesFlag, quickHelpFlag, noQuickHelpFlag, escToExitFlag, cycleFilenamesFlag, debugModeFlag)
 
 		// SIGQUIT the parent PID. Useful if being opened repeatedly by a find command.
+		stopParent := false
 		switch nextAction {
 		case megafile.NextFile:
 			fmt.Fprintln(os.Stderr, "nextfile")
@@ -668,11 +669,7 @@ func main() {
 			fmt.Fprintln(os.Stderr, "prevfile")
 		case megafile.StopParent:
 			// As PID 1 there is no meaningful parent to signal.
-			if !inVTEGUI && !runningAsInit() {
-				defer func() {
-					sendParentQuitSignal()
-				}()
-			}
+			stopParent = !inVTEGUI && !runningAsInit()
 		}
 
 		// Remove the terminal title, if the current terminal emulator supports it and if NO_COLOR is not set.
@@ -704,17 +701,17 @@ func main() {
 
 		traceComplete() // if building with -tags trace
 
-		// Respond to the error returned from the main loop, if any
-		if err != nil {
-			// A clean file-browser exit is not an error for the user; exit silently.
-			if errors.Is(err, errFileBrowserExit) {
-				return
-			}
+		// Respond to the error returned from the main loop, if any.
+		// A clean file-browser exit is not an error for the user; exit silently.
+		if err != nil && !errors.Is(err, errFileBrowserExit) {
 			if userMessage != "" {
 				quitMessage(tty, userMessage)
 			} else {
 				quitError(tty, err)
 			}
+		}
+		if stopParent {
+			sendParentQuitSignal()
 		}
 		return
 	}
