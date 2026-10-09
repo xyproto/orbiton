@@ -3,6 +3,12 @@
 # Create release tarballs/zip-files
 #
 
+if [ "$1" = "single" ]; then
+  parallel=0
+else
+  parallel=1
+fi
+
 platforms="
   linux,amd64,,linux_x86_64_static,tar.xz
   linux,arm64,,linux_aarch64_static,tar.xz
@@ -89,8 +95,12 @@ while read -r p; do
   IFS=',' read -r goos goarch goarm platform compression <<EOF
 $p
 EOF
-  compile_and_compress "$goos" "$goarch" "$goarm" "$platform" "$compression" &
-  pids="$pids $!"
+  if [ "$parallel" -eq 1 ]; then
+    compile_and_compress "$goos" "$goarch" "$goarm" "$platform" "$compression" &
+    pids="$pids $!"
+  else
+    compile_and_compress "$goos" "$goarch" "$goarm" "$platform" "$compression"
+  fi
 done <<EOF
 $platforms
 EOF
