@@ -596,8 +596,10 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	e.PlaceAndEnableCursor(c)
 
 	if underKonsole {
-		// Show the cursor one extra time
+		// Show the cursor two extra times. This is a workaround specifically for Konsole.
 		go func() {
+			time.Sleep(50 * time.Millisecond)
+			vt.ShowCursor(true)
 			time.Sleep(250 * time.Millisecond)
 			vt.ShowCursor(true)
 		}()
