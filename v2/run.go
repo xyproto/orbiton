@@ -12,6 +12,7 @@ import (
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/slay"
 	"github.com/xyproto/vt"
 )
 
@@ -155,6 +156,14 @@ func (e *Editor) Run() (string, bool, error) {
 			}
 		} else {
 			cmd = exec.Command("lua", sourceFilename)
+		}
+	case mode.C, mode.Cpp:
+		if rom := gbaROM(sourceDir); rom != "" {
+			if cmd = slay.GBAEmulatorCommand(rom); cmd == nil {
+				return "", false, errors.New("please install mGBA to run " + filepath.Base(rom))
+			}
+		} else {
+			cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 		}
 	case mode.Make:
 		cmd = exec.Command("make")
@@ -382,4 +391,17 @@ func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	}
 	// Return the output bytes and the error, if any
 	return b.String(), err
+}
+
+// gbaROM returns the path to the Game Boy Advance ROM that slay builds in the given
+// directory, or an empty string if there is none.
+func gbaROM(sourceDir string) string {
+	name := filepath.Base(sourceDir)
+	if name == "src" {
+		name = "main"
+	}
+	if rom := filepath.Join(sourceDir, name+".gba"); files.IsFile(rom) {
+		return rom
+	}
+	return ""
 }
