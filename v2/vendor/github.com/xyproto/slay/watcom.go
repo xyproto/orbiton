@@ -32,6 +32,9 @@ func findWatcomCompiler() string {
 
 func assembleWatcomFlags(proj Project, opts BuildOptions) BuildFlags {
 	bf := BuildFlags{Watcom: true, Compiler: findWatcomCompiler()}
+	if root := findWatcomRoot(); root != "" {
+		bf.IncPaths = append(bf.IncPaths, filepath.Join(root, "h"))
+	}
 	bf.CFlags = append(bf.CFlags, "-q", "-bt=dos", "-ms")
 	if proj.IsC {
 		bf.CFlags = append(bf.CFlags, "-za99")

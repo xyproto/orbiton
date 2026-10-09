@@ -44,10 +44,18 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 	}
 
 	exe := executableName()
-	if opts.Win64 || proj.HasWin64 || opts.Watcom {
+	if opts.Win64 || proj.HasWin64 || opts.Watcom || proj.HasWatcom {
 		exe += ".exe"
 	}
+	gba := opts.GBA || proj.HasGBA
+	if gba {
+		exe += ".gba"
+	}
 	result.OutputExecutable = exe
+	linkOutput := exe
+	if gba {
+		linkOutput = gbaELFName(exe)
+	}
 
 	flags := assembleFlags(proj, opts)
 
@@ -57,12 +65,20 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 	}
 
 	srcs := append([]string{proj.MainSource}, proj.DepSources...)
-	output, cmds, err := compileSourcesCaptured(srcs, exe, flags)
+	output, cmds, err := compileSourcesCaptured(srcs, linkOutput, flags)
 	result.Output = output
 	result.CommandsRun = cmds
 	if err != nil {
 		recommendPackage(proj.Includes)
 		return result, err
+	}
+	if gba {
+		finishOutput, finishCmds, err := gbaFinish(linkOutput, exe)
+		result.Output = append(result.Output, finishOutput...)
+		result.CommandsRun = append(result.CommandsRun, finishCmds...)
+		if err != nil {
+			return result, err
+		}
 	}
 	return result, nil
 }

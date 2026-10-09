@@ -152,6 +152,16 @@ func runExecutable(win64 bool, args ...string) error {
 	if exe == "" {
 		return fmt.Errorf("no main source file found")
 	}
+	if !fileExists(exe) && fileExists(exe+".gba") {
+		cmd := GBAEmulatorCommand(dotSlash(exe+".gba"), args...)
+		if cmd == nil {
+			return fmt.Errorf("built %s.gba, but no GBA emulator such as mgba was found", exe)
+		}
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
 	if win64 || !fileExists(exe) && fileExists(exe+".exe") {
 		exe += ".exe"
 	}
@@ -187,8 +197,10 @@ func cleanFiles() {
 		if err := os.Remove(exe); err == nil {
 			fmt.Println("Removed", exe)
 		}
-		if err := os.Remove(exe + ".exe"); err == nil {
-			fmt.Println("Removed", exe+".exe")
+		for _, ext := range []string{".exe", ".gba", ".elf"} {
+			if err := os.Remove(exe + ext); err == nil {
+				fmt.Println("Removed", exe+ext)
+			}
 		}
 	}
 	testSrcs := getTestSources()
@@ -212,8 +224,10 @@ func fastCleanFiles() {
 		if err := os.Remove(exe); err == nil {
 			fmt.Println("Removed", exe)
 		}
-		if err := os.Remove(exe + ".exe"); err == nil {
-			fmt.Println("Removed", exe+".exe")
+		for _, ext := range []string{".exe", ".gba", ".elf"} {
+			if err := os.Remove(exe + ext); err == nil {
+				fmt.Println("Removed", exe+ext)
+			}
 		}
 	}
 }

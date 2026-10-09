@@ -164,6 +164,8 @@ type Project struct {
 	HasExperimentalFS bool // detected from #include <experimental/filesystem>
 	HasThreads        bool
 	HasWin64          bool // detected from #include <windows.h>
+	HasWatcom         bool // detected from #include <i86.h>
+	HasGBA            bool // detected from #include <tonc.h> or <gba.h>
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
 	HasDlopen         bool // detected from #include <dlfcn.h>
 }
@@ -196,6 +198,24 @@ func detectProject() Project {
 	allFiles := slices.Concat(allSources, localHeaderPaths(allSources))
 	for _, filename := range allFiles {
 		scanSourceForFlags(filename, &p)
+	}
+
+	if !p.HasWatcom {
+		for _, mf := range []string{"Makefile", "makefile", "GNUmakefile"} {
+			data, err := os.ReadFile(mf)
+			if err != nil {
+				continue
+			}
+			s := string(data)
+			if strings.Contains(s, "wcl") || strings.Contains(s, "WATCOM") {
+				p.HasWatcom = true
+				break
+			}
+			if makefileUsesGBA(s) {
+				p.HasGBA = true
+				break
+			}
+		}
 	}
 
 	// Verify HasWin64 using the C preprocessor: if windows.h is only
@@ -256,6 +276,12 @@ func scanSourceForFlags(filename string, p *Project) {
 		}
 		if trimmed == "#include <dlfcn.h>" {
 			p.HasDlopen = true
+		}
+		if strings.Contains(line, "#include <i86.h>") {
+			p.HasWatcom = true
+		}
+		if isGBAInclude(line) {
+			p.HasGBA = true
 		}
 		// Detect win64 from includes
 		for _, wh := range []string{`#include <windows.h>`, `#include "windows.h"`, `#include<windows.h>`} {
