@@ -595,6 +595,14 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// Place and enable the cursor
 	e.PlaceAndEnableCursor(c)
 
+	if underKonsole {
+		// Show the cursor one extra time
+		go func() {
+			time.Sleep(250 * time.Millisecond)
+			vt.ShowCursor(true)
+		}()
+	}
+
 	// This is the main loop for the editor
 	for !e.quit {
 
