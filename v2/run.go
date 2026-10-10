@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"os"
@@ -161,6 +162,10 @@ func (e *Editor) Run() (string, bool, error) {
 		if rom := gbaROM(sourceDir); rom != "" {
 			if cmd = slay.GBAEmulatorCommand(rom); cmd == nil {
 				return "", false, errors.New("please install mGBA to run " + filepath.Base(rom))
+			}
+		} else if exe := dosExecutable(sourceDir, sourceFilename); exe != "" {
+			if cmd = dosboxCommand(exe); cmd == nil {
+				return "", false, errors.New("please install DOSBox-X, DOSBox Staging or DOSBox to run " + filepath.Base(exe))
 			}
 		} else {
 			cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
@@ -404,4 +409,63 @@ func gbaROM(sourceDir string) string {
 		return rom
 	}
 	return ""
+}
+
+// dosExecutable returns the path to a DOS program that was built in the given directory,
+// or an empty string if there is none. Windows executables are not DOS programs.
+func dosExecutable(sourceDir, sourceFilename string) string {
+	firstName := strings.TrimSuffix(filepath.Base(sourceFilename), filepath.Ext(sourceFilename))
+	candidates := []string{firstName, filepath.Base(sourceDir), "main"}
+	if matches, err := filepath.Glob(filepath.Join(sourceDir, "*.[eE][xX][eE]")); err == nil {
+		for _, match := range matches {
+			candidates = append(candidates, strings.TrimSuffix(filepath.Base(match), filepath.Ext(match)))
+		}
+	}
+	for _, name := range candidates {
+		for _, ext := range []string{".exe", ".EXE"} {
+			if exe := filepath.Join(sourceDir, name+ext); isDOSExecutable(exe) {
+				return exe
+			}
+		}
+	}
+	return ""
+}
+
+// isDOSExecutable checks if the given file is an MZ executable without a Windows PE header
+func isDOSExecutable(filename string) bool {
+	f, err := os.Open(filename)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	header := make([]byte, 64)
+	if _, err := f.ReadAt(header, 0); err != nil || string(header[:2]) != "MZ" {
+		return false
+	}
+	peOffset := int64(binary.LittleEndian.Uint32(header[0x3c:]))
+	signature := make([]byte, 4)
+	if _, err := f.ReadAt(signature, peOffset); err != nil {
+		return true
+	}
+	return string(signature) != "PE\x00\x00"
+}
+
+// dosboxCommand returns a command that runs the given DOS program in DOSBox-X, DOSBox Staging
+// or DOSBox, whichever is found first, or nil if none of them are installed.
+func dosboxCommand(exe string) *exec.Cmd {
+	for _, name := range []string{"dosbox-x", "dosbox-staging", "dosbox"} {
+		p := files.WhichCached(name)
+		if p == "" {
+			continue
+		}
+		var args []string
+		if name == "dosbox-x" {
+			args = append(args, "-fastlaunch")
+		}
+		args = append(args, exe, "-exit")
+		cmd := exec.Command(p, args...)
+		cmd.Dir = filepath.Dir(exe)
+		return cmd
+	}
+	return nil
 }
