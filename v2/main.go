@@ -17,6 +17,7 @@ import (
 	"github.com/xyproto/digraph"
 	"github.com/xyproto/env/v2"
 	"github.com/xyproto/files"
+	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/megafile"
 	"github.com/xyproto/slay"
 	"github.com/xyproto/themes"
@@ -107,6 +108,8 @@ func main() {
 	slay.ProgURL = "https://github.com/xyproto/orbiton"
 
 	os.Setenv("ORBITON", "1") // set ORBITON to 1, for Megafile
+
+	imagepreview.CheckSixelSpeed()
 
 	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), reap orphaned
 	// child processes so they don't pile up as zombies. The editor also never
