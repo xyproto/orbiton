@@ -225,6 +225,14 @@ func (e *Editor) Run() (string, bool, error) {
 		} else {
 			cmd = exec.Command("sclang", sourceFilename)
 		}
+	case mode.Assembly:
+		if com := filepath.Join(sourceDir, e.exeName(e.filename, false)+".com"); isDOSAssembly(e.String()) && files.IsFile(com) {
+			if cmd = dosboxCommand(com); cmd == nil {
+				return "", false, errors.New("please install DOSBox-X, DOSBox Staging or DOSBox to run " + filepath.Base(com))
+			}
+		} else {
+			cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
+		}
 	default:
 		cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 	}
@@ -468,4 +476,18 @@ func dosboxCommand(exe string) *exec.Cmd {
 		return cmd
 	}
 	return nil
+}
+
+// isDOSAssembly checks if the given assembly source code is for a DOS .com program, which starts with org 100h
+func isDOSAssembly(sourceCode string) bool {
+	for line := range strings.SplitSeq(sourceCode, "\n") {
+		if i := strings.IndexByte(line, ';'); i >= 0 {
+			line = line[:i]
+		}
+		fields := strings.Fields(strings.ToLower(strings.Trim(strings.TrimSpace(line), "[]")))
+		if len(fields) == 2 && fields[0] == "org" && (fields[1] == "100h" || fields[1] == "0x100" || fields[1] == "256") {
+			return true
+		}
+	}
+	return false
 }
