@@ -757,6 +757,14 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
 	case mode.Assembly:
+		if isDOSAssembly(e.String()) && files.WhichCached("nasm") != "" {
+			comFilename := exeFilename + ".com"
+			cmd = exec.Command("nasm", "-f", "bin", "-o", comFilename, sourceFilename)
+			cmd.Dir = sourceDir
+			return cmd, func() (bool, string) {
+				return files.IsFile(comFilename), filepath.Base(comFilename)
+			}, nil
+		}
 		objFullFilename := exeFilename + ".o"
 		objCheckFunc := func() (bool, string) {
 			// Note that returning the full path as the second argument instead of only the base name
@@ -974,7 +982,7 @@ analyzeOutput:
 	}
 
 	// Also perform linking, if needed
-	if ok, objFullFilename := compilationProducedSomething(); e.mode == mode.Assembly && ok {
+	if ok, objFullFilename := compilationProducedSomething(); e.mode == mode.Assembly && ok && strings.HasSuffix(objFullFilename, ".o") {
 		linkerCmd := exec.Command("ld", "-o", exeFilename, objFullFilename)
 		linkerCmd.Dir = sourceDir
 		if e.debugMode {
