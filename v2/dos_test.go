@@ -30,3 +30,12 @@ func TestIsDOSExecutable(t *testing.T) {
 		t.Errorf("dosExecutable returned %q", got)
 	}
 }
+
+func TestIsDOSAssembly(t *testing.T) {
+	if !isDOSAssembly("; intro\norg 100h ; COM file\nmov al, 13h\n") || !isDOSAssembly("[ORG 0x100]\n") {
+		t.Error("org 100h should be detected as DOS assembly")
+	}
+	if isDOSAssembly("section .text\nglobal _start\n; org 100h\n") {
+		t.Error("Linux assembly should not be detected as DOS assembly")
+	}
+}
