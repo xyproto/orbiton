@@ -1087,23 +1087,10 @@ func segmentsPlainText(segs []textSegment) string {
 
 // parseBookLine converts a raw Markdown line into a parsedLine.
 func parseBookLine(line string) parsedLine {
-	return parseBookLineInContext(line, false)
-}
-
-// parseBookLineInContext converts a raw Markdown line into a parsedLine with HTML comment context.
-func parseBookLineInContext(line string, inComment bool) parsedLine {
 	if strings.TrimSpace(line) == "" {
 		return parsedLine{kind: lineKindBlank}
 	}
-	// If we're currently inside a multiline HTML comment block, skip the line
-	if inComment {
-		return parsedLine{kind: lineKindBlank}
-	}
-	// HTML comments: <!-- ... --> (render as blank to hide from output)
 	trimmedWhole := strings.TrimSpace(line)
-	if strings.HasPrefix(trimmedWhole, "<!--") && strings.Contains(trimmedWhole, "-->") {
-		return parsedLine{kind: lineKindBlank}
-	}
 	if isHorizontalRule(line) {
 		return parsedLine{kind: lineKindRule}
 	}
@@ -3084,7 +3071,7 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 			continue
 		}
 
-		pl := parseBookLineInContext(rawLine, false)
+		pl := parseBookLine(rawLine)
 		if inFence {
 			pl = parsedLine{kind: lineKindCode, body: rawLine}
 		}
@@ -4770,7 +4757,7 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 		rl = strings.ReplaceAll(rl, "\t", "    ")
 		// Hidden HTML comment lines consume no display rows, matching
 		// the rendering in bookContentImage.
-		if e.isBookHiddenLine(dl) {
+		if e.bookGraphicalMode() && e.isBookHiddenLine(dl) {
 			dl++
 			continue
 		}
@@ -5762,7 +5749,7 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 	e.pos.SetY(e.pos.sy + 1)
 	// Skip hidden HTML comment lines so the cursor doesn't land on an
 	// invisible line (matching the rendering in bookContentImage).
-	for int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
+	for e.bookGraphicalMode() && int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
 		e.pos.SetY(e.pos.sy + 1)
 	}
 	// In graphical mode, consecutive image lines are rendered as a single
@@ -5855,7 +5842,7 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, _ *StatusBar) bool {
 	e.pos.SetY(e.pos.sy - 1)
 	// Skip hidden HTML comment lines so the cursor doesn't land on an
 	// invisible line (matching the rendering in bookContentImage).
-	for e.DataY() > 0 && e.isBookHiddenLine(int(e.DataY())) {
+	for e.bookGraphicalMode() && e.DataY() > 0 && e.isBookHiddenLine(int(e.DataY())) {
 		e.pos.SetY(e.pos.sy - 1)
 	}
 	// In graphical mode, if we landed inside an image group (not on the
