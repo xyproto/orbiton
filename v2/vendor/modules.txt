@@ -121,8 +121,8 @@ github.com/xyproto/globi
 # github.com/xyproto/iferr v1.1.0
 ## explicit; go 1.19
 github.com/xyproto/iferr
-# github.com/xyproto/imagepreview v1.2.3
-## explicit; go 1.25.1
+# github.com/xyproto/imagepreview v1.2.4
+## explicit; go 1.26.0
 github.com/xyproto/imagepreview
 # github.com/xyproto/javasig v1.0.3
 ## explicit; go 1.24.2
