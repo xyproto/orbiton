@@ -314,7 +314,7 @@ func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput s
 		lines = append([]string{"[...]", ""}, lines...)
 	}
 
-	boxMinWidth := w - 7
+	boxMinWidth := w - 9
 
 	maxLineLength := maxLength(lines)
 
@@ -342,12 +342,9 @@ func (e *Editor) DrawOutput(c *vt.Canvas, maxLines int, title, collectedOutput s
 		lowerBox.W += 7
 	}
 
-	lowerBox.Y -= 5
-	lowerBox.H += 4
-
-	if rightHandSide { // cosmetic adjustments
-		lowerBox.W -= 2
-	}
+	lowerBox.Y -= 7
+	lowerBox.H += 7
+	lowerBox.W -= 2
 
 	// Then create a list box
 	listBox := NewBox()

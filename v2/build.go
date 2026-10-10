@@ -1739,10 +1739,10 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 				e.FullResetRedraw(c, status, drawLines, shouldHighlightCurrentLine)
 
 				title := "Program output"
-				n := 25
+				n := 27
 				h := float64(c.Height())
 				counter := 0
-				for float64(n) > h*0.6 {
+				for float64(n) > h*0.7 {
 					n /= 2
 					counter++
 					if counter > 10 { // endless loop safeguard
@@ -1750,7 +1750,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 					}
 				}
 				// Expand the box to show more output if there is room on the canvas
-				maxAllowed := int(h * 0.6)
+				maxAllowed := int(h * 0.7)
 				if outputLineCount := strings.Count(output, "\n"); outputLineCount > n && outputLineCount <= maxAllowed {
 					n = outputLineCount
 				}
