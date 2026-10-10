@@ -14,6 +14,7 @@ import (
 	"io"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -26,6 +27,7 @@ import (
 
 	"github.com/srwiley/rasterx"
 	"github.com/xyproto/env/v2"
+	"github.com/xyproto/files"
 	"github.com/xyproto/imagepreview"
 	"github.com/xyproto/oksvg"
 	"github.com/xyproto/vt"
@@ -6952,4 +6954,70 @@ func (e *Editor) bookGraphicalUserInput(c *vt.Canvas, tty *vt.TTY, title string)
 		}
 		renderDialog(title, entered)
 	}
+}
+
+// restoreBookState returns to the given book mode state
+func (e *Editor) restoreBookState(state BookModeState) {
+	switch state {
+	case BookModeOff:
+		if e.InBookMode() {
+			e.exitBookMode()
+		}
+	case BookModeText:
+		e.enterBookModeText()
+	case BookModeGraphical:
+		e.enterBookModeGraphical()
+	}
+}
+
+// viewMarkdownInBrowser saves the document and opens it in the browser in $BROWSER, or the default browser.
+// "algernon -m" is used if it is available, otherwise the document is exported to HTML first.
+func (e *Editor) viewMarkdownInBrowser(c *vt.Canvas, tty *vt.TTY, status *StatusBar) {
+	status.ClearAll(c, false)
+	if e.changed.Load() {
+		if err := e.Save(c, tty); err != nil {
+			status.SetError(err)
+			status.Show(c, e)
+			return
+		}
+	}
+	absFilename, err := filepath.Abs(e.filename)
+	if err != nil {
+		status.SetError(err)
+		status.Show(c, e)
+		return
+	}
+	browser := env.Str("BROWSER")
+	var cmd *exec.Cmd
+	if files.WhichCached("algernon") != "" {
+		args := []string{"-m"}
+		if browser != "" {
+			args = append(args, "--open="+browser)
+		}
+		cmd = exec.Command("algernon", append(args, absFilename)...)
+	} else {
+		htmlFilename := filepath.Join(filepath.Dir(absFilename), strings.ReplaceAll(filepath.Base(absFilename), ".", "_")+".html")
+		if err := e.exportMarkdownHTML(c, status, htmlFilename); err != nil {
+			return
+		}
+		switch {
+		case browser != "":
+			cmd = exec.Command(browser, htmlFilename)
+		case isDarwin:
+			cmd = exec.Command("open", htmlFilename)
+		case isWindows:
+			cmd = exec.Command("cmd", "/C", "start", "", htmlFilename)
+		default:
+			cmd = exec.Command("xdg-open", htmlFilename)
+		}
+	}
+	cmd.Dir = filepath.Dir(absFilename)
+	if err := cmd.Start(); err != nil {
+		status.SetError(err)
+		status.Show(c, e)
+		return
+	}
+	go cmd.Wait()
+	status.SetMessage("Opening " + filepath.Base(absFilename) + " in the browser")
+	status.Show(c, e)
 }

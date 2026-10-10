@@ -126,6 +126,9 @@ var (
 
 	// the last time ctrl-space stepped through the book-mode cycle, used to debounce buffered repeats
 	lastBookModeToggle time.Time
+
+	// the book mode state before the last ctrl-space toggle, so that a double tap can undo the first tap
+	bookStateBeforeToggle BookModeState
 )
 
 // the shortest interval between successive ctrl-space book-mode cycle steps
@@ -140,6 +143,7 @@ func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, dra
 		return
 	}
 	lastBookModeToggle = time.Now()
+	bookStateBeforeToggle = e.bookState()
 	if bookModeTextFlag && bookGraphicsCapable() {
 		// Started with -T and graphics available: toggle text <--> graphical, never drop to regular editing.
 		if e.bookGraphicalMode() {
@@ -986,6 +990,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 		case "c:0", "F5": // ctrl-space or F5, build (or export/cycle when in book mode, toggle checkboxes in Markdown)
 			if e.nanoMode.Load() {
 				break // do nothing
+			}
+			if e.mode == mode.Markdown && !bookGraphicsCapable() && kh.DoubleTapped("c:0") {
+				if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
+					e.restoreBookState(bookStateBeforeToggle)
+				}
+				e.viewMarkdownInBrowser(c, tty, status)
+				drainKeys(tty, "c:0")
+				e.FullResetRedraw(c, status, true, false)
+				break
 			}
 			if e.InBookMode() {
 				e.cycleBookMode(c, tty, status, "c:0", kh.DoubleTapped("c:0"))
