@@ -142,6 +142,7 @@ func (e *Editor) cycleBookMode(c *vt.Canvas, tty *vt.TTY, status *StatusBar, dra
 	if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 		return
 	}
+	imagepreview.CheckSixelSpeed()
 	lastBookModeToggle = time.Now()
 	bookStateBeforeToggle = e.bookState()
 	if bookModeTextFlag && bookGraphicsCapable() {
@@ -991,7 +992,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
-			if e.mode == mode.Markdown && !bookGraphicsCapable() && kh.DoubleTapped("c:0") {
+			if e.mode == mode.Markdown && kh.DoubleTapped("c:0") && (e.InBookMode() || !bookGraphicsCapable()) {
 				if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 					e.restoreBookState(bookStateBeforeToggle)
 				}

@@ -328,6 +328,11 @@ func (e *Editor) enterBookModeText() {
 
 // enterBookModeGraphical enables graphical book mode, saving settings so exitBookMode can restore them.
 func (e *Editor) enterBookModeGraphical() {
+	imagepreview.CheckSixelSpeed()
+	if !bookGraphicsCapable() {
+		e.enterBookModeText()
+		return
+	}
 	if imagepreview.IsKitty && e.InBookMode() {
 		imagepreview.DeleteInlineImages()
 	}
