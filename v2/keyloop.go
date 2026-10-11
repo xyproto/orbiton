@@ -613,7 +613,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 	// This is the main loop for the editor
 	for !e.quit {
 
-		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
+		if len(e.queuedKeys) > 0 {
+			key = e.queuedKeys[0]
+			e.queuedKeys = e.queuedKeys[1:]
+			recording := e.macro != nil && e.macro.Recording
+			if recording && key != "c:20" {
+				e.macro.Add(key)
+			}
+			recordKeyActivity()
+			undo.IgnoreSnapshots(recording)
+		} else if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// In book mode, use a short read timeout while images are
 			// downloading so that completed downloads trigger a redraw
 			// without waiting for a keypress.

@@ -52,6 +52,7 @@ type Editor struct {
 	macro                        *Macro            // the contents of the current macro (will be cleared when esc is pressed)
 	hlCache                      *highlightCache   // cached QuoteState checkpoints for fast redraw of large files
 	debugWatches                 map[string]string // watches preserved across debug sessions
+	queuedKeys                   []string          // keys pressed while waiting for something, handled by the main loop next
 	blockCursors                 map[int]int       // per-line cursor X positions for block editing (line Y -> X)
 	selection                    *Selection        // active text selection, nil if none
 	filename                     string            // the current filename
