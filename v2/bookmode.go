@@ -90,6 +90,14 @@ func (e *Editor) bookBGImage() image.Image {
 	return image.NewUniform(e.bookBG())
 }
 
+// bookCommentFG returns the dimmed color used for HTML comments in graphical book mode.
+func (e *Editor) bookCommentFG() color.NRGBA {
+	if e.bookDarkMode {
+		return color.NRGBA{0x90, 0x90, 0x90, 0xff}
+	}
+	return color.NRGBA{0x80, 0x80, 0x80, 0xff}
+}
+
 // bookCodeBG returns the code-block background color.
 func (e *Editor) bookCodeBG() color.NRGBA {
 	if e.bookDarkMode {
@@ -804,52 +812,48 @@ func isFencedCodeMarker(line string) bool {
 	return strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~")
 }
 
-// fenceStateAtLine reports whether line lineIdx is inside a fenced code block.
-func (e *Editor) fenceStateAtLine(lineIdx int) bool {
-	inFence := false
-	for i := range lineIdx {
-		raw := e.Line(LineIndex(i))
-		raw = strings.ReplaceAll(raw, "\t", "    ")
-		if isFencedCodeMarker(raw) {
-			inFence = !inFence
-		}
-	}
-	return inFence
+// bookCommentState tracks fenced code blocks and HTML comments while walking document lines.
+type bookCommentState struct {
+	inFence   bool
+	inComment bool
 }
 
-// inHTMLCommentAtLine reports whether line lineIdx is inside an HTML comment block.
-func (e *Editor) inHTMLCommentAtLine(lineIdx int) bool {
+// next reports whether the given line is part of an HTML comment, and advances the state.
+// Lines in fenced code blocks are never comments.
+func (s *bookCommentState) next(line string) bool {
 	const openTag = "<!--"
 	const closeTag = "-->"
-	inComment := false
-	for i := range lineIdx {
-		raw := e.Line(LineIndex(i))
-		for j := 0; j < len(raw); {
-			if strings.HasPrefix(raw[j:], openTag) {
-				inComment = true
-				j += len(openTag)
-			} else if strings.HasPrefix(raw[j:], closeTag) {
-				inComment = false
-				j += len(closeTag)
-			} else {
-				j++
-			}
+	if !s.inComment && isFencedCodeMarker(line) {
+		s.inFence = !s.inFence
+		return false
+	}
+	if s.inFence {
+		return false
+	}
+	isComment := s.inComment
+	for j := 0; j < len(line); {
+		switch {
+		case !s.inComment && strings.HasPrefix(line[j:], openTag):
+			s.inComment = true
+			isComment = true
+			j += len(openTag)
+		case s.inComment && strings.HasPrefix(line[j:], closeTag):
+			s.inComment = false
+			j += len(closeTag)
+		default:
+			j++
 		}
 	}
-	return inComment
+	return isComment
 }
 
-// isBookHiddenLine reports whether the given data line is hidden in graphical
-// book mode. A line is hidden when it starts inside an HTML comment block, or
-// contains an opening <!-- or closing --> marker (matching bookContentImage).
-func (e *Editor) isBookHiddenLine(lineIdx int) bool {
-	const openTag = "<!--"
-	const closeTag = "-->"
-	wasInComment := e.inHTMLCommentAtLine(lineIdx)
-	raw := e.Line(LineIndex(lineIdx))
-	commentStarted := strings.Contains(raw, openTag)
-	commentEnded := strings.Contains(raw, closeTag)
-	return wasInComment || commentStarted || commentEnded
+// bookCommentStateAt returns the comment state at the start of line lineIdx.
+func (e *Editor) bookCommentStateAt(lineIdx int) bookCommentState {
+	var state bookCommentState
+	for i := range lineIdx {
+		state.next(strings.ReplaceAll(e.Line(LineIndex(i)), "\t", "    "))
+	}
+	return state
 }
 
 // isHorizontalRule reports whether the line is a Markdown thematic break
@@ -3003,7 +3007,8 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	marginTop := int(float64(pixH) * bookMarginTop)
 	marginBottom := int(float64(pixH) * bookMarginBottom)
 
-	dark := e.bookFG()
+	pageFG := e.bookFG()
+	commentFG := e.bookCommentFG()
 	pageBG := e.bookBGImage()
 	maxLines := min((pixH-marginTop-marginBottom)/lineH, editRows)
 	rightMargin := pixW - int(float64(pixW)*bookMarginRight)
@@ -3011,10 +3016,9 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 	startLine := e.pos.offsetY
 	totalLines := e.Len()
 
-	// Determine whether we start inside a fenced code block.
-	inFence := e.fenceStateAtLine(startLine)
-	// Determine whether we start inside an HTML comment block.
-	inComment := e.inHTMLCommentAtLine(startLine)
+	// Determine whether we start inside a fenced code block or an HTML comment block.
+	comments := e.bookCommentStateAt(startLine)
+	inFence := comments.inFence
 	// codeBlockStart is flipped to true when we transition into a fenced
 	// code block via a fence marker; the first subsequent code line uses it
 	// to inset its gray background by a few pixels, producing a visible
@@ -3031,48 +3035,21 @@ func (e *Editor) bookContentImage(pixW, pixH, editRows int, cellH uint) *image.R
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 
-		// Track HTML comment state: a line is hidden if it's inside a comment
-		// (inComment was true at line start) OR if the line contains both <!-- and -->
-		// on the same line (single-line comment). Update inComment for next iteration.
-		const htmlCommentOpen = "<!--"
-		const htmlCommentClose = "-->"
-		wasInComment := inComment
-		commentStarted := false
-		commentEnded := false
-		for j := 0; j < len(rawLine); {
-			if strings.HasPrefix(rawLine[j:], htmlCommentOpen) {
-				inComment = true
-				commentStarted = true
-				j += len(htmlCommentOpen)
-			} else if strings.HasPrefix(rawLine[j:], htmlCommentClose) {
-				inComment = false
-				commentEnded = true
-				j += len(htmlCommentClose)
-			} else {
-				j++
-			}
+		lineIsComment := comments.next(rawLine)
+		dark := pageFG
+		if lineIsComment {
+			dark = commentFG
 		}
-
-		// A line should be hidden if:
-		// 1. It started inside a comment block (wasInComment), OR
-		// 2. It contains the opening <!-- marker (commentStarted), OR
-		// 3. It contains the closing --> marker (commentEnded)
-		lineIsComment := wasInComment || commentStarted || commentEnded
 
 		docLine++
 
 		// Fence marker: toggle state, render as blank row.
-		if isFencedCodeMarker(rawLine) {
+		if !lineIsComment && isFencedCodeMarker(rawLine) {
 			if !inFence {
 				codeBlockStart = true
 			}
 			inFence = !inFence
 			row++
-			continue
-		}
-
-		// HTML comment line: skip without rendering or consuming display row
-		if lineIsComment {
 			continue
 		}
 
@@ -3341,9 +3318,9 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 	totalLines := e.Len()
 
 	// Map cursor document line to its display row, accounting for multi-row
-	// images, fenced code blocks, HTML comment lines, and soft-wrapped body/list lines.
-	inFence := e.fenceStateAtLine(startLine)
-	inComment := e.inHTMLCommentAtLine(startLine)
+	// images, fenced code blocks, and soft-wrapped body/list lines.
+	comments := e.bookCommentStateAt(startLine)
+	inFence := comments.inFence
 	cursorDisplayRow := -1
 	cursorInFence := false
 	{
@@ -3351,32 +3328,12 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 		for row := 0; row < maxLines && dl < totalLines; {
 			rl := e.Line(LineIndex(dl))
 			rl = strings.ReplaceAll(rl, "\t", "    ")
-
-			// Track HTML comment state: comment lines consume no display rows.
-			const htmlCommentOpen = "<!--"
-			const htmlCommentClose = "-->"
-			wasInComment := inComment
-			commentStarted := false
-			commentEnded := false
-			for j := 0; j < len(rl); {
-				if strings.HasPrefix(rl[j:], htmlCommentOpen) {
-					inComment = true
-					commentStarted = true
-					j += len(htmlCommentOpen)
-				} else if strings.HasPrefix(rl[j:], htmlCommentClose) {
-					inComment = false
-					commentEnded = true
-					j += len(htmlCommentClose)
-				} else {
-					j++
-				}
-			}
-			lineIsComment := wasInComment || commentStarted || commentEnded
+			lineIsComment := comments.next(rl)
 
 			dl++
 
 			// Fence marker: toggle state, render as blank row (matches bookContentImage).
-			if isFencedCodeMarker(rl) {
+			if !lineIsComment && isFencedCodeMarker(rl) {
 				inFence = !inFence
 				if dl-1 == cursorDataY {
 					cursorDisplayRow = row
@@ -3387,10 +3344,6 @@ func (e *Editor) bookOverlayCursor(dst *image.RGBA, pixW, pixH, editRows int, ce
 				continue
 			}
 
-			// HTML comment line: skip without consuming a display row.
-			if lineIsComment {
-				continue
-			}
 			pl := parseBookLine(rl)
 			if inFence {
 				pl = parsedLine{kind: lineKindCode, body: rl}
@@ -3840,11 +3793,15 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 		activeEndY = e.bookParagraphEnd(activeDocY)
 	}
 
+	comments := e.bookCommentStateAt(startLine)
+	commentFg := e.bookTextModeFGDim()
+
 	row := 0
 	docLine := startLine
 	for row+topMargin < yMax && docLine < totalLines {
 		rawLine := e.Line(LineIndex(docLine))
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
+		lineIsComment := comments.next(rawLine)
 		pl := parseBookLine(rawLine)
 		rowBefore := row
 		currentDocLine := LineIndex(docLine)
@@ -3958,6 +3915,16 @@ func (e *Editor) bookTextModeRender(c *vt.Canvas) {
 			}
 		}
 
+		if lineIsComment {
+			for y := rowBefore + topMargin; y < row+topMargin && y < yMax; y++ {
+				for x := range w {
+					if r, err := c.At(uint(x), uint(y)); err == nil && r != 0 && r != ' ' {
+						c.PlotColor(uint(x), uint(y), commentFg, r)
+					}
+				}
+			}
+		}
+
 		// Remember the y-range of the active paragraph so the focus-mode
 		// post-pass can leave it alone and dim everything else.
 		if focusEnabled && currentDocLine >= activeStartY && currentDocLine <= activeEndY {
@@ -4040,7 +4007,8 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 	} else {
 		selBg = color.NRGBA{0xD0, 0xD0, 0xD0, 0xFF}
 	}
-	dark := e.bookFG()
+	pageFG := e.bookFG()
+	commentFG := e.bookCommentFG()
 	codeBg := e.bookCodeBG()
 	pageBG := e.bookBGImage()
 
@@ -4159,8 +4127,8 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		}
 	}
 
-	inFenceSel := e.fenceStateAtLine(startLine)
-	inCommentSel := e.inHTMLCommentAtLine(startLine)
+	commentsSel := e.bookCommentStateAt(startLine)
+	inFenceSel := commentsSel.inFence
 	codeBlockStartSel := false
 	docLine2 := startLine
 	for row := 0; row < maxLines && docLine2 < totalLines; {
@@ -4170,39 +4138,19 @@ func (e *Editor) bookOverlaySelection(dst *image.RGBA, pixW, pixH, editRows int,
 		rawLine := e.Line(lineIdx)
 		rawLine = strings.ReplaceAll(rawLine, "\t", "    ")
 
-		// Track HTML comment state (mirrors bookContentImage).
-		const htmlCommentOpen = "<!--"
-		const htmlCommentClose = "-->"
-		wasInCommentSel := inCommentSel
-		commentStartedSel := false
-		commentEndedSel := false
-		for j := 0; j < len(rawLine); {
-			if strings.HasPrefix(rawLine[j:], htmlCommentOpen) {
-				inCommentSel = true
-				commentStartedSel = true
-				j += len(htmlCommentOpen)
-			} else if strings.HasPrefix(rawLine[j:], htmlCommentClose) {
-				inCommentSel = false
-				commentEndedSel = true
-				j += len(htmlCommentClose)
-			} else {
-				j++
-			}
+		lineIsCommentSel := commentsSel.next(rawLine)
+		dark := pageFG
+		if lineIsCommentSel {
+			dark = commentFG
 		}
-		lineIsCommentSel := wasInCommentSel || commentStartedSel || commentEndedSel
 
 		// Fence marker: toggle state (matches bookContentImage ordering).
-		if isFencedCodeMarker(rawLine) {
+		if !lineIsCommentSel && isFencedCodeMarker(rawLine) {
 			if !inFenceSel {
 				codeBlockStartSel = true
 			}
 			inFenceSel = !inFenceSel
 			row++
-			continue
-		}
-
-		// HTML comment line: skip without consuming a display row.
-		if lineIsCommentSel {
 			continue
 		}
 
@@ -4760,12 +4708,6 @@ func (e *Editor) countDisplayRowsTo(startDoc, targetDoc, maxRows, lineH, textW, 
 		}
 		rl := e.Line(LineIndex(dl))
 		rl = strings.ReplaceAll(rl, "\t", "    ")
-		// Hidden HTML comment lines consume no display rows, matching
-		// the rendering in bookContentImage.
-		if e.bookGraphicalMode() && e.isBookHiddenLine(dl) {
-			dl++
-			continue
-		}
 		pl := parseBookLine(rl)
 		switch {
 		case pl.kind == lineKindImage:
@@ -5752,11 +5694,6 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 		return false
 	}
 	e.pos.SetY(e.pos.sy + 1)
-	// Skip hidden HTML comment lines so the cursor doesn't land on an
-	// invisible line (matching the rendering in bookContentImage).
-	for e.bookGraphicalMode() && int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
-		e.pos.SetY(e.pos.sy + 1)
-	}
 	// In graphical mode, consecutive image lines are rendered as a single
 	// group at one visual row. If we landed on an image line whose previous
 	// line is also an image (meaning we're inside the group, not entering it
@@ -5775,10 +5712,6 @@ func (e *Editor) bookCursorDown(c *vt.Canvas, status *StatusBar) bool {
 			}
 			// Move one more to land past the image group.
 			if int(e.DataY()) < e.Len()-1 {
-				e.pos.SetY(e.pos.sy + 1)
-			}
-			// Skip any hidden lines after the group.
-			for int(e.DataY()) < e.Len()-1 && e.isBookHiddenLine(int(e.DataY())) {
 				e.pos.SetY(e.pos.sy + 1)
 			}
 		}
@@ -5845,11 +5778,6 @@ func (e *Editor) bookCursorUp(c *vt.Canvas, _ *StatusBar) bool {
 	// Advance DataY directly by decrementing sy; bookModeEnsureCursorVisible
 	// will handle scroll-up when sy goes below zero.
 	e.pos.SetY(e.pos.sy - 1)
-	// Skip hidden HTML comment lines so the cursor doesn't land on an
-	// invisible line (matching the rendering in bookContentImage).
-	for e.bookGraphicalMode() && e.DataY() > 0 && e.isBookHiddenLine(int(e.DataY())) {
-		e.pos.SetY(e.pos.sy - 1)
-	}
 	// In graphical mode, if we landed inside an image group (not on the
 	// first line of it), jump to the first line of the group so the cursor
 	// lands at the visual top of the group, matching bookOverlayCursor.
@@ -6962,6 +6890,36 @@ func (e *Editor) restoreBookState(state BookModeState) {
 	}
 }
 
+// browserCommand splits the value of $BROWSER into a command and arguments for opening target.
+// The value may contain flags, a %s placeholder for the target, and several browsers
+// separated by the path list separator, where the first one that is found is used.
+func browserCommand(browser, target string) (string, []string, bool) {
+	for candidate := range strings.SplitSeq(browser, string(os.PathListSeparator)) {
+		candidate = strings.TrimSpace(candidate)
+		if candidate != "" && !strings.Contains(candidate, "%s") && files.WhichCached(candidate) != "" {
+			return candidate, []string{target}, true
+		}
+		fields := strings.Fields(candidate)
+		if len(fields) == 0 || files.WhichCached(fields[0]) == "" {
+			continue
+		}
+		args := make([]string, 0, len(fields))
+		replaced := false
+		for _, field := range fields[1:] {
+			if strings.Contains(field, "%s") {
+				field = strings.ReplaceAll(field, "%s", target)
+				replaced = true
+			}
+			args = append(args, field)
+		}
+		if !replaced {
+			args = append(args, target)
+		}
+		return fields[0], args, true
+	}
+	return "", nil, false
+}
+
 // viewMarkdownInBrowser saves the document and opens it in the browser in $BROWSER, or the default browser.
 // "algernon -m" is used if it is available, otherwise the document is exported to HTML first.
 func (e *Editor) viewMarkdownInBrowser(c *vt.Canvas, tty *vt.TTY, status *StatusBar) {
@@ -6983,8 +6941,8 @@ func (e *Editor) viewMarkdownInBrowser(c *vt.Canvas, tty *vt.TTY, status *Status
 	var cmd *exec.Cmd
 	if files.WhichCached("algernon") != "" {
 		args := []string{"-m"}
-		if browser != "" {
-			args = append(args, "--open="+browser)
+		if command, _, ok := browserCommand(browser, ""); ok {
+			args = append(args, "--open="+command)
 		}
 		cmd = exec.Command("algernon", append(args, absFilename)...)
 	} else {
@@ -6992,9 +6950,10 @@ func (e *Editor) viewMarkdownInBrowser(c *vt.Canvas, tty *vt.TTY, status *Status
 		if err := e.exportMarkdownHTML(c, status, htmlFilename); err != nil {
 			return
 		}
+		command, args, ok := browserCommand(browser, htmlFilename)
 		switch {
-		case browser != "":
-			cmd = exec.Command(browser, htmlFilename)
+		case ok:
+			cmd = exec.Command(command, args...)
 		case isDarwin:
 			cmd = exec.Command("open", htmlFilename)
 		case isWindows:

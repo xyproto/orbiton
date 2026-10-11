@@ -71,9 +71,6 @@ var (
 	// Graphical book mode: Kitty/iTerm2/Sixel rendering
 	bookModeGraphicalFlag bool
 
-	// Book screenshot: render one frame in graphical book mode and save as PNG
-	bookScreenshotFlag string
-
 	// An empty *Ollama struct
 	ollama = NewOllama()
 
@@ -168,7 +165,6 @@ func main() {
 	pflag.BoolVarP(&bookModeFlag, "book", "B", false, "open in best available book mode (graphical if the terminal supports it, text otherwise)")
 	pflag.BoolVarP(&bookModeTextFlag, "book-mode-text", "T", false, "open in text book mode: soft wrap, plain text, word count")
 	pflag.BoolVarP(&bookModeGraphicalFlag, "book-mode-graphical", "G", false, "open in graphical book mode (requires Kitty, iTerm2 or Sixel support)")
-	pflag.StringVar(&bookScreenshotFlag, "bookscreenshot", "", "render graphical book mode and save a PNG screenshot to the given path")
 	pflag.BoolVarP(&quickHelpFlag, "quick-help", "q", false, "always display the quick help when starting")
 	pflag.BoolVarP(&noQuickHelpFlag, "no-quick-help", "z", false, "never display the quick help when starting")
 	pflag.BoolVarP(&versionFlag, "version", "v", false, "version information")
