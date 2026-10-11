@@ -348,25 +348,38 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	}
 
 	// Resolve pkg-config flags for external includes
+	unresolved := proj.Includes
 	if hasPkgConfig() {
 		seen := make(map[string]bool)
+		resolvedPkgs := make(map[string]bool)
+		unresolved = nil
 		for _, inc := range proj.Includes {
-			pkgName := pkgNameFromInclude(inc)
+			pkgName := pkgNameFromIncludeFor(inc, proj.GtkVersion)
 			if pkgName == "" {
-				if name, flags := pkgConfigFlagsForHeader(inc); name != "" && !seen[name] {
+				name, flags := pkgConfigFlagsForHeader(inc)
+				if name == "" {
+					unresolved = append(unresolved, inc)
+				} else if !seen[name] {
 					seen[name] = true
 					bf.CFlags, bf.LDFlags = mergeFlags(bf.CFlags, bf.LDFlags, flags)
 				}
 				continue
 			}
 			if seen[pkgName] {
+				if !resolvedPkgs[pkgName] {
+					unresolved = append(unresolved, inc)
+				}
 				continue
 			}
 			seen[pkgName] = true
 			flags := pkgConfigFlags(pkgName)
 			if flags != "" {
+				resolvedPkgs[pkgName] = true
 				bf.CFlags, bf.LDFlags = mergeFlags(bf.CFlags, bf.LDFlags, flags)
-			} else if libExists(pkgName) {
+				continue
+			}
+			unresolved = append(unresolved, inc)
+			if libExists(pkgName) {
 				bf.LDFlags = appendUnique(bf.LDFlags, "-l"+pkgName)
 			}
 		}
@@ -378,7 +391,7 @@ func assembleFlags(proj Project, opts BuildOptions) BuildFlags {
 	bf.LDFlags = appendAllUnique(bf.LDFlags, extraLDFlags)
 
 	// Resolve via platform package manager for unresolved includes
-	pkgCFlags, pkgLDFlags := resolveIncludesViaPackageManager(proj.Includes, systemIncludeDirs(), win64, bf.Compiler)
+	pkgCFlags, pkgLDFlags := resolveIncludesViaPackageManager(unresolved, systemIncludeDirs(), win64, bf.Compiler)
 	bf.CFlags = appendAllUnique(bf.CFlags, pkgCFlags)
 	bf.LDFlags = appendAllUnique(bf.LDFlags, pkgLDFlags)
 

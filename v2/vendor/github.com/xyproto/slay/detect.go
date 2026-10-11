@@ -168,6 +168,7 @@ type Project struct {
 	HasGBA            bool // detected from #include <tonc.h> or <gba.h>
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
 	HasDlopen         bool // detected from #include <dlfcn.h>
+	GtkVersion        int
 }
 
 // detectProject scans the current directory to detect the project layout.
@@ -227,6 +228,9 @@ func detectProject() Project {
 
 	// Collect external includes from all sources and project headers
 	p.Includes = collectExternalIncludes(allFiles, p.HasWin64)
+	if slices.Contains(p.Includes, "gtk/gtk.h") || slices.Contains(p.Includes, "vte/vte.h") {
+		p.GtkVersion = detectGtkVersion(allFiles)
+	}
 
 	return p
 }

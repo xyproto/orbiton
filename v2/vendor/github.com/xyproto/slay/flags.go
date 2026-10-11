@@ -31,28 +31,75 @@ func hasPkgConfig() bool {
 
 // bestGtkPkg returns the best available GTK pkg-config name, preferring the newest version.
 func bestGtkPkg() string {
-	for _, pkg := range []string{"gtk4", "gtk+-3.0", "gtk+-2.0"} {
+	return gtkPkgFor(0)
+}
+
+func gtkPkgFor(version int) string {
+	order := []string{"gtk4", "gtk+-3.0", "gtk+-2.0"}
+	want := map[int]string{2: "gtk+-2.0", 3: "gtk+-3.0", 4: "gtk4"}[version]
+	if want != "" {
+		if pkgConfigFlags(want) != "" {
+			return want
+		}
+		fmt.Fprintf(os.Stderr, "WARNING: The source uses the GTK %d API, but %s was not found by pkg-config\n", version, want)
+	}
+	for _, pkg := range order {
 		if pkgConfigFlags(pkg) != "" {
 			return pkg
 		}
+	}
+	if want != "" {
+		return want
 	}
 	return "gtk4"
 }
 
 // bestVtePkg returns the best available VTE pkg-config name, matching the GTK version in use.
 func bestVtePkg() string {
-	gtk := bestGtkPkg()
-	if gtk == "gtk4" {
-		if pkgConfigFlags("vte-2.91-gtk4") != "" {
-			return "vte-2.91-gtk4"
-		}
+	return vtePkgFor(0)
+}
+
+func vtePkgFor(gtkVersion int) string {
+	order := []string{"vte-2.91", "vte-2.91-gtk4"}
+	if gtkPkgFor(gtkVersion) == "gtk4" {
+		order = []string{"vte-2.91-gtk4", "vte-2.91"}
 	}
-	for _, pkg := range []string{"vte-2.91-gtk4", "vte-2.91"} {
+	for _, pkg := range order {
 		if pkgConfigFlags(pkg) != "" {
 			return pkg
 		}
 	}
-	return "vte-2.91-gtk4"
+	return order[0]
+}
+
+var (
+	gtkOnly4Pattern      = regexp.MustCompile(`\b(gtk_window_set_child|gtk_box_append|gtk_box_prepend|gtk_editable_get_text|gtk_editable_set_text|gtk_window_destroy|gtk_drawing_area_set_draw_func|gtk_scrolled_window_set_child|gtk_frame_set_child|gtk_button_set_child|gtk_popover_set_child|gtk_overlay_set_child|gtk_widget_get_first_child|gtk_widget_get_next_sibling|gtk_widget_add_controller|gtk_event_controller_key_new|gtk_gesture_click_new|gtk_snapshot_\w+|GtkSnapshot|gtk_string_list_new|gtk_window_set_titlebar_child)\b|\bgtk_init\s*\(\s*\)`)
+	gtkRemovedIn4Pattern = regexp.MustCompile(`\b(gtk_main|gtk_main_quit|gtk_main_iteration|gtk_events_pending|gtk_container_\w+|GTK_CONTAINER|GtkContainer|gtk_widget_show_all|gtk_box_pack_start|gtk_box_pack_end|gtk_entry_get_text|gtk_entry_set_text|gtk_widget_destroy|gtk_dialog_run|GTK_WINDOW_TOPLEVEL|gtk_window_set_position|gtk_misc_set_alignment|gtk_scrolled_window_add_with_viewport)\b|\bgtk_init\s*\(\s*&`)
+	gtkOnly2Pattern      = regexp.MustCompile(`\b(GtkObject|GTK_OBJECT|gtk_object_\w+|gtk_signal_connect\w*|GTK_WIDGET_FLAGS|GTK_WIDGET_SET_FLAGS|GTK_WIDGET_UNSET_FLAGS|GTK_WIDGET_STATE|GTK_WIDGET_VISIBLE|GTK_WIDGET_REALIZED|gtk_widget_hide_all|GdkPixmap|gdk_pixmap_\w+|GdkColormap|gdk_colormap_\w+|GdkGC|gdk_gc_\w+|gdk_draw_\w+|gtk_combo_box_new_text|gtk_combo_box_append_text|gtk_widget_set_usize|expose_event|expose-event)\b`)
+	gtkSince3Pattern     = regexp.MustCompile(`\b(gtk_box_new|gtk_grid_\w+|GtkGrid|GTK_GRID|gtk_widget_set_hexpand|gtk_widget_set_vexpand|GdkRGBA|gdk_rgba_\w+|gtk_css_provider_\w+|gtk_style_context_\w+|gtk_header_bar_\w+|gtk_stack_\w+|gtk_application_window_new|gtk_button_new_from_icon_name|gtk_label_set_xalign|gtk_widget_set_margin_start)\b`)
+)
+
+func detectGtkVersion(sources []string) int {
+	var only4, removedIn4, only2, since3 int
+	for _, src := range sources {
+		data, err := os.ReadFile(src)
+		if err != nil {
+			continue
+		}
+		only4 += len(gtkOnly4Pattern.FindAllIndex(data, -1))
+		removedIn4 += len(gtkRemovedIn4Pattern.FindAllIndex(data, -1))
+		only2 += len(gtkOnly2Pattern.FindAllIndex(data, -1))
+		since3 += len(gtkSince3Pattern.FindAllIndex(data, -1))
+	}
+	switch {
+	case only4 > 0 && only4 >= removedIn4+only2:
+		return 4
+	case only2 > 0 && only2 >= since3:
+		return 2
+	case removedIn4 > 0:
+		return 3
+	}
+	return 0
 }
 
 // sfmlMajorVersion returns the installed SFML major version (2 or 3), or 0 if unavailable.
@@ -73,7 +120,18 @@ func sfmlMajorVersion() int {
 
 // pkgNameFromInclude guesses the pkg-config package name from an include path.
 func pkgNameFromInclude(inc string) string {
+	return pkgNameFromIncludeFor(inc, 0)
+}
+
+func pkgNameFromIncludeFor(inc string, gtkVersion int) string {
 	lower := strings.ToLower(inc)
+
+	switch lower {
+	case "gtk/gtk.h":
+		return gtkPkgFor(gtkVersion)
+	case "vte/vte.h":
+		return vtePkgFor(gtkVersion)
+	}
 
 	// Well-known mappings
 	mappings := map[string]string{
@@ -87,8 +145,6 @@ func pkgNameFromInclude(inc string) string {
 		"sdl3/sdl_mixer.h":                "SDL3_mixer",
 		"sdl3/sdl_ttf.h":                  "SDL3_ttf",
 		"sdl3/sdl_net.h":                  "SDL3_net",
-		"gtk/gtk.h":                       bestGtkPkg(),
-		"vte/vte.h":                       bestVtePkg(),
 		"gl/gl.h":                         "gl",
 		"gl/glew.h":                       "glew",
 		"gl/glut.h":                       "glu",
