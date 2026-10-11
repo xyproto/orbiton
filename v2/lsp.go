@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 
@@ -40,9 +41,9 @@ type LSPClient struct {
 	stdout         io.ReadCloser
 	stderr         io.ReadCloser
 	cmd            *exec.Cmd
-	msgCh          chan map[string]any // receives parsed messages from the background readLoop
-	done           chan struct{}       // closed by Shutdown to unblock readLoop
-	initOptions    map[string]any      // extra initializationOptions, ie. the nixpkgs expression for nixd
+	responses      map[int]chan map[string]any // pending requests, guarded by responsesMutex
+	closed         chan struct{}               // closed by readLoop when the connection is lost
+	initOptions    map[string]any              // extra initializationOptions, ie. the nixpkgs expression for nixd
 	workspaceRoot  string
 	openedURI      string
 	linkedProjects []any // inline rust-project.json objects for standalone Rust files
@@ -50,9 +51,11 @@ type LSPClient struct {
 	requestID      int
 	mutex          sync.Mutex
 	readyMutex     sync.Mutex // serializes readiness checks
+	responsesMutex sync.Mutex
+	documentMutex  sync.Mutex // serializes document syncs and the requests that depend on them
 	running        bool
 	initialized    bool
-	ready          bool // the server has answered requests, guarded by readyMutex
+	ready          atomic.Bool // the server has answered requests
 }
 
 // errLSPStillStarting is returned when a language server is running but not ready yet
@@ -68,17 +71,15 @@ func needsReadinessCheck(m mode.Mode) bool {
 func (lsp *LSPClient) checkReady(m mode.Mode) bool {
 	lsp.readyMutex.Lock()
 	defer lsp.readyMutex.Unlock()
-	if !lsp.ready && lsp.initialized && (!needsReadinessCheck(m) || lsp.TestReady(m)) {
-		lsp.ready = true
+	if !lsp.ready.Load() && lsp.initialized && (!needsReadinessCheck(m) || lsp.TestReady(m)) {
+		lsp.ready.Store(true)
 	}
-	return lsp.ready
+	return lsp.ready.Load()
 }
 
 // isReady returns true if the language server has been found to answer requests
 func (lsp *LSPClient) isReady() bool {
-	lsp.readyMutex.Lock()
-	defer lsp.readyMutex.Unlock()
-	return lsp.ready
+	return lsp.ready.Load()
 }
 
 // waitUntilReady waits for the language server to answer requests. A server that is still not
@@ -274,6 +275,7 @@ func lspClientKey(m mode.Mode, workspaceRoot string) string {
 var (
 	lspClients     = make(map[string]*LSPClient) // key is "mode:workspaceRoot"
 	lspMutex       sync.Mutex
+	lspTriggered   = make(map[string]bool)   // keys with a background TriggerLSPInitialization in progress
 	lspTempDirs    = make(map[string]string) // file path -> temp directory
 	lspFileMapping = make(map[string]string) // original file path -> temp workspace file path
 )
@@ -496,8 +498,8 @@ func NewLSPClient(serverCmd string, args []string, workspaceRoot string) (*LSPCl
 		stdin:         stdin,
 		stdout:        stdout,
 		stderr:        stderr,
-		msgCh:         make(chan map[string]any, 32),
-		done:          make(chan struct{}),
+		responses:     make(map[int]chan map[string]any),
+		closed:        make(chan struct{}),
 		requestID:     0,
 		running:       true,
 		initialized:   false,
@@ -553,6 +555,9 @@ func (lsp *LSPClient) sendRequest(method string, params any) (int, error) {
 	}
 	lsp.requestID++
 	id := lsp.requestID
+	lsp.responsesMutex.Lock()
+	lsp.responses[id] = make(chan map[string]any, 1)
+	lsp.responsesMutex.Unlock()
 	request := map[string]any{
 		"jsonrpc": "2.0",
 		"id":      id,
@@ -560,15 +565,19 @@ func (lsp *LSPClient) sendRequest(method string, params any) (int, error) {
 		"params":  params,
 	}
 	if err := lsp.writeMessage(request); err != nil {
+		lsp.responsesMutex.Lock()
+		delete(lsp.responses, id)
+		lsp.responsesMutex.Unlock()
 		return 0, err
 	}
 	return id, nil
 }
 
 // readLoop is a persistent background goroutine that reads LSP messages from
-// stdout and sends them to msgCh. It exits when stdout is closed or returns an error.
+// stdout and passes each response to the request that is waiting for it.
+// It exits when stdout is closed or returns an error.
 func (lsp *LSPClient) readLoop() {
-	defer close(lsp.msgCh)
+	defer close(lsp.closed)
 	reader := bufio.NewReader(lsp.stdout)
 	for {
 		headers := make(map[string]string)
@@ -609,10 +618,20 @@ func (lsp *LSPClient) readLoop() {
 			}
 			continue // notifications are not handled yet
 		}
-		select {
-		case lsp.msgCh <- result:
-		case <-lsp.done:
-			return
+		idVal, hasID := result["id"]
+		if !hasID {
+			continue
+		}
+		id, ok := idVal.(float64)
+		if !ok {
+			continue
+		}
+		lsp.responsesMutex.Lock()
+		ch, waiting := lsp.responses[int(id)]
+		delete(lsp.responses, int(id))
+		lsp.responsesMutex.Unlock()
+		if waiting {
+			ch <- result
 		}
 	}
 }
@@ -650,32 +669,35 @@ func (lsp *LSPClient) answerServerRequest(method string, reqID, params any) {
 	})
 }
 
-// readResponse reads the JSON-RPC response matching expectedID.
-// NOTE: only one goroutine should call readResponse at a time;
-// concurrent callers would race on msgCh and discard each other's responses.
-func (lsp *LSPClient) readResponse(expectedID int, timeout time.Duration) (map[string]any, error) {
+// readResponse waits for the JSON-RPC response to the request with the given ID.
+// It gives up when the timeout has passed or the context is canceled.
+func (lsp *LSPClient) readResponse(ctx context.Context, id int, timeout time.Duration) (map[string]any, error) {
+	lsp.responsesMutex.Lock()
+	ch, ok := lsp.responses[id]
+	lsp.responsesMutex.Unlock()
+	if !ok {
+		return nil, fmt.Errorf("no pending LSP request with id %d", id)
+	}
+	defer func() {
+		lsp.responsesMutex.Lock()
+		delete(lsp.responses, id)
+		lsp.responsesMutex.Unlock()
+	}()
 	timer := time.NewTimer(timeout)
 	defer timer.Stop()
-	for {
-		select {
-		case result, ok := <-lsp.msgCh:
-			if !ok {
-				lsp.mutex.Lock()
-				lsp.running = false
-				lsp.openedURI = ""
-				lsp.mutex.Unlock()
-				return nil, errors.New("LSP connection closed")
-			}
-			if idVal, hasID := result["id"]; hasID {
-				if id, ok := idVal.(float64); ok && int(id) == expectedID {
-					return result, nil
-				}
-				continue
-			}
-			// no id or method, skip
-		case <-timer.C:
-			return nil, errors.New("timeout reading LSP response")
-		}
+	select {
+	case result := <-ch:
+		return result, nil
+	case <-lsp.closed:
+		lsp.mutex.Lock()
+		lsp.running = false
+		lsp.openedURI = ""
+		lsp.mutex.Unlock()
+		return nil, errors.New("LSP connection closed")
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-timer.C:
+		return nil, errors.New("timeout reading LSP response")
 	}
 }
 
@@ -713,7 +735,7 @@ func (lsp *LSPClient) Initialize() error {
 	}
 	if id, err := lsp.sendRequest("initialize", params); err != nil {
 		return err
-	} else if _, err := lsp.readResponse(id, lspInitTimeout); err != nil {
+	} else if _, err := lsp.readResponse(context.Background(), id, lspInitTimeout); err != nil {
 		return err
 	}
 	if err := lsp.sendNotification("initialized", map[string]any{}); err != nil {
@@ -743,7 +765,7 @@ func (lsp *LSPClient) TestReady(m mode.Mode) bool {
 		if err != nil {
 			return false
 		}
-		_, err = lsp.readResponse(id, 500*time.Millisecond)
+		_, err = lsp.readResponse(context.Background(), id, 500*time.Millisecond)
 		return err == nil
 	}
 	// For other languages, assume ready after initialization
@@ -778,7 +800,7 @@ func (lsp *LSPClient) DidChange(uri, text string, version int) error {
 }
 
 // GetCompletions requests completions at the given position
-func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCharacter string) ([]LSPCompletionItem, error) {
+func (lsp *LSPClient) GetCompletions(ctx context.Context, uri string, line, character int, triggerCharacter string) ([]LSPCompletionItem, error) {
 	if !lsp.initialized {
 		return nil, errors.New("LSP client not initialized")
 	}
@@ -806,7 +828,7 @@ func (lsp *LSPClient) GetCompletions(uri string, line, character int, triggerCha
 	if err != nil {
 		return nil, err
 	}
-	response, err := lsp.readResponse(id, lspCompletionTimeout)
+	response, err := lsp.readResponse(ctx, id, lspCompletionTimeout)
 	if err != nil {
 		return nil, err
 	}
@@ -856,7 +878,7 @@ func (lsp *LSPClient) GetDefinition(uri string, line, character int, timeout tim
 	if err != nil {
 		return nil, err
 	}
-	response, err := lsp.readResponse(id, timeout)
+	response, err := lsp.readResponse(context.Background(), id, timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -908,7 +930,6 @@ func (lsp *LSPClient) Shutdown() error {
 		"method":  "exit",
 	}
 	lsp.writeMessage(notification)
-	close(lsp.done)
 	lsp.stdin.Close()
 	lsp.stdout.Close()
 	lsp.stderr.Close()
@@ -1027,20 +1048,24 @@ func GetOrCreateLSPClient(ctx context.Context, m mode.Mode, workspaceRoot string
 	return waitUntilReady(ctx, client, m)
 }
 
-// TriggerLSPInitialization starts LSP initialization in the background if not already running
+// TriggerLSPInitialization starts LSP initialization in the background if not already running.
+// A client that is running but not ready yet is checked again, since the previous attempt
+// may have given up waiting while the language server was still warming up.
 func TriggerLSPInitialization(m mode.Mode, workspaceRoot string, linkedProjects ...any) {
-	// quick check -- if already exists, return
-	lspMutex.Lock()
 	key := lspClientKey(m, workspaceRoot)
-	if client, exists := lspClients[key]; exists && client != nil {
+	lspMutex.Lock()
+	if client, exists := lspClients[key]; (exists && client != nil && client.isReady()) || lspTriggered[key] {
 		lspMutex.Unlock()
 		return
 	}
+	lspTriggered[key] = true
 	lspMutex.Unlock()
 
-	// start LSP in the background
 	go func() {
 		GetOrCreateLSPClient(context.Background(), m, workspaceRoot, linkedProjects...)
+		lspMutex.Lock()
+		delete(lspTriggered, key)
+		lspMutex.Unlock()
 	}()
 }
 
@@ -1530,7 +1555,7 @@ func (e *Editor) GetLSPCompletions() ([]LSPCompletionItem, error) {
 		}
 	}
 
-	items, err := client.GetCompletions(uri, line, x, triggerChar)
+	items, err := client.GetCompletions(context.Background(), uri, line, x, triggerChar)
 	if err != nil {
 		return nil, err
 	}
@@ -1585,6 +1610,24 @@ func (e *Editor) ShouldOfferLSPCompletion() bool {
 	return true
 }
 
+// waitOrQueueKeypress waits until done is closed and returns true, or returns false as soon as
+// a key is pressed. Esc is consumed, while other keys are queued for the main loop.
+func (e *Editor) waitOrQueueKeypress(tty *vt.TTY, done <-chan struct{}) bool {
+	for {
+		select {
+		case <-done:
+			return true
+		default:
+		}
+		if key := tty.ReadKeyTimeout(20 * time.Millisecond); key != "" {
+			if key != "c:27" {
+				e.queuedKeys = append(e.queuedKeys, key)
+			}
+			return false
+		}
+	}
+}
+
 // handleLSPCompletion handles LSP-based code completion
 func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TTY, undo *Undo) bool {
 	if !e.ShouldOfferLSPCompletion() {
@@ -1625,9 +1668,7 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		workspaceRoot, lspFilePath = ensureGleamWorkspace(absPath)
 	}
 
-	// check if the LSP client already exists
-	existingClient := GetReadyLSPClient(e.mode, workspaceRoot)
-	isNewClient := (existingClient == nil)
+	isNewClient := GetReadyLSPClient(e.mode, workspaceRoot) == nil
 
 	var quitSpinner chan bool
 	var spinnerActive bool
@@ -1655,26 +1696,9 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 	defer stopSpinner()
 
 	if isNewClient {
-		startSpinner(fmt.Sprintf("Starting %s", lspCommand))
-	}
-
-	client, err := GetOrCreateLSPClient(context.Background(), e.mode, workspaceRoot, linkedProjects...)
-	if errors.Is(err, errLSPStillStarting) {
-		stopSpinner()
-		status.SetMessageAfterRedraw(fmt.Sprintf("%s is still starting, press Tab again in a moment", lspCommand))
-		return false
-	}
-	if err != nil {
-		stopSpinner()
-		status.SetMessageAfterRedraw(fmt.Sprintf("Could not launch %s: %v", lspCommand, err))
-		return false
-	}
-
-	// verify client is ready
-	if !client.initialized {
-		stopSpinner()
-		status.SetMessageAfterRedraw(fmt.Sprintf("%s is not responding", lspCommand))
-		return false
+		startSpinner(fmt.Sprintf("Starting %s, press Esc to cancel", lspCommand))
+	} else {
+		startSpinner("")
 	}
 
 	line := int(e.DataY())
@@ -1711,37 +1735,6 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// update the physical file in temp workspace, if any
-	if needsWorkspaceSetup(e.mode) && lspFilePath != absPath {
-		os.WriteFile(lspFilePath, []byte(fileContent), 0644)
-	}
-
-	startSpinner("")
-
-	uri := "file://" + lspFilePath
-	if client.openedURI != uri {
-		if err := client.DidOpen(uri, config.LanguageID, fileContent); err != nil {
-			stopSpinner()
-			client.openedURI = ""
-			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
-			return false
-		}
-		client.openedURI = uri
-		client.openedVersion = 1
-
-	} else {
-		client.openedVersion++
-		if err := client.DidChange(uri, fileContent, client.openedVersion); err != nil {
-			stopSpinner()
-			client.openedURI = ""
-			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
-			return false
-		}
-		if slowToWarmUp(e.mode) {
-			time.Sleep(50 * time.Millisecond)
-		}
-	}
-
 	// detect trigger character (only if cursor is immediately after "." or "::")
 	var triggerChar string
 	if x > 0 && len(currentLine) > 0 {
@@ -1753,52 +1746,125 @@ func (e *Editor) handleLSPCompletion(c *vt.Canvas, status *StatusBar, tty *vt.TT
 		}
 	}
 
-	// request completions, retrying until timeout for language servers that are slow to warm up
-	// and also for the first request to a freshly started server, since ie. bash-language-server
-	// answers with an empty list until it has fetched its configuration from the client
-	var items []LSPCompletionItem
-	completionDeadline := time.Now().Add(lspCompletionWaitTimeout)
-	retryDelay := 500 * time.Millisecond
-	mayRetry := isNewClient || slowToWarmUp(e.mode)
+	m := e.mode
+	uri := "file://" + lspFilePath
 
-	for {
-		items, err = client.GetCompletions(uri, line, x, triggerChar)
+	// talk to the language server in the background, so that a keypress can cancel the wait
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var (
+		items      []LSPCompletionItem
+		errMessage string
+		done       = make(chan struct{})
+	)
+
+	go func() {
+		defer close(done)
+
+		client, err := GetOrCreateLSPClient(ctx, m, workspaceRoot, linkedProjects...)
+		if errors.Is(err, errLSPStillStarting) {
+			errMessage = fmt.Sprintf("%s is still starting, press Tab again in a moment", lspCommand)
+			return
+		}
 		if err != nil {
-			stopSpinner()
-			client.openedURI = ""
-			status.SetMessageAfterRedraw(fmt.Sprintf("%s error: %v", lspCommand, err))
-			return false
+			errMessage = fmt.Sprintf("Could not launch %s: %v", lspCommand, err)
+			return
+		}
+		if !client.initialized {
+			errMessage = fmt.Sprintf("%s is not responding", lspCommand)
+			return
 		}
 
-		// filter out the placeholder added for Zig
-		if needsPlaceholder && e.mode == mode.Zig {
-			filtered := make([]LSPCompletionItem, 0, len(items))
-			for _, item := range items {
-				if item.Label != "X" {
-					filtered = append(filtered, item)
-				}
+		client.documentMutex.Lock()
+		defer client.documentMutex.Unlock()
+
+		if ctx.Err() != nil {
+			return
+		}
+
+		// update the physical file in temp workspace, if any
+		if needsWorkspaceSetup(m) && lspFilePath != absPath {
+			os.WriteFile(lspFilePath, []byte(fileContent), 0644)
+		}
+
+		if client.openedURI != uri {
+			if err := client.DidOpen(uri, config.LanguageID, fileContent); err != nil {
+				client.openedURI = ""
+				errMessage = fmt.Sprintf("%s error: %v", lspCommand, err)
+				return
 			}
-			items = filtered
-		}
-
-		items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, e.mode)
-
-		if len(items) > 0 || !mayRetry {
-			break
-		}
-
-		// retry until deadline
-		if time.Now().Add(retryDelay).Before(completionDeadline) {
-			time.Sleep(retryDelay)
+			client.openedURI = uri
+			client.openedVersion = 1
 		} else {
-			stopSpinner()
-			const drawLines = true
-			e.FullResetRedraw(c, status, drawLines, false)
-			c.Draw()
-			status.SetMessage("No completions found")
-			status.Show(c, e)
-			return false
+			client.openedVersion++
+			if err := client.DidChange(uri, fileContent, client.openedVersion); err != nil {
+				client.openedURI = ""
+				errMessage = fmt.Sprintf("%s error: %v", lspCommand, err)
+				return
+			}
+			if slowToWarmUp(m) {
+				time.Sleep(50 * time.Millisecond)
+			}
 		}
+
+		// request completions, retrying until timeout for language servers that are slow to warm up
+		// and also for the first request to a freshly started server, since ie. bash-language-server
+		// answers with an empty list until it has fetched its configuration from the client
+		completionDeadline := time.Now().Add(lspCompletionWaitTimeout)
+		retryDelay := 500 * time.Millisecond
+		mayRetry := isNewClient || slowToWarmUp(m)
+
+		for {
+			items, err = client.GetCompletions(ctx, uri, line, x, triggerChar)
+			if ctx.Err() != nil {
+				return
+			}
+			if err != nil {
+				client.openedURI = ""
+				errMessage = fmt.Sprintf("%s error: %v", lspCommand, err)
+				return
+			}
+
+			// filter out the placeholder added for Zig
+			if needsPlaceholder && m == mode.Zig {
+				filtered := make([]LSPCompletionItem, 0, len(items))
+				for _, item := range items {
+					if item.Label != "X" {
+						filtered = append(filtered, item)
+					}
+				}
+				items = filtered
+			}
+
+			items = sortAndFilterCompletions(items, currentLine, workspaceRoot, config.FileExtensions, m)
+
+			if len(items) > 0 || !mayRetry || !time.Now().Add(retryDelay).Before(completionDeadline) {
+				return
+			}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(retryDelay):
+			}
+		}
+	}()
+
+	if !e.waitOrQueueKeypress(tty, done) {
+		cancel()
+		stopSpinner()
+		const drawLines = true
+		e.FullResetRedraw(c, status, drawLines, false)
+		status.SetMessage("Canceled")
+		status.Show(c, e)
+		return false
+	}
+
+	if errMessage != "" {
+		stopSpinner()
+		status.SetMessageAfterRedraw(errMessage)
+		return false
 	}
 
 	if len(items) > 10 {

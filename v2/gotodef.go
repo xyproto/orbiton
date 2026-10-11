@@ -57,6 +57,10 @@ func (e *Editor) tryLSPDefinition() *LSPLocation {
 	if client == nil {
 		return nil // LSP not ready yet, use fallback
 	}
+	if !client.documentMutex.TryLock() {
+		return nil // a completion request is using the language server, use fallback
+	}
+	defer client.documentMutex.Unlock()
 
 	// Ensure document is synced with LSP
 	var buf bytes.Buffer
