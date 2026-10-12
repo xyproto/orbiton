@@ -887,6 +887,28 @@ func loadHighScore() (uint, error) {
 	return uint(highScore), nil
 }
 
+// saveGameScreenshot saves the canvas as a timestamped PNG, without the title bar
+func saveGameScreenshot(c *vt.Canvas) (string, error) {
+	originalImg, err := c.ToImage()
+	if err != nil {
+		return "", err
+	}
+	// Leave out the first 8 rows
+	bounds := originalImg.Bounds()
+	newImg := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()-8))
+	draw.Draw(newImg, newImg.Bounds(), originalImg, image.Point{0, 8}, draw.Src)
+	screenshotFilename := files.TimestampedFilename("orbiton.png")
+	f, err := os.Create(screenshotFilename)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	if err := png.Encode(f, newImg); err != nil {
+		return "", err
+	}
+	return screenshotFilename, nil
+}
+
 // Game starts the game and returns true if ctrl-q was pressed
 func Game() (bool, error) {
 retry:
@@ -1112,32 +1134,11 @@ retry:
 
 		case 19: // ctrl-s
 			// Save a screenshot
-			// Use c.ToImage to generate the image
-			originalImg, err := c.ToImage()
-			if err != nil {
+			if screenshotFilename, err := saveGameScreenshot(c); err != nil {
 				statusText = "error: " + err.Error()
-				break
+			} else {
+				statusText = "Wrote " + screenshotFilename
 			}
-			// Create a new image without the first 8 rows
-			bounds := originalImg.Bounds()
-			newImg := image.NewRGBA(image.Rect(0, 0, bounds.Dx(), bounds.Dy()-8))
-			draw.Draw(newImg, newImg.Bounds(), originalImg, image.Point{0, 8}, draw.Src)
-			// Create the file
-			screenshotFilename := files.TimestampedFilename("orbiton.png")
-			f, err := os.Create(screenshotFilename)
-			if err != nil {
-				statusText = "error: " + err.Error()
-				break
-			}
-			defer f.Close()
-			// Encode and save the image
-			err = png.Encode(f, newImg)
-			if err != nil {
-				statusText = "error: " + err.Error()
-				break
-			}
-			// Done
-			statusText = "Wrote " + screenshotFilename
 		case 32: // Space
 			if !paused {
 				// Fire a new pellet
