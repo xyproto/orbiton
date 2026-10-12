@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Also support shift-return, especially in book mode.
 - [ ] Improve the colors of the "Welcome" box.
 - [ ] When editing YAML, use 2-space indentation by default.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
