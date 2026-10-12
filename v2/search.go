@@ -101,6 +101,11 @@ func (e *Editor) SetSearchTermWithTimeout(c *vt.Canvas, status *StatusBar, s str
 	// Go to the first instance after the current line, if found
 	e.lineBeforeSearch = e.DataY()
 
+	// An empty search term only clears the highlighting, so skip the scan
+	if s == "" {
+		return false
+	}
+
 	// create a channel to receive the matching line index (or -1)
 	resultCh := make(chan LineIndex, 1)
 
@@ -345,6 +350,10 @@ func (e *Editor) GoToNextMatch(c *vt.Canvas, status *StatusBar, wrap, forward bo
 	return nil
 }
 
+// searchDebounce is how long typing must pause before the live search preview
+// is refreshed. Refreshing it on every keystroke makes typing crawl in huge files.
+const searchDebounce = 150 * time.Millisecond
+
 // SearchMode will enter the interactive "search mode" where the user can type in a string and then press return to search
 func (e *Editor) SearchMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY, clearSearch, searchForward bool, undo *Undo) {
 	notRegularEditingRightNow.Store(true)
@@ -377,6 +386,16 @@ func (e *Editor) SearchMode(c *vt.Canvas, status *StatusBar, tty *vt.TTY, clearS
 	}
 
 AGAIN:
+	// pendingSearch means s has changed but the live search has not caught up.
+	// While it is set, key reads time out so the search can run once typing stops.
+	pendingSearch := false
+	readKeyDebounced := func() string {
+		if pendingSearch {
+			return tty.ReadKeyTimeout(searchDebounce)
+		}
+		return tty.ReadKey()
+	}
+
 	doneCollectingLetters := false
 	pressedReturn := false
 	pressedTab := false
@@ -395,11 +414,11 @@ AGAIN:
 	for !doneCollectingLetters {
 		if e.macro == nil || (e.playBackMacroCount == 0 && !e.macro.Recording) {
 			// Read the next key in the regular way
-			key = tty.ReadKey()
+			key = readKeyDebounced()
 		} else {
 			if e.macro.Recording {
 				// Read and record the next key
-				key = tty.ReadKey()
+				key = readKeyDebounced()
 				if key != "c:20" { // ctrl-t
 					// But never record the macro toggle button
 					e.macro.Add(key)
@@ -414,12 +433,20 @@ AGAIN:
 				}
 			}
 		}
+		if key == "" && pendingSearch {
+			// Typing has paused, so refresh the live search now
+			pendingSearch = false
+			e.SetSearchTermWithTimeout(c, status, s, false, timeout)
+			status.SetMessage(searchPrompt + " " + s)
+			status.ShowNoTimeout(c, e)
+			continue
+		}
 		switch key {
 		case "c:8", "c:127": // ctrl-h or backspace
 			if len(s) > 0 {
 				s = s[:len(s)-1]
 				if previousSearch == "" {
-					e.SetSearchTermWithTimeout(c, status, s, false, timeout)
+					pendingSearch = true
 				}
 				e.GoToLineNumber(initialLocation, c, status, false)
 				status.SetMessage(searchPrompt + " " + s)
@@ -483,7 +510,7 @@ AGAIN:
 				s = replaceHistory.GetIndex(replaceHistoryIndex, newestFirst)
 			}
 			if previousSearch == "" {
-				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
+				pendingSearch = true
 			}
 			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
@@ -509,7 +536,7 @@ AGAIN:
 				s = replaceHistory.GetIndex(replaceHistoryIndex, newestFirst)
 			}
 			if previousSearch == "" {
-				e.SetSearchTermWithTimeout(c, status, s, false, timeout)
+				pendingSearch = true
 			}
 			status.ClearAll(c, true)
 			status.SetMessage(searchPrompt + " " + s)
@@ -518,7 +545,7 @@ AGAIN:
 			if key != "" && !strings.HasPrefix(key, "c:") {
 				s += key
 				if previousSearch == "" {
-					e.SetSearchTermWithTimeout(c, status, s, false, timeout)
+					pendingSearch = true
 				}
 				status.SetMessage(searchPrompt + " " + s)
 				status.ShowNoTimeout(c, e)
