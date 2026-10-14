@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let the file browser be more like `ncdu` + fix xoria256 background color issue.
 - [ ] Also support shift-return, especially in book mode.
 - [ ] Improve the colors of the "Welcome" box.
 - [ ] When editing YAML, use 2-space indentation by default.
