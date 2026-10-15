@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -509,7 +508,7 @@ func main() {
 			fmt.Fprintf(os.Stderr, "no file matching the glob %q was found\n", substring)
 			os.Exit(1)
 		}
-		sort.Strings(matches)
+		sortGlobMatches(matches, substring)
 		fnord.filename = matches[0]
 	}
 

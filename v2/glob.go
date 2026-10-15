@@ -1,6 +1,8 @@
 package main
 
 import (
+	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -37,6 +39,52 @@ func sortByEditPriority(matches []string) {
 			return pi < pj
 		}
 		return matches[i] < matches[j]
+	})
+}
+
+// generatedDirs are directories that usually hold build output, dependencies or
+// VCS data, so files below them are rarely the ones the user meant to edit.
+var generatedDirs = []string{".git", ".gradle", ".hg", ".idea", ".mvn", ".svn", ".tox", ".vscode", "__pycache__", "build", "dist", "node_modules", "out", "target", "vendor"}
+
+// inGeneratedDir reports whether any element of the path is a generated directory
+func inGeneratedDir(path string) bool {
+	for part := range strings.SplitSeq(filepath.ToSlash(path), "/") {
+		if slices.Contains(generatedDirs, part) {
+			return true
+		}
+	}
+	return false
+}
+
+// sortGlobMatches orders the matches from a recursive search so that the file the
+// user most likely meant comes first. files.FindFile matches every filename that
+// *contains* the given string, so searching for "Mapper.java" also matches a
+// generated "Mapper.java.xml" report. Prefer an exact filename, then a path
+// outside build output, then an editable file, then the shallowest path, and
+// finally the alphabetically first one so the choice stays deterministic.
+func sortGlobMatches(matches []string, substring string) {
+	want := strings.ToLower(filepath.Base(substring))
+	exact := func(path string) bool {
+		return strings.ToLower(filepath.Base(path)) == want
+	}
+	depth := func(path string) int {
+		return strings.Count(filepath.ToSlash(path), "/")
+	}
+	sort.SliceStable(matches, func(i, j int) bool {
+		a, b := matches[i], matches[j]
+		if ea, eb := exact(a), exact(b); ea != eb {
+			return ea
+		}
+		if ga, gb := inGeneratedDir(a), inGeneratedDir(b); ga != gb {
+			return gb
+		}
+		if pa, pb := editPriority(a), editPriority(b); pa != pb {
+			return pa < pb
+		}
+		if da, db := depth(a), depth(b); da != db {
+			return da < db
+		}
+		return a < b
 	})
 }
 
