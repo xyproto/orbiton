@@ -166,6 +166,8 @@ type Project struct {
 	HasWin64          bool // detected from #include <windows.h>
 	HasWatcom         bool // detected from #include <i86.h>
 	HasGBA            bool // detected from #include <tonc.h> or <gba.h>
+	HasC64            bool
+	HasSNES           bool
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
 	HasDlopen         bool // detected from #include <dlfcn.h>
 	GtkVersion        int
@@ -214,6 +216,14 @@ func detectProject() Project {
 			}
 			if makefileUsesGBA(s) {
 				p.HasGBA = true
+				break
+			}
+			if makefileUsesC64(s) {
+				p.HasC64 = true
+				break
+			}
+			if makefileUsesSNES(s) {
+				p.HasSNES = true
 				break
 			}
 		}
@@ -286,6 +296,12 @@ func scanSourceForFlags(filename string, p *Project) {
 		}
 		if isGBAInclude(line) {
 			p.HasGBA = true
+		}
+		if isC64Include(line) {
+			p.HasC64 = true
+		}
+		if isSNESInclude(line) {
+			p.HasSNES = true
 		}
 		// Detect win64 from includes
 		for _, wh := range []string{`#include <windows.h>`, `#include "windows.h"`, `#include<windows.h>`} {
@@ -731,6 +747,23 @@ func uniqueStrings(strs []string) []string {
 		if !seen[norm] {
 			seen[norm] = true
 			result = append(result, filepath.Clean(s))
+		}
+	}
+	return result
+}
+
+// dedupStrings removes duplicates from a list of plain strings, preserving
+// order and the exact value of each string. Unlike uniqueStrings, it does not
+// treat the values as file system paths, so it neither rewrites separators via
+// filepath.Clean nor case-folds on case-insensitive platforms. Use it for
+// header names, package names and other non-path tokens.
+func dedupStrings(strs []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, s := range strs {
+		if !seen[s] {
+			seen[s] = true
+			result = append(result, s)
 		}
 	}
 	return result

@@ -453,6 +453,22 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 	}
 
 	exe := executableName()
+	if proj.HasC64 || proj.HasSNES {
+		srcs := append([]string{proj.MainSource}, proj.DepSources...)
+		var out []byte
+		var cmds []string
+		var err error
+		if proj.HasC64 {
+			out, cmds, err = buildC64(srcs, exe+".prg", opts)
+		} else {
+			out, cmds, err = buildSNES(srcs, exe+".sfc")
+		}
+		for _, c := range cmds {
+			fmt.Println(c)
+		}
+		os.Stdout.Write(out)
+		return err
+	}
 	if opts.Win64 || proj.HasWin64 || opts.Watcom || proj.HasWatcom {
 		exe += ".exe"
 	}

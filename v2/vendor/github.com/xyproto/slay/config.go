@@ -152,6 +152,26 @@ func runExecutable(win64 bool, args ...string) error {
 	if exe == "" {
 		return fmt.Errorf("no main source file found")
 	}
+	if !fileExists(exe) && fileExists(exe+".prg") {
+		cmd := C64EmulatorCommand(dotSlash(exe+".prg"), args...)
+		if cmd == nil {
+			return fmt.Errorf("built %s.prg, but no C64 emulator such as VICE was found", exe)
+		}
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
+	if !fileExists(exe) && fileExists(exe+".sfc") {
+		cmd := SNESEmulatorCommand(dotSlash(exe+".sfc"), args...)
+		if cmd == nil {
+			return fmt.Errorf("built %s.sfc, but no SNES emulator such as ZSNES was found", exe)
+		}
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		return cmd.Run()
+	}
 	if !fileExists(exe) && fileExists(exe+".gba") {
 		cmd := GBAEmulatorCommand(dotSlash(exe+".gba"), args...)
 		if cmd == nil {
@@ -185,7 +205,7 @@ func runExecutable(win64 bool, args ...string) error {
 // cleanFiles removes build artifacts from the current directory.
 func cleanFiles() {
 	exe := executableName()
-	patterns := []string{"*.o", "*.d", "common/*.o", "common/*.d", "include/*.o", "include/*.d", "*.profraw", "*.gcda", "*.gcno", ".sconsign.dblite", "callgrind.out.*"}
+	patterns := []string{"*.o", "*.d", "*.ps", "*.obj", "linkfile", "common/*.o", "common/*.d", "include/*.o", "include/*.d", "*.profraw", "*.gcda", "*.gcno", ".sconsign.dblite", "callgrind.out.*"}
 	for _, pat := range patterns {
 		matches, _ := filepath.Glob(pat)
 		for _, f := range matches {
@@ -197,7 +217,7 @@ func cleanFiles() {
 		if err := os.Remove(exe); err == nil {
 			fmt.Println("Removed", exe)
 		}
-		for _, ext := range []string{".exe", ".gba", ".elf"} {
+		for _, ext := range []string{".exe", ".gba", ".elf", ".prg", ".sfc", ".sym"} {
 			if err := os.Remove(exe + ext); err == nil {
 				fmt.Println("Removed", exe+ext)
 			}
@@ -224,7 +244,7 @@ func fastCleanFiles() {
 		if err := os.Remove(exe); err == nil {
 			fmt.Println("Removed", exe)
 		}
-		for _, ext := range []string{".exe", ".gba", ".elf"} {
+		for _, ext := range []string{".exe", ".gba", ".elf", ".prg", ".sfc", ".sym"} {
 			if err := os.Remove(exe + ext); err == nil {
 				fmt.Println("Removed", exe+ext)
 			}

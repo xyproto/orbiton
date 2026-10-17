@@ -229,7 +229,7 @@ func pkgNamesForHeader(inc string) []string {
 	if base == "" || base == "." {
 		return nil
 	}
-	return uniqueStrings([]string{base, strings.ToLower(base), "lib" + strings.ToLower(base)})
+	return dedupStrings([]string{base, strings.ToLower(base), "lib" + strings.ToLower(base)})
 }
 
 // pkgConfigFlagsForHeader returns the name and flags of the first pkg-config package that may provide the header.
@@ -255,7 +255,7 @@ func missingHeaders(output string) []string {
 			headers = append(headers, m[2])
 		}
 	}
-	return uniqueStrings(headers)
+	return dedupStrings(headers)
 }
 
 // flagsForMissingHeaders adds pkg-config flags for the headers that the compiler could not find.

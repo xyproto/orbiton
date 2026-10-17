@@ -44,6 +44,18 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 	}
 
 	exe := executableName()
+	if proj.HasC64 || proj.HasSNES {
+		srcs := append([]string{proj.MainSource}, proj.DepSources...)
+		var buildErr error
+		if proj.HasC64 {
+			result.OutputExecutable = exe + ".prg"
+			result.Output, result.CommandsRun, buildErr = buildC64(srcs, result.OutputExecutable, opts)
+		} else {
+			result.OutputExecutable = exe + ".sfc"
+			result.Output, result.CommandsRun, buildErr = buildSNES(srcs, result.OutputExecutable)
+		}
+		return result, buildErr
+	}
 	if opts.Win64 || proj.HasWin64 || opts.Watcom || proj.HasWatcom {
 		exe += ".exe"
 	}
