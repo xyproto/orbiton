@@ -159,9 +159,17 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command("lua", sourceFilename)
 		}
 	case mode.C, mode.Cpp:
-		if rom := gbaROM(sourceDir); rom != "" {
+		if rom := builtROM(sourceDir, ".gba"); rom != "" {
 			if cmd = slay.GBAEmulatorCommand(rom); cmd == nil {
 				return "", false, errors.New("please install mGBA to run " + filepath.Base(rom))
+			}
+		} else if rom := builtROM(sourceDir, ".sfc"); rom != "" {
+			if cmd = slay.SNESEmulatorCommand(rom); cmd == nil {
+				return "", false, errors.New("please install ZSNES or Snes9x to run " + filepath.Base(rom))
+			}
+		} else if prg := builtROM(sourceDir, ".prg"); prg != "" {
+			if cmd = slay.C64EmulatorCommand(prg); cmd == nil {
+				return "", false, errors.New("please install VICE to run " + filepath.Base(prg))
 			}
 		} else if exe := dosExecutable(sourceDir, sourceFilename); exe != "" {
 			if cmd = dosboxCommand(exe); cmd == nil {
@@ -403,14 +411,14 @@ func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	return b.String(), err
 }
 
-// gbaROM returns the path to the Game Boy Advance ROM that slay builds in the given
+// builtROM returns the path to the ROM with the given extension that slay builds in the given
 // directory, or an empty string if there is none.
-func gbaROM(sourceDir string) string {
+func builtROM(sourceDir, ext string) string {
 	name := filepath.Base(sourceDir)
 	if name == "src" {
 		name = "main"
 	}
-	if rom := filepath.Join(sourceDir, name+".gba"); files.IsFile(rom) {
+	if rom := filepath.Join(sourceDir, name+ext); files.IsFile(rom) {
 		return rom
 	}
 	return ""
