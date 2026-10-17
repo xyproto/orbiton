@@ -1959,12 +1959,13 @@ func (e *Editor) HandleBuildKey(c *vt.Canvas, tty *vt.TTY, status *StatusBar, kh
 		}
 	default:
 		baseFilename := filepath.Base(e.filename)
-		if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !kh.DoubleTapped(keyCode) {
+		doubleTapped := kh.DoubleTappedWithin(keyCode, buildKeyDoubleTapTimeLimit)
+		if (baseFilename == "PKGBUILD" || baseFilename == "APKBUILD") && !doubleTapped {
 			status.ClearAll(c, false)
 			status.SetMessageAfterRedraw("Press ctrl-b again to build")
 			return
 		}
-		e.runAfterBuild.Store(kh.DoubleTapped(keyCode))
+		e.runAfterBuild.Store(doubleTapped)
 		stopBackgroundProcesses()
 		e.Build(c, status, tty)
 		e.redrawCursor.Store(true)

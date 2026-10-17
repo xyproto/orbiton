@@ -12,6 +12,8 @@ const (
 
 	// Double tap time limit
 	doubleTapTimeLimit = 300 * time.Millisecond
+
+	buildKeyDoubleTapTimeLimit = 600 * time.Millisecond
 )
 
 // keyHistoryState holds an immutable snapshot of the last 3 keypresses.
@@ -171,6 +173,11 @@ func (kh *KeyHistory) SpecialArrowKeypressWith(extraKeypress string) bool {
 func (kh *KeyHistory) DoubleTapped(keypress string) bool {
 	s := kh.load()
 	return s.keys[2] == keypress && time.Since(s.t[2]) < doubleTapTimeLimit
+}
+
+func (kh *KeyHistory) DoubleTappedWithin(keypress string, limit time.Duration) bool {
+	s := kh.load()
+	return s.keys[2] == keypress && time.Since(s.t[2]) < limit
 }
 
 // String returns the last keypresses as a string, with the oldest one first
