@@ -15,6 +15,14 @@ import (
 	"github.com/xyproto/vt"
 )
 
+func (s *State) writePreviewLine(row, col uint, bg, text string) {
+	fmt.Fprintf(os.Stdout, "\033[%d;%dH%s%s\033[0m", row, col, bg, text)
+}
+
+func keepBackground(colored, bg string) string {
+	return strings.ReplaceAll(colored, vt.NoColor, vt.NoColor+bg)
+}
+
 // previewPaneBounds returns the 1-indexed terminal column/row and the cell dimensions
 // (cols, rows) of the preview pane.  A separator column sits at splitX (canvas, 0-indexed),
 // so the preview starts one column to the right of it.
@@ -56,9 +64,10 @@ func (s *State) clearPreviewPane() {
 	if cols == 0 || rows == 0 {
 		return
 	}
+	bg := s.Background.String()
 	blank := strings.Repeat(" ", int(cols))
 	for r := range rows {
-		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
+		s.writePreviewLine(row+r, col, bg, blank)
 	}
 	s.currentPreviewPath = ""
 	s.currentPreviewEncoded = ""
@@ -118,9 +127,10 @@ func (s *State) showPreview(path string) {
 		// New file selected: cancel any stale load and clear the pane.
 		s.cancelPreviewLoad()
 		imagepreview.DeleteInlineImages()
+		bg := s.Background.String()
 		blank := strings.Repeat(" ", int(cols))
 		for r := range rows {
-			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
+			s.writePreviewLine(row+r, col, bg, blank)
 		}
 		s.currentPreviewPath = path
 		s.currentPreviewEncoded = ""
@@ -203,9 +213,10 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 
 	// Clear the pane first, so the previous page doesn't show through
 	// where the new page has shorter or fewer lines.
+	bg := s.Background.String()
 	blank := strings.Repeat(" ", int(cols))
 	for r := range rows {
-		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, blank)
+		s.writePreviewLine(row+r, col, bg, blank)
 	}
 
 	sc := bufio.NewScanner(f)
@@ -224,12 +235,12 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 		}
 		truncated := string(runes)
 		if !highlight {
-			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, truncated)
+			s.writePreviewLine(row+r, col, bg, truncated)
 			continue
 		}
 		tagged, err := syntax.AsText([]byte(truncated), m, options...)
 		if err != nil {
-			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, truncated)
+			s.writePreviewLine(row+r, col, bg, truncated)
 		} else {
 			var colored string
 			if s.Light {
@@ -237,7 +248,7 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 			} else {
 				colored = tout.DarkTags(string(tagged))
 			}
-			fmt.Fprintf(os.Stdout, "\033[%d;%dH%s\033[0m", row+r, col, colored)
+			s.writePreviewLine(row+r, col, bg, keepBackground(colored, bg))
 		}
 	}
 
@@ -276,6 +287,7 @@ func (s *State) drawDirPreview(path string, col, row, cols, rows uint) {
 		return
 	}
 	r := uint(0)
+	bg := s.Background.String()
 	for _, e := range entries {
 		if r >= rows {
 			break
@@ -291,7 +303,7 @@ func (s *State) drawDirPreview(path string, col, row, cols, rows uint) {
 		if uint(len(runes)) >= cols {
 			runes = runes[:cols-1]
 		}
-		fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row+r, col, string(runes))
+		s.writePreviewLine(row+r, col, bg, string(runes))
 		r++
 	}
 }
@@ -307,5 +319,5 @@ func (s *State) drawBinaryPreview(path string, col, row, cols uint) {
 	if uint(len(runes)) >= cols {
 		runes = runes[:cols-1]
 	}
-	fmt.Fprintf(os.Stdout, "\033[%d;%dH%s", row, col, string(runes))
+	s.writePreviewLine(row, col, s.Background.String(), string(runes))
 }
