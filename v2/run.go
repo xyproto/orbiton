@@ -176,7 +176,11 @@ func (e *Editor) Run() (string, bool, error) {
 				return "", false, errors.New("please install DOSBox-X, DOSBox Staging or DOSBox to run " + filepath.Base(exe))
 			}
 		} else {
-			cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
+			exe := slay.MakefileRunProgram(sourceDir)
+			if exe == "" || !files.IsFile(filepath.Join(sourceDir, exe)) {
+				exe = e.exeName(e.filename, true)
+			}
+			cmd = exec.Command(filepath.Join(sourceDir, exe))
 		}
 	case mode.Make:
 		cmd = exec.Command("make")

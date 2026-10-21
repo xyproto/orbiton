@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/xyproto/files"
+	"github.com/xyproto/slay"
 )
 
 // autoBuildCandidate describes a language/ecosystem detectable from a
@@ -76,8 +77,17 @@ func tryAutoBuild() (bool, error) {
 		if !has(cand.tool) {
 			continue
 		}
+		args := cand.args
+		if cand.tool == "make" {
+			// Aim make at the targets of the run: rule, when present, so
+			// that Makefiles whose default goal is an install target do
+			// not install anything as a side effect.
+			if targets, ok := slay.MakefileRunTargets(""); ok {
+				args = targets
+			}
+		}
 		fmt.Fprintf(os.Stderr, "%s project detected, building with %s\n", cand.label, cand.tool)
-		cmd := exec.Command(cand.tool, cand.args...)
+		cmd := exec.Command(cand.tool, args...)
 		cmd.Dir = cwd
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
