@@ -152,6 +152,7 @@ func detectMinWinVersion(sources []string) int {
 type Project struct {
 	MainSource        string
 	DepSources        []string
+	ExtraMains        []string // other sources in the project that contain main(), built as separate executables
 	TestSources       []string
 	Includes          []string // external includes from source files
 	BoostLibs         []string
@@ -179,6 +180,7 @@ func detectProject() Project {
 	p.TestSources = getTestSources()
 	p.MainSource = GetMainSourceFile(p.TestSources)
 	p.DepSources = getDepSources(p.MainSource, p.TestSources)
+	p.ExtraMains = getExtraMains(p.MainSource, p.TestSources)
 	if strings.HasSuffix(p.MainSource, ".c") {
 		p.IsC = true
 	}
@@ -194,6 +196,7 @@ func detectProject() Project {
 	if p.MainSource != "" {
 		allSources = append(allSources, p.MainSource)
 	}
+	allSources = append(allSources, p.ExtraMains...)
 	allSources = append(allSources, p.DepSources...)
 	allSources = append(allSources, p.TestSources...)
 
@@ -418,14 +421,16 @@ func GetMainSourceFile(testSrcs []string) string {
 	return ""
 }
 
-// getDepSources returns non-main, non-test source files.
+// getDepSources returns non-main, non-test source files. Sources that
+// themselves contain main( are excluded, since each main is built as its own
+// executable (see ExtraMains), not as a dependency of another one.
 func getDepSources(mainSrc string, testSrcs []string) []string {
 	testMap := toSet(testSrcs)
 	var deps []string
 	for _, ext := range SourceExts {
 		matches, _ := filepath.Glob("*" + ext)
 		for _, m := range matches {
-			if m != mainSrc && !testMap[m] && !isTestFile(m) {
+			if m != mainSrc && !testMap[m] && !isTestFile(m) && !containsMain(m) {
 				deps = append(deps, m)
 			}
 		}
@@ -435,13 +440,33 @@ func getDepSources(mainSrc string, testSrcs []string) []string {
 		for _, ext := range SourceExts {
 			matches, _ := filepath.Glob(filepath.Join(cp, "*"+ext))
 			for _, m := range matches {
-				if !isTestFile(m) {
+				if !isTestFile(m) && !containsMain(m) {
 					deps = append(deps, m)
 				}
 			}
 		}
 	}
 	return uniqueStrings(deps)
+}
+
+// getExtraMains returns the sources, apart from the main source, that contain
+// their own main( function. Each of them is built as a separate executable,
+// named after the source file, linking the same dependency sources.
+func getExtraMains(mainSrc string, testSrcs []string) []string {
+	if mainSrc == "" {
+		return nil
+	}
+	testMap := toSet(testSrcs)
+	var mains []string
+	for _, ext := range SourceExts {
+		matches, _ := filepath.Glob("*" + ext)
+		for _, m := range matches {
+			if m != mainSrc && !testMap[m] && !isTestFile(m) && containsMain(m) {
+				mains = append(mains, m)
+			}
+		}
+	}
+	return uniqueStrings(mains)
 }
 
 // isTestFile returns true if the filename matches *_test.* or test.* patterns.

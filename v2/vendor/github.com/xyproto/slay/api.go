@@ -34,6 +34,19 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 
 	proj := detectProject()
 
+	// Defer to a Makefile with a run: rule with file targets, when present.
+	// Explicit win64/watcom builds and Watcom-style Makefiles keep using the
+	// cross-compiling paths instead.
+	if !opts.Win64 && !opts.Watcom && !proj.HasWatcom {
+		out, cmds, exe, ok, buildErr := buildWithMakefile()
+		if ok {
+			result.Output = out
+			result.CommandsRun = cmds
+			result.OutputExecutable = exe
+			return result, buildErr
+		}
+	}
+
 	// Auto-detect win64 from source
 	if proj.HasWin64 && !opts.Win64 {
 		opts.Win64 = true
@@ -92,7 +105,10 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 			return result, err
 		}
 	}
-	return result, nil
+	extraOutput, extraCmds, err := buildExtraMainsCaptured(proj, flags)
+	result.Output = append(result.Output, extraOutput...)
+	result.CommandsRun = append(result.CommandsRun, extraCmds...)
+	return result, err
 }
 
 // compileSourcesCaptured compiles and links the given source files, capturing

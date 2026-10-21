@@ -443,6 +443,20 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 		opts.Win64 = true
 	}
 
+	// Defer to a Makefile with a run: rule with file targets, when present.
+	// Explicit win64/watcom builds and Watcom-style Makefiles keep using the
+	// cross-compiling paths instead.
+	if !opts.Win64 && !opts.Watcom && !proj.HasWatcom {
+		out, cmds, _, ok, buildErr := buildWithMakefile()
+		if ok {
+			for _, c := range cmds {
+				fmt.Println(c)
+			}
+			os.Stdout.Write(out)
+			return buildErr
+		}
+	}
+
 	if proj.MainSource == "" && len(proj.TestSources) == 0 {
 		return fmt.Errorf("no source files found")
 	}
@@ -511,7 +525,7 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 		os.Stdout.Write(out)
 		return err
 	}
-	return nil
+	return buildExtraMains(proj, flags)
 }
 
 // compilerOutput keeps a copy of the compiler error output, so that missing headers can be detected.
