@@ -160,7 +160,7 @@ github.com/xyproto/themes
 # github.com/xyproto/usermodel v1.3.0
 ## explicit; go 1.23.1
 github.com/xyproto/usermodel
-# github.com/xyproto/vt v1.9.20
+# github.com/xyproto/vt v1.9.21
 ## explicit; go 1.26.0
 github.com/xyproto/vt
 # github.com/xyproto/wordwrap v1.2.0
