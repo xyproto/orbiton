@@ -2,11 +2,11 @@
 
 ## General
 
-- [ ] Let the file browser be more like `ncdu` + fix xoria256 background color issue.
+- [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
+- [ ] Let the file browser be more like `ncdu`.
 - [ ] Also support shift-return, especially in book mode.
 - [ ] Improve the colors of the "Welcome" box.
 - [ ] When editing YAML, use 2-space indentation by default.
-- [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
 - [ ] When saving a file that is very slow to save, the save progress bar may remain without being cleared.
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
