@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/xyproto/files"
@@ -124,8 +125,8 @@ func (s *State) undoTrash(currentDir string) (trashEntry, error) {
 		return trashEntry{}, errNoUndoForDir
 	}
 	currentDir = filepath.Clean(currentDir)
-	for i := len(s.trashUndo) - 1; i >= 0; i-- {
-		entry := s.trashUndo[i]
+	for i, entry := range slices.Backward(s.trashUndo) {
+
 		entryDir := filepath.Clean(filepath.Dir(entry.original))
 		if entryDir != currentDir {
 			continue

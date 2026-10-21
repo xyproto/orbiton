@@ -80,6 +80,6 @@ This project can be used as the `github.com/xyproto/megafile` package, or as a s
 
 ### General info
 
-* Version: 1.7.10
+* Version: 1.7.11
 * License: BSD-3
 * Author: Alexander F. Rødseth &lt;xyproto@archlinux.org&gt;

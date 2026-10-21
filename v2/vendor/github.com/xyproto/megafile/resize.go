@@ -67,6 +67,7 @@ func (s *State) redraw() {
 
 	// Clear the canvas
 	c.Clear()
+	c.FillBackground(s.Background)
 
 	y := topLine
 

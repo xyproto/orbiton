@@ -1371,6 +1371,7 @@ func (s *State) Run() ([]string, error) {
 
 	clearAndPrepare := func() {
 		c.Clear()
+		c.FillBackground(s.Background)
 
 		y := topLine
 
