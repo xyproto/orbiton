@@ -2,7 +2,6 @@
 
 ## General
 
-- [ ] QuickHelp should not be shown when in `nano` mode.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
 - [ ] Let the file browser be more like `ncdu`.
 - [ ] Also support shift-return, especially in book mode.

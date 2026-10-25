@@ -516,6 +516,10 @@ func main() {
 		bookModeFlag = true
 	}
 
+	if nanoMode {
+		noQuickHelpFlag = true
+	}
+
 	// Check if the given filename contains something
 	implicitBuild := false
 	if fnord.Empty() {
