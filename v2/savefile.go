@@ -41,6 +41,55 @@ func (e *Editor) binaryBytes() []byte {
 	return buf
 }
 
+func writeFileSafely(filename string, data []byte, perm os.FileMode) error {
+	if resolved, err := filepath.EvalSymlinks(filename); err == nil {
+		filename = resolved
+	}
+	fi, statErr := os.Stat(filename)
+	if statErr == nil {
+		if !fi.Mode().IsRegular() {
+			return os.WriteFile(filename, data, perm)
+		}
+		perm = fi.Mode().Perm()
+	}
+	f, err := os.CreateTemp(filepath.Dir(filename), "."+filepath.Base(filename)+".*.tmp")
+	if err != nil {
+		return writeFileInPlace(filename, data, perm)
+	}
+	tmpName := f.Name()
+	if statErr == nil && !preserveOwnership(f, fi) {
+		f.Close()
+		os.Remove(tmpName)
+		return writeFileInPlace(filename, data, perm)
+	}
+	_, err = f.Write(data)
+	if err == nil {
+		err = f.Chmod(perm)
+	}
+	if err == nil {
+		err = f.Sync()
+	}
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err == nil {
+		err = os.Rename(tmpName, filename)
+	}
+	if err != nil {
+		os.Remove(tmpName)
+	}
+	return err
+}
+
+func writeFileInPlace(filename string, data []byte, perm os.FileMode) error {
+	original, readErr := os.ReadFile(filename)
+	err := os.WriteFile(filename, data, perm)
+	if err != nil && readErr == nil {
+		os.WriteFile(filename, original, perm)
+	}
+	return err
+}
+
 // SaveAs will try to save the current editor contents to given file.
 // It needs a canvas in case trailing spaces are stripped and the cursor needs to move to the end.
 func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
@@ -134,6 +183,11 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 	if !e.binaryFile {
 		e.changed.Store(false)
 	}
+	restoreChanged := func() {
+		if !e.binaryFile {
+			e.changed.Store(true)
+		}
+	}
 
 	// Default file mode (0644 for regular files, 0755 for executable files)
 	var fileMode os.FileMode = 0o644
@@ -170,14 +224,16 @@ func (e *Editor) SaveAs(c *vt.Canvas, tty *vt.TTY, filename string) error {
 			data, err = gZipData(data)
 			if err != nil {
 				quitChan <- true
+				restoreChanged()
 				return err
 			}
 		}
 
 		// Save the file and return any errors
-		if err := os.WriteFile(filename, data, fileMode); err != nil {
+		if err := writeFileSafely(filename, data, fileMode); err != nil {
 			// Stop the spinner and return
 			quitChan <- true
+			restoreChanged()
 			return err
 		}
 

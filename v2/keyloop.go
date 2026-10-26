@@ -1288,7 +1288,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				// Ask the user which filename to save to
 				if newFilename, ok := e.UserInput(c, tty, status, "Save as", e.filename, []string{e.filename}, false, e.filename); ok {
 					e.filename = newFilename
-					e.Save(c, tty)
+					if err := e.Save(c, tty); err != nil {
+						status.ClearAll(c, false)
+						status.SetError(err)
+						status.Show(c, e)
+						break
+					}
 					e.Switch(c, tty, status, fileLock, newFilename)
 				} else {
 					status.Clear(c, false)
@@ -2753,7 +2758,12 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					// Ask the user which filename to save to
 					if newFilename, ok := e.UserInput(c, tty, status, "Write to", e.filename, []string{e.filename}, false, e.filename); ok {
 						e.filename = newFilename
-						e.Save(c, tty)
+						if err := e.Save(c, tty); err != nil {
+							status.ClearAll(c, false)
+							status.SetError(err)
+							status.Show(c, e)
+							break
+						}
 					} else {
 						status.Clear(c, false)
 						status.SetMessage("Wrote nothing")
