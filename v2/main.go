@@ -516,7 +516,7 @@ func main() {
 		bookModeFlag = true
 	}
 
-	if nanoMode {
+	if nanoMode && !quickHelpFlag {
 		noQuickHelpFlag = true
 	}
 
