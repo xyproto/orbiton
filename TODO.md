@@ -2,6 +2,8 @@
 
 ## General
 
+- [ ] Support arrow keys when browsing files under tmux + ssh.
+- [ ] Let users select if files should be deleted or moved to "trash" the first time they delete a file in a session, in the file browser, when pressing ctrl-d.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
 - [ ] Let the file browser be more like `ncdu`.
 - [ ] Also support shift-return, especially in book mode.
