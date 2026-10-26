@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Let `ctrl-j` jump between brackets when on a bracket, instead of `ctrl-r`, so that `ctrl-r` is always for portals.
 - [ ] Support arrow keys when browsing files under tmux + ssh.
 - [ ] Let users select if files should be deleted or moved to "trash" the first time they delete a file in a session, in the file browser, when pressing ctrl-d.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
