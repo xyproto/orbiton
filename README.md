@@ -3,6 +3,7 @@
 [![Build](https://github.com/xyproto/orbiton/actions/workflows/build.yml/badge.svg)](https://github.com/xyproto/orbiton/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-BSD-green.svg?style=flat)](https://raw.githubusercontent.com/xyproto/orbiton/main/LICENSE)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield)
+[![orbiton on The Terminal Index](https://cli.masoko.net/badge/orbiton.svg)](https://cli.masoko.net/tools/orbiton/)
 
 Orbiton is a text editor and a simple IDE with the following leading principles:
 
