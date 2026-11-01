@@ -242,6 +242,10 @@ func (e *Editor) Run() (string, bool, error) {
 			if cmd = dosboxCommand(com); cmd == nil {
 				return "", false, errors.New("please install DOSBox-X, DOSBox Staging or DOSBox to run " + filepath.Base(com))
 			}
+		} else if rom := assemblyROM(sourceDir); e.slayAssembly(sourceDir) && rom != "" {
+			if cmd = romCommand(rom); cmd == nil {
+				return "", false, errors.New("could not find an emulator for " + filepath.Base(rom))
+			}
 		} else {
 			cmd = exec.Command(filepath.Join(sourceDir, e.exeName(e.filename, true)))
 		}
@@ -413,6 +417,55 @@ func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	}
 	// Return the output bytes and the error, if any
 	return b.String(), err
+}
+
+// slayAssembly returns true if the current file is assembly that slay can build: C64 assembly for ca65,
+// or assembly for another platform than DOS in a directory with a Makefile that has a run: rule
+func (e *Editor) slayAssembly(sourceDir string) bool {
+	if e.mode != mode.Assembly || isDOSAssembly(e.String()) {
+		return false
+	}
+	if slay.IsC64Assembly(e.String()) {
+		return true
+	}
+	_, ok := slay.MakefileRunTargets(sourceDir)
+	return ok
+}
+
+// assemblyROM returns the path to the program that was built from an assembly project by slay,
+// or the file that the run: rule of the Makefile starts, or an empty string if there is none
+func assemblyROM(sourceDir string) string {
+	for _, ext := range []string{".prg", ".sfc", ".gba"} {
+		if rom := builtROM(sourceDir, ext); rom != "" {
+			return rom
+		}
+	}
+	return makefileRunFile(sourceDir)
+}
+
+// makefileRunFile returns the path to the file that the run: rule of the Makefile in the given directory starts,
+// or an empty string if there is none
+func makefileRunFile(sourceDir string) string {
+	if name := slay.MakefileRunProgram(sourceDir); name != "" {
+		if path := filepath.Join(sourceDir, name); files.IsFile(path) {
+			return path
+		}
+	}
+	return ""
+}
+
+// romCommand returns a command for running the given ROM or program file in an emulator, chosen by the file extension.
+// Returns nil if no suitable emulator is installed.
+func romCommand(rom string) *exec.Cmd {
+	switch strings.ToLower(filepath.Ext(rom)) {
+	case ".gba":
+		return slay.GBAEmulatorCommand(rom)
+	case ".sfc", ".smc":
+		return slay.SNESEmulatorCommand(rom)
+	case ".prg":
+		return slay.C64EmulatorCommand(rom)
+	}
+	return exec.Command(rom)
 }
 
 // builtROM returns the path to the ROM with the given extension that slay builds in the given

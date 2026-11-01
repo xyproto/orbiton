@@ -876,8 +876,8 @@ func (e *Editor) BuildOrExport(tty *vt.TTY, c *vt.Canvas, status *StatusBar) (st
 		compilationProducedSomething func() (bool, string)
 	)
 
-	// Use slay for C and C++ builds
-	if e.mode == mode.C || e.mode == mode.Cpp {
+	// Use slay for C and C++ builds, and for assembly that slay can build (like C64 assembly for ca65)
+	if e.mode == mode.C || e.mode == mode.Cpp || e.slayAssembly(sourceDir) {
 		if e.mode == mode.Cpp && files.IsFile("BUILD.bazel") && files.WhichCached("bazel") != "" {
 			goto cmdBuild // Bazel projects use the command-based flow
 		}
