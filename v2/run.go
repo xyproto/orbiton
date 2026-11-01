@@ -168,8 +168,12 @@ func (e *Editor) Run() (string, bool, error) {
 				return "", false, errors.New("please install ZSNES or Snes9x to run " + filepath.Base(rom))
 			}
 		} else if prg := builtROM(sourceDir, ".prg"); prg != "" {
-			if cmd = slay.C64EmulatorCommand(prg); cmd == nil {
-				return "", false, errors.New("please install VICE to run " + filepath.Base(prg))
+			if cmd = slay.CBMEmulatorCommand(prg); cmd == nil {
+				return "", false, errors.New("please install VICE (x64sc, x128 or xvic) to run " + filepath.Base(prg))
+			}
+		} else if rom := builtROM(sourceDir, ".nes"); rom != "" {
+			if cmd = slay.NESEmulatorCommand(rom); cmd == nil {
+				return "", false, errors.New("please install an NES emulator, like FCEUX or Nestopia, to run " + filepath.Base(rom))
 			}
 		} else if exe := dosExecutable(sourceDir, sourceFilename); exe != "" {
 			if cmd = dosboxCommand(exe); cmd == nil {
@@ -419,13 +423,14 @@ func CombinedOutputSetPID(c *exec.Cmd) (string, error) {
 	return b.String(), err
 }
 
-// slayAssembly returns true if the current file is assembly that slay can build: C64 assembly for ca65,
-// or assembly for another platform than DOS in a directory with a Makefile that has a run: rule
+// slayAssembly returns true if the current file is assembly that slay can build: 6502 or 65816 assembly for ca65
+// (for the C64, C128, VIC-20, NES or SNES), or assembly for another platform than DOS in a directory with a
+// Makefile that has a run: rule
 func (e *Editor) slayAssembly(sourceDir string) bool {
 	if e.mode != mode.Assembly || isDOSAssembly(e.String()) {
 		return false
 	}
-	if slay.IsC64Assembly(e.String()) {
+	if slay.AssemblyTarget(e.String()) != "" {
 		return true
 	}
 	_, ok := slay.MakefileRunTargets(sourceDir)
@@ -435,7 +440,7 @@ func (e *Editor) slayAssembly(sourceDir string) bool {
 // assemblyROM returns the path to the program that was built from an assembly project by slay,
 // or the file that the run: rule of the Makefile starts, or an empty string if there is none
 func assemblyROM(sourceDir string) string {
-	for _, ext := range []string{".prg", ".sfc", ".gba"} {
+	for _, ext := range []string{".prg", ".nes", ".sfc", ".gba"} {
 		if rom := builtROM(sourceDir, ext); rom != "" {
 			return rom
 		}
@@ -454,16 +459,13 @@ func makefileRunFile(sourceDir string) string {
 	return ""
 }
 
-// romCommand returns a command for running the given ROM or program file in an emulator, chosen by the file extension.
+// romCommand returns a command for running the given ROM or program file in an emulator, chosen by slay.
+// Files that are not ROMs or programs for an emulator are run directly.
 // Returns nil if no suitable emulator is installed.
 func romCommand(rom string) *exec.Cmd {
 	switch strings.ToLower(filepath.Ext(rom)) {
-	case ".gba":
-		return slay.GBAEmulatorCommand(rom)
-	case ".sfc", ".smc":
-		return slay.SNESEmulatorCommand(rom)
-	case ".prg":
-		return slay.C64EmulatorCommand(rom)
+	case ".prg", ".nes", ".sfc", ".smc", ".gba":
+		return slay.EmulatorCommand(rom)
 	}
 	return exec.Command(rom)
 }
