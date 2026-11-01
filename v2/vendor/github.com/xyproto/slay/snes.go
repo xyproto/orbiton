@@ -2,6 +2,7 @@ package slay
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"os"
 	"os/exec"
@@ -166,4 +167,96 @@ func SNESEmulatorCommand(rom string, args ...string) *exec.Cmd {
 		}
 	}
 	return nil
+}
+
+// snesLoROMConfig is an ld65 configuration for a 32 KiB LoROM SNES cartridge.
+// The assembly source code provides the HEADER segment (at $FFC0) and the VECTORS segment (at $FFE0).
+const snesLoROMConfig = `MEMORY {
+    ZEROPAGE: start = $0000, size = $0100;
+    RAM:      start = $0200, size = $1E00;
+    ROM:      start = $8000, size = $8000, fill = yes, fillval = $FF;
+}
+
+SEGMENTS {
+    ZEROPAGE: load = ZEROPAGE, type = zp, optional = yes;
+    BSS:      load = RAM, type = bss, optional = yes;
+    CODE:     load = ROM, start = $8000;
+    RODATA:   load = ROM, optional = yes;
+    HEADER:   load = ROM, start = $FFC0;
+    VECTORS:  load = ROM, start = $FFE0;
+}
+`
+
+// buildSNESAssembly assembles 65816 assembly with ca65 and links it into a LoROM SNES cartridge with ld65,
+// using the ld65 configuration in the current directory, if there is one
+func buildSNESAssembly(srcs []string, rom string, opts BuildOptions) ([]byte, []string, error) {
+	var output bytes.Buffer
+	var commands []string
+	ca65, ld65 := cc65ToolPath("ca65"), cc65ToolPath("ld65")
+	if ca65 == "" || ld65 == "" {
+		return nil, nil, fmt.Errorf("ca65 and ld65 were not found, please install cc65")
+	}
+	run := func(name string, args ...string) error {
+		cmd := exec.Command(name, args...)
+		commands = append(commands, cmdToString(cmd))
+		out, err := cmd.CombinedOutput()
+		output.Write(out)
+		if err != nil {
+			return fmt.Errorf("%s failed: %w", filepath.Base(name), err)
+		}
+		return nil
+	}
+	cfg := projectLinkerConfig()
+	if cfg == "" {
+		f, err := os.CreateTemp("", "slay-snes-*.cfg")
+		if err != nil {
+			return nil, nil, err
+		}
+		defer os.Remove(f.Name())
+		if _, err := f.WriteString(snesLoROMConfig); err != nil {
+			f.Close()
+			return nil, nil, err
+		}
+		if err := f.Close(); err != nil {
+			return nil, nil, err
+		}
+		cfg = f.Name()
+	}
+	var objs []string
+	for _, src := range srcs {
+		obj := strings.TrimSuffix(src, filepath.Ext(src)) + ".o"
+		args := []string{"--cpu", "65816"}
+		if opts.Debug {
+			args = append(args, "-g")
+		}
+		if err := run(ca65, append(args, "-o", obj, src)...); err != nil {
+			return output.Bytes(), commands, err
+		}
+		objs = append(objs, obj)
+	}
+	if err := run(ld65, append([]string{"-C", cfg, "-o", rom}, objs...)...); err != nil {
+		return output.Bytes(), commands, err
+	}
+	return output.Bytes(), commands, writeSNESChecksum(rom)
+}
+
+// writeSNESChecksum writes the checksum and its complement into the header of a LoROM SNES cartridge,
+// so that emulators see the ROM as intact
+func writeSNESChecksum(rom string) error {
+	const offset = 0x7FDC
+	data, err := os.ReadFile(rom)
+	if err != nil {
+		return err
+	}
+	if len(data) < offset+4 {
+		return nil
+	}
+	copy(data[offset:], []byte{0xFF, 0xFF, 0x00, 0x00})
+	var sum uint16
+	for _, b := range data {
+		sum += uint16(b)
+	}
+	binary.LittleEndian.PutUint16(data[offset:], sum^0xFFFF)
+	binary.LittleEndian.PutUint16(data[offset+2:], sum)
+	return os.WriteFile(rom, data, 0o644)
 }

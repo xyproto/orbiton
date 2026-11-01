@@ -164,10 +164,10 @@ type Project struct {
 	HasFS             bool
 	HasExperimentalFS bool // detected from #include <experimental/filesystem>
 	HasThreads        bool
-	HasWin64          bool // detected from #include <windows.h>
-	HasWatcom         bool // detected from #include <i86.h>
-	HasGBA            bool // detected from #include <tonc.h> or <gba.h>
-	HasC64            bool
+	HasWin64          bool   // detected from #include <windows.h>
+	HasWatcom         bool   // detected from #include <i86.h>
+	HasGBA            bool   // detected from #include <tonc.h> or <gba.h>
+	CC65Target        string // c64, c128, vic20 or nes for cc65, or snes for 65816 assembly built with ca65
 	HasSNES           bool
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
 	HasDlopen         bool // detected from #include <dlfcn.h>
@@ -183,6 +183,13 @@ func detectProject() Project {
 	p.ExtraMains = getExtraMains(p.MainSource, p.TestSources)
 	if strings.HasSuffix(p.MainSource, ".c") {
 		p.IsC = true
+	}
+	if p.MainSource == "" {
+		if srcs, target := assemblyProject(); target != "" {
+			p.MainSource = srcs[0]
+			p.DepSources = srcs[1:]
+			p.CC65Target = target
+		}
 	}
 
 	// Resolve common/ sources from includes (iteratively)
@@ -221,8 +228,10 @@ func detectProject() Project {
 				p.HasGBA = true
 				break
 			}
-			if makefileUsesC64(s) {
-				p.HasC64 = true
+			if target := makefileCC65Target(s); target != "" {
+				if p.CC65Target == "" {
+					p.CC65Target = target
+				}
 				break
 			}
 			if makefileUsesSNES(s) {
@@ -300,8 +309,8 @@ func scanSourceForFlags(filename string, p *Project) {
 		if isGBAInclude(line) {
 			p.HasGBA = true
 		}
-		if isC64Include(line) {
-			p.HasC64 = true
+		if target := cc65IncludeTarget(line); target != "" && (p.CC65Target == "" || p.CC65Target == "c64") {
+			p.CC65Target = target
 		}
 		if isSNESInclude(line) {
 			p.HasSNES = true

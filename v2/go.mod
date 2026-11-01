@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20261022144421-6c848fa1b723
+	github.com/gomarkdown/markdown v0.0.0-20261031165833-acfab5edc1ce
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.31
@@ -42,7 +42,7 @@ require (
 
 require github.com/xyproto/themes v1.0.2
 
-require github.com/xyproto/slay v1.3.11
+require github.com/xyproto/slay v1.3.12
 
 require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
 
@@ -62,7 +62,7 @@ require (
 	github.com/xyproto/distrodetector v1.3.2 // indirect
 	github.com/xyproto/env v1.9.1 // indirect
 	github.com/xyproto/palgen v1.7.3 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.49.0
 	golang.org/x/term v0.47.0 // indirect
 	golang.org/x/text v0.43.0 // indirect

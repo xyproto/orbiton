@@ -467,13 +467,13 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 	}
 
 	exe := executableName()
-	if proj.HasC64 || proj.HasSNES {
+	if proj.CC65Target != "" || proj.HasSNES {
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
 		var out []byte
 		var cmds []string
 		var err error
-		if proj.HasC64 {
-			out, cmds, err = buildC64(srcs, exe+".prg", opts)
+		if proj.CC65Target != "" {
+			out, cmds, err = buildCC65(proj.CC65Target, srcs, exe+cc65Extension(proj.CC65Target), opts)
 		} else {
 			out, cmds, err = buildSNES(srcs, exe+".sfc")
 		}

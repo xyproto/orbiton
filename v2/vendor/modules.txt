@@ -42,7 +42,7 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20261022144421-6c848fa1b723
+# github.com/gomarkdown/markdown v0.0.0-20261031165833-acfab5edc1ce
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -145,7 +145,7 @@ github.com/xyproto/oksvg
 # github.com/xyproto/palgen v1.7.3
 ## explicit; go 1.25.1
 github.com/xyproto/palgen
-# github.com/xyproto/slay v1.3.11
+# github.com/xyproto/slay v1.3.12
 ## explicit; go 1.25.1
 github.com/xyproto/slay
 # github.com/xyproto/syntax v1.14.7
@@ -184,7 +184,7 @@ golang.org/x/image/vector
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/net v0.61.0
+# golang.org/x/net v0.62.0
 ## explicit; go 1.26.0
 golang.org/x/net/html
 golang.org/x/net/html/atom

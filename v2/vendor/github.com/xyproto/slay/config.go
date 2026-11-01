@@ -152,30 +152,13 @@ func runExecutable(win64 bool, args ...string) error {
 	if exe == "" {
 		return fmt.Errorf("no main source file found")
 	}
-	if !fileExists(exe) && fileExists(exe+".prg") {
-		cmd := C64EmulatorCommand(dotSlash(exe+".prg"), args...)
-		if cmd == nil {
-			return fmt.Errorf("built %s.prg, but no C64 emulator such as VICE was found", exe)
+	for _, ext := range []string{".prg", ".nes", ".sfc", ".gba"} {
+		if fileExists(exe) || !fileExists(exe+ext) {
+			continue
 		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	}
-	if !fileExists(exe) && fileExists(exe+".sfc") {
-		cmd := SNESEmulatorCommand(dotSlash(exe+".sfc"), args...)
+		cmd := EmulatorCommand(dotSlash(exe+ext), args...)
 		if cmd == nil {
-			return fmt.Errorf("built %s.sfc, but no SNES emulator such as ZSNES was found", exe)
-		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	}
-	if !fileExists(exe) && fileExists(exe+".gba") {
-		cmd := GBAEmulatorCommand(dotSlash(exe+".gba"), args...)
-		if cmd == nil {
-			return fmt.Errorf("built %s.gba, but no GBA emulator such as mgba was found", exe)
+			return fmt.Errorf("built %s%s, but no emulator for it was found", exe, ext)
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
