@@ -105,8 +105,6 @@ func main() {
 
 	os.Setenv("ORBITON", "1") // set ORBITON to 1, for Megafile
 
-	imagepreview.CheckSixelSpeed()
-
 	// When launched as PID 1 (e.g. booted with init=/usr/bin/o), reap orphaned
 	// child processes so they don't pile up as zombies. The editor also never
 	// exits in this mode (see the main loop below) so the kernel doesn't panic.
@@ -626,6 +624,9 @@ func main() {
 		}
 		os.Exit(0)
 	}
+
+	// This tiny benchmark may also draw colorful squares in some terminal emulators
+	imagepreview.CheckSixelSpeed()
 
 	// Initialize the VT100 terminal
 	tty, err := vt.NewTTY()
