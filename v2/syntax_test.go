@@ -88,3 +88,22 @@ func TestPrologHighlight(t *testing.T) {
 		t.Errorf("Expected comment to be highlighted, got:\n%q", string(highlighted))
 	}
 }
+
+func TestFishAndOilHighlightLikeShell(t *testing.T) {
+	input := []byte("if test -f x; echo --force; end")
+	adjustSyntaxHighlightingKeywords(mode.Shell)
+	expected, err := AsText(input, mode.Shell)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range []mode.Mode{mode.Fish, mode.Oil} {
+		adjustSyntaxHighlightingKeywords(m)
+		highlighted, err := AsText(input, m)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(highlighted, expected) {
+			t.Errorf("Expected %q for %s, got %q", string(expected), m, string(highlighted))
+		}
+	}
+}
