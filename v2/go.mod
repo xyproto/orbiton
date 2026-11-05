@@ -31,7 +31,7 @@ require (
 	github.com/xyproto/megafile v1.7.14
 	github.com/xyproto/mode v0.12.18
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/syntax v1.14.8
+	github.com/xyproto/syntax v1.14.9
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.22

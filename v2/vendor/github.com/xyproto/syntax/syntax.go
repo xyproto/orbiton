@@ -330,9 +330,15 @@ func AdjustKeywords(m mode.Mode) {
 	case mode.Make:
 		delKws := []string{"#else", "#endif", "and", "as", "build", "default", "del", "done", "double", "exec", "export", "finally", "float", "fn", "generic", "get", "install", "local", "long", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "stop", "super", "super", "template", "type", "var", "with"}
 		AddAndRemoveKeywords(shellWords, delKws)
-	case mode.Shell:
+	case mode.Shell, mode.Fish, mode.Oil:
 		delKws := []string{"#else", "#endif", "as", "build", "default", "del", "double", "exec", "false", "finally", "float", "fn", "generic", "get", "install", "long", "namespace", "native", "new", "no", "package", "pass", "print", "property", "require", "ret", "set", "super", "super", "template", "true", "type", "var", "with"}
 		AddAndRemoveKeywords(shellWords, delKws)
+		switch m {
+		case mode.Fish:
+			AddKeywords(fishWords)
+		case mode.Oil:
+			AddKeywords(oilWords)
+		}
 	case mode.SuperCollider:
 		AddKeywords(superColliderWords)
 	case mode.Spec:

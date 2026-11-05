@@ -130,6 +130,12 @@ var (
 	// Swift
 	swiftWords = []string{"associatedtype", "class", "deinit", "enum", "extension", "fileprivate", "func", "import", "init", "inout", "internal", "let", "open", "operator", "private", "precedencegroup", "protocol", "public", "rethrows", "static", "struct", "subscript", "typealias", "var", "break", "case", "catch", "continue", "default", "defer", "do", "else", "fallthrough", "for", "guard", "if", "in", "repeat", "return", "throw", "switch", "where", "while", "Any", "as", "await", "catch", "false", "is", "nil", "rethrows", "self", "Self", "super", "throw", "throws", "true", "try", "#available", "#colorLiteral", "#elseif", "#else", "#endif", "#fileLiteral", "#if", "#imageLiteral", "#keyPath", "#selector", "#sourceLocation", "associativity", "convenience", "didSet", "dynamic", "final", "get", "indirect", "infix", "lazy", "left", "mutating", "none", "nonmutating", "optional", "override", "postfix", "precedence", "prefix", "Protocol", "required", "right", "set", "some", "Type", "unowned", "weak", "willSet"}
 
+	// Fish shell
+	fishWords = []string{"and", "argparse", "begin", "break", "builtin", "case", "command", "contains", "continue", "else", "end", "exec", "for", "function", "functions", "if", "in", "not", "or", "read", "return", "set", "set_color", "status", "string", "switch", "test", "while"}
+
+	// Oil shell (YSH)
+	oilWords = []string{"and", "break", "call", "case", "const", "continue", "elif", "else", "false", "for", "func", "if", "in", "is", "not", "null", "or", "proc", "return", "setglobal", "setvar", "shopt", "source", "true", "try", "use", "var", "while"}
+
 	// For Shell, Make and Just
 	shellWords = []string{"--force", "-f", "checkout", "configure", "dd", "do", "doas", "done", "endif", "exec", "fdisk", "for", "gdisk", "ifeq", "ifneq", "in", "mv", "rm", "rmdir", "setopt", "su", "sudo", "while"}
 

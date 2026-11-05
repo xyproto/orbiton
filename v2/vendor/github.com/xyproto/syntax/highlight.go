@@ -239,7 +239,7 @@ func Print(s *scanner.Scanner, w io.Writer, p Printer, m mode.Mode) error {
 		s.IsIdentRune = func(ch rune, i int) bool {
 			return ch == '*' || ch == '-' || ch == '+' || ch == '/' || ch == '?' || ch == '!' || ch == '.' || ch == ':' || ch == '&' || ch == '<' || ch == '>' || ch == '=' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
 		}
-	case mode.Shell, mode.Make, mode.Just:
+	case mode.Shell, mode.Fish, mode.Oil, mode.Make, mode.Just:
 		s.IsIdentRune = func(ch rune, i int) bool {
 			return ch == '-' || ch == '_' || unicode.IsLetter(ch) || unicode.IsDigit(ch) && i > 0
 		}
