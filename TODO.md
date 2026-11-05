@@ -3,10 +3,8 @@
 ## General
 
 - [ ] Let `ctrl-j` jump between brackets when on a bracket, instead of `ctrl-r`, so that `ctrl-r` is always for portals.
-- [ ] Support arrow keys when browsing files under tmux + ssh.
 - [ ] Let users select if files should be deleted or moved to "trash" the first time they delete a file in a session, in the file browser, when pressing ctrl-d.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
-- [ ] Let the file browser be more like `ncdu`.
 - [ ] Also support shift-return, especially in book mode.
 - [ ] Improve the colors of the "Welcome" box.
 - [ ] When editing YAML, use 2-space indentation by default.
@@ -14,6 +12,7 @@
 - [ ] Syntax highlight decorators in Java in a color that stands out more.
 - [ ] Paths with "include" in them, ending with ".h" should prioritize being syntax highlighted
       over being red if they are read-only, for readability. Like `/usr/lib/tcc/include/tgmath.h`.
+- [ ] The color for text in read-only files should be red not only in the default theme, but also in ie. the xoria theme.
 - [ ] When launching `og` and then entering the file browser and then opening a file, Esc should not go back to the file browser.
 - [ ] Let the `.desktop` file for the light version use the same executable as the dark version instead of `lig`?
 - [ ] Make `ctrl-b` more predictable.
