@@ -70,10 +70,10 @@ const (
 
 	delayUntilSpeedUp = 700 * time.Millisecond
 
-	insertKey         = "⎀"         // insert
-	shiftInsertKey    = "shift⎀"    // shift-insert
-	ctrlShiftLeftKey  = "\x1b[1;6D" // ctrl-shift-left (not in the vt library)
-	ctrlShiftRightKey = "\x1b[1;6C" // ctrl-shift-right (not in the vt library)
+	insertKey         = "⎀"          // insert
+	shiftInsertKey    = "shift⎀"     // shift-insert
+	ctrlShiftLeftKey  = "ctrlshift←" // ctrl-shift-left
+	ctrlShiftRightKey = "ctrlshift→" // ctrl-shift-right
 )
 
 // movementKeys lists all keys treated as cursor movement for highlighting
