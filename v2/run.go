@@ -43,13 +43,18 @@ func (e *Editor) Run() (string, bool, error) {
 	switch e.mode {
 	case mode.ABC:
 		stopBackgroundProcesses()
+		midiFilename := filepath.Join(tempDir, "o.mid")
+		if soundFont := findSoundFont(); soundFont != "" && files.WhichCached("fluidsynth") != "" {
+			cmd = exec.Command("fluidsynth", "-n", "-i", "-q", soundFont, midiFilename)
+			break
+		}
 		var audioOutputFlag string
 		if isLinux {
 			audioOutputFlag = "-Oj" // jack
 		} else if isDarwin {
 			audioOutputFlag = "-Od" // macOS
 		}
-		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, filepath.Join(tempDir, "o.mid"))
+		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, midiFilename)
 	case mode.VersionChecker:
 		cmd = exec.Command("pkgctl version check", sourceFilename)
 	case mode.Shell:
@@ -454,6 +459,20 @@ func makefileRunFile(sourceDir string) string {
 	if name := slay.MakefileRunProgram(sourceDir); name != "" {
 		if path := filepath.Join(sourceDir, name); files.IsFile(path) {
 			return path
+		}
+	}
+	return ""
+}
+
+func findSoundFont() string {
+	for _, prefix := range []string{"/usr/share", "/usr/local/share", "/opt/homebrew/share"} {
+		for _, pattern := range []string{"soundfonts/default.sf2", "soundfonts/FluidR3_GM*.sf2", "soundfonts/GeneralUser*.sf[23]", "sounds/sf2/default-GM.sf2", "sounds/sf2/FluidR3_GM.sf2", "scummvm/Roland_SC-55.sf2"} {
+			matches, _ := filepath.Glob(filepath.Join(prefix, pattern))
+			for _, soundFont := range matches {
+				if files.IsFile(soundFont) {
+					return soundFont
+				}
+			}
 		}
 	}
 	return ""
