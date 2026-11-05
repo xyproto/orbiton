@@ -118,7 +118,7 @@ These features are unique to `o`, as far as I am aware:
 * Press `ctrl-v` once to paste one line, press `ctrl-v` again to paste the rest.
 * When pasting lines copied out of a diff into source code, the leading `+` and ` ` are removed.
 * Press `ctrl-c` once to copy one line, press `ctrl-c` again to copy a block of lines (until a blank line), press `ctrl-c` again to copy the current function.
-* Jump to matching bracket with `ctrl-r`, or open or close a portal. Toggle wrap when typing for prose with `ctrl-r` pressed twice. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
+* Jump to the matching bracket with `ctrl-g` or `ctrl-5` Open or close a portal with `ctrl-r`. Toggle wrap when typing for prose with `ctrl-r` pressed twice. When a portal is open, copy lines across files (or within the same file) with `ctrl-v`.
 * Build code with `ctrl-space` or `ctrl-b` and format code with `ctrl-w`, for a wide range of programming languages.
 * Cycle git rebase keywords with `ctrl-w` or `ctrl-r`, when an interactive git rebase session is in progress.
 * When opening a file with merge conflict markers, jump to the first marker. Press `ctrl-n` to jump to the next one.
@@ -241,11 +241,12 @@ There are pretty few hotkeys to remember:
 * `F12`    - Go to a definition or include (same as `ctrl-g`).
 
 On macOS, the function keys may need to be held together with `Fn`, depending on the keyboard settings.
-* `ctrl-g` - Go to include or definition, go back or toggle the status bar.
-* `ctrl-r` - Jump to matching bracket, otherwise open or close a portal. Double press to toggle "wrap when typing".
+* `ctrl-g` - Jump to the matching bracket, go to include or definition, go back or toggle the status bar.
+* `ctrl-r` - Open or close a portal. Double press to toggle "wrap when typing".
              For git interactive rebase, cycle keywords.
 * `ctrl-\` - Comment in or out a block of code, or reflow the current paragraph when editing prose.
 * `ctrl-~` - Insert the current date and time.
+* `ctrl-5` - Jump to the matching bracket (same as `ctrl-]`).
 * `esc`    - Go back after having gone to another location or file. Redraw everything and clear the last search.
 
 ## Screen recordings for a few select programming languages
