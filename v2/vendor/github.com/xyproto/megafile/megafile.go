@@ -157,14 +157,16 @@ func (s *State) startReadKey() {
 			if !s.browsing.Load() {
 				return
 			}
-			hasInput, _ := s.tty.Poll(50 * time.Millisecond)
-			if !hasInput {
-				continue
+			if !s.tty.HasPendingInput() {
+				hasInput, _ := s.tty.Poll(50 * time.Millisecond)
+				if !hasInput {
+					continue
+				}
 			}
 			if !s.browsing.Load() {
 				return
 			}
-			s.keyChan <- s.tty.KeyString()
+			s.keyChan <- s.tty.ReadKey()
 			return
 		}
 	}()
@@ -274,6 +276,18 @@ func New(c *vt.Canvas, tty *vt.TTY, startdirs []string, header, editor, undoHist
 
 func ulen[T string | []rune | []string](xs T) uint {
 	return uint(len(xs))
+}
+
+// truncateCells returns the start of s that fits within n canvas cells
+func truncateCells(s string, n uint) string {
+	width := uint(0)
+	for i, r := range s {
+		width += vt.CellCount(string(r))
+		if width > n {
+			return s[:i]
+		}
+	}
+	return s
 }
 
 // RealPath checks if the current path is the same if symlinks are not followed (pwd -P) (the "real" path)
@@ -418,7 +432,7 @@ func (s *State) selectedIndex() int {
 // highlightEntry highlights a file entry with the given foreground and background colors.
 // It clears any leftover tail from a previous longer highlight at the same position.
 func (s *State) highlightEntry(entry *FileEntry, fg, bg vt.AttributeColor, withSuffix bool) {
-	entryWidth := ulen(entry.displayName)
+	entryWidth := vt.CellCount(entry.displayName)
 	// If this position was previously highlighted with a longer name, clear the tail
 	if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y && s.lastHighlightWidth > entryWidth {
 		clearFrom := entry.x + entryWidth
@@ -456,7 +470,7 @@ func (s *State) clearHighlight() {
 		entry := &s.fileEntries[i]
 		if entry.selected {
 			// Clear only the area that was actually highlighted (displayName + suffix)
-			clearWidth := ulen(entry.displayName) + 2 // +2 for suffix and safety margin
+			clearWidth := vt.CellCount(entry.displayName) + 2 // +2 for suffix and safety margin
 			if s.hasLastHighlight && s.lastHighlightX == entry.x && s.lastHighlightY == entry.y {
 				clearWidth = max(clearWidth, s.lastHighlightWidth+2)
 			}
@@ -466,7 +480,7 @@ func (s *State) clearHighlight() {
 			// Redraw with original colors
 			s.canvas.Write(entry.x, entry.y, entry.color, s.Background, entry.displayName)
 			if entry.suffix != "" {
-				s.canvas.Write(entry.x+ulen(entry.displayName), entry.y, vt.White, s.Background, entry.suffix)
+				s.canvas.Write(entry.x+vt.CellCount(entry.displayName), entry.y, vt.White, s.Background, entry.suffix)
 			}
 			entry.selected = false
 			s.hasLastHighlight = false
@@ -651,8 +665,8 @@ func (s *State) ls(dir string) (int, error) {
 			}
 		}
 
-		if ulen(name) > maxLen {
-			maxLen = ulen(name)
+		if vt.CellCount(name) > maxLen {
+			maxLen = vt.CellCount(name)
 		}
 
 		// Store ALL filtered entries so selectedIndex remains stable
@@ -695,12 +709,12 @@ func (s *State) ls(dir string) (int, error) {
 			columnWidth = s.splitX - s.startx
 		}
 
-		if ulen(name) > columnWidth-2 {
-			displayName = string([]rune(name)[:columnWidth-5]) + "..."
+		if vt.CellCount(name) > columnWidth-2 {
+			displayName = truncateCells(name, columnWidth-5) + "..."
 		}
 
-		if ulen(name) > longestSoFar {
-			longestSoFar = ulen(name)
+		if vt.CellCount(name) > longestSoFar {
+			longestSoFar = vt.CellCount(name)
 		}
 		if longestSoFar > columnWidth {
 			longestSoFar = columnWidth
@@ -752,7 +766,7 @@ func (s *State) ls(dir string) (int, error) {
 
 		s.canvas.Write(x, y, color, s.Background, displayName)
 		if suffix != "" {
-			s.canvas.Write(x+ulen(displayName), y, vt.White, s.Background, suffix)
+			s.canvas.Write(x+vt.CellCount(displayName), y, vt.White, s.Background, suffix)
 		}
 
 		y++
@@ -1334,7 +1348,7 @@ func (s *State) Run() ([]string, error) {
 			prompt = strings.Replace(prompt, env.HomeDir(), "~", 1)
 		}
 		c.Write(s.startx, s.starty, s.PromptColor, s.Background, prompt)
-		s.promptLength = ulen([]rune(prompt)) + 2 // +2 for > and " "
+		s.promptLength = vt.CellCount(prompt) + 2 // +2 for > and " "
 		c.WriteRune(s.startx+s.promptLength-2, s.starty, s.AngleColor, s.Background, '>')
 		c.WriteRune(s.startx+s.promptLength-1, s.starty, vt.Default, s.Background, ' ')
 	}
@@ -1355,7 +1369,7 @@ func (s *State) Run() ([]string, error) {
 		if envNoColor {
 			cursorBackground = vt.BackgroundWhite
 		}
-		c.WriteRune(x+index, y, cursorForeground, cursorBackground, r)
+		c.WriteRune(x+vt.CellCount(string(s.written[:index])), y, cursorForeground, cursorBackground, r)
 		vt.SetXY(x, y)
 	}
 
