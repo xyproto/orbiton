@@ -347,6 +347,14 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 		cmd = exec.Command("bash", "-n", sourceFilename)
 		cmd.Dir = sourceDir
 		return cmd, everythingIsFine, nil
+	case mode.Fish:
+		cmd = exec.Command("fish", "-n", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
+	case mode.Oil:
+		cmd = exec.Command("ysh", "-n", sourceFilename)
+		cmd.Dir = sourceDir
+		return cmd, everythingIsFine, nil
 	case mode.VersionChecker:
 		cmd = exec.Command("pkgctl", "version", "check", ".")
 		cmd.Dir = sourceDir
@@ -1703,7 +1711,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 							switch e.mode {
 							case mode.ABC, mode.Chuck, mode.SuperCollider:
 								msg = fmt.Sprintf("Playing with %s...", e.mode)
-							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.TypeScript:
+							case mode.JavaScript, mode.Lua, mode.Python, mode.Shell, mode.Fish, mode.Oil, mode.TypeScript:
 								if e.flaskApplication.Load() {
 									msg = "Serving Flask on http://127.0.0.1:5000/ ..."
 									var cmd *exec.Cmd
@@ -1813,7 +1821,7 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 		}
 
 		switch e.mode {
-		case mode.Perl, mode.Python, mode.Ruby, mode.Shell:
+		case mode.Perl, mode.Python, mode.Ruby, mode.Shell, mode.Fish, mode.Oil:
 			status.SetMessage("Syntax OK")
 		default:
 			status.SetMessage("Success")

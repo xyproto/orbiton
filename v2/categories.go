@@ -77,7 +77,7 @@ func (e *Editor) NoSmartIndentation() bool {
 // UsingGDBMightWork evaluates if using GDB might work, for this file type
 func (e *Editor) UsingGDBMightWork() bool {
 	switch e.mode {
-	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.CSV, mode.Dart, mode.Dhall, mode.Email, mode.Erlang, mode.FSTAB, mode.Git, mode.Gradle, mode.HCL, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nix, mode.Nroff, mode.Oak, mode.Perl, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Teal, mode.Text, mode.TOML, mode.TypeScript, mode.WGSL, mode.VersionChecker, mode.Vim, mode.XML, mode.YAML:
+	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Arduino, mode.Basic, mode.Bat, mode.Bazel, mode.Blank, mode.CMake, mode.CS, mode.Clojure, mode.Config, mode.CSV, mode.Dart, mode.Dhall, mode.Email, mode.Erlang, mode.FSTAB, mode.Git, mode.Gradle, mode.HCL, mode.HIDL, mode.HTML, mode.Ini, mode.JSON, mode.Java, mode.JavaScript, mode.Just, mode.Kotlin, mode.Lisp, mode.Log, mode.Lua, mode.M4, mode.Make, mode.ManPage, mode.Markdown, mode.Nix, mode.Nroff, mode.Oak, mode.Perl, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.Python, mode.SCDoc, mode.Starlark, mode.SQL, mode.Scala, mode.Shell, mode.Fish, mode.Oil, mode.Teal, mode.Text, mode.TOML, mode.TypeScript, mode.WGSL, mode.VersionChecker, mode.Vim, mode.XML, mode.YAML:
 		// Most likely "no"
 		return false
 	case mode.Zig:
@@ -103,7 +103,7 @@ func (e *Editor) CanRun() bool {
 	switch e.mode {
 	case mode.AIDL, mode.ASCIIDoc, mode.Amber, mode.Bazel, mode.Blank, mode.Config, mode.CSV, mode.Dhall, mode.Email, mode.FSTAB, mode.Git, mode.HCL, mode.HIDL, mode.HTML, mode.JSON, mode.Log, mode.M4, mode.ManPage, mode.Markdown, mode.Nroff, mode.Pkl, mode.PolicyLanguage, mode.Protobuf, mode.ReStructured, mode.SCDoc, mode.SQL, mode.Shader, mode.Text, mode.TOML, mode.VersionChecker, mode.WGSL, mode.XML, mode.YAML:
 		return false
-	case mode.Shell: // don't run, because it's not a good idea
+	case mode.Shell, mode.Fish, mode.Oil: // don't run, because it's not a good idea
 		return false
 	case mode.Zig: // TODO: Find out why running Zig programs is problematic, terminal emulator wise
 		return false

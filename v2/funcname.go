@@ -25,12 +25,14 @@ func (e *Editor) FuncPrefix() string {
 		return "func "
 	case mode.Kotlin:
 		return "fun "
-	case mode.Jakt, mode.JavaScript, mode.Koka, mode.Lua, mode.Shell, mode.TypeScript:
+	case mode.Jakt, mode.JavaScript, mode.Koka, mode.Lua, mode.Shell, mode.Fish, mode.TypeScript:
 		return "function "
 	case mode.Terra:
 		return "terra "
 	case mode.Odin:
 		return "proc() "
+	case mode.Oil:
+		return "proc "
 	case mode.Gleam, mode.Hare, mode.Rust, mode.V, mode.Zig:
 		return "fn "
 	case mode.OCaml:

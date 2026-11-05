@@ -77,7 +77,9 @@ var (
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 
 	// AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
-	AsText = syntax.AsText
+	AsText = func(src []byte, m mode.Mode, options ...syntax.Option) ([]byte, error) {
+		return syntax.AsText(src, highlightMode(m), options...)
+	}
 )
 
 // writeRuneOfWidth writes r at x, y, taking up rw cells. x+rw-1 must be within the canvas.
@@ -334,7 +336,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 	}
 	// q should now contain the current quote state
 
-	if e.mode == mode.Make || e.mode == mode.Just || e.mode == mode.Shell || e.mode == mode.Docker {
+	if e.mode == mode.Make || e.mode == mode.Just || isShell(e.mode) || e.mode == mode.Docker {
 		escapeFunction = ShEscape
 		unEscapeFunction = ShUnEscape
 	}
@@ -625,13 +627,13 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
 					case (e.mode == mode.Arduino || e.mode == mode.C || e.mode == mode.Cpp || e.mode == mode.ObjC || e.mode == mode.Shader || e.mode == mode.Make || e.mode == mode.Just) && !q.multiLineComment && (strings.HasPrefix(trimmedLine, "#if") || strings.HasPrefix(trimmedLine, "#else") || strings.HasPrefix(trimmedLine, "#elseif") || strings.HasPrefix(trimmedLine, "#endif") || strings.HasPrefix(trimmedLine, "#elif") || strings.HasPrefix(trimmedLine, "#define") || strings.HasPrefix(trimmedLine, "#pragma")):
 						coloredString = unEscapeFunction(e.MultiLineString.Get(line))
-					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
+					case !isShell(e.mode) && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*/") && !strings.Contains(trimmedLine, "/*"):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml || e.mode == mode.ObjectPascal) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "*)") && !strings.Contains(trimmedLine, "(*")):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case (e.mode == mode.Elm || e.mode == mode.Haskell || e.mode == mode.Tim) && (!strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.HasSuffix(trimmedLine, "-}") && !strings.Contains(trimmedLine, "{-") || q.multiLineComment):
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
-					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
+					case !isShell(e.mode) && e.mode != mode.Docker && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "/*") > strings.LastIndex(trimmedLine, "*/"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 					case (e.mode == mode.StandardML || e.mode == mode.OCaml || e.mode == mode.ObjectPascal) && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && strings.LastIndex(trimmedLine, "(*") > strings.LastIndex(trimmedLine, "*)"):
 						coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
@@ -643,7 +645,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 						} else {
 							coloredString = unEscapeFunction(tout.DarkTags(string(textWithTags)))
 						}
-					case e.mode != mode.Shell && e.mode != mode.Docker && e.mode != mode.FSTAB && e.mode != mode.Nix && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
+					case !isShell(e.mode) && e.mode != mode.Docker && e.mode != mode.FSTAB && e.mode != mode.Nix && e.mode != mode.Make && e.mode != mode.Just && !strings.HasPrefix(trimmedLine, singleLineCommentMarker) && (q.multiLineComment || q.stoppedMultiLineComment) && !strings.Contains(line, "\"/*") && !strings.Contains(line, "*/\"") && !strings.Contains(line, "\"(*") && !strings.Contains(line, "*)\"") && !strings.HasPrefix(trimmedLine, "#") && !strings.HasPrefix(trimmedLine, "//"):
 						// In the middle of a multi-line comment
 						coloredString = unEscapeFunction(e.MultiLineComment.Get(line))
 					case q.hasSingleLineComment || q.stoppedMultiLineComment:
@@ -715,7 +717,7 @@ func (e *Editor) WriteLines(c *vt.Canvas, fromline, toline LineIndex, cx, cy uin
 					}
 
 					// Take an extra pass on coloring the -> arrow, even if it's in a comment
-					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.HCL || e.mode == mode.Shell || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just || e.mode == mode.TOML || e.mode == mode.YAML) && strings.Contains(line, "->") {
+					if !(e.mode == mode.HTML || e.mode == mode.XML || e.mode == mode.Markdown || e.mode == mode.ReStructured || e.mode == mode.Blank || e.mode == mode.Config || e.mode == mode.CSV || e.mode == mode.HCL || isShell(e.mode) || e.mode == mode.Docker || e.mode == mode.Ini || e.mode == mode.Just || e.mode == mode.TOML || e.mode == mode.YAML) && strings.Contains(line, "->") {
 						arrowIndex = strings.Index(line, "->")
 						arrowBeforeCommentMarker = true
 

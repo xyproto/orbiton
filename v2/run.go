@@ -59,6 +59,10 @@ func (e *Editor) Run() (string, bool, error) {
 		cmd = exec.Command("pkgctl version check", sourceFilename)
 	case mode.Shell:
 		cmd = exec.Command("bash", sourceFilename)
+	case mode.Fish:
+		cmd = exec.Command("fish", sourceFilename)
+	case mode.Oil:
+		cmd = exec.Command("ysh", sourceFilename)
 	case mode.Chuck:
 		stopBackgroundProcesses()
 		cmd = exec.Command("chuck", sourceFilename)

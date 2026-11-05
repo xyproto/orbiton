@@ -65,6 +65,7 @@ func (e *Editor) GetFormatMap() FormatMap {
 			mode.Rust:       exec.Command("rustfmt"),
 			mode.Scala:      exec.Command("scalafmt"),
 			mode.Shell:      exec.Command("shfmt", "-s", "-w", "-i", "2", "-bn", "-ci", "-sr"),
+			mode.Fish:       exec.Command("fish_indent", "-w"),
 			mode.Ruby:       exec.Command("rubocop", "--autocorrect", "--fail-level", "fatal"),
 			mode.V:          exec.Command("v", "fmt"),
 			mode.XML:        exec.Command("tidy", "-w", "80", "-q", "-i", "-utf8", "--show-errors", "0", "--show-warnings", "no", "--tidy-mark", "no", "-xml", "-m"),
