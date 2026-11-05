@@ -10,21 +10,13 @@ var Keywords = syntax.Keywords
 
 // adjustSyntaxHighlightingKeywords configures syntax highlighting keywords for the given mode
 func adjustSyntaxHighlightingKeywords(m mode.Mode) {
-	syntax.AdjustKeywords(highlightMode(m))
+	syntax.AdjustKeywords(m)
 	Keywords = syntax.Keywords
 }
 
 // isShell checks if the given mode is for shell scripts, including Fish and Oil
 func isShell(m mode.Mode) bool {
 	return m == mode.Shell || m == mode.Fish || m == mode.Oil
-}
-
-// highlightMode returns the mode that the syntax package should use for highlighting the given mode
-func highlightMode(m mode.Mode) mode.Mode {
-	if isShell(m) {
-		return mode.Shell
-	}
-	return m
 }
 
 // ignoreSingleQuotes checks if this mode does not use single quotes for strings

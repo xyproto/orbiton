@@ -77,9 +77,7 @@ var (
 	resizeMut     sync.RWMutex // locked when the terminal emulator is being resized
 
 	// AsText delegates to syntax.AsText, using the current syntax.DefaultTextConfig.
-	AsText = func(src []byte, m mode.Mode, options ...syntax.Option) ([]byte, error) {
-		return syntax.AsText(src, highlightMode(m), options...)
-	}
+	AsText = syntax.AsText
 )
 
 // writeRuneOfWidth writes r at x, y, taking up rw cells. x+rw-1 must be within the canvas.
