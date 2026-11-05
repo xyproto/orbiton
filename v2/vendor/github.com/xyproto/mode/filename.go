@@ -26,14 +26,16 @@ func Detect(filename string) Mode {
 	// Check if we should be in a particular mode for a particular type of file
 	// TODO: Create a hash map to look up many of the extensions
 	switch {
-	case baseFilename == "COMMIT_EDITMSG" ||
+	case strings.HasSuffix(baseFilename, "_EDITMSG") ||
 		baseFilename == "MERGE_MSG" ||
+		baseFilename == "SQUASH_MSG" ||
+		baseFilename == "EDIT_DESCRIPTION" ||
 		(strings.HasPrefix(baseFilename, "git-") &&
 			!strings.Contains(baseFilename, ".") &&
 			strings.Count(baseFilename, "-") >= 2):
 		// Git mode
 		mode = Git
-	case baseFilename == "Dockerfile" || baseFilename == "dockerfile":
+	case isDockerfile(baseFilename):
 		mode = Docker
 	case baseFilename == "Modelfile" || baseFilename == "modelfile":
 		mode = Ollama
@@ -47,7 +49,7 @@ func Detect(filename string) Mode {
 		mode = VersionChecker
 	case ext == ".vimrc" || ext == ".vim" || ext == ".nvim":
 		mode = Vim
-	case ext == ".mk" || ext == ".mak" || ext == ".Mak" || strings.HasPrefix(baseFilename, "Make") || strings.HasPrefix(baseFilename, "makefile") || baseFilename == "GNUmakefile":
+	case ext == ".mk" || ext == ".mak" || ext == ".Mak" || isMakefile(baseFilename):
 		// NOTE: This one MUST come before the ext == "" check below!
 		mode = Make
 	case ext == ".just" || ext == ".justfile" || baseFilename == "justfile":
@@ -59,17 +61,26 @@ func Detect(filename string) Mode {
 		mode = YAML
 	case ext == ".toml":
 		mode = TOML
-	case ext == ".tf" || ext == ".tfvars":
+	case baseFilename == "Gemfile" || baseFilename == "Rakefile" || baseFilename == "Vagrantfile" || baseFilename == "Podfile":
+		// NOTE: This one MUST come before the ext == "" check below!
+		mode = Ruby
+	case baseFilename == "go.work":
+		mode = GoMod
+	case ext == ".tf" || ext == ".tfvars" || ext == ".hcl":
 		mode = HCL
 	case ext == ".dhall":
 		mode = Dhall
 	case ext == ".pkl":
 		mode = Pkl
-	case strings.HasSuffix(filename, ".git/config") || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || ext == ".godot" || ext == ".import" || ext == ".tres" || ext == ".rc" || ext == ".prop" || ext == ".properties":
+	case strings.HasSuffix(filename, ".git/config") || ext == ".cfg" || ext == ".conf" || ext == ".service" || ext == ".target" || ext == ".socket" || ext == ".godot" || ext == ".import" || ext == ".tres" || ext == ".rc" || ext == ".prop" || ext == ".properties" || ext == ".env":
 		fallthrough
 	case ext == ".bp" || ext == ".rule" || (ext == "" && (strings.HasSuffix(baseFilename, "file") || strings.HasSuffix(baseFilename, "rc") || hasS(configFilenames, baseFilename))):
 		mode = Config
-	case ext == ".sh" || ext == ".fish" || ext == ".install" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
+	case ext == ".fish":
+		mode = Fish
+	case ext == ".oil" || ext == ".ysh":
+		mode = Oil
+	case ext == ".sh" || ext == ".install" || ext == ".ksh" || ext == ".tcsh" || ext == ".bash" || ext == ".zsh" || ext == ".local" || ext == ".profile" || baseFilename == "PKGBUILD" || baseFilename == "APKBUILD" || (strings.HasPrefix(baseFilename, ".") && strings.Contains(baseFilename, "sh")): // This last part covers .bashrc, .zshrc etc
 		mode = Shell
 	case baseFilename == ".gitignore" || baseFilename == ".ignore":
 		mode = Ignore
@@ -122,7 +133,7 @@ func Detect(filename string) Mode {
 		case ".cm":
 			// Standard ML project file
 			mode = StandardML
-		case ".cpp", ".cc", ".c++", ".cxx", ".hh", ".hpp", ".h", ".h++": // C++ mode
+		case ".cpp", ".cc", ".c++", ".cxx", ".hh", ".hpp", ".h", ".h++", ".C", ".H": // C++ mode
 			// TODO: Find a way to discover is a .h file is most likely to be C or C++
 			mode = Cpp
 		case ".clj", ".clojure", ".cljs":
@@ -161,7 +172,7 @@ func Detect(filename string) Mode {
 			mode = Elm
 		case ".eml":
 			mode = Email
-		case ".erl":
+		case ".erl", ".hrl":
 			mode = Erlang
 		case ".dsp":
 			mode = Faust
@@ -181,7 +192,7 @@ func Detect(filename string) Mode {
 			mode = Go
 		case ".gleam":
 			mode = Gleam
-		case ".glsl", ".hlsl":
+		case ".glsl", ".hlsl", ".frag", ".vert", ".comp", ".geom", ".tesc", ".tese":
 			mode = Shader
 		case ".gradle":
 			mode = Gradle
@@ -197,7 +208,7 @@ func Detect(filename string) Mode {
 			mode = HTTP
 		case ".hx", ".hxml":
 			mode = Haxe
-		case ".ini":
+		case ".ini", ".editorconfig", ".desktop":
 			mode = Ini
 		case ".ino":
 			mode = Arduino
@@ -211,9 +222,9 @@ func Detect(filename string) Mode {
 			mode = Janet
 		case ".java":
 			mode = Java
-		case ".js", ".jsx":
+		case ".js", ".jsx", ".mjs", ".cjs":
 			mode = JavaScript
-		case ".ign", ".ipynb", ".json":
+		case ".ign", ".ipynb", ".json", ".jsonc", ".json5":
 			mode = JSON
 		case ".kk":
 			mode = Koka
@@ -234,7 +245,7 @@ func Detect(filename string) Mode {
 		case ".md", ".markdown":
 			// Markdown mode
 			mode = Markdown
-		case ".ml":
+		case ".ml", ".mli":
 			mode = OCaml // or standard ML, if the file does not contain ";;"
 		case ".mod":
 			mode = GoMod // go.mod files
@@ -260,7 +271,7 @@ func Detect(filename string) Mode {
 			mode = Prolog
 		case ".proto":
 			mode = Protobuf
-		case ".py":
+		case ".py", ".pyi":
 			mode = Python
 		case ".pov":
 			mode = POV
@@ -268,7 +279,7 @@ func Detect(filename string) Mode {
 			mode = Mojo
 		case ".r":
 			mode = R
-		case ".rb":
+		case ".rb", ".rake", ".gemspec":
 			mode = Ruby
 		case ".razor":
 			mode = XML
@@ -307,7 +318,7 @@ func Detect(filename string) Mode {
 			mode = Tim
 		case ".tl":
 			mode = Teal
-		case ".ts", ".tsx":
+		case ".ts", ".tsx", ".mts", ".cts":
 			mode = TypeScript
 		case ".wg":
 			mode = WordGrinder
@@ -317,13 +328,17 @@ func Detect(filename string) Mode {
 			mode = Text
 		case ".v":
 			mode = V
-		case ".xml":
+		case ".xml", ".svg":
 			mode = XML
-		case ".zig", ".zir":
+		case ".zig", ".zir", ".zon":
 			mode = Zig
 		default:
 			mode = Blank
 		}
+	}
+
+	if mode == Blank && ext != strings.ToLower(ext) {
+		return Detect(strings.TrimSuffix(filename, ext) + strings.ToLower(ext))
 	}
 
 	// If the mode is not set, and there is no extensions
@@ -341,4 +356,28 @@ func Detect(filename string) Mode {
 	}
 
 	return mode
+}
+
+// isMakefile checks if the given filename looks like a Makefile, like "Makefile", "Makefile.am" or "GNUmakefile"
+func isMakefile(baseFilename string) bool {
+	switch baseFilename {
+	case "GNUmakefile", "BSDmakefile":
+		return true
+	}
+	for _, name := range []string{"Makefile", "makefile"} {
+		if rest, ok := strings.CutPrefix(baseFilename, name); ok && (rest == "" || strings.ContainsRune(".-_", rune(rest[0]))) {
+			return true
+		}
+	}
+	return false
+}
+
+// isDockerfile checks if the given filename looks like a Dockerfile, like "Dockerfile", "Dockerfile.dev", "app.dockerfile" or "Containerfile"
+func isDockerfile(baseFilename string) bool {
+	for _, name := range []string{"Dockerfile", "dockerfile", "Containerfile", "containerfile"} {
+		if baseFilename == name || strings.HasPrefix(baseFilename, name+".") || strings.HasSuffix(baseFilename, "."+name) {
+			return true
+		}
+	}
+	return false
 }

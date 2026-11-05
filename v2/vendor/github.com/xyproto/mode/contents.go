@@ -2,6 +2,7 @@ package mode
 
 import (
 	"bytes"
+	"path/filepath"
 	"strings"
 
 	"github.com/xyproto/lookslikegoasm"
@@ -45,27 +46,8 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		}
 	}
 	if bytes.HasPrefix(firstLine, []byte("#!")) { // The line starts with a shebang
-		words := bytes.Split(firstLine, []byte(" "))
-		lastWord := words[len(words)-1]
-		if bytes.Contains(lastWord, []byte("/")) {
-			words = bytes.Split(lastWord, []byte("/"))
-			lastWord = words[len(words)-1]
-		}
-		// Check the two first bytes first, for a tiny bit faster comparison
-		if len(lastWord) > 1 {
-			if lastWord[0] == 'p' && lastWord[1] == 'e' && string(lastWord) == "perl" { // perl
-				return Perl, true
-			}
-			if lastWord[0] == 'p' && lastWord[1] == 'y' && strings.HasPrefix(string(lastWord), "python") { // check for "python", "python2.7", "python3" etc
-				return Python, true
-			}
-			switch string(lastWord) {
-			case "ash", "bash", "fish", "ksh", "oil", "sh", "tcsh", "zsh": // TODO: support Fish and Oil with their own file modes
-				return Shell, true
-			case "nu":
-				return Nushell, true
-			}
-
+		if m, ok := shebangMode(shebangInterpreter(firstLine)); ok {
+			return m, true
 		}
 		notConfig = true
 	} else if bytes.HasPrefix(firstLine, []byte("# $")) {
@@ -87,7 +69,7 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 		return HTML, true
 	} else if bytes.Contains(firstLine, []byte("-*- nroff -*-")) {
 		return Nroff, true
-	} else if !bytes.HasPrefix(firstLine, []byte("//")) && !bytes.HasPrefix(firstLine, []byte("#")) && bytes.Count(bytes.TrimSpace(firstLine), []byte(" ")) > 10 && bytes.HasSuffix(firstLine, []byte(")")) {
+	} else if !bytes.HasPrefix(firstLine, []byte("//")) && !bytes.HasPrefix(firstLine, []byte("#")) && bytes.Count(bytes.TrimSpace(firstLine), []byte(" ")) > 10 && bytes.HasSuffix(firstLine, []byte(")")) && looksLikeManPageHeader(firstLine) {
 		return ManPage, true
 	} else if bytes.HasPrefix(firstLine, []byte("\" ")) {
 		// The first line starts with '" ', assume ViM script
@@ -200,6 +182,61 @@ func DetectFromContentBytes(initial Mode, firstLine []byte, allBytesFunc func() 
 func DetectFromContents(initial Mode, firstLine string, allTextFunc func() string) (Mode, bool) {
 	allBytesFunc := func() []byte { return []byte(allTextFunc()) }
 	return DetectFromContentBytes(initial, []byte(firstLine), allBytesFunc)
+}
+
+// shebangInterpreter returns the name of the interpreter in a shebang line,
+// like "python3" for "#!/usr/bin/env -S python3 -u" or "bash" for "#!/bin/bash -e"
+func shebangInterpreter(firstLine []byte) string {
+	fields := strings.Fields(string(bytes.TrimPrefix(firstLine, []byte("#!"))))
+	if len(fields) == 0 {
+		return ""
+	}
+	interpreter := filepath.Base(fields[0])
+	if interpreter == "env" {
+		interpreter = ""
+		for _, field := range fields[1:] {
+			if !strings.HasPrefix(field, "-") && !strings.Contains(field, "=") {
+				interpreter = filepath.Base(field)
+				break
+			}
+		}
+	}
+	return interpreter
+}
+
+// shebangMode returns the Mode for the given shebang interpreter name, if it is known
+func shebangMode(interpreter string) (Mode, bool) {
+	switch interpreter {
+	case "ash", "bash", "csh", "dash", "ksh", "mksh", "osh", "sh", "tcsh", "zsh":
+		return Shell, true
+	case "fish":
+		return Fish, true
+	case "oil", "ysh":
+		return Oil, true
+	case "nu":
+		return Nushell, true
+	case "node", "nodejs":
+		return JavaScript, true
+	}
+	for _, prefix := range []struct {
+		name string
+		mode Mode
+	}{{"perl", Perl}, {"python", Python}, {"ruby", Ruby}, {"lua", Lua}, {"php", PHP}} {
+		if strings.HasPrefix(interpreter, prefix.name) {
+			return prefix.mode, true
+		}
+	}
+	return Blank, false
+}
+
+// looksLikeManPageHeader checks if the first word of the given line looks like "LS(1)" or "printf(3p)"
+func looksLikeManPageHeader(firstLine []byte) bool {
+	fields := bytes.Fields(firstLine)
+	if len(fields) == 0 {
+		return false
+	}
+	name, section, ok := bytes.Cut(fields[0], []byte("("))
+	return ok && len(name) > 0 && len(section) > 1 && bytes.IndexByte(section, ')') == len(section)-1
 }
 
 // looksLikeShell returns true if the content has the typical shape of a shell

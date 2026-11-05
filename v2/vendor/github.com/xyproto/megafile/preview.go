@@ -197,6 +197,9 @@ func (s *State) drawTextPreview(path string, col, row, cols, rows uint) {
 
 	// Detect the file mode and adjust keywords for syntax highlighting.
 	m := mode.Detect(path)
+	if m == mode.Fish || m == mode.Oil {
+		m = mode.Shell
+	}
 	syntax.AdjustKeywords(m)
 	tout := vt.New()
 

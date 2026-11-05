@@ -50,6 +50,7 @@ const (
 	Fortran77             // Fortran 77
 	Fortran90             // Fortran 90
 	Fennel                // Fennel
+	Fish                  // Fish shell scripts
 	FSharp                // F#
 	FSTAB                 // Filesystem table
 	Garnet                // Garnet
@@ -99,6 +100,7 @@ const (
 	ObjC                  // Objective-C
 	ObjectPascal          // Object Pascal and Delphi
 	Odin                  // Odin
+	Oil                   // Oil shell scripts (YSH)
 	Ollama                // For Modelfiles
 	Perl                  // Perl
 	PHP                   // PHP
@@ -231,6 +233,8 @@ func (mode Mode) String() string {
 		return "Erlang"
 	case Faust:
 		return "Faust"
+	case Fish:
+		return "Fish"
 	case Fennel:
 		return "Fennel"
 	case Fortran77:
@@ -329,6 +333,8 @@ func (mode Mode) String() string {
 		return "Oak"
 	case ObjC:
 		return "Objective-C"
+	case Oil:
+		return "Oil"
 	case Ollama:
 		return "Ollama"
 	case ObjectPascal:
