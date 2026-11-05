@@ -73,10 +73,10 @@ F10         in debug mode, step over (same as ctrl-o)
 F11         in debug mode, step out (same as ctrl-f)
 F12         go to a definition or include (same as ctrl-g)
             on macOS, the function keys may need to be held together with Fn
-ctrl-g      go to include or definition, go back or toggle the status bar
-ctrl-r      to jump to matching bracket, otherwise open or close a portal.
-            Double press to toggle "wrap when typing". For git interactive
-            rebase, cycle keywords.
+ctrl-g      jump to the matching bracket, go to include or definition,
+            go back or toggle the status bar
+ctrl-r      to open or close a portal. Double press to toggle "wrap when
+            typing". For git interactive rebase, cycle keywords.
 ctrl-_      insert a symbol by typing in a two letter ViM-style digraph
             see https://raw.githubusercontent.com/xyproto/digraph/main/digraphs.txt
 ctrl-a      go to start of text, then start of line and then the previous line
@@ -106,6 +106,7 @@ ctrl-f      to find text. To search and replace, press Tab instead of Return.
             to spellcheck, search for "t", then press ctrl-a to add and ctrl-i to ignore
 ctrl-\      to toggle single-line comments for a block of code (or entire function)
 ctrl-~      insert the current date and time
+ctrl-5      jump to the matching bracket (same as ctrl-])
 esc         to go back after having gone to another location or file
             to redraw the screen, clear the last search and clear the current macro
 

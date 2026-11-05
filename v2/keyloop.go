@@ -861,7 +861,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			const searchForward = true
 			e.SearchMode(c, status, tty, clearPreviousSearch, searchForward, undo)
 
-		case "c:18": // ctrl-r, jump to matching bracket or toggle portals (double-press to toggle wrap)
+		case "c:18": // ctrl-r, toggle portals (double-press to toggle wrap)
 			if e.InBookMode() {
 				url := e.bookLinkURLUnderCursor()
 				pushCurrent := true
@@ -941,26 +941,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 						status.SetMessageAfterRedraw("Wrap when typing disabled")
 					}
 					e.redraw.Store(true)
-				}
-				break
-			}
-			// Jump to matching bracket if the cursor is on one
-			if r := e.Rune(); r == '(' || r == ')' || r == '{' || r == '}' || r == '[' || r == ']' {
-				if e.JumpToMatching(c) {
-					e.redraw.Store(true)
-					e.redrawCursor.Store(true)
-				} else {
-					name := "bracket"
-					switch r {
-					case '(', ')':
-						name = "parenthesis"
-					case '{', '}':
-						name = "curly bracket"
-					case '[', ']':
-						name = "square bracket"
-					}
-					status.ClearAll(c, false)
-					status.SetMessageAfterRedraw("Can't find a matching " + name)
 				}
 				break
 			}
@@ -1317,7 +1297,7 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			}
 			undo = undoBackup
 
-		case "c:31": // ctrl-_, jump to a matching parenthesis or enter a digraph
+		case "c:31": // ctrl-_, enter a digraph
 
 			if e.nanoMode.Load() { // nano: ctrl-/
 				// go to line
@@ -2551,13 +2531,15 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redraw.Store(true)
 			}
 			e.redrawCursor.Store(true)
-		case "c:29", "c:30": // ctrl-~, insert the current date and time
+		case "c:29": // ctrl-5 or ctrl-], jump to the matching bracket
+			e.JumpToMatchingBracket(c, status)
+		case "c:30": // ctrl-~, insert the current date and time
 			if insertDateAndTimeFunc, err := e.CommandToFunction(c, tty, status, undo, "insertdateandtime"); err == nil { // success
 				insertDateAndTimeFunc()
 			}
 		case "c:19", "F2": // ctrl-s or F2, save (or toggle stdout in debug mode)
 			e.UserSave(c, tty, status)
-		case "c:7", "F12": // ctrl-g or F12, either go to definition OR jump to matching parent/bracket OR toggle the GDB console in debug mode
+		case "c:7", "F12": // ctrl-g or F12, either go to definition OR jump to matching bracket OR toggle the GDB console in debug mode
 
 			if e.nanoMode.Load() { // nano: ctrl-g, help
 				status.ClearAll(c, false)
@@ -2601,6 +2583,11 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 				e.redrawCursor.Store(true)
 			}
 
+			// Jump to the matching bracket if the cursor is on one
+			if e.JumpToMatchingBracket(c, status) {
+				break
+			}
+
 			oldFilename := e.filename
 			oldLineIndex := e.LineIndex()
 
@@ -2611,9 +2598,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					if _, didJump := e.GoToInclude(tty, c, status); didJump {
 						jumped = true
 					}
-				} else if e.JumpToMatching(c) { // jump to matching parenthesis or bracket
-					e.redrawCursor.Store(true)
-					jumped = true
 				} else if e.GoToDefinition(tty, c, status) { // go to definition
 					jumped = true
 					break
@@ -2637,9 +2621,6 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 					e.ClearSearch()
 					status.Show(c, e)
 				})
-				jumped = true
-			} else if e.JumpToMatching(c) {
-				e.redrawCursor.Store(true)
 				jumped = true
 			}
 

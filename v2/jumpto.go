@@ -460,6 +460,31 @@ func (e *Editor) prevAndScroll(c *vt.Canvas) error {
 	return nil
 }
 
+// JumpToMatchingBracket jumps to the bracket that matches the one under the
+// cursor, or shows a status message if there is no match.
+// Returns false if the cursor is not on a bracket.
+func (e *Editor) JumpToMatchingBracket(c *vt.Canvas, status *StatusBar) bool {
+	opening, _, ok := bracketPair(e.Rune())
+	if !ok {
+		return false
+	}
+	if e.JumpToMatching(c) {
+		e.redraw.Store(true)
+		e.redrawCursor.Store(true)
+		return true
+	}
+	name := "parenthesis"
+	switch opening {
+	case '{':
+		name = "curly bracket"
+	case '[':
+		name = "square bracket"
+	}
+	status.ClearAll(c, false)
+	status.SetMessageAfterRedraw("Can't find a matching " + name)
+	return true
+}
+
 // JumpToMatching can jump to a to matching parenthesis or bracket ([{.
 // Return true if a jump was possible and happened.
 func (e *Editor) JumpToMatching(c *vt.Canvas) bool {
