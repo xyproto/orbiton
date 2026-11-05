@@ -28,7 +28,7 @@ const (
 	DefinitionLists                               // Parse definition lists
 	MathJax                                       // Parse MathJax
 	OrderedListStart                              // Keep track of the first number used when starting an ordered list.
-	Attributes                                    // Block Attributes
+	Attributes                                    // Block attributes: {#id .class key="value"} before a block or {: ...} after it. See html.SkipHTML for untrusted documents.
 	SuperSubscript                                // Super- and subscript support: 2^10^, H~2~O.
 	// EmptyLinesBreakList is retained for source compatibility and has no effect.
 	//
@@ -36,7 +36,7 @@ const (
 	EmptyLinesBreakList
 	Includes         // Support including other files.
 	Mmark            // Support Mmark syntax, see https://mmark.miek.nl/post/syntax/
-	InlineAttributes // Parse {: key="value"} after links and images
+	InlineAttributes // Parse {key="value"} after links and images. See html.SkipHTML for untrusted documents.
 	MarkdownInHTML   // Parse markdown inside HTML table cells and similar tags
 
 	CommonExtensions Extensions = NoIntraEmphasis | Tables | FencedCode |
@@ -69,13 +69,16 @@ func NewCommonMark() *Parser {
 	return p
 }
 
+// maxNesting limits how deeply blocks and inline content are nested.
+const maxNesting = 64
+
 // NewWithExtensions creates a markdown parser with the given extensions.
 func NewWithExtensions(extension Extensions) *Parser {
 	doc := &ast.Document{}
 	p := Parser{
 		refs:                 make(map[string]*reference),
 		refsRecord:           make(map[string]struct{}),
-		maxNesting:           64,
+		maxNesting:           maxNesting,
 		Doc:                  doc,
 		extensions:           extension,
 		tip:                  doc,
