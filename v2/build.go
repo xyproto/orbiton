@@ -1701,13 +1701,21 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 
 				doneRunning := false
 				go func() {
-					// TODO: Wait for the process to start instead of sleeping
-					time.Sleep(500 * time.Millisecond)
+					loveOrLovr := e.mode == mode.Lua && e.LuaLoveOrLovr()
+					if !loveOrLovr {
+						// TODO: Wait for the process to start instead of sleeping
+						time.Sleep(500 * time.Millisecond)
+					}
 					if !doneRunning {
 						const repositionCursorAfterDrawing = true
 						const rightHandSide = true
-						if skipTheStatusBox := e.mode == mode.Lua && e.LuaLoveOrLovr(); !skipTheStatusBox {
-							msg := "Done building. Running..."
+						msg := "Done building. Running..."
+						switch {
+						case loveOrLovr && e.LuaLovr():
+							msg = "Starting LÖVR..."
+						case loveOrLovr:
+							msg = "Starting LÖVE..."
+						default:
 							switch e.mode {
 							case mode.ABC, mode.Chuck, mode.SuperCollider:
 								msg = fmt.Sprintf("Playing with %s...", e.mode)
@@ -1728,8 +1736,8 @@ func (e *Editor) Build(c *vt.Canvas, status *StatusBar, tty *vt.TTY) {
 									msg = "Running..."
 								}
 							}
-							e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing, rightHandSide)
 						}
+						e.DrawOutput(c, 20, "", "  "+msg, e.DebugStoppedBackground, repositionCursorAfterDrawing, rightHandSide)
 					}
 				}()
 
