@@ -339,6 +339,13 @@ func (e *Editor) GenerateBuildCommand(c *vt.Canvas, tty *vt.TTY, filename string
 	}
 
 	switch e.mode {
+	case mode.Octo:
+		romFilename := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename)) + ".ch8"
+		cmd = exec.Command("octo-cli", sourceFilename, romFilename)
+		cmd.Dir = sourceDir
+		return cmd, func() (bool, string) {
+			return files.IsFile(romFilename), filepath.Base(romFilename)
+		}, nil
 	case mode.ABC:
 		cmd = exec.Command("abc2midi", sourceFilename, "-o", filepath.Join(tempDir, "o.mid"))
 		cmd.Dir = sourceDir

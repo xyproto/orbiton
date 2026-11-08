@@ -55,6 +55,11 @@ func (e *Editor) Run() (string, bool, error) {
 			audioOutputFlag = "-Od" // macOS
 		}
 		cmd = exec.Command("timidity", "--quiet", audioOutputFlag, midiFilename)
+	case mode.Octo:
+		rom := strings.TrimSuffix(sourceFilename, filepath.Ext(sourceFilename)) + ".ch8"
+		if cmd = slay.Chip8EmulatorCommand(rom); cmd == nil {
+			return "", false, errors.New("please install Octo (octo-run) to run " + filepath.Base(rom))
+		}
 	case mode.VersionChecker:
 		cmd = exec.Command("pkgctl version check", sourceFilename)
 	case mode.Shell:
