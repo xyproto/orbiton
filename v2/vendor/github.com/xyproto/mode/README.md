@@ -6,5 +6,5 @@
 
 ### General info
 
-* Version: 0.12.18
+* Version: 0.12.19
 * License: BSD-3

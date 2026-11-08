@@ -29,9 +29,9 @@ require (
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.2
 	github.com/xyproto/megafile v1.7.15
-	github.com/xyproto/mode v0.12.18
+	github.com/xyproto/mode v0.12.19
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/syntax v1.14.9
+	github.com/xyproto/syntax v1.14.10
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.22
@@ -42,7 +42,7 @@ require (
 
 require github.com/xyproto/themes v1.0.2
 
-require github.com/xyproto/slay v1.3.12
+require github.com/xyproto/slay v1.3.13
 
 require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
 

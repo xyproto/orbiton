@@ -17,7 +17,7 @@ var DefaultTabsSpaces = TabsSpaces{4, true}
 var languageIndentation = map[TabsSpaces][]Mode{
 	// Languages that use spaces (from the opinionated point of view of this package)
 	{1, true}: {ABC},
-	{2, true}: {Agda, Algol68, Amber, Arduino, Assembly, Blueprint, C3, Clojure, Config, CSS, CSound, Dart, Diff, Elixir, Erlang, Fennel, Fortran90, FSTAB, Gleam, HTML, Haskell, Ignore, Ini, Inko, JSON, Koka, Lilypond, Lua, Nmap, Nix, ObjC, ObjectPascal, OCaml, Oil, Perl, PolicyLanguage, POV, ReStructured, Ruby, Scala, Scheme, Shell, StandardML, Teal, VersionChecker, Vim, XML, YAML},
+	{2, true}: {Agda, Algol68, Amber, Arduino, Assembly, Blueprint, C3, Clojure, Config, CSS, CSound, Dart, Diff, Elixir, Erlang, Fennel, Fortran90, FSTAB, Gleam, HTML, Haskell, Ignore, Ini, Inko, JSON, Koka, Lilypond, Lua, Nmap, Nix, ObjC, ObjectPascal, OCaml, Octo, Oil, Perl, PolicyLanguage, POV, ReStructured, Ruby, Scala, Scheme, Shell, StandardML, Teal, VersionChecker, Vim, XML, YAML},
 	{3, true}: {Ada, Prolog}, // Ada and Prolog are special
 	{4, true}: {ASCIIDoc, Basic, Bat, Battlestar, Beef, CMake, Chuck, CS, Cpp, COBOL, Crystal, Docker, Elm, Email, Faust, Fish, FSharp, GDScript, Garnet, Git, Haxe, Jakt, Java, JavaScript, Kotlin, Markdown, Mojo, Nim, Oak, Ollama, PHP, Python, R, Rust, SCDoc, Skill, Spec, SQL, Starlark, Subversion, Swift, Terra, Text, Tim, TypeScript, V, Zig},
 	{7, true}: {Fortran77},        // Fortran77 is weird

@@ -57,6 +57,12 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 	}
 
 	exe := executableName()
+	if proj.HasChip8 {
+		result.OutputExecutable = exe + ".ch8"
+		var buildErr error
+		result.Output, result.CommandsRun, buildErr = buildChip8(proj.MainSource, result.OutputExecutable)
+		return result, buildErr
+	}
 	if proj.CC65Target != "" || proj.HasSNES {
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
 		var buildErr error

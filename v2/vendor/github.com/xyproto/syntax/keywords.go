@@ -97,6 +97,9 @@ var (
 	// OCaml
 	ocamlWords = []string{"and", "as", "assert", "asr", "begin", "class", "constraint", "do", "done", "downto", "else", "end", "exception", "external", "false", "for", "fun", "function", "functor", "if", "in", "include", "inherit", "initializer", "land", "lazy", "let", "lor", "lsl", "lsr", "lxor", "match", "method", "mod", "module", "mutable", "new", "nonrec", "object", "of", "open", "or", "private", "rec", "sig", "struct", "then", "to", "true", "try", "type", "val", "virtual", "when", "while", "with"}
 
+	// Octo (CHIP-8, SUPER-CHIP and XO-CHIP assembly)
+	octoWords = []string{"again", "alias", "assert", "audio", "bcd", "begin", "bighex", "breakpoint", "buzzer", "byte", "call", "calc", "clear", "const", "delay", "else", "end", "exit", "hex", "hires", "i", "if", "jump", "jump0", "key", "load", "loadflags", "long", "loop", "lores", "macro", "monitor", "native", "next", "org", "pitch", "plane", "pointer", "proto", "random", "return", "save", "saveflags", "scroll-down", "scroll-left", "scroll-right", "scroll-up", "sprite", "stringmode", "then", "unpack", "while"}
+
 	// Odin
 	odinWords = []string{"align_of", "auto_cast", "bit_field", "bit_set", "break", "case", "cast", "const", "context", "continue", "defer", "distinct", "do", "do", "dynamic", "else", "enum", "fallthrough", "for", "foreign", "if", "import", "in", "inline", "macro", "map", "no_inline", "notin", "offset_of", "opaque", "package", "proc", "return", "size_of", "struct", "switch", "transmute", "type_of", "union", "using", "when"}
 

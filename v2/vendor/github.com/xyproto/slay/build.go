@@ -467,6 +467,14 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 	}
 
 	exe := executableName()
+	if proj.HasChip8 {
+		out, cmds, err := buildChip8(proj.MainSource, exe+".ch8")
+		for _, c := range cmds {
+			fmt.Println(c)
+		}
+		os.Stdout.Write(out)
+		return err
+	}
 	if proj.CC65Target != "" || proj.HasSNES {
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
 		var out []byte

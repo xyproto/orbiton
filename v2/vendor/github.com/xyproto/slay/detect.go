@@ -169,6 +169,7 @@ type Project struct {
 	HasGBA            bool   // detected from #include <tonc.h> or <gba.h>
 	CC65Target        string // c64, c128, vic20 or nes for cc65, or snes for 65816 assembly built with ca65
 	HasSNES           bool
+	HasChip8          bool // an Octo (.8o) source file and no C or C++ sources
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
 	HasDlopen         bool // detected from #include <dlfcn.h>
 	GtkVersion        int
@@ -189,6 +190,12 @@ func detectProject() Project {
 			p.MainSource = srcs[0]
 			p.DepSources = srcs[1:]
 			p.CC65Target = target
+		}
+	}
+	if p.MainSource == "" {
+		if src := chip8Source(); src != "" {
+			p.MainSource = src
+			p.HasChip8 = true
 		}
 	}
 

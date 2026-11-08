@@ -289,6 +289,8 @@ func AdjustKeywords(m mode.Mode) {
 		AddKeywords(povrayWords)
 	case mode.Nim:
 		AddAndRemoveKeywords([]string{"proc", "type"}, []string{"append", "exit", "fn", "get", "package", "print", "until"})
+	case mode.Octo:
+		SetKeywords(octoWords)
 	case mode.Odin:
 		SetKeywords(odinWords)
 	case mode.Ollama:

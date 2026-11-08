@@ -99,6 +99,7 @@ const (
 	Oak                   // Oak
 	ObjC                  // Objective-C
 	ObjectPascal          // Object Pascal and Delphi
+	Octo                  // Octo, CHIP-8 assembly
 	Odin                  // Odin
 	Oil                   // Oil shell scripts (YSH)
 	Ollama                // For Modelfiles
@@ -341,6 +342,8 @@ func (mode Mode) String() string {
 		return "Pas"
 	case OCaml:
 		return "Ocaml"
+	case Octo:
+		return "Octo"
 	case Odin:
 		return "Odin"
 	case Perl:

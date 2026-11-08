@@ -257,6 +257,8 @@ func Detect(filename string) Mode {
 			mode = Nmap
 		case ".nu":
 			mode = Nushell
+		case ".8o":
+			mode = Octo
 		case ".odin":
 			mode = Odin
 		case ".ok":
