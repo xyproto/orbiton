@@ -42,11 +42,13 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20261104120941-c01a8a138111
+# github.com/gomarkdown/markdown v0.0.0-20261107153045-a51d70be185e
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
 github.com/gomarkdown/markdown/html
+github.com/gomarkdown/markdown/internal/matter
+github.com/gomarkdown/markdown/internal/render
 github.com/gomarkdown/markdown/internal/textutil
 github.com/gomarkdown/markdown/parser
 # github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25
@@ -76,7 +78,7 @@ github.com/sajari/fuzzy
 # github.com/sourcegraph/annotate v0.0.0-20160123013949-f4cad6c6324d
 ## explicit
 github.com/sourcegraph/annotate
-# github.com/spf13/pflag v1.0.10
+# github.com/spf13/pflag v1.1.0
 ## explicit; go 1.12
 github.com/spf13/pflag
 # github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
@@ -133,7 +135,7 @@ github.com/xyproto/kotlinsig
 # github.com/xyproto/lookslikegoasm v1.0.2
 ## explicit; go 1.23.2
 github.com/xyproto/lookslikegoasm
-# github.com/xyproto/megafile v1.7.14
+# github.com/xyproto/megafile v1.7.15
 ## explicit; go 1.26.0
 github.com/xyproto/megafile
 # github.com/xyproto/mode v0.12.18

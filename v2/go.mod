@@ -8,12 +8,12 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20261104120941-c01a8a138111
+	github.com/gomarkdown/markdown v0.0.0-20261107153045-a51d70be185e
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/sajari/fuzzy v1.0.0
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
 	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/burnfont v1.2.3
@@ -28,7 +28,7 @@ require (
 	github.com/xyproto/javasig v1.0.3
 	github.com/xyproto/kotlinsig v0.0.1
 	github.com/xyproto/lookslikegoasm v1.0.2
-	github.com/xyproto/megafile v1.7.14
+	github.com/xyproto/megafile v1.7.15
 	github.com/xyproto/mode v0.12.18
 	github.com/xyproto/oksvg v1.0.1
 	github.com/xyproto/syntax v1.14.9
