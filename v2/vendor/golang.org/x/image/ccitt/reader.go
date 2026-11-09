@@ -5,6 +5,13 @@
 //go:generate go run gen.go
 
 // Package ccitt implements a CCITT (fax) image decoder.
+//
+// # Security Considerations
+//
+// This package is not hardened against malicious inputs.
+// Crashes, excessive CPU or memory consumption, or similar misbehavior
+// caused by malicious or corrupt inputs will be handled as ordinary bugs,
+// not vulnerabilities.
 package ccitt
 
 import (

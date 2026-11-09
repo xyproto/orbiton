@@ -211,6 +211,10 @@ loop:
 		if d.hi+1 >= d.overflow { // NOTE: the "+1" is where TIFF's LZW differs from the standard algorithm.
 			if d.width == maxWidth {
 				d.last = decoderInvalidCode
+				// Undo the d.hi++ a few lines above, so that (1) we maintain
+				// the invariant that d.hi < d.overflow, and (2) d.hi does not
+				// eventually overflow a uint16.
+				d.hi--
 			} else {
 				d.width++
 				d.overflow <<= 1

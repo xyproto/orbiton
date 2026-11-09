@@ -36,15 +36,18 @@ require (
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.22
 	github.com/xyproto/wordwrap v1.2.0
-	golang.org/x/image v0.47.0
+	golang.org/x/image v0.48.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require github.com/xyproto/themes v1.0.2
 
-require github.com/xyproto/slay v1.3.13
+require github.com/xyproto/slay v1.3.14
 
-require github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
+require (
+	github.com/peterhellberg/gfx v0.0.0-20260907063546-85ca1d9df3fe // indirect
+	github.com/yuin/gopher-lua v1.1.2 // indirect
+)
 
 require (
 	github.com/BurntSushi/toml v1.6.0
@@ -64,7 +67,7 @@ require (
 	github.com/xyproto/palgen v1.7.3 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sys v0.50.0
-	golang.org/x/term v0.47.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/term v0.48.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	mvdan.cc/sh/v3 v3.14.1 // indirect
 )
