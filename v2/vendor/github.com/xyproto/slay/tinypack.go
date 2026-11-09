@@ -231,8 +231,6 @@ func (r *TinyRecipe) read() error {
 	if r.Release == "" {
 		r.Release = "1"
 	}
-	r.Name = r.str("name")
-	r.Version = r.str("version")
 	if r.Name == "" || r.Version == "" {
 		return fmt.Errorf("name and version are required")
 	}
