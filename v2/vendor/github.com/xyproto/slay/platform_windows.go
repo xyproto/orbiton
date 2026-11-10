@@ -405,3 +405,5 @@ func msys2ToWindowsPath(msysPath string) string {
 	}
 	return ""
 }
+
+func umask22() {}

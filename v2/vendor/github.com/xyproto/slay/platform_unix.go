@@ -5,6 +5,7 @@ package slay
 import (
 	"os/exec"
 	"strings"
+	"syscall"
 )
 
 // systemIncludeDirs returns the system include directories on Unix-like systems.
@@ -52,3 +53,7 @@ func msys2IncludePathToFlags(_ string) string { return "" }
 
 // vcpkgIncludePathToFlags is a no-op on non-Windows platforms.
 func vcpkgIncludePathToFlags(_ string) string { return "" }
+
+func umask22() {
+	syscall.Umask(0o022)
+}

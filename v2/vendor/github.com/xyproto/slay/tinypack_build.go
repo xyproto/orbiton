@@ -17,7 +17,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/xyproto/env/v2"
@@ -137,7 +136,7 @@ func (b *TinyBuilder) Run() ([]string, error) {
 	if !strings.Contains(b.Work, string(filepath.Separator)+"tinypack"+string(filepath.Separator)) {
 		return nil, fmt.Errorf("refusing to use %s as a work directory", b.Work)
 	}
-	syscall.Umask(0o022)
+	umask22()
 	os.RemoveAll(b.Work)
 	for _, d := range []string{b.SrcDir, b.PkgDir, b.BinDir, b.HomeDir, b.OutDir, b.SrcDest} {
 		if err := os.MkdirAll(d, 0o755); err != nil {
