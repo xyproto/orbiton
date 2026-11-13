@@ -31,7 +31,7 @@ require (
 	github.com/xyproto/megafile v1.7.15
 	github.com/xyproto/mode v0.12.19
 	github.com/xyproto/oksvg v1.0.1
-	github.com/xyproto/syntax v1.14.10
+	github.com/xyproto/syntax v1.14.11
 	github.com/xyproto/termtitle v1.5.1
 	github.com/xyproto/usermodel v1.3.0
 	github.com/xyproto/vt v1.9.22
@@ -40,7 +40,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/xyproto/themes v1.0.2
+require github.com/xyproto/themes v1.0.3
 
 require github.com/xyproto/slay v1.3.16
 

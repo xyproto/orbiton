@@ -1298,22 +1298,28 @@ func NewDarkVSTheme() Theme {
 // RegisterVSColors adds the VS Code light palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
 func RegisterVSColors() {
-	vt.LightColorMap["vscomment"] = vt.TrueColor(0x00, 0x80, 0x00)  // green
-	vt.LightColorMap["vsstring"] = vt.TrueColor(0xa3, 0x15, 0x15)   // dark red
-	vt.LightColorMap["vssident"] = vt.TrueColor(0x00, 0x10, 0x80)   // dark blue (variables)
-	vt.LightColorMap["vsnumber"] = vt.TrueColor(0x09, 0x86, 0x58)   // dark green
-	vt.LightColorMap["vspreproc"] = vt.TrueColor(0xaf, 0x00, 0xdb)  // purple (preprocessor)
-	vt.LightColorMap["vskeyword"] = vt.TrueColor(0x00, 0x00, 0xff)  // blue
-	vt.LightColorMap["vstype"] = vt.TrueColor(0x26, 0x7f, 0x99)     // dark cyan
-	vt.LightColorMap["vsplain"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
-	vt.LightColorMap["vsescape"] = vt.TrueColor(0xee, 0x00, 0x00)   // bright red (escape sequences)
-	vt.LightColorMap["vspunct"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
-	vt.LightColorMap["vsfunc"] = vt.TrueColor(0x79, 0x5e, 0x26)     // dark yellow/brown (functions)
-	vt.LightColorMap["vscurly"] = vt.TrueColor(0x00, 0x00, 0x00)    // black
-	vt.LightColorMap["vstag"] = vt.TrueColor(0x80, 0x00, 0x00)      // dark red (XML/HTML tags)
-	vt.LightColorMap["vsattrname"] = vt.TrueColor(0xff, 0x00, 0x00) // red (attribute names)
-	vt.LightColorMap["vsattrval"] = vt.TrueColor(0x00, 0x00, 0xff)  // blue (attribute values)
-	vt.LightColorMap["vsincsys"] = vt.TrueColor(0xa3, 0x15, 0x15)   // dark red (system includes)
+	colors := map[string]vt.AttributeColor{
+		"vscomment":  vt.TrueColor(0x00, 0x80, 0x00),
+		"vsstring":   vt.TrueColor(0xa3, 0x15, 0x15),
+		"vssident":   vt.TrueColor(0x00, 0x10, 0x80),
+		"vsnumber":   vt.TrueColor(0x09, 0x86, 0x58),
+		"vspreproc":  vt.TrueColor(0xaf, 0x00, 0xdb),
+		"vskeyword":  vt.TrueColor(0x00, 0x00, 0xff),
+		"vstype":     vt.TrueColor(0x26, 0x7f, 0x99),
+		"vsplain":    vt.TrueColor(0x00, 0x00, 0x00),
+		"vsescape":   vt.TrueColor(0xee, 0x00, 0x00),
+		"vspunct":    vt.TrueColor(0x00, 0x00, 0x00),
+		"vsfunc":     vt.TrueColor(0x79, 0x5e, 0x26),
+		"vscurly":    vt.TrueColor(0x00, 0x00, 0x00),
+		"vstag":      vt.TrueColor(0x80, 0x00, 0x00),
+		"vsattrname": vt.TrueColor(0xff, 0x00, 0x00),
+		"vsattrval":  vt.TrueColor(0x00, 0x00, 0xff),
+		"vsincsys":   vt.TrueColor(0xa3, 0x15, 0x15),
+	}
+	for k, v := range colors {
+		vt.LightColorMap[k] = v
+		vt.DarkColorMap[k] = v
+	}
 	vt.RebuildTagReplacers()
 }
 
@@ -1703,18 +1709,24 @@ func (t Theme) TextConfig() *syntax.TextConfig {
 // RegisterXoria256Colors adds the Xoria256 palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
 func RegisterXoria256Colors() {
-	vt.DarkColorMap["xcomment"] = vt.Color256(244)
-	vt.DarkColorMap["xstring"] = vt.Color256(229)
-	vt.DarkColorMap["xident"] = vt.Color256(182)
-	vt.DarkColorMap["xnumber"] = vt.Color256(180)
-	vt.DarkColorMap["xpreproc"] = vt.Color256(150)
-	vt.DarkColorMap["xkeyword"] = vt.Color256(110)
-	vt.DarkColorMap["xtype"] = vt.Color256(146)
-	vt.DarkColorMap["xplain"] = vt.Color256(252)
-	vt.DarkColorMap["xescape"] = vt.Color256(174)
-	vt.DarkColorMap["xpunct"] = vt.Color256(247)
-	vt.DarkColorMap["xincsys"] = vt.Color256(110) // same as keyword
-	vt.DarkColorMap["xcurly"] = vt.Color256(247)
+	colors := map[string]vt.AttributeColor{
+		"xcomment": vt.Color256(244),
+		"xstring":  vt.Color256(229),
+		"xident":   vt.Color256(182),
+		"xnumber":  vt.Color256(180),
+		"xpreproc": vt.Color256(150),
+		"xkeyword": vt.Color256(110),
+		"xtype":    vt.Color256(146),
+		"xplain":   vt.Color256(252),
+		"xescape":  vt.Color256(174),
+		"xpunct":   vt.Color256(247),
+		"xincsys":  vt.Color256(110),
+		"xcurly":   vt.Color256(247),
+	}
+	for k, v := range colors {
+		vt.DarkColorMap[k] = v
+		vt.LightColorMap[k] = v
+	}
 	vt.RebuildTagReplacers()
 }
 
@@ -1919,18 +1931,24 @@ func NewXoria16Theme() Theme {
 // RegisterGruvboxColors adds the Gruvbox palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
 func RegisterGruvboxColors() {
-	vt.DarkColorMap["gbcomment"] = vt.TrueColor(0x66, 0x5c, 0x54)
-	vt.DarkColorMap["gbstring"] = vt.TrueColor(0xb8, 0xbb, 0x26)
-	vt.DarkColorMap["gbident"] = vt.TrueColor(0xd3, 0x86, 0x9b)
-	vt.DarkColorMap["gbnumber"] = vt.TrueColor(0xfe, 0x80, 0x19)
-	vt.DarkColorMap["gbpreproc"] = vt.TrueColor(0x8e, 0xc0, 0x7c)
-	vt.DarkColorMap["gbkeyword"] = vt.TrueColor(0xfb, 0x49, 0x34)
-	vt.DarkColorMap["gbtype"] = vt.TrueColor(0xfa, 0xbd, 0x2f)
-	vt.DarkColorMap["gbplain"] = vt.TrueColor(0xd5, 0xc4, 0xa1)
-	vt.DarkColorMap["gbescape"] = vt.TrueColor(0xd6, 0x5d, 0x0e)
-	vt.DarkColorMap["gbpunct"] = vt.TrueColor(0xbd, 0xae, 0x93)
-	vt.DarkColorMap["gbfunc"] = vt.TrueColor(0x83, 0xa5, 0x98)
-	vt.DarkColorMap["gbcurly"] = vt.TrueColor(0xbd, 0xae, 0x93)
+	colors := map[string]vt.AttributeColor{
+		"gbcomment": vt.TrueColor(0x66, 0x5c, 0x54),
+		"gbstring":  vt.TrueColor(0xb8, 0xbb, 0x26),
+		"gbident":   vt.TrueColor(0xd3, 0x86, 0x9b),
+		"gbnumber":  vt.TrueColor(0xfe, 0x80, 0x19),
+		"gbpreproc": vt.TrueColor(0x8e, 0xc0, 0x7c),
+		"gbkeyword": vt.TrueColor(0xfb, 0x49, 0x34),
+		"gbtype":    vt.TrueColor(0xfa, 0xbd, 0x2f),
+		"gbplain":   vt.TrueColor(0xd5, 0xc4, 0xa1),
+		"gbescape":  vt.TrueColor(0xd6, 0x5d, 0x0e),
+		"gbpunct":   vt.TrueColor(0xbd, 0xae, 0x93),
+		"gbfunc":    vt.TrueColor(0x83, 0xa5, 0x98),
+		"gbcurly":   vt.TrueColor(0xbd, 0xae, 0x93),
+	}
+	for k, v := range colors {
+		vt.DarkColorMap[k] = v
+		vt.LightColorMap[k] = v
+	}
 	vt.RebuildTagReplacers()
 }
 
@@ -2134,18 +2152,24 @@ func NewGruvbox16Theme() Theme {
 // RegisterMonokaiColors adds the Monokai palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
 func RegisterMonokaiColors() {
-	vt.DarkColorMap["mkcomment"] = vt.TrueColor(0x46, 0x54, 0x57)
-	vt.DarkColorMap["mkstring"] = vt.TrueColor(0xe6, 0xdb, 0x74)
-	vt.DarkColorMap["mkident"] = vt.TrueColor(0xfd, 0x97, 0x1f)
-	vt.DarkColorMap["mknumber"] = vt.TrueColor(0xae, 0x81, 0xff)
-	vt.DarkColorMap["mkpreproc"] = vt.TrueColor(0xa6, 0xe2, 0x2e)
-	vt.DarkColorMap["mkkeyword"] = vt.TrueColor(0xf9, 0x26, 0x72)
-	vt.DarkColorMap["mktype"] = vt.TrueColor(0x66, 0xd9, 0xef)
-	vt.DarkColorMap["mkplain"] = vt.TrueColor(0xf8, 0xf8, 0xf2)
-	vt.DarkColorMap["mkescape"] = vt.TrueColor(0x66, 0xd9, 0xef)
-	vt.DarkColorMap["mkpunct"] = vt.TrueColor(0xf8, 0xf8, 0xf2)
-	vt.DarkColorMap["mkfunc"] = vt.TrueColor(0xa6, 0xe2, 0x2e)
-	vt.DarkColorMap["mkcurly"] = vt.TrueColor(0xf8, 0xf8, 0xf2)
+	colors := map[string]vt.AttributeColor{
+		"mkcomment": vt.TrueColor(0x46, 0x54, 0x57),
+		"mkstring":  vt.TrueColor(0xe6, 0xdb, 0x74),
+		"mkident":   vt.TrueColor(0xfd, 0x97, 0x1f),
+		"mknumber":  vt.TrueColor(0xae, 0x81, 0xff),
+		"mkpreproc": vt.TrueColor(0xa6, 0xe2, 0x2e),
+		"mkkeyword": vt.TrueColor(0xf9, 0x26, 0x72),
+		"mktype":    vt.TrueColor(0x66, 0xd9, 0xef),
+		"mkplain":   vt.TrueColor(0xf8, 0xf8, 0xf2),
+		"mkescape":  vt.TrueColor(0x66, 0xd9, 0xef),
+		"mkpunct":   vt.TrueColor(0xf8, 0xf8, 0xf2),
+		"mkfunc":    vt.TrueColor(0xa6, 0xe2, 0x2e),
+		"mkcurly":   vt.TrueColor(0xf8, 0xf8, 0xf2),
+	}
+	for k, v := range colors {
+		vt.DarkColorMap[k] = v
+		vt.LightColorMap[k] = v
+	}
 	vt.RebuildTagReplacers()
 }
 
@@ -2414,18 +2438,24 @@ func ParseBase16File(filename string) (name string, colors [16]vt.AttributeColor
 // RegisterBase16Colors adds base16 palette entries to the vt color maps
 // and rebuilds the tag replacers so the custom color names are recognized.
 func RegisterBase16Colors(colors [16]vt.AttributeColor) {
-	vt.DarkColorMap["b16comment"] = colors[0x3]
-	vt.DarkColorMap["b16string"] = colors[0xB]
-	vt.DarkColorMap["b16ident"] = colors[0xE]
-	vt.DarkColorMap["b16number"] = colors[0x9]
-	vt.DarkColorMap["b16preproc"] = colors[0xC]
-	vt.DarkColorMap["b16keyword"] = colors[0x8]
-	vt.DarkColorMap["b16type"] = colors[0xA]
-	vt.DarkColorMap["b16plain"] = colors[0x5]
-	vt.DarkColorMap["b16escape"] = colors[0xF]
-	vt.DarkColorMap["b16punct"] = colors[0x4]
-	vt.DarkColorMap["b16func"] = colors[0xD]
-	vt.DarkColorMap["b16curly"] = colors[0x4]
+	mapping := map[string]vt.AttributeColor{
+		"b16comment": colors[0x3],
+		"b16string":  colors[0xB],
+		"b16ident":   colors[0xE],
+		"b16number":  colors[0x9],
+		"b16preproc": colors[0xC],
+		"b16keyword": colors[0x8],
+		"b16type":    colors[0xA],
+		"b16plain":   colors[0x5],
+		"b16escape":  colors[0xF],
+		"b16punct":   colors[0x4],
+		"b16func":    colors[0xD],
+		"b16curly":   colors[0x4],
+	}
+	for k, v := range mapping {
+		vt.DarkColorMap[k] = v
+		vt.LightColorMap[k] = v
+	}
 	vt.RebuildTagReplacers()
 }
 

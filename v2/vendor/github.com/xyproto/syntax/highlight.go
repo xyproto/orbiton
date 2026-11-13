@@ -13,6 +13,7 @@ import (
 
 	"github.com/sourcegraph/annotate"
 	"github.com/xyproto/mode"
+	"github.com/xyproto/vt"
 )
 
 // Kind represents a syntax highlighting kind (class) which will be assigned to tokens.
@@ -226,6 +227,205 @@ var DefaultTextConfig = TextConfig{
 	TextTag:       "white",
 	Type:          "white",
 	Whitespace:    "",
+}
+
+var (
+	DefaultDarkTextConfig  = DefaultTextConfig
+	DefaultLightTextConfig = TextConfig{
+		AndOr:         "black",
+		AngleBracket:  "black",
+		AssemblyEnd:   "red",
+		Class:         "blue",
+		Comment:       "gray",
+		CurlyBracket:  "black",
+		Decimal:       "darkcyan",
+		Dollar:        "red",
+		IncludeSystem: "blue",
+		Keyword:       "blue",
+		Literal:       "darkcyan",
+		Mut:           "black",
+		Plaintext:     "black",
+		Private:       "black",
+		Protected:     "black",
+		Public:        "black",
+		Punctuation:   "black",
+		Self:          "darkcyan",
+		Star:          "black",
+		Static:        "black",
+		String:        "red",
+		Tag:           "black",
+		TextAttrName:  "black",
+		TextAttrValue: "black",
+		TextTag:       "black",
+		Type:          "blue",
+		Whitespace:    "",
+	}
+)
+
+func NewTextConfig(light bool) TextConfig {
+	if light {
+		return DefaultLightTextConfig
+	}
+	return DefaultDarkTextConfig
+}
+
+type Style struct {
+	Foreground vt.AttributeColor
+	Background vt.AttributeColor
+}
+
+type Palette [IncludeSystem + 1]Style
+
+func (p Palette) Style(k Kind) Style {
+	if int(k) < len(p) {
+		return p[k]
+	}
+	return Style{}
+}
+
+type Theme struct {
+	Name    string
+	Light   bool
+	Palette Palette
+}
+
+func (t Theme) Style(k Kind) Style {
+	return t.Palette.Style(k)
+}
+
+func NewTheme(name string, light bool, mapping map[Kind]Style) Theme {
+	var pal Palette
+	for k, s := range mapping {
+		if int(k) < len(pal) {
+			pal[k] = s
+		}
+	}
+	return Theme{
+		Name:    name,
+		Light:   light,
+		Palette: pal,
+	}
+}
+
+var (
+	DefaultDarkTheme = NewTheme("DefaultDark", false, map[Kind]Style{
+		Whitespace:    {},
+		Plaintext:     {Foreground: vt.LightGray},
+		Keyword:       {Foreground: vt.Red},
+		Type:          {Foreground: vt.LightGray},
+		String:        {Foreground: vt.White},
+		Comment:       {Foreground: vt.DarkGray},
+		Decimal:       {Foreground: vt.Red},
+		Punctuation:   {Foreground: vt.Red},
+		CurlyBracket:  {Foreground: vt.Red},
+		IncludeSystem: {Foreground: vt.Red},
+	})
+
+	DefaultLightTheme = NewTheme("DefaultLight", true, map[Kind]Style{
+		Whitespace:    {},
+		Plaintext:     {Foreground: vt.Black},
+		Keyword:       {Foreground: vt.Blue},
+		Type:          {Foreground: vt.Blue},
+		String:        {Foreground: vt.Red},
+		Comment:       {Foreground: vt.Gray},
+		Decimal:       {Foreground: vt.Cyan},
+		Punctuation:   {Foreground: vt.Black},
+		CurlyBracket:  {Foreground: vt.Black},
+		IncludeSystem: {Foreground: vt.Blue},
+	})
+
+	VSLightTheme = NewTheme("VSLight", true, map[Kind]Style{
+		Whitespace:    {},
+		Plaintext:     {Foreground: vt.TrueColor(0x00, 0x00, 0x00)},
+		Keyword:       {Foreground: vt.TrueColor(0x00, 0x00, 0xff)},
+		Type:          {Foreground: vt.TrueColor(0x26, 0x7f, 0x99)},
+		String:        {Foreground: vt.TrueColor(0xa3, 0x15, 0x15)},
+		Comment:       {Foreground: vt.TrueColor(0x00, 0x80, 0x00)},
+		Decimal:       {Foreground: vt.TrueColor(0x09, 0x86, 0x58)},
+		Punctuation:   {Foreground: vt.TrueColor(0x00, 0x00, 0x00)},
+		CurlyBracket:  {Foreground: vt.TrueColor(0x00, 0x00, 0x00)},
+		IncludeSystem: {Foreground: vt.TrueColor(0xa3, 0x15, 0x15)},
+	})
+)
+
+type Styler interface {
+	Style(Kind) Style
+}
+
+type DirectPrinter struct {
+	Scheme Styler
+}
+
+func (dp DirectPrinter) Print(w io.Writer, kind Kind, tokText string) error {
+	st := dp.Scheme.Style(kind)
+	if st.Foreground != 0 {
+		if _, err := io.WriteString(w, st.Foreground.String()); err != nil {
+			return err
+		}
+	}
+	if st.Background != 0 {
+		if _, err := io.WriteString(w, st.Background.String()); err != nil {
+			return err
+		}
+	}
+	if _, err := io.WriteString(w, tokText); err != nil {
+		return err
+	}
+	if st.Foreground != 0 || st.Background != 0 {
+		if _, err := io.WriteString(w, vt.NoColor); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func Highlight(src []byte, m mode.Mode, s Styler, w io.Writer) error {
+	scan := NewScanner(src)
+	dp := DirectPrinter{Scheme: s}
+	inComment := false
+	inInclude := false
+	for tok := scan.Scan(); tok != scanner.EOF; tok = scan.Scan() {
+		tokText := scan.TokenText()
+		if err := dp.Print(w, tokenKind(tok, tokText, &inComment, &inInclude, m), tokText); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func HighlightToAttributes(src []byte, m mode.Mode, s Styler) []vt.CharAttribute {
+	scan := NewScanner(src)
+	inComment := false
+	inInclude := false
+	var attrs []vt.CharAttribute
+	for tok := scan.Scan(); tok != scanner.EOF; tok = scan.Scan() {
+		tokText := scan.TokenText()
+		kind := tokenKind(tok, tokText, &inComment, &inInclude, m)
+		st := s.Style(kind)
+		color := st.Foreground
+		if st.Background != 0 {
+			color = color.Combine(st.Background)
+		}
+		for _, r := range tokText {
+			attrs = append(attrs, vt.CharAttribute{
+				R: r,
+				A: color,
+			})
+		}
+	}
+	return attrs
+}
+
+func AsTextWithBackground(src []byte, m mode.Mode, light bool, options ...Option) ([]byte, error) {
+	opt := NewTextConfig(light)
+	for _, f := range options {
+		f(&opt)
+	}
+	var buf bytes.Buffer
+	if err := Print(NewScanner(src), &buf, TextPrinter(opt), m); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // Print scans tokens from s, using Printer p for mode m.
