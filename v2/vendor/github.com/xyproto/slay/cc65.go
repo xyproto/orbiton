@@ -198,7 +198,7 @@ func CBMEmulatorCommand(prg string, args ...string) *exec.Cmd {
 func viceCommand(emulators []string, prg string, args ...string) *exec.Cmd {
 	for _, emulator := range emulators {
 		if p := files.WhichCached(emulator); p != "" {
-			cmdArgs := append(append([]string{}, args...), "-autostart", prg)
+			cmdArgs := append(append([]string{"-silent"}, args...), "-autostart", prg)
 			return exec.Command(p, cmdArgs...)
 		}
 	}
