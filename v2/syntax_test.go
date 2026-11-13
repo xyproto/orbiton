@@ -2,9 +2,12 @@ package main
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 
 	"github.com/xyproto/mode"
+	"github.com/xyproto/syntax"
+	"github.com/xyproto/themes"
 )
 
 func TestRPMHighlight(t *testing.T) {
@@ -100,5 +103,38 @@ func TestFishAndOilHighlight(t *testing.T) {
 		if !bytes.Equal(highlighted, expected) {
 			t.Errorf("Expected %q for %s, got %q", string(expected), m, string(highlighted))
 		}
+	}
+}
+
+func TestVSLightNoTagLeak(t *testing.T) {
+	registerVSColors()
+	theme := themes.NewVSTrueColorTheme()
+	syntax.DefaultTextConfig = *(theme.TextConfig())
+	highlighted, err := AsText([]byte("hello world"), mode.Go)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rendered := tout.DarkTags(string(highlighted))
+	if strings.Contains(rendered, "<vsplain>") {
+		t.Errorf("Tag <vsplain> was leaked into rendered output: %q", rendered)
+	}
+	if strings.Contains(rendered, "<") && strings.Contains(rendered, ">") {
+		t.Errorf("Unexpanded tags leaked into rendered output: %q", rendered)
+	}
+}
+
+func TestDirectHighlighting(t *testing.T) {
+	var buf bytes.Buffer
+	err := syntax.Highlight([]byte("func main() {}"), mode.Go, syntax.VSLightTheme, &buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := buf.String()
+	if strings.Contains(out, "<") && strings.Contains(out, ">") {
+		t.Errorf("Tags leaked into direct highlighted output: %q", out)
+	}
+	attrs := syntax.HighlightToAttributes([]byte("func main() {}"), mode.Go, syntax.VSLightTheme)
+	if len(attrs) == 0 {
+		t.Errorf("Expected attributes, got none")
 	}
 }

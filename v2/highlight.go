@@ -1058,6 +1058,12 @@ func colorNameToAttribute(colorName string) (vt.AttributeColor, bool) {
 	if attr, ok := vt.DarkColorMap[strings.ToLower(colorName)]; ok {
 		return attr, true
 	}
+	if attr, ok := vt.LightColorMap[colorName]; ok {
+		return attr, true
+	}
+	if attr, ok := vt.LightColorMap[strings.ToLower(colorName)]; ok {
+		return attr, true
+	}
 	return 0, false
 }
 
