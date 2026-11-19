@@ -142,6 +142,7 @@ Flags:
   -h, --help                     Display this usage information.
   -y, --esc                      Just pressing Esc will exit the program.
   -v, --version                  Display the current version.
+  -b, --build                    Try to build the source files in the current directory.
 
 See the man page for more information.
 
