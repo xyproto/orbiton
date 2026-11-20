@@ -554,6 +554,11 @@ func main() {
 		}
 	}
 
+	// TODO: Consider if isBookFilename is a good idea outside of booting with PID=1
+	if !buildFlag && !catFlag && !fmtFlag && isBookFilename(fnord.filename) {
+		bookModeFlag = true
+	}
+
 	// Set the terminal title, if the current terminal emulator supports it, and NO_COLOR is not set
 	go fnord.SetTitle()
 

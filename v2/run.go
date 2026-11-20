@@ -37,6 +37,7 @@ func (e *Editor) Run() (string, bool, error) {
 	allEnv := env.Environ()
 
 	var cmd *exec.Cmd
+	emulator := false
 
 	// Make sure not to do anything with cmd here until it has been initialized by the switch below!
 
@@ -173,6 +174,7 @@ func (e *Editor) Run() (string, bool, error) {
 			cmd = exec.Command("lua", sourceFilename)
 		}
 	case mode.C, mode.Cpp:
+		emulator = true
 		if rom := builtROM(sourceDir, ".gba"); rom != "" {
 			if cmd = slay.GBAEmulatorCommand(rom); cmd == nil {
 				return "", false, errors.New("please install mGBA to run " + filepath.Base(rom))
@@ -194,6 +196,7 @@ func (e *Editor) Run() (string, bool, error) {
 				return "", false, errors.New("please install DOSBox-X, DOSBox Staging or DOSBox to run " + filepath.Base(exe))
 			}
 		} else {
+			emulator = false
 			exe := slay.MakefileRunProgram(sourceDir)
 			if exe == "" || !files.IsFile(filepath.Join(sourceDir, exe)) {
 				exe = e.exeName(e.filename, true)
@@ -306,6 +309,9 @@ func (e *Editor) Run() (string, bool, error) {
 	}
 
 	output, err := CombinedOutputSetPID(cmd)
+	if emulator && err == nil {
+		output = ""
+	}
 
 	// filter gleam build/run progress lines from the output
 	if e.mode == mode.Gleam {
