@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] Fix the issue with unrecognized keys / `kp_ins` !
 - [ ] Let users select if files should be deleted or moved to "trash" the first time they delete a file in a session, in the file browser, when pressing ctrl-d.
 - [ ] Respect `.clang-format-ignore` when pressing `ctrl-w` to format C or C++ files.
 - [ ] Also support `shift-return`, especially in book mode.
