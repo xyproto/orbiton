@@ -5,6 +5,8 @@
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxyproto%2Forbiton.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxyproto%2Forbiton?ref=badge_shield)
 [![Orbiton on The Terminal Index](img/termindex.svg)](https://cli.masoko.net/tools/orbiton/)
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=2)](https://repology.org/project/orbiton/versions)
+
 Orbiton is a text editor and a simple IDE with the following leading principles:
 
 * **Minimal annoyance** (within the limits of `VT100`)
@@ -12,8 +14,6 @@ Orbiton is a text editor and a simple IDE with the following leading principles:
 * **Facilitate rapid edit-format-compile-run cycles**
 
 Please submit a PR if anything can be improved to help adhere to these.
-
-[![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=2)](https://repology.org/project/orbiton/versions)
 
 Orbiton might be a good fit for:
 
