@@ -13,6 +13,8 @@ Orbiton is a text editor and a simple IDE with the following leading principles:
 
 Please submit a PR if anything can be improved to help adhere to these.
 
+[![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=2)](https://repology.org/project/orbiton/versions)
+
 Orbiton might be a good fit for:
 
 * Writing git commit messages (using `EDITOR=o git commit`).
@@ -49,12 +51,6 @@ There are also light themes available:
 Writing commit messages:
 
 ![git](img/git_screenshot.png)
-
-## Packaging status
-
-| **orbiton**                                                                                                                    |
-|--------------------------------------------------------------------------------------------------------------------------------|
-| [![Packaging status](https://repology.org/badge/vertical-allrepos/orbiton.svg?columns=2)](https://repology.org/project/orbiton/versions) |
 
 ## Quick start
 
