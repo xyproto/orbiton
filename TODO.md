@@ -2,6 +2,7 @@
 
 ## General
 
+- [ ] When starting Orbiton with `o .` in MINGW64 on win11, .png previews works the first but not the second time.
 - [ ] Fix the issue with unrecognized keys / `kp_ins` !
 - [ ] When editing C and pressing `ctrl-g`: let the status bar also contain the character count.
 - [ ] Let users select if files should be deleted or moved to "trash" the first time they delete a file in a session, in the file browser, when pressing ctrl-d.
