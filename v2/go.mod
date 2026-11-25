@@ -8,7 +8,7 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c
+	github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.31
@@ -19,8 +19,8 @@ require (
 	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/clip v1.0.1
 	github.com/xyproto/digraph v1.3.0
-	github.com/xyproto/env/v2 v2.5.6
-	github.com/xyproto/files v1.10.8
+	github.com/xyproto/env/v2 v2.6.0
+	github.com/xyproto/files v1.11.1
 	github.com/xyproto/fullname v1.1.0
 	github.com/xyproto/globi v1.0.2
 	github.com/xyproto/iferr v1.1.0

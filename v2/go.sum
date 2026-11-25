@@ -6,6 +6,8 @@ github.com/JohannesKaufmann/dom v0.3.1 h1:J16l9JAHWgkFPR3VIPbQ1gvS0cWab6laK1q7PF
 github.com/JohannesKaufmann/dom v0.3.1/go.mod h1:BZPkf8ZeYrBgABjwJn9iiKt8aiCtkxpHkevms+Yp2DE=
 github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2 h1:XFJZFWESIWlUEHHjzBuv8RvrtCWnSGlimEX17ysSDb8=
 github.com/JohannesKaufmann/html-to-markdown/v2 v2.5.2/go.mod h1:BHWO8lJzttJLqwuV8Rb1B3OG2OSzLbssZDI1FRg2eAA=
+github.com/alecthomas/chroma/v2 v2.24.0 h1:zrg+k0tAaVbM8whaT2hR5DOUqAdopsDaH998EGi6Llk=
+github.com/alecthomas/chroma/v2 v2.24.0/go.mod h1:l+ohZ9xRXIbGe7cIW+YZgOGbvuVLjMps/FYN/CwuabI=
 github.com/boombuler/barcode v1.0.0/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
@@ -19,6 +21,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06 h1:yKWwcHDMrhQ1Vle7iG4xPt9l61A/rTsdYc7bJHwB+sQ=
 github.com/dkua/go-ico v0.0.0-20161218204303-1c25f691ce06/go.mod h1:ILJc15OqkUIbcYqL9A7W7xTsfOLRAKP0Jpl74ur9mm8=
+github.com/dlclark/regexp2 v1.12.0 h1:0j4c5qQmnC6XOWNjP3PIXURXN2gWx76rd3KvgdPkCz8=
+github.com/dlclark/regexp2 v1.12.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2xWg=
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
 github.com/felixge/fgtrace v0.2.0 h1:lq7RO6ELjR+S74+eD+ai/vhYvsjno7Vb84yzU6RPSeU=
@@ -27,8 +31,8 @@ github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx5
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
 github.com/go-quicktest/qt v1.102.0 h1:HSQxCeh5YZH3EL3W39ixjtyaEhcWSXQHtHnMBzSs474=
 github.com/go-quicktest/qt v1.102.0/go.mod h1:p4lGIVX+8Wa6ZPNDvqcxq36XpUDLh42FLetFU7odllI=
-github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c h1:/9gYo2KFY7h9zG/apNf1o4DMDJbfPTzLWaPMsZYlpC0=
-github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c/go.mod h1:zLCvXLlUnS5tvOi4hpJgzzpJsq0+dliwn85VbPh1JbQ=
+github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d h1:TNmJpszOE9CvuUDlgmImqL+nCH75TCmY0GrSPA0/gEw=
+github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d/go.mod h1:y1k49yXXXS2Kifibe9TEOef1b8dMvgpCrSMq4iKd7D8=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/jsummers/gobmp v0.0.0-20230614200233-a9de23ed2e25 h1:YLvr1eE6cdCqjOe972w/cYF+FjW34v27+9Vo5106B4M=
@@ -91,10 +95,10 @@ github.com/xyproto/distrodetector v1.3.2/go.mod h1:KvQs8MNUd3Gj27Oeuj+U806R77Ikq
 github.com/xyproto/env v1.7.0/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
 github.com/xyproto/env v1.9.1 h1:RSWzKrNYEcK+Tvk2fu5eHYW5ENq19tYzbHLWfA7fx5s=
 github.com/xyproto/env v1.9.1/go.mod h1:quJdc4lLgEPSzrCRBZDFAptJIjm0fBDZiA1t9shxc7c=
-github.com/xyproto/env/v2 v2.5.6 h1:ZDhM5caXmM0/Bjf4BHd3QkC6p0g0aXAtTwpBOS4sxyU=
-github.com/xyproto/env/v2 v2.5.6/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
-github.com/xyproto/files v1.10.8 h1:WddqvjjvZxLaLHhEmLdeHlr+03pHnHHMtsXGTY1D+os=
-github.com/xyproto/files v1.10.8/go.mod h1:cP7k9SE756cww4r2pN3fXOeQXtJqfpiA2b+qfVNrJCY=
+github.com/xyproto/env/v2 v2.6.0 h1:WJEhEse4a+nLEyr/S9wofjwlpAU88q/hUqvLIi32AFY=
+github.com/xyproto/env/v2 v2.6.0/go.mod h1:F81ZEzu15s3TWUZJ1uzBl9iNeq9zcfHvxMkQJaLZUl0=
+github.com/xyproto/files v1.11.1 h1:Ztxyy4BVsPAzUvKs7lZ4UsOku3AkyMxZdCOGpt7P2Yw=
+github.com/xyproto/files v1.11.1/go.mod h1:XT2C+VLRzqO/xjTwGakK03ReSf1+z07nFrUTS/yquJ0=
 github.com/xyproto/fullname v1.1.0 h1:QTykh2AuMB4Nr41vp/jnGofki1MFSqEAjI4fLXaNPDA=
 github.com/xyproto/fullname v1.1.0/go.mod h1:Yq+cQPXuZ4KaucZ8RtixShE2aZNag4fs05XYtWN1Wfo=
 github.com/xyproto/globi v1.0.2 h1:w7jxy0X4pmM/Jw5k1fO8Z030XeTf7A/1P8MB7/fD5H8=

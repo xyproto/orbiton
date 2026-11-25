@@ -42,7 +42,7 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20261117205700-e8c6d33a8b6c
+# github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -108,10 +108,10 @@ github.com/xyproto/distrodetector
 # github.com/xyproto/env v1.9.1
 ## explicit; go 1.15
 github.com/xyproto/env
-# github.com/xyproto/env/v2 v2.5.6
+# github.com/xyproto/env/v2 v2.6.0
 ## explicit; go 1.19
 github.com/xyproto/env/v2
-# github.com/xyproto/files v1.10.8
+# github.com/xyproto/files v1.11.1
 ## explicit; go 1.19
 github.com/xyproto/files
 # github.com/xyproto/fullname v1.1.0

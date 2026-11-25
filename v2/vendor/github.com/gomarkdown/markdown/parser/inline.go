@@ -4,6 +4,7 @@ import (
 	"regexp"
 
 	"github.com/gomarkdown/markdown/ast"
+	"github.com/gomarkdown/markdown/internal/textutil"
 )
 
 // Parsing of inline elements
@@ -32,20 +33,17 @@ func (p *Parser) Inline(currBlock ast.Node, data []byte) {
 	prevParens := p.parens
 	prevLinkStops := p.linkStops
 	prevPlainParens := p.plainParens
-	prevCloserBalance := p.closerBalance
 	p.brackets = bracketTable{data: data}
 	p.citationBrackets = delimiterTable{data: data, open: '[', close: ']', escapePrevious: true}
 	p.parens = delimiterTable{data: data, open: '(', close: ')', honorEscapes: true}
 	p.linkStops = byteIndex{data: data, chars: "'\")", honorEscapes: true}
 	p.plainParens = delimiterTable{data: data, open: '(', close: ')'}
-	p.closerBalance = closerBalanceCache{scanned: -1}
 	defer func() {
 		p.brackets = prevBrackets
 		p.citationBrackets = prevCitationBrackets
 		p.parens = prevParens
 		p.linkStops = prevLinkStops
 		p.plainParens = prevPlainParens
-		p.closerBalance = prevCloserBalance
 		p.nesting--
 	}()
 	beg, end := 0, 0
@@ -107,7 +105,7 @@ func (c *runCache) endOf(data []byte, offset int, b byte) int {
 	if c.buf.covers(data, offset, c.start, c.end) {
 		return c.end
 	}
-	end := skipChar(data, offset, b)
+	end := textutil.SkipChar(data, offset, b)
 	*c = runCache{buf: idOf(data), start: offset, end: end}
 	return end
 }
@@ -117,7 +115,7 @@ func maybeLineBreak(p *Parser, data []byte, offset int) (int, ast.Node) {
 	origOffset := offset
 	offset = p.spaces.endOf(data, offset, ' ')
 
-	if offset < len(data) && data[offset] == '\n' {
+	if textutil.ByteAt(data, offset, '\n') {
 		if offset-origOffset >= 2 {
 			return offset - origOffset + 1, &ast.Hardbreak{}
 		}
@@ -160,10 +158,8 @@ func maybeInlineFootnoteOrSuper(p *Parser, data []byte, offset int) (int, ast.No
 			// no closing '^'
 			return 0, nil
 		}
-		for i := offset; i < offset+ret; i++ {
-			if IsSpace(data[i]) && !isEscape(data, i) {
-				return 0, nil
-			}
+		if hasUnescapedSpace(data, offset, offset+ret) {
+			return 0, nil
 		}
 		sup := &ast.Superscript{Leaf: ast.Leaf{Literal: data[offset+1 : offset+ret]}}
 		return ret + 1, sup
