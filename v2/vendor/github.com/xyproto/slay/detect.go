@@ -168,6 +168,7 @@ type Project struct {
 	HasWatcom         bool   // detected from #include <i86.h>
 	HasGBA            bool   // detected from #include <tonc.h> or <gba.h>
 	CC65Target        string // c64, c128, vic20 or nes for cc65, or snes for 65816 assembly built with ca65
+	Z88DKTarget       string // zx for z88dk
 	HasSNES           bool
 	HasChip8          bool // an Octo (.8o) source file and no C or C++ sources
 	HasGLFWVulkan     bool // detected from #define GLFW_INCLUDE_VULKAN
@@ -233,6 +234,10 @@ func detectProject() Project {
 			}
 			if makefileUsesGBA(s) {
 				p.HasGBA = true
+				break
+			}
+			if target := makefileZ88DKTarget(s); target != "" {
+				p.Z88DKTarget = target
 				break
 			}
 			if target := makefileCC65Target(s); target != "" {
@@ -321,6 +326,9 @@ func scanSourceForFlags(filename string, p *Project) {
 		}
 		if isSNESInclude(line) {
 			p.HasSNES = true
+		}
+		if target := z88dkIncludeTarget(line); target != "" {
+			p.Z88DKTarget = target
 		}
 		// Detect win64 from includes
 		for _, wh := range []string{`#include <windows.h>`, `#include "windows.h"`, `#include<windows.h>`} {

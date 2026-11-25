@@ -231,6 +231,13 @@ func EmulatorCommand(rom string, args ...string) *exec.Cmd {
 	switch strings.ToLower(filepath.Ext(rom)) {
 	case ".prg":
 		return CBMEmulatorCommand(rom, args...)
+	case ".tap":
+		if isC64Tape(rom) {
+			return C64EmulatorCommand(rom, args...)
+		}
+		return ZXEmulatorCommand(rom, args...)
+	case ".tzx", ".z80", ".sna", ".szx":
+		return ZXEmulatorCommand(rom, args...)
 	case ".nes":
 		return NESEmulatorCommand(rom, args...)
 	case ".sfc", ".smc":

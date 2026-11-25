@@ -63,10 +63,13 @@ func Build(sourceDir string, opts BuildOptions) (BuildResult, error) {
 		result.Output, result.CommandsRun, buildErr = buildChip8(proj.MainSource, result.OutputExecutable)
 		return result, buildErr
 	}
-	if proj.CC65Target != "" || proj.HasSNES {
+	if proj.Z88DKTarget != "" || proj.CC65Target != "" || proj.HasSNES {
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
 		var buildErr error
-		if proj.CC65Target != "" {
+		if proj.Z88DKTarget != "" {
+			result.OutputExecutable = exe + z88dkExtension(proj.Z88DKTarget)
+			result.Output, result.CommandsRun, buildErr = buildZ88DK(proj.Z88DKTarget, srcs, result.OutputExecutable, opts)
+		} else if proj.CC65Target != "" {
 			result.OutputExecutable = exe + cc65Extension(proj.CC65Target)
 			result.Output, result.CommandsRun, buildErr = buildCC65(proj.CC65Target, srcs, result.OutputExecutable, opts)
 		} else {

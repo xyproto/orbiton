@@ -475,12 +475,14 @@ func doBuildWithDirOverrides(opts BuildOptions, proj Project) error {
 		os.Stdout.Write(out)
 		return err
 	}
-	if proj.CC65Target != "" || proj.HasSNES {
+	if proj.Z88DKTarget != "" || proj.CC65Target != "" || proj.HasSNES {
 		srcs := append([]string{proj.MainSource}, proj.DepSources...)
 		var out []byte
 		var cmds []string
 		var err error
-		if proj.CC65Target != "" {
+		if proj.Z88DKTarget != "" {
+			out, cmds, err = buildZ88DK(proj.Z88DKTarget, srcs, exe+z88dkExtension(proj.Z88DKTarget), opts)
+		} else if proj.CC65Target != "" {
 			out, cmds, err = buildCC65(proj.CC65Target, srcs, exe+cc65Extension(proj.CC65Target), opts)
 		} else {
 			out, cmds, err = buildSNES(srcs, exe+".sfc")
