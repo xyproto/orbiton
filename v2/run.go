@@ -183,6 +183,10 @@ func (e *Editor) Run() (string, bool, error) {
 			if cmd = slay.SNESEmulatorCommand(rom); cmd == nil {
 				return "", false, errors.New("please install ZSNES or Snes9x to run " + filepath.Base(rom))
 			}
+		} else if tap := builtROM(sourceDir, ".tap"); tap != "" {
+			if cmd = slay.ZXEmulatorCommand(tap); cmd == nil {
+				return "", false, errors.New("please install Fuse to run " + filepath.Base(tap))
+			}
 		} else if prg := builtROM(sourceDir, ".prg"); prg != "" {
 			if cmd = slay.CBMEmulatorCommand(prg); cmd == nil {
 				return "", false, errors.New("please install VICE (x64sc, x128 or xvic) to run " + filepath.Base(prg))
@@ -498,7 +502,7 @@ func findSoundFont() string {
 // Returns nil if no suitable emulator is installed.
 func romCommand(rom string) *exec.Cmd {
 	switch strings.ToLower(filepath.Ext(rom)) {
-	case ".prg", ".nes", ".sfc", ".smc", ".gba":
+	case ".prg", ".nes", ".sfc", ".smc", ".gba", ".tap", ".tzx", ".z80", ".sna", ".szx":
 		return slay.EmulatorCommand(rom)
 	}
 	return exec.Command(rom)
