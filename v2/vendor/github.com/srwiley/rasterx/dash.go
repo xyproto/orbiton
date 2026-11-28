@@ -60,7 +60,7 @@ func (r *Dasher) lineF(b fixed.Point26_6) {
 	if b == r.leadPoint.P { // End of segment
 		bnorm = r.leadPoint.TNorm // Use more accurate leadPoint tangent
 	} else {
-		bnorm = turnPort90(ToLength(b.Sub(a), r.u)) // Intra segment normal
+		bnorm = turnPort90(ToLength(ba, r.u)) // Intra segment normal
 	}
 	for segLen+r.deltaDash > r.Dashes[r.dashPlace] {
 		nl := r.Dashes[r.dashPlace] - r.deltaDash
@@ -112,7 +112,7 @@ func (r *Dasher) SetStroke(width, miterLimit fixed.Int26_6, capL, capT CapFunc, 
 	r.sgm = r // Use the full dasher
 }
 
-//Stop terminates a dashed line
+// Stop terminates a dashed line
 func (r *Dasher) Stop(isClosed bool) {
 	if len(r.Dashes) == 0 {
 		r.Stroker.Stop(isClosed)

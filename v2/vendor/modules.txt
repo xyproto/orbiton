@@ -42,7 +42,7 @@ github.com/felixge/fgtrace/internal
 ## explicit; go 1.23
 github.com/fsnotify/fsnotify
 github.com/fsnotify/fsnotify/internal
-# github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d
+# github.com/gomarkdown/markdown v0.0.0-20261127224621-51f24eb83f8a
 ## explicit; go 1.22
 github.com/gomarkdown/markdown
 github.com/gomarkdown/markdown/ast
@@ -81,7 +81,7 @@ github.com/sourcegraph/annotate
 # github.com/spf13/pflag v1.1.0
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
+# github.com/srwiley/rasterx v0.0.0-20261128054241-78f2104be592
 ## explicit; go 1.17
 github.com/srwiley/rasterx
 # github.com/xfmoulet/qoi v0.2.0

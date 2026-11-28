@@ -288,24 +288,25 @@ func (r *Stroker) strokeEdge(p C2Point, crossProd fixed.Int26_6) {
 		((r.JoinMode == Arc || r.JoinMode == ArcClip) && (rt == 0 && rl == 0)) {
 		xt := CalcIntersect(s1.Sub(p.TTan), s1, s2, s2.Sub(p.LTan))
 		xa := xt.Sub(p.P)
-		if Length(xa) < r.mLimit { // within miter limit
+		xaLength := Length(xa)
+		if xaLength < r.mLimit { // within miter limit
 			ra.Line(xt)
 			ra.Line(s2)
 			return
 		}
 		if r.JoinMode == MiterClip || (r.JoinMode == ArcClip) {
 			//Projection of tNorm onto xa
-			tProjP := xa.Mul(fixed.Int26_6((DotProd(xa, p.TNorm) << 6) / DotProd(xa, xa)))
+			tProjP := xa.Mul(fixed.Int26_6(float64(DotProd(xa, p.TNorm)<<6) / float64(DotProd(xa, xa))))
 			projLen := Length(tProjP)
 			if r.mLimit > projLen { // the miter limit line is past the bevel point
 				// t is the fraction shifted by tStrokeShift to scale the vectors from the bevel point
 				// to the line intersection, so that they abbut the miter limit line.
-				tiLength := Length(xa)
 				sx1, sx2 := xt.Sub(s1), xt.Sub(s2)
-				t := (r.mLimit - projLen) << tStrokeShift / (tiLength - projLen)
-				tx := ToLength(sx1, t*Length(sx1)>>tStrokeShift)
-				lx := ToLength(sx2, t*Length(sx2)>>tStrokeShift)
-				vx := ToLength(xa, t*Length(xa)>>tStrokeShift)
+				sx1Length, sx2Length := Length(sx1), Length(sx2)
+				t := (r.mLimit - projLen) << tStrokeShift / (xaLength - projLen)
+				tx := ToLength(sx1, t*sx1Length>>tStrokeShift)
+				lx := ToLength(sx2, t*sx2Length>>tStrokeShift)
+				vx := ToLength(xa, t*xaLength>>tStrokeShift)
 				s1p, _, ap := s1.Add(tx), s2.Add(lx), p.P.Add(vx)
 				gLen := Length(ap.Sub(s1p))
 				ra.Line(s1p)
@@ -332,7 +333,7 @@ func (r *Stroker) strokeEdge(p C2Point, crossProd fixed.Int26_6) {
 				if r.JoinMode == ArcClip { // Scale bevel points towards xt, and call gap func
 					xa := xt.Sub(p.P)
 					//Projection of tNorm onto xa
-					tProjP := xa.Mul(fixed.Int26_6((DotProd(xa, p.TNorm) << 6) / DotProd(xa, xa)))
+					tProjP := xa.Mul(fixed.Int26_6(float64(DotProd(xa, p.TNorm)<<6) / float64(DotProd(xa, xa))))
 					projLen := Length(tProjP)
 					if r.mLimit > projLen { // the miter limit line is past the bevel point
 						// t is the fraction shifted by tStrokeShift to scale the line or arc from the bevel point
@@ -377,7 +378,7 @@ func (r *Stroker) strokeEdge(p C2Point, crossProd fixed.Int26_6) {
 				if r.JoinMode == ArcClip { // Scale bevel points towards xt, and call gap func
 					xa := xt.Sub(p.P)
 					//Projection of lNorm onto xa
-					lProjP := xa.Mul(fixed.Int26_6((DotProd(xa, p.LNorm) << 6) / DotProd(xa, xa)))
+					lProjP := xa.Mul(fixed.Int26_6(float64(DotProd(xa, p.LNorm)<<6) / float64(DotProd(xa, xa))))
 					projLen := Length(lProjP)
 					if r.mLimit > projLen { // The miter limit line is past the bevel point,
 						// t is the fraction to scale the line or arc from the bevel point
@@ -423,7 +424,7 @@ func (r *Stroker) strokeEdge(p C2Point, crossProd fixed.Int26_6) {
 				if r.JoinMode == ArcClip { // Scale bevel points towards xt, and call gap func
 					xa := xt.Sub(p.P)
 					//Projection of lNorm onto xa
-					lProjP := xa.Mul(fixed.Int26_6((DotProd(xa, p.LNorm) << 6) / DotProd(xa, xa)))
+					lProjP := xa.Mul(fixed.Int26_6(float64(DotProd(xa, p.LNorm)<<6) / float64(DotProd(xa, xa))))
 					projLen := Length(lProjP)
 					if r.mLimit > projLen { // The miter limit line is past the bevel point,
 						// t is the fraction to scale the line or arc from the bevel point
@@ -457,7 +458,6 @@ func (r *Stroker) strokeEdge(p C2Point, crossProd fixed.Int26_6) {
 	}
 	r.JoinGap(ra, p.P, p.TNorm, p.LNorm)
 	ra.Line(s2)
-	return
 }
 
 // Stop a stroked line. The line will close
@@ -556,7 +556,7 @@ func (r *Stroker) Line(b fixed.Point26_6) {
 	r.LineSeg(r, b)
 }
 
-//LineSeg is called by both the Stroker and Dasher
+// LineSeg is called by both the Stroker and Dasher
 func (r *Stroker) LineSeg(sgm Rasterx, b fixed.Point26_6) {
 	r.trailPoint = r.leadPoint
 	ba := b.Sub(r.a)

@@ -8,13 +8,13 @@ require (
 	github.com/cyrus-and/gdb v0.0.0-20260120112000-c4757ad21baa
 	github.com/felixge/fgtrace v0.2.0
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gomarkdown/markdown v0.0.0-20261124143954-1814b856890d
+	github.com/gomarkdown/markdown v0.0.0-20261127224621-51f24eb83f8a
 	github.com/jung-kurt/gofpdf v1.16.2
 	github.com/klauspost/asmfmt v1.3.2
 	github.com/mattn/go-runewidth v0.0.31
 	github.com/sajari/fuzzy v1.0.0
 	github.com/spf13/pflag v1.1.0
-	github.com/srwiley/rasterx v0.0.0-20220730225603-2ab79fcdd4ef
+	github.com/srwiley/rasterx v0.0.0-20261128054241-78f2104be592
 	github.com/xyproto/binary v1.4.0
 	github.com/xyproto/burnfont v1.2.3
 	github.com/xyproto/clip v1.0.1

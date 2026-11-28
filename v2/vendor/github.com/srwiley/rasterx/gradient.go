@@ -154,12 +154,12 @@ func (g *Gradient) blendStops(t, opacity float64, s1, s2 GradStop, flip bool) co
 		0xFF}, (s1.Opacity*(1-tp)+s2.Opacity*tp)*opacity)
 }
 
-//GetColorFunction returns the color function
+// GetColorFunction returns the color function
 func (g *Gradient) GetColorFunction(opacity float64) interface{} {
 	return g.GetColorFunctionUS(opacity, Identity)
 }
 
-//GetColorFunctionUS returns the color function using the User Space objMatrix
+// GetColorFunctionUS returns the color function using the User Space objMatrix
 func (g *Gradient) GetColorFunctionUS(opacity float64, objMatrix Matrix2D) interface{} {
 	switch len(g.Stops) {
 	case 0:

@@ -1,6 +1,33 @@
 # rasterx
 
+[![CI](https://github.com/srwiley/rasterx/actions/workflows/ci.yml/badge.svg)](https://github.com/srwiley/rasterx/actions/workflows/ci.yml)
+
 Rasterx is a golang rasterizer that implements path stroking functions capable of SVG 2.0 compliant 'arc' joins and explicit loop closing. 
+
+## Installation
+
+Rasterx is a Go module, so no GOPATH setup is required:
+
+```
+go get github.com/srwiley/rasterx
+```
+
+```golang
+import "github.com/srwiley/rasterx"
+```
+
+A minimal fill:
+
+```golang
+img := image.NewRGBA(image.Rect(0, 0, 512, 512))
+scanner := rasterx.NewScannerGV(512, 512, img, img.Bounds())
+filler := rasterx.NewFiller(512, 512, scanner)
+scanner.SetColor(color.RGBA{0, 0, 255, 255})
+rasterx.AddCircle(256, 256, 200, filler)
+scanner.Draw()
+```
+
+Swap `NewFiller` for `NewStroker` or `NewDasher` to stroke or dash the same path.
 
 
 
@@ -20,6 +47,8 @@ The above image shows the effect of using different join modes for a stroked cur
 Rasterx takes the path description of lines, bezier curves, and drawing parameters, and converts them into a set of straight line segments before rasterizing the lines to an image using some method of antialiasing. Rasterx abstracts this last step through the Scanner interface. There are two different structs that satisfy the Scanner interface; ScannerGV and [ScannerFT](https://github.com/srwiley/scanFT). ScannerGV wraps the rasterizer found in the golang.org/x/image/vector package. ScannerFT contains a modified version of the antialiaser found in the [golang freetype](https://github.com/golang/freetype) translation. These use different functions to connect an image to the antialiaser. ScannerFT uses a Painter to translate the raster onto the image, and ScannerGV uses the vector's Draw method with a source image and uses the path as an alpha mask. Please see the test files for examples. At this time, the ScannerFT is a bit faster as compared to ScannerGV for larger and less complicated images, while ScannerGV can be faster for smaller and more complex images. Also ScannerGV does not allow for using the even-odd winding rule, which is something the SVG specification uses. Since ScannerFT is subject to freetype style licensing rules, it lives [here](https://github.com/srwiley/scanFT) in a separate repository and must be imported into your project seperately. ScannerGV is included in the rasterx package, and has more go-friendly licensing. 
 
 Below are the results of some benchmarks performed on a sample shape (the letter Q ). The first test is the time it takes to scan the image after all the curves have been flattened. The second test is the time it takes to flatten, and scan a simple filled image. The last test is the time it takes to flatten a stroked and dashed outline of the shape and scan it. Results for three different image sizes are shown.
+
+These numbers were recorded on older hardware and are kept for relative comparison only. Run `go test -bench . -benchmem` on your own machine for current figures.
 
 
 ```
@@ -73,12 +102,14 @@ rasterx requires the following imports which are not included in the go standard
 * golang.org/x/image/math/fixed
 * golang.org/x/image/vector
 
-These can be included in your gopath by the following 'get' commands:
-
-* "go get golang.org/x/image/vector"
-* "go get golang.org/x/image/math/fixed"
+Both are pulled in automatically by `go get github.com/srwiley/rasterx` and recorded in `go.sum`.
 
 If you want to use the freetype style antialiaser, 'go get' or clone into your workspace the scanFT package:
 
-* github.com/srwiley/scanFT 
+* github.com/srwiley/scanFT
+
+### Mobius transformations
+
+`Mobius` and `MobiusAdder` apply a Möbius transformation M(z) = (az+b)/(cz+d) to every point of a path, mapping the complex plane onto itself. `MobiusAdder` wraps any `Adder`, so it composes with `Filler`, `Stroker` and `Dasher` like `MatrixAdder` does. Note that the mapping is undefined at the pole z = -d/c; points that land there produce non-finite coordinates.
+ 
 

@@ -27,8 +27,8 @@ type (
 		Clear()
 
 		// SetClip sets an optional clipping rectangle to restrict rendering
-		// only to that region -- if size is 0 then ignored (set to image.ZR
-		// to clear)
+		// only to that region -- if size is 0 then ignored (set to
+		// image.Rectangle{} to clear)
 		SetClip(rect image.Rectangle)
 	}
 	// Adder interface for types that can accumlate path commands

@@ -42,6 +42,14 @@ type (
 		Source                 image.Image
 		Offset                 image.Point
 		minX, minY, maxX, maxY fixed.Int26_6 // keep track of bounds
+		path                   []pathOp      // buffered path, replayed at Draw
+	}
+
+	// pathOp is one buffered path command. ScannerGV receives only move and
+	// line commands, because the Filler flattens curves before passing them on.
+	pathOp struct {
+		p    fixed.Point26_6
+		move bool
 	}
 )
 
@@ -77,7 +85,7 @@ func (s *ScannerGV) SetColor(clr interface{}) {
 	switch c := clr.(type) {
 	case color.Color:
 		s.clipImage.ColorFuncImage.Uniform.C = c
-		if s.clipImage.clip == image.ZR {
+		if s.clipImage.clip == (image.Rectangle{}) {
 			s.Source = &s.clipImage.ColorFuncImage.Uniform
 		} else {
 			s.clipImage.ColorFuncImage.colorFunc = func(x, y int) color.Color {
@@ -87,7 +95,7 @@ func (s *ScannerGV) SetColor(clr interface{}) {
 		}
 	case ColorFunc:
 		s.clipImage.ColorFuncImage.colorFunc = c
-		if s.clipImage.clip == image.ZR {
+		if s.clipImage.clip == (image.Rectangle{}) {
 			s.Source = &s.clipImage.ColorFuncImage
 		} else {
 			s.Source = s.clipImage
@@ -96,7 +104,7 @@ func (s *ScannerGV) SetColor(clr interface{}) {
 }
 
 // SetClip sets an optional clipping rectangle to restrict rendering only to
-// that region -- if size is 0 then ignored (set to image.ZR to clear)
+// that region -- if size is 0 then ignored (set to image.Rectangle{} to clear)
 func (s *ScannerGV) SetClip(rect image.Rectangle) {
 	s.clipImage.clip = rect
 	if s.Source == &s.clipImage.ColorFuncImage.Uniform {
@@ -124,38 +132,50 @@ func (s *ScannerGV) set(a fixed.Point26_6) {
 // Start starts a new path at the given point.
 func (s *ScannerGV) Start(a fixed.Point26_6) {
 	s.set(a)
-	s.r.MoveTo(float32(a.X)/64, float32(a.Y)/64)
+	s.path = append(s.path, pathOp{p: a, move: true})
 }
 
 // Line adds a linear segment to the current curve.
 func (s *ScannerGV) Line(b fixed.Point26_6) {
 	s.set(b)
-	s.r.LineTo(float32(b.X)/64, float32(b.Y)/64)
+	s.path = append(s.path, pathOp{p: b})
 }
 
-// Draw renders the accumulate scan to the desination
+// Draw renders the accumulated scan to the desination
 func (s *ScannerGV) Draw() {
-	// This draws the entire bounds of the image, because
-	// at this point the alpha mask does not shift with the
-	// placement of the target rectangle in the vector rasterizer
-	s.r.Draw(s.Dest, s.Dest.Bounds(), s.Source, s.Offset)
+	if len(s.path) == 0 {
+		return
+	}
 
-	// Remove the line above and uncomment the lines below if you
-	// are using a version of the vector rasterizer that shifts the alpha
-	// mask with the placement of the target
+	// The vector rasterizer indexes its alpha mask relative to the target
+	// rectangle, so the path has to be replayed into a rasterizer sized to
+	// the path extent and translated by the extent's min corner. Drawing the
+	// whole destination bounds instead would be correct but costs a full
+	// canvas blit for every shape.
+	r := image.Rect(int(s.minX>>6), int(s.minY>>6), int(s.maxX>>6)+1, int(s.maxY>>6)+1)
+	r = r.Intersect(s.Dest.Bounds())
+	if r.Empty() {
+		return
+	}
 
-	//	s.Targ.Min.X = int(s.minX >> 6)
-	//	s.Targ.Min.Y = int(s.minY >> 6)
-	//	s.Targ.Max.X = int(s.maxX>>6) + 1
-	//	s.Targ.Max.Y = int(s.maxY>>6) + 1
-	//	s.Targ = s.Targ.Intersect(s.Dest.Bounds())  // This check should be done by the rasterizer?
-	//	s.r.Draw(s.Dest, s.Targ, s.Source, s.Offset)
+	s.r.Reset(r.Dx(), r.Dy())
+	ox, oy := float32(r.Min.X), float32(r.Min.Y)
+	for _, op := range s.path {
+		x, y := float32(op.p.X)/64-ox, float32(op.p.Y)/64-oy
+		if op.move {
+			s.r.MoveTo(x, y)
+		} else {
+			s.r.LineTo(x, y)
+		}
+	}
+	// The source point is advanced by the target origin so that the source
+	// image is still sampled in absolute coordinates.
+	s.r.Draw(s.Dest, r, s.Source, s.Offset.Add(r.Min))
 }
 
 // Clear cancels any previous accumulated scans
 func (s *ScannerGV) Clear() {
-	p := s.r.Size()
-	s.r.Reset(p.X, p.Y)
+	s.path = s.path[:0]
 	const mxfi = fixed.Int26_6(math.MaxInt32)
 	s.minX, s.minY, s.maxX, s.maxY = mxfi, mxfi, -mxfi, -mxfi
 }

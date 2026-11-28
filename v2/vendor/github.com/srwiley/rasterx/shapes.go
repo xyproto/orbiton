@@ -95,7 +95,7 @@ func AddRoundRect(minX, minY, maxX, maxY, rx, ry, rot float64, gf GapFunc, p Add
 	q.Stop(true)
 }
 
-//AddArc adds an arc to the adder p
+// AddArc adds an arc to the adder p
 func AddArc(points []float64, cx, cy, px, py float64, p Adder) (lx, ly float64) {
 	rotX := points[2] * math.Pi / 180 // Convert degress to radians
 	largeArc := points[3] != 0
@@ -135,7 +135,7 @@ func AddArc(points []float64, cx, cy, px, py float64, p Adder) (lx, ly float64) 
 	alpha := math.Sin(dEta) * (math.Sqrt(4+3*tde*tde) - 1) / 3 // Math is fun!
 	lx, ly = px, py
 	sinTheta, cosTheta := math.Sin(rotX), math.Cos(rotX)
-	ldx, ldy := ellipsePrime(points[0], points[1], sinTheta, cosTheta, etaStart, cx, cy)
+	ldx, ldy := ellipsePrime(points[0], points[1], sinTheta, cosTheta, etaStart)
 	for i := 1; i <= segs; i++ {
 		eta := etaStart + dEta*float64(i)
 		var px, py float64
@@ -144,7 +144,7 @@ func AddArc(points []float64, cx, cy, px, py float64, p Adder) (lx, ly float64) 
 		} else {
 			px, py = ellipsePointAt(points[0], points[1], sinTheta, cosTheta, eta, cx, cy)
 		}
-		dx, dy := ellipsePrime(points[0], points[1], sinTheta, cosTheta, eta, cx, cy)
+		dx, dy := ellipsePrime(points[0], points[1], sinTheta, cosTheta, eta)
 		p.CubeBezier(ToFixedP(lx+alpha*ldx, ly+alpha*ldy),
 			ToFixedP(px-alpha*dx, py-alpha*dy), ToFixedP(px, py))
 		lx, ly, ldx, ldy = px, py, dx, dy
@@ -152,8 +152,8 @@ func AddArc(points []float64, cx, cy, px, py float64, p Adder) (lx, ly float64) 
 	return lx, ly
 }
 
-// ellipsePrime gives tangent vectors for parameterized elipse; a, b, radii, eta parameter, center cx, cy
-func ellipsePrime(a, b, sinTheta, cosTheta, eta, cx, cy float64) (px, py float64) {
+// ellipsePrime gives tangent vectors for parameterized elipse; a, b, radii, eta parameter
+func ellipsePrime(a, b, sinTheta, cosTheta, eta float64) (px, py float64) {
 	bCosEta := b * math.Cos(eta)
 	aSinEta := a * math.Sin(eta)
 	px = -aSinEta*cosTheta - bCosEta*sinTheta

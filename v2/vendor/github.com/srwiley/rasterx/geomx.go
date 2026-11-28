@@ -37,7 +37,7 @@ func Length(v fixed.Point26_6) fixed.Int26_6 {
 	return fixed.Int26_6(math.Sqrt(vx*vx + vy*vy))
 }
 
-//PathCommand is the type for the path command token
+// PathCommand is the type for the path command token
 type PathCommand fixed.Int26_6
 
 // Human readable path constants
