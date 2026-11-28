@@ -981,6 +981,16 @@ func Loop(tty *vt.TTY, fnord FilenameOrData, lineNumber LineNumber, colNumber Co
 			if e.nanoMode.Load() {
 				break // do nothing
 			}
+			if e.mode == mode.Markdown && e.InBookMode() {
+				// In book mode, a single ctrl-space does nothing (ctrl-b cycles the book modes),
+				// and a double ctrl-space exports the book as a PDF and shows it
+				if kh.DoubleTapped("c:0") {
+					e.viewBookPDF(c, tty, status)
+					drainKeys(tty, "c:0")
+					e.FullResetRedraw(c, status, true, false)
+				}
+				break
+			}
 			if e.mode == mode.Markdown && kh.DoubleTapped("c:0") && (e.InBookMode() || !bookGraphicsCapable()) {
 				if time.Since(lastBookModeToggle) < bookModeToggleDebounce {
 					e.restoreBookState(bookStateBeforeToggle)

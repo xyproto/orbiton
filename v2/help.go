@@ -55,6 +55,7 @@ ctrl-b      to build or export (double press to also run)
             toggle bold when started directly in book mode
 ctrl-space  to build or export (double press to also run)
             to toggle checkboxes in Markdown
+            double press in book mode to make a PDF of the book
 ctrl-w      for Zig, Rust, V and Go, format with the "... fmt" command
             for C++, format the current file with "clang-format"
             for HTML, format the file with "tidy", for Python: "ruff"
